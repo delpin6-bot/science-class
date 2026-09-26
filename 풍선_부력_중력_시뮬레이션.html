@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>풍선에 가해지는 부력과 중력 (Balloon Buoyancy & Gravity)</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-red: #f43f5e;
+      --accent-green: #10b981;
+      --accent-yellow: #fbbf24;
+      --border: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title-group h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #2563eb; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #60a5fa; margin-bottom: 6px; font-size: 0.98rem; }
+    .theory-box ul { margin-left: 20px; }
+    .theory-box li { margin-bottom: 4px; }
+
+    /* 데이터 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .stat-box {
+      background: var(--card-bg);
+      border-radius: 6px;
+      padding: 6px 4px;
+    }
+    .stat-box.highlight-blue { border-top: 3px solid var(--accent-blue); }
+    .stat-box.highlight-red { border-top: 3px solid var(--accent-red); }
+    .stat-box.highlight-green { border-top: 3px solid var(--accent-green); }
+    .stat-box.highlight-yellow { border-top: 3px solid var(--accent-yellow); }
+
+    .stat-lbl {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .stat-num {
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .status-up { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .status-down { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
+    .status-hover { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+    /* 캔버스 영역 */
+    .canvas-container {
+      position: relative;
+      background: linear-gradient(180deg, #0b1329 0%, #1e293b 85%, #334155 100%);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 420px;
+      cursor: grab;
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    .canvas-tip {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(4px);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 10;
+    }
+
+    /* 기체 선택 버튼 그리드 */
+    .gas-selection-section {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .gas-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .gas-buttons {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+    }
+
+    .btn-gas {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.15s;
+    }
+    .btn-gas .formula { font-size: 0.95rem; }
+    .btn-gas .mw { font-size: 0.65rem; color: var(--text-muted); font-weight: normal; }
+
+    .btn-gas:hover { background: #475569; }
+    .btn-gas.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+    .btn-gas.active .mw { color: #e0f2fe; }
+
+    /* 컨트롤 슬라이더 & 토글 */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .control-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .slider-header span.val {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--card-bg);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+    }
+
+    /* 하단 툴바 */
+    .toolbar {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #475569; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-toggle.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .gas-buttons { grid-template-columns: repeat(5, 1fr); }
+      .controls-grid { grid-template-columns: 1fr; }
+      canvas { height: 350px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>🎈 풍선에 가해지는 부력과 중력 (Balloon Simulation)</h1>
+      <p>기체의 분자량과 밀도에 따른 부력·중력의 크기 및 풍선의 상승/하강 가상실험</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>풍선이 뜨고 가라앉는 과학적 원리</h3>
+    <ul>
+      <li><strong>아르키메데스의 원리와 부력:</strong> 풍선은 자신이 밀어낸 <em>주변 공기의 무게</em>만큼 위쪽 방향의 부력($F_{부력} = \rho_{공기} \cdot V \cdot g$)을 받습니다. 부력은 풍선 내부의 기체 종류와 무관하게 <strong>풍선의 부피</strong>와 <strong>대기 밀도</strong>에 의해서만 결정됩니다.</li>
+      <li><strong>기체 밀도와 중력:</strong> 아보가드로 법칙에 따라 같은 온도·압력·부피에서 기체의 질량은 <strong>분자량</strong>에 비례합니다. 공기(평균 분자량 약 29)보다 가벼운 기체($H_2, He, Ne, CO, N_2$)는 밀도가 작아 중력이 부력보다 작고, 무거운 기체($O_2, Ar, CO_2$)는 밀도가 커서 중력이 부력보다 큽니다.</li>
+      <li><strong>알짜힘과 운동 방향:</strong>
+        <ul>
+          <li>$F_{부력} > F_{중력}$ (알짜힘 위쪽 ↑) : 풍선이 위로 가속하여 상승합니다 ($H_2, He$ 등).</li>
+          <li>$F_{부력} < F_{중력}$ (알짜힘 아래쪽 ↓) : 풍선이 아래로 가속하여 바닥으로 하강합니다 ($CO_2, Ar$ 등).</li>
+          <li>$F_{부력} = F_{중력}$ (알짜힘 = 0) : 중성 부력 상태로 공중에 가만히 떠 있습니다.</li>
+        </ul>
+      </li>
+      <li><strong>풍선 자체의 무게:</strong> 실제 풍선은 고무막과 묶는 끈의 자체 질량이 있으므로, 공기와 비슷한 기체(Air, $N_2$)는 고무 무게로 인해 아래로 천천히 가라앉습니다.</li>
+    </ul>
+  </div>
+
+  <!-- 실시간 대시보드 -->
+  <div class="dashboard">
+    <!-- 기체 정보 카드 -->
+    <div class="stat-card">
+      <div class="card-title">
+        <span>기체 특성 (20℃, 1기압 기준)</span>
+        <span id="gasStatusBadge" class="status-badge status-up">▲ 빠르게 상승</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-lbl">분자량 (M)</div>
+          <div class="stat-num" id="dispMw">4.00 g/mol</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">기체 밀도 (ρ)</div>
+          <div class="stat-num" id="dispDensity">0.166 kg/m³</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">공기 대비 밀도비</div>
+          <div class="stat-num" id="dispDensityRatio">0.14 배</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">기체 질량 (m)</div>
+          <div class="stat-num" id="dispGasMass">0.67 g</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 작용하는 힘 카드 -->
+    <div class="stat-card">
+      <div class="card-title">
+        <span>풍선에 작용하는 힘 (Vector)</span>
+        <span style="font-size:0.75rem; color:var(--text-muted);">부피: <b id="dispVolHeader">4.0 L</b></span>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box highlight-blue">
+          <div class="stat-lbl">부력 (위쪽 ↑)</div>
+          <div class="stat-num" id="dispBuoyancy" style="color:#38bdf8;">0.047 N</div>
+        </div>
+        <div class="stat-box highlight-red">
+          <div class="stat-lbl">총 중력 (아래쪽 ↓)</div>
+          <div class="stat-num" id="dispGravity" style="color:#f43f5e;">0.016 N</div>
+        </div>
+        <div class="stat-box highlight-green">
+          <div class="stat-lbl">알짜힘 (합력)</div>
+          <div class="stat-num" id="dispNetForce" style="color:#10b981;">+0.031 N</div>
+        </div>
+        <div class="stat-box highlight-yellow">
+          <div class="stat-lbl">풍선 총 질량</div>
+          <div class="stat-num" id="dispTotalMass" style="color:#fbbf24;">1.67 g</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 캔버스 영역 -->
+  <div class="canvas-container" id="canvasContainer">
+    <div class="canvas-tip">풍선을 마우스나 터치로 잡아 원하는 위치로 드래그해 보세요!</div>
+    <canvas id="balloonCanvas"></canvas>
+  </div>
+
+  <!-- 기체 선택 버튼 섹션 -->
+  <div class="gas-selection-section">
+    <div class="gas-section-header">
+      <span>주입할 기체 선택 (가벼운 기체 ➔ 무거운 기체 순)</span>
+      <span style="font-size:0.78rem; color:var(--accent-blue);" id="currentGasName">헬륨 (Helium, He)</span>
+    </div>
+    <div class="gas-buttons" id="gasButtonsContainer">
+      <!-- JS에서 9종 생성 -->
+    </div>
+  </div>
+
+  <!-- 컨트롤 슬라이더 & 옵션 -->
+  <div class="controls-grid">
+    <div class="control-box">
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>풍선 부피 (Volume)</span>
+          <span class="val" id="valVolume">4.0 L</span>
+        </div>
+        <input type="range" id="sliderVolume" min="1.0" max="10.0" step="0.5" value="4.0">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>풍선 고무 + 끈 질량 (Rubber Mass)</span>
+          <span class="val" id="valRubber">1.0 g</span>
+        </div>
+        <input type="range" id="sliderRubber" min="0.0" max="5.0" step="0.2" value="1.0">
+      </div>
+    </div>
+
+    <div class="control-box" style="justify-content: center; gap: 12px;">
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-toggle active" id="btnToggleForce" style="flex:1;">힘 화살표 (Vector): ON</button>
+        <button class="btn btn-toggle active" id="btnToggleMolecules" style="flex:1;">분자 운동: ON</button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" id="btnPlayPause" style="flex:1;">⏸ 일시정지</button>
+        <button class="btn" id="btnReset" style="flex:1;">↺ 초기화</button>
+        <button class="btn" id="btnCenterBalloon" style="flex:1;">📍 중앙 배치</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // --- 기체 데이터 (20℃, 1기압 기준) ---
+  // 공기 밀도 = 1.205 kg/m3 (g/L), 공기 평균 분자량 = 28.97 g/mol
+  const AIR_DENSITY = 1.205; // g/L
+  const AIR_MW = 28.97;
+  const GRAVITY_G = 9.80665;
+
+  const GASES = [
+    { id: 'H2', name: '수소 (H₂)', formula: 'H₂', mw: 2.016, color: '#f472b6', desc: '가장 가벼운 기체' },
+    { id: 'He', name: '헬륨 (He)', formula: 'He', mw: 4.003, color: '#38bdf8', desc: '안전한 상승 기체' },
+    { id: 'Ne', name: '네온 (Ne)', formula: 'Ne', mw: 20.18, color: '#a78bfa', desc: '비활성 기체' },
+    { id: 'CO', name: '일산화탄소 (CO)', formula: 'CO', mw: 28.01, color: '#94a3b8', desc: '유독성 기체' },
+    { id: 'N2', name: '질소 (N₂)', formula: 'N₂', mw: 28.01, color: '#60a5fa', desc: '대기의 주성분' },
+    { id: 'Air', name: '공기 (Air)', formula: 'Air', mw: 28.97, color: '#34d399', desc: '주변 대기' },
+    { id: 'O2', name: '산소 (O₂)', formula: 'O₂', mw: 32.00, color: '#fb923c', desc: '호흡에 필요' },
+    { id: 'Ar', name: '아르곤 (Ar)', formula: 'Ar', mw: 39.95, color: '#c084fc', desc: '공기보다 무거움' },
+    { id: 'CO2', name: '이산화탄소 (CO₂)', formula: 'CO₂', mw: 44.01, color: '#f87171', desc: '밀도가 큰 기체' }
+  ];
+
+  let selectedGas = GASES[1]; // 기본 헬륨 (He)
+  let balloonVolume = 4.0; // Liters
+  let rubberMass = 1.0; // grams
+
+  // 시뮬레이션 상태
+  let isRunning = true;
+  let showForces = true;
+  let showMolecules = true;
+
+  // 캔버스 & 물리 변수
+  const canvas = document.getElementById('balloonCanvas');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('canvasContainer');
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+
+  // 풍선 좌표 & 속도
+  let balloonX = 0;
+  let balloonY = 0;
+  let balloonVy = 0;
+  let balloonRadiusX = 40;
+  let balloonRadiusY = 50;
+
+  // 드래그 상태
+  let isDragging = false;
+  let dragOffsetY = 0;
+  let dragOffsetX = 0;
+
+  // 분자 시뮬레이션 입자
+  let insideParticles = [];
+  let ambientParticles = [];
+  const NUM_INSIDE_PARTICLES = 36;
+  const NUM_AMBIENT_PARTICLES = 50;
+
+  // --- UI 요소 ---
+  const gasButtonsContainer = document.getElementById('gasButtonsContainer');
+  const currentGasName = document.getElementById('currentGasName');
+  const dispMw = document.getElementById('dispMw');
+  const dispDensity = document.getElementById('dispDensity');
+  const dispDensityRatio = document.getElementById('dispDensityRatio');
+  const dispGasMass = document.getElementById('dispGasMass');
+  const dispBuoyancy = document.getElementById('dispBuoyancy');
+  const dispGravity = document.getElementById('dispGravity');
+  const dispNetForce = document.getElementById('dispNetForce');
+  const dispTotalMass = document.getElementById('dispTotalMass');
+  const dispVolHeader = document.getElementById('dispVolHeader');
+  const gasStatusBadge = document.getElementById('gasStatusBadge');
+
+  const sliderVolume = document.getElementById('sliderVolume');
+  const sliderRubber = document.getElementById('sliderRubber');
+  const valVolume = document.getElementById('valVolume');
+  const valRubber = document.getElementById('valRubber');
+
+  const btnToggleForce = document.getElementById('btnToggleForce');
+  const btnToggleMolecules = document.getElementById('btnToggleMolecules');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnReset = document.getElementById('btnReset');
+  const btnCenterBalloon = document.getElementById('btnCenterBalloon');
+  const btnHelpToggle = document.getElementById('btnHelpToggle');
+  const theoryBox = document.getElementById('theoryBox');
+
+  // --- 기체 선택 버튼 생성 ---
+  function initGasButtons() {
+    gasButtonsContainer.innerHTML = '';
+    GASES.forEach(gas => {
+      const btn = document.createElement('button');
+      btn.className = `btn-gas ${gas.id === selectedGas.id ? 'active' : ''}`;
+      btn.innerHTML = `<span class="formula">${gas.formula}</span><span class="mw">${gas.mw.toFixed(1)}</span>`;
+      btn.title = `${gas.name} (분자량: ${gas.mw} g/mol)`;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-gas').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedGas = gas;
+        currentGasName.textContent = `${gas.name} - 분자량: ${gas.mw} g/mol`;
+        initInsideParticles();
+        updatePhysicsAndUI();
+      });
+      gasButtonsContainer.appendChild(btn);
+    });
+  }
+
+  // --- 캔버스 리사이징 ---
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    width = rect.width;
+    height = rect.height;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (balloonX === 0) {
+      balloonX = width / 2;
+      balloonY = height / 2;
+    }
+    updateBalloonDimensions();
+  }
+
+  function updateBalloonDimensions() {
+    // 4L 기준 radiusX approx 42px, radiusY approx 52px
+    const scale = Math.cbrt(balloonVolume / 4.0);
+    balloonRadiusX = 42 * scale;
+    balloonRadiusY = 52 * scale;
+  }
+
+  // --- 분자 입자 시스템 ---
+  class Particle {
+    constructor(isInside) {
+      this.isInside = isInside;
+      this.radius = 3;
+      this.reset();
+    }
+
+    reset() {
+      if (this.isInside) {
+        // 풍선 내부 타원형 영역 안의 랜덤 위치
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * 0.85;
+        this.x = balloonX + Math.cos(angle) * balloonRadiusX * r;
+        this.y = balloonY + Math.sin(angle) * balloonRadiusY * r;
+
+        // 속력: 그레이엄 확산 법칙 (v ~ 1/sqrt(mw))
+        const speed = (280 / Math.sqrt(selectedGas.mw)) * (0.8 + Math.random() * 0.4);
+        const vAngle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(vAngle) * speed;
+        this.vy = Math.sin(vAngle) * speed;
+        this.color = selectedGas.color;
+      } else {
+        // 대기 외부 입자 (질소/산소)
+        this.x = Math.random() * width;
+        this.y = Math.random() * (height - 30);
+        const speed = (280 / Math.sqrt(AIR_MW)) * (0.8 + Math.random() * 0.4);
+        const vAngle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(vAngle) * speed;
+        this.vy = Math.sin(vAngle) * speed;
+        this.color = Math.random() < 0.78 ? '#60a5fa' : '#fb923c'; // N2 vs O2
+      }
+    }
+
+    update(dt) {
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+
+      if (this.isInside) {
+        // 풍선 타원 벽면 충돌
+        const dx = (this.x - balloonX) / balloonRadiusX;
+        const dy = (this.y - balloonY) / balloonRadiusY;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq >= 0.85) {
+          // 법선 벡터 계산 및 탄성 반사
+          const nx = dx / balloonRadiusX;
+          const ny = dy / balloonRadiusY;
+          const nLen = Math.hypot(nx, ny);
+          const unx = nx / nLen;
+          const uny = ny / nLen;
+
+          const dot = this.vx * unx + this.vy * uny;
+          if (dot > 0) {
+            this.vx -= 2 * dot * unx;
+            this.vy -= 2 * dot * uny;
+          }
+          // 위치 보정
+          this.x = balloonX + (dx / Math.sqrt(distSq)) * balloonRadiusX * 0.9;
+          this.y = balloonY + (dy / Math.sqrt(distSq)) * balloonRadiusY * 0.9;
+        }
+      } else {
+        // 캔버스 외벽 충돌
+        if (this.x <= this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx); }
+        if (this.x >= width - this.radius) { this.x = width - this.radius; this.vx = -Math.abs(this.vx); }
+        if (this.y <= this.radius) { this.y = this.radius; this.vy = Math.abs(this.vy); }
+        if (this.y >= height - 30) { this.y = height - 30; this.vy = -Math.abs(this.vy); }
+      }
+    }
+
+    draw(ctx) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+  }
+
+  function initInsideParticles() {
+    insideParticles = [];
+    for (let i = 0; i < NUM_INSIDE_PARTICLES; i++) {
+      insideParticles.push(new Particle(true));
+    }
+  }
+
+  function initAmbientParticles() {
+    ambientParticles = [];
+    for (let i = 0; i < NUM_AMBIENT_PARTICLES; i++) {
+      ambientParticles.push(new Particle(false));
+    }
+  }
+
+  // --- 물리 계산 및 UI 갱신 ---
+  let calcNetForce = 0;
+  let calcBuoyancy = 0;
+  let calcGravity = 0;
+
+  function updatePhysicsAndUI() {
+    // 1. 기체 밀도 = 공기 밀도 * (M_gas / M_air) [g/L]
+    const gasDensity = AIR_DENSITY * (selectedGas.mw / AIR_MW);
+    const densityRatio = gasDensity / AIR_DENSITY;
+
+    // 2. 질량 계산 (g)
+    const gasMass = gasDensity * balloonVolume;
+    const totalMassG = gasMass + rubberMass;
+    const totalMassKg = totalMassG / 1000;
+
+    // 3. 부력 = 공기밀도(kg/m3) * 부피(m3) * g
+    // V_L -> V_m3 = V_L * 1e-3, AIR_DENSITY g/L = kg/m3
+    const buoyancyN = AIR_DENSITY * (balloonVolume * 1e-3) * GRAVITY_G;
+
+    // 4. 중력 = 총 질량(kg) * g
+    const gravityN = totalMassKg * GRAVITY_G;
+
+    // 5. 알짜힘 = 부력 - 중력
+    const netForceN = buoyancyN - gravityN;
+
+    calcBuoyancy = buoyancyN;
+    calcGravity = gravityN;
+    calcNetForce = netForceN;
+
+    // UI 수치 표시
+    dispMw.textContent = `${selectedGas.mw.toFixed(2)} g/mol`;
+    dispDensity.textContent = `${gasDensity.toFixed(3)} kg/m³`;
+    dispDensityRatio.textContent = `${densityRatio.toFixed(2)} 배`;
+    dispGasMass.textContent = `${gasMass.toFixed(2)} g`;
+
+    dispBuoyancy.textContent = `${buoyancyN.toFixed(4)} N`;
+    dispGravity.textContent = `${gravityN.toFixed(4)} N`;
+    dispNetForce.textContent = `${netForceN >= 0 ? '+' : ''}${netForceN.toFixed(4)} N`;
+    dispTotalMass.textContent = `${totalMassG.toFixed(2)} g`;
+    dispVolHeader.textContent = `${balloonVolume.toFixed(1)} L`;
+
+    valVolume.textContent = `${balloonVolume.toFixed(1)} L`;
+    valRubber.textContent = `${rubberMass.toFixed(1)} g`;
+
+    // 상태 배지 업데이트
+    if (Math.abs(netForceN) < 0.0015) {
+      gasStatusBadge.className = 'status-badge status-hover';
+      gasStatusBadge.textContent = '■ 공중 정지 (중성 부력)';
+    } else if (netForceN > 0.02) {
+      gasStatusBadge.className = 'status-badge status-up';
+      gasStatusBadge.textContent = '▲ 빠르게 상승';
+    } else if (netForceN > 0) {
+      gasStatusBadge.className = 'status-badge status-up';
+      gasStatusBadge.textContent = '▲ 천천히 상승';
+    } else if (netForceN < -0.02) {
+      gasStatusBadge.className = 'status-badge status-down';
+      gasStatusBadge.textContent = '▼ 빠르게 하강';
+    } else {
+      gasStatusBadge.className = 'status-badge status-down';
+      gasStatusBadge.textContent = '▼ 천천히 하강';
+    }
+  }
+
+  // --- 풍선 렌더링 함수 ---
+  function drawBalloon(ctx) {
+    ctx.save();
+
+    // 1. 풍선 묶는 매듭 & 끈
+    const knotY = balloonY + balloonRadiusY;
+    ctx.beginPath();
+    ctx.moveTo(balloonX - 6, knotY + 6);
+    ctx.lineTo(balloonX + 6, knotY + 6);
+    ctx.lineTo(balloonX, knotY);
+    ctx.closePath();
+    ctx.fillStyle = selectedGas.color;
+    ctx.fill();
+
+    // 아래로 늘어진 부드러운 끈
+    ctx.beginPath();
+    ctx.moveTo(balloonX, knotY + 6);
+    ctx.bezierCurveTo(
+      balloonX - 10, knotY + 30,
+      balloonX + 12, knotY + 55,
+      balloonX, knotY + 80
+    );
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    // 2. 풍선 고무 바디 (타원형 + 그라데이션)
+    ctx.beginPath();
+    ctx.ellipse(balloonX, balloonY, balloonRadiusX, balloonRadiusY, 0, 0, Math.PI * 2);
+
+    // 반투명 입체 그라데이션
+    const grad = ctx.createRadialGradient(
+      balloonX - balloonRadiusX * 0.35, balloonY - balloonRadiusY * 0.35, balloonRadiusX * 0.1,
+      balloonX, balloonY, balloonRadiusY
+    );
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+    grad.addColorStop(0.3, selectedGas.color);
+    grad.addColorStop(0.9, shadeColor(selectedGas.color, -30));
+    grad.addColorStop(1, shadeColor(selectedGas.color, -60));
+
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+
+    // 풍선 외곽선
+    ctx.strokeStyle = shadeColor(selectedGas.color, -20);
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.95;
+    ctx.stroke();
+
+    // 3. 고무 표면 하이라이트 (빛 반사)
+    ctx.beginPath();
+    ctx.ellipse(
+      balloonX - balloonRadiusX * 0.38,
+      balloonY - balloonRadiusY * 0.38,
+      balloonRadiusX * 0.22,
+      balloonRadiusY * 0.32,
+      -Math.PI / 4, 0, Math.PI * 2
+    );
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fill();
+
+    // 4. 풍선 중앙 라벨 (화학식 & 기체명)
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(selectedGas.formula, balloonX, balloonY - 4);
+    ctx.font = '11px sans-serif';
+    ctx.fillText(`${selectedGas.mw.toFixed(1)} g/mol`, balloonX, balloonY + 14);
+
+    ctx.restore();
+  }
+
+  // --- 힘 벡터 화살표 그리기 ---
+  function drawForceVectors(ctx) {
+    if (!showForces) return;
+
+    ctx.save();
+    const arrowScale = 2200; // 뉴턴 단위 픽셀 변환 스케일
+    const centerX = balloonX;
+    const centerY = balloonY;
+
+    // 1. 부력 화살표 (위쪽, 파란색)
+    const fbLen = Math.max(14, Math.min(130, calcBuoyancy * arrowScale));
+    drawArrow(ctx, centerX, centerY, centerX, centerY - fbLen, '#38bdf8', `부력 (Fb): ${(calcBuoyancy * 1000).toFixed(1)} mN`, 'left');
+
+    // 2. 중력 화살표 (아래쪽, 빨간색)
+    const fgLen = Math.max(14, Math.min(130, calcGravity * arrowScale));
+    drawArrow(ctx, centerX, centerY, centerX, centerY + fgLen, '#f43f5e', `중력 (Fg): ${(calcGravity * 1000).toFixed(1)} mN`, 'left');
+
+    // 3. 알짜힘 화살표 (녹색, 합력 방향)
+    const fNetLen = Math.min(140, Math.abs(calcNetForce) * arrowScale);
+    if (fNetLen > 4) {
+      const netTargetY = calcNetForce > 0 ? centerY - fNetLen : centerY + fNetLen;
+      drawArrow(ctx, centerX + 30, centerY, centerX + 30, netTargetY, '#10b981', `알짜힘: ${(calcNetForce * 1000).toFixed(1)} mN`, 'right');
+    }
+
+    ctx.restore();
+  }
+
+  function drawArrow(ctx, fromX, fromY, toX, toY, color, label, alignSide) {
+    const headLen = 10;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+
+    // 본체 선
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+
+    // 화살표 머리
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+
+    // 텍스트 라벨
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = color;
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    ctx.textBaseline = 'middle';
+    if (alignSide === 'left') {
+      ctx.textAlign = 'right';
+      ctx.fillText(label, fromX - 12, (fromY + toY) / 2);
+    } else {
+      ctx.textAlign = 'left';
+      ctx.fillText(label, fromX + 12, (fromY + toY) / 2);
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // 색상 명도 조절 유틸
+  function shadeColor(color, percent) {
+    let num = parseInt(color.replace("#",""), 16),
+      amt = Math.round(2.55 * percent),
+      R = (num >> 16) + amt,
+      B = (num >> 8 & 0x00FF) + amt,
+      G = (num & 0x0000FF) + amt;
+    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+  }
+
+  // --- 메인 루프 (물리 업데이트 및 렌더링) ---
+  let lastTime = performance.now();
+
+  function animate(timestamp) {
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+    lastTime = timestamp;
+
+    if (isRunning && !isDragging) {
+      // 1. 풍선 운동 방정식 (F_net = m * a)
+      const totalMassKg = (AIR_DENSITY * (selectedGas.mw / AIR_MW) * balloonVolume + rubberMass) / 1000;
+      // 가상 유체 부가질량 (Added Mass) 효과 반영하여 급격한 가속 완화
+      const effectiveMass = totalMassKg + (AIR_DENSITY * balloonVolume * 1e-3 * 0.5);
+
+      // 종단 속도(공기 저항 항력) 적용: F_drag = -k * v
+      const dragCoeff = 0.28 * Math.sqrt(balloonVolume / 4.0);
+      const dragForce = -dragCoeff * balloonVy;
+
+      // 상향 알짜힘이므로, y축 방향(화면 아래가 +y) 가속도는:
+      // a_y = - (F_net + F_drag) / m
+      const accelY = - (calcNetForce + dragForce) / effectiveMass;
+
+      // 픽셀 환산 스케일 (가속도 반영)
+      balloonVy += accelY * dt * 25;
+      balloonY += balloonVy * dt;
+
+      // 2. 경계 제약 (천장 및 바닥 충돌)
+      const ceilingLimit = balloonRadiusY + 12;
+      const floorLimit = height - balloonRadiusY - 24;
+
+      if (balloonY <= ceilingLimit) {
+        balloonY = ceilingLimit;
+        balloonVy = 0;
+      } else if (balloonY >= floorLimit) {
+        balloonY = floorLimit;
+        balloonVy = 0;
+      }
+    }
+
+    // 3. 분자 입자 업데이트
+    if (showMolecules) {
+      insideParticles.forEach(p => {
+        // 풍선 이동에 따른 내부 분자 기준점 동기화
+        p.update(dt);
+      });
+      ambientParticles.forEach(p => p.update(dt));
+    }
+
+    // 4. 캔버스 렌더링
+    drawScene();
+
+    requestAnimationFrame(animate);
+  }
+
+  function drawScene() {
+    ctx.clearRect(0, 0, width, height);
+
+    // 바닥면 렌더링
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, height - 22, width, 22);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0, height - 22, width, 22);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('바닥면 (Ground)', width - 16, height - 7);
+
+    // 대기 분자 렌더링
+    if (showMolecules) {
+      ambientParticles.forEach(p => p.draw(ctx));
+    }
+
+    // 풍선 및 내부 분자 렌더링
+    drawBalloon(ctx);
+
+    if (showMolecules) {
+      insideParticles.forEach(p => p.draw(ctx));
+    }
+
+    // 힘 벡터 화살표 렌더링
+    drawForceVectors(ctx);
+  }
+
+  // --- 마우스 & 터치 인터랙션 (드래그 앤 드롭) ---
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function isInsideBalloon(x, y) {
+    const dx = (x - balloonX) / balloonRadiusX;
+    const dy = (y - balloonY) / balloonRadiusY;
+    return (dx * dx + dy * dy) <= 1.2;
+  }
+
+  function handlePointerDown(e) {
+    const { x, y } = getCanvasCoords(e);
+    if (isInsideBalloon(x, y)) {
+      isDragging = true;
+      dragOffsetX = x - balloonX;
+      dragOffsetY = y - balloonY;
+      balloonVy = 0;
+    }
+  }
+
+  function handlePointerMove(e) {
+    if (isDragging) {
+      const { x, y } = getCanvasCoords(e);
+      balloonX = Math.max(balloonRadiusX + 10, Math.min(width - balloonRadiusX - 10, x - dragOffsetX));
+      balloonY = Math.max(balloonRadiusY + 10, Math.min(height - balloonRadiusY - 24, y - dragOffsetY));
+
+      // 드래그 시 내부 입자들의 기준점도 함께 이동
+      insideParticles.forEach(p => {
+        p.reset();
+      });
+    }
+  }
+
+  function handlePointerUp() {
+    isDragging = false;
+  }
+
+  canvas.addEventListener('mousedown', handlePointerDown);
+  window.addEventListener('mousemove', handlePointerMove);
+  window.addEventListener('mouseup', handlePointerUp);
+
+  canvas.addEventListener('touchstart', (e) => {
+    handlePointerDown(e);
+    if (isDragging) e.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isDragging) {
+      handlePointerMove(e);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', handlePointerUp);
+
+  // --- 이벤트 리스너 ---
+  sliderVolume.addEventListener('input', (e) => {
+    balloonVolume = parseFloat(e.target.value);
+    updateBalloonDimensions();
+    initInsideParticles();
+    updatePhysicsAndUI();
+  });
+
+  sliderRubber.addEventListener('input', (e) => {
+    rubberMass = parseFloat(e.target.value);
+    updatePhysicsAndUI();
+  });
+
+  btnToggleForce.addEventListener('click', () => {
+    showForces = !showForces;
+    btnToggleForce.classList.toggle('active', showForces);
+    btnToggleForce.textContent = `힘 화살표 (Vector): ${showForces ? 'ON' : 'OFF'}`;
+  });
+
+  btnToggleMolecules.addEventListener('click', () => {
+    showMolecules = !showMolecules;
+    btnToggleMolecules.classList.toggle('active', showMolecules);
+    btnToggleMolecules.textContent = `분자 운동: ${showMolecules ? 'ON' : 'OFF'}`;
+  });
+
+  btnPlayPause.addEventListener('click', () => {
+    isRunning = !isRunning;
+    btnPlayPause.textContent = isRunning ? '⏸ 일시정지' : '▶ 재생';
+  });
+
+  btnReset.addEventListener('click', () => {
+    balloonVolume = 4.0;
+    rubberMass = 1.0;
+    sliderVolume.value = 4.0;
+    sliderRubber.value = 1.0;
+    selectedGas = GASES[1]; // 헬륨
+    initGasButtons();
+    updateBalloonDimensions();
+    balloonX = width / 2;
+    balloonY = height / 2;
+    balloonVy = 0;
+    initInsideParticles();
+    initAmbientParticles();
+    updatePhysicsAndUI();
+  });
+
+  btnCenterBalloon.addEventListener('click', () => {
+    balloonX = width / 2;
+    balloonY = height / 2;
+    balloonVy = 0;
+    initInsideParticles();
+  });
+
+  btnHelpToggle.addEventListener('click', () => {
+    theoryBox.classList.toggle('active');
+    btnHelpToggle.textContent = theoryBox.classList.contains('active') ? '원리 설명 닫기 ▴' : '원리 설명 보기 ▾';
+  });
+
+  // --- 초기화 실행 ---
+  window.addEventListener('resize', resizeCanvas);
+  initGasButtons();
+  resizeCanvas();
+  initInsideParticles();
+  initAmbientParticles();
+  updatePhysicsAndUI();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

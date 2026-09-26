@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>입자 모형과 확산·증발 (Diffusion & Evaporation) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --tab-active: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 실험 모드 탭 바 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 시뮬레이션 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 460px;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #2563eb; }
+    .dash-card.c2 { border-top: 3px solid #ef4444; }
+    .dash-card.c3 { border-top: 3px solid #10b981; }
+    .dash-card.c4 { border-top: 3px solid #f59e0b; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 카드 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .slider-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2563eb;
+      cursor: pointer;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+    .btn-action.primary {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .btn-action.primary:hover { background: #1e293b; }
+
+    @media (max-width: 800px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 400px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 500px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>💨 입자 모형과 확산·증발 (Diffusion & Evaporation)</h1>
+      <p>물질을 이루는 입자가 스스로 끊임없이 운동하여 퍼져나가는 확산과 표면에서 기화하는 증발 탐구</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 입자 운동의 증거: 확산과 증발의 과학적 원리</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🌊 1. 확산 (Diffusion)</h4>
+        <ul>
+          <li><strong>정의:</strong> 물질을 이루는 입자가 스스로 운동하여 농도가 높은 곳에서 낮은 곳으로 퍼져 나가는 현상.</li>
+          <li><strong>확산 속도가 빠른 조건:</strong>
+            <br>• 온도가 높을수록 (입자 운동 활발)
+            <br>• 물질의 상태가 기체 > 액체 > 고체 순 (입자 간 방해 적음)
+            <br>• 입자의 질량(분자량)이 작고 가벼울수록 (암모니아가 염화수소보다 빠름)
+            <br>• 물질이 퍼져나가는 매질이 진공 > 기체 > 액체 순
+          </li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>☀️ 2. 증발 (Evaporation) vs 끓음 (Boiling)</h4>
+        <ul>
+          <li><strong>증발:</strong> 끓는점 미만의 온도에서도 <strong>액체 표면</strong>의 입자가 인력을 끊고 스스로 기체로 변하는 현상.</li>
+          <li><strong>끓음:</strong> 끓는점 이상의 온도에서 액체 <strong>표면뿐만 아니라 내부</strong>에서도 기화가 일어나는 현상.</li>
+          <li><strong>증발이 잘 일어나는 조건 (빨래 마르는 조건):</strong>
+            <br>• 온도가 높을수록, 바람이 잘 불수록, 표면적이 넓을수록, 습도가 낮을수록
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실험 모드 탭 바 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="LIQUID_DIFF">💧 액체 확산 비교 (찬물 vs 따뜻한 물)</button>
+    <button class="tab-btn" data-tab="GAS_DIFF">🧪 기체 확산 (암모니아수 + 묽은 염산)</button>
+    <button class="tab-btn" data-tab="EVAP">💨 표면 증발 (온도·바람과 증발 속도)</button>
+  </div>
+
+  <!-- 메인 시뮬레이션 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl" id="lblMetric1">온도 조건</div>
+      <div class="dash-val" id="valMetric1">찬물 15℃ vs 온수 70℃</div>
+      <div class="dash-sub" id="subMetric1">온도차에 의한 열운동 비교</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl" id="lblMetric2">입자 평균 속력</div>
+      <div class="dash-val" id="valMetric2">1.8배 빠름</div>
+      <div class="dash-sub" id="subMetric2">온도가 높을수록 충돌 빈도 증가</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl" id="lblMetric3">확산 / 증발 진행률</div>
+      <div class="dash-val" id="valMetric3">0.0 %</div>
+      <div class="dash-sub" id="subMetric3">입자의 균일 분산도 측정</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl" id="lblMetric4">핵심 탐구 결론</div>
+      <div class="dash-val" id="valMetric4" style="font-size:1.0rem; color:#d97706;">입자의 스스로 운동</div>
+      <div class="dash-sub" id="subMetric4">외부 힘 없이 분자가 퍼져나감</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 카드 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <button class="btn-action primary" id="btnDrop">💧 잉크 한 방울 떨어뜨리기</button>
+        <button class="btn-action" id="btnPlayPause">⏸ 일시정지</button>
+        <button class="btn-action" id="btnReset">↺ 초기화</button>
+
+        <div class="slider-box" id="boxTempSlider" style="display:none;">
+          <span>온도 조절:</span>
+          <input type="range" id="tempSlider" min="10" max="80" step="5" value="25">
+          <span id="tempVal">25℃</span>
+        </div>
+
+        <div class="slider-box" id="boxWindSlider" style="display:none;">
+          <span>바람 세기:</span>
+          <input type="range" id="windSlider" min="0" max="3" step="1" value="1">
+          <span id="windVal">약풍</span>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem; color:#64748b;">
+        * 캔버스를 클릭하여 원하는 위치에 분자를 직접 투입할 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 460;
+
+  // 탭 모드: 'LIQUID_DIFF', 'GAS_DIFF', 'EVAP'
+  let currentTab = "LIQUID_DIFF";
+  let isRunning = true;
+
+  // DOM 요소
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const btnDrop = document.getElementById("btnDrop");
+  const btnPlayPause = document.getElementById("btnPlayPause");
+  const btnReset = document.getElementById("btnReset");
+  const boxTempSlider = document.getElementById("boxTempSlider");
+  const tempSlider = document.getElementById("tempSlider");
+  const tempVal = document.getElementById("tempVal");
+  const boxWindSlider = document.getElementById("boxWindSlider");
+  const windSlider = document.getElementById("windSlider");
+  const windVal = document.getElementById("windVal");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const lblMetric1 = document.getElementById("lblMetric1");
+  const valMetric1 = document.getElementById("valMetric1");
+  const subMetric1 = document.getElementById("subMetric1");
+
+  const lblMetric2 = document.getElementById("lblMetric2");
+  const valMetric2 = document.getElementById("valMetric2");
+  const subMetric2 = document.getElementById("subMetric2");
+
+  const lblMetric3 = document.getElementById("lblMetric3");
+  const valMetric3 = document.getElementById("valMetric3");
+  const subMetric3 = document.getElementById("subMetric3");
+
+  const lblMetric4 = document.getElementById("lblMetric4");
+  const valMetric4 = document.getElementById("valMetric4");
+  const subMetric4 = document.getElementById("subMetric4");
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 460;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // ==========================================================================
+  // [모듈 1] 액체 확산 비교 (찬물 vs 따뜻한 물)
+  // ==========================================================================
+  let coldInk = [];
+  let warmInk = [];
+  let coldWater = [];
+  let warmWater = [];
+
+  function initLiquidDiff() {
+    coldInk = [];
+    warmInk = [];
+    coldWater = [];
+    warmWater = [];
+
+    // 물 분자 배경 (각각 40개)
+    for (let i = 0; i < 40; i++) {
+      coldWater.push({
+        x: 60 + Math.random() * 360,
+        y: 120 + Math.random() * 260,
+        vx: (Math.random() - 0.5) * 35,
+        vy: (Math.random() - 0.5) * 35,
+        r: 3.5
+      });
+      warmWater.push({
+        x: width - 420 + Math.random() * 360,
+        y: 120 + Math.random() * 260,
+        vx: (Math.random() - 0.5) * 85,
+        vy: (Math.random() - 0.5) * 85,
+        r: 3.5
+      });
+    }
+
+    // 초기 잉크 20개씩 상단 투입
+    dropInk();
+  }
+
+  function dropInk() {
+    const coldCenterX = width * 0.26;
+    const warmCenterX = width * 0.74;
+
+    for (let i = 0; i < 35; i++) {
+      coldInk.push({
+        x: coldCenterX + (Math.random() - 0.5) * 20,
+        y: 125 + (Math.random() - 0.5) * 15,
+        vx: (Math.random() - 0.5) * 25,
+        vy: 20 + Math.random() * 25, // 약간 가라앉으며 퍼짐
+        r: 5.5,
+        color: "#dc2626"
+      });
+      warmInk.push({
+        x: warmCenterX + (Math.random() - 0.5) * 20,
+        y: 125 + (Math.random() - 0.5) * 15,
+        vx: (Math.random() - 0.5) * 90,
+        vy: 30 + Math.random() * 80,
+        r: 5.5,
+        color: "#dc2626"
+      });
+    }
+  }
+
+  function updateLiquidDiff(dt) {
+    const bW = Math.min(380, width * 0.42);
+    const bH = 280;
+    const bTop = 110;
+    const bBottom = bTop + bH;
+
+    const b1Left = width * 0.25 - bW / 2;
+    const b1Right = b1Left + bW;
+
+    const b2Left = width * 0.75 - bW / 2;
+    const b2Right = b2Left + bW;
+
+    // 찬물 비커 잉크 업데이트
+    coldInk.forEach(p => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      // 브라운 운동 (약한 랜덤 요동)
+      p.vx += (Math.random() - 0.5) * 40 * dt;
+      p.vy += (Math.random() - 0.5) * 40 * dt;
+
+      if (p.x - p.r < b1Left + 6) { p.x = b1Left + 6 + p.r; p.vx = Math.abs(p.vx); }
+      if (p.x + p.r > b1Right - 6) { p.x = b1Right - 6 - p.r; p.vx = -Math.abs(p.vx); }
+      if (p.y - p.r < bTop + 4) { p.y = bTop + 4 + p.r; p.vy = Math.abs(p.vy); }
+      if (p.y + p.r > bBottom - 6) { p.y = bBottom - 6 - p.r; p.vy = -Math.abs(p.vy); }
+    });
+
+    // 따뜻한 물 비커 잉크 업데이트 (격렬한 열운동)
+    warmInk.forEach(p => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx += (Math.random() - 0.5) * 180 * dt;
+      p.vy += (Math.random() - 0.5) * 180 * dt;
+
+      if (p.x - p.r < b2Left + 6) { p.x = b2Left + 6 + p.r; p.vx = Math.abs(p.vx); }
+      if (p.x + p.r > b2Right - 6) { p.x = b2Right - 6 - p.r; p.vx = -Math.abs(p.vx); }
+      if (p.y - p.r < bTop + 4) { p.y = bTop + 4 + p.r; p.vy = Math.abs(p.vy); }
+      if (p.y + p.r > bBottom - 6) { p.y = bBottom - 6 - p.r; p.vy = -Math.abs(p.vy); }
+    });
+
+    // 확산도 계산 (비커 전체에 얼마나 고루 퍼졌는지 표준편차/범위 기반)
+    let spreadCold = calculateSpread(coldInk, b1Left, b1Right, bTop, bBottom);
+    let spreadWarm = calculateSpread(warmInk, b2Left, b2Right, bTop, bBottom);
+
+    valMetric3.textContent = `찬물 ${spreadCold}% / 온수 ${spreadWarm}%`;
+    subMetric3.textContent = "온수가 약 2.5배 빠른 확산 진행";
+  }
+
+  function calculateSpread(particles, minX, maxX, minY, maxY) {
+    if (particles.length === 0) return 0;
+    let sumDist = 0;
+    const cx = (minX + maxX) / 2;
+    const cy = minY + 20; // 잉크 최초 투입 위치
+    particles.forEach(p => {
+      const d = Math.hypot(p.x - cx, p.y - cy);
+      sumDist += d;
+    });
+    const avgDist = sumDist / particles.length;
+    const maxPossible = Math.hypot(maxX - minX, maxY - minY) * 0.55;
+    return Math.min(100, Math.round((avgDist / maxPossible) * 100));
+  }
+
+  function drawLiquidDiff() {
+    const bW = Math.min(380, width * 0.42);
+    const bH = 280;
+    const bTop = 110;
+    const bBottom = bTop + bH;
+
+    const b1Center = width * 0.25;
+    const b2Center = width * 0.75;
+
+    // --- 비커 1 (찬물) ---
+    drawBeaker(b1Center, bTop, bW, bH, "🧊 찬물 (15℃)", "rgba(59, 130, 246, 0.12)", "#3b82f6");
+    coldInk.forEach(p => drawParticle(p, "#ef4444"));
+
+    // --- 비커 2 (따뜻한 물) ---
+    drawBeaker(b2Center, bTop, bW, bH, "🔥 따뜻한 물 (70℃)", "rgba(239, 68, 68, 0.15)", "#ef4444");
+    warmInk.forEach(p => drawParticle(p, "#dc2626"));
+
+    // 상단 안내 배너
+    ctx.fillStyle = "#334155";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("동일한 붉은색 잉크를 떨어뜨렸을 때 물 분자의 운동 속도(온도)에 따른 확산 속도 차이를 관찰합니다.", width / 2, 45);
+  }
+
+  function drawBeaker(cx, top, w, h, label, bgTint, themeColor) {
+    const left = cx - w / 2;
+    const right = cx + w / 2;
+    const bottom = top + h;
+
+    // 액체 배경
+    ctx.fillStyle = bgTint;
+    ctx.fillRect(left + 2, top + 15, w - 4, h - 17);
+
+    // 비커 수면 라인
+    ctx.strokeStyle = themeColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(left + 2, top + 15);
+    ctx.lineTo(right - 2, top + 15);
+    ctx.stroke();
+
+    // 유리 외벽
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(left - 6, top);
+    ctx.lineTo(left, top);
+    ctx.lineTo(left, bottom);
+    ctx.lineTo(right, bottom);
+    ctx.lineTo(right, top);
+    ctx.lineTo(right + 6, top);
+    ctx.stroke();
+
+    // 라벨
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, cx, top - 15);
+  }
+
+  // ==========================================================================
+  // [모듈 2] 기체 확산 (암모니아수 + 묽은 염산)
+  // ==========================================================================
+  let nh3Particles = [];
+  let hclParticles = [];
+  let ringX = 0;
+  let ringOpacity = 0;
+
+  function initGasDiff() {
+    nh3Particles = [];
+    hclParticles = [];
+    ringOpacity = 0;
+
+    const tubeW = width * 0.85;
+    const tubeLeft = width * 0.075;
+    const tubeRight = tubeLeft + tubeW;
+    const tubeY = 220;
+
+    // NH3 분자 (분자량 17, 가벼움 -> 빠름)
+    for (let i = 0; i < 45; i++) {
+      nh3Particles.push({
+        x: tubeLeft + 35 + Math.random() * 30,
+        y: tubeY - 30 + Math.random() * 60,
+        vx: 40 + Math.random() * 70, // 오른쪽으로 확산
+        vy: (Math.random() - 0.5) * 40,
+        r: 5.5,
+        color: "#3b82f6"
+      });
+    }
+
+    // HCl 분자 (분자량 36.5, 무거움 -> 느림)
+    for (let i = 0; i < 45; i++) {
+      hclParticles.push({
+        x: tubeRight - 35 - Math.random() * 30,
+        y: tubeY - 30 + Math.random() * 60,
+        vx: -(20 + Math.random() * 35), // 왼쪽으로 확산
+        vy: (Math.random() - 0.5) * 25,
+        r: 7.0,
+        color: "#f59e0b"
+      });
+    }
+
+    // 그레이엄의 법칙 이론적 만남 위치: NH3 속도 : HCl 속도 = sqrt(36.5) : sqrt(17) ≈ 6.04 : 4.12 ≈ 1.47 : 1
+    // 즉, NH3가 전체의 약 60%를 이동했을 때 만남 (염산 쪽에 더 가까움)
+    ringX = tubeLeft + tubeW * 0.61;
+  }
+
+  function updateGasDiff(dt) {
+    const tubeLeft = width * 0.075;
+    const tubeRight = tubeLeft + width * 0.85;
+    const tubeY = 220;
+    const tubeH = 80;
+
+    nh3Particles.forEach(p => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.y - p.r < tubeY - tubeH / 2) { p.y = tubeY - tubeH / 2 + p.r; p.vy = Math.abs(p.vy); }
+      if (p.y + p.r > tubeY + tubeH / 2) { p.y = tubeY + tubeH / 2 - p.r; p.vy = -Math.abs(p.vy); }
+      if (p.x >= ringX - 10) {
+        ringOpacity = Math.min(1.0, ringOpacity + dt * 0.4);
+      }
+    });
+
+    hclParticles.forEach(p => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.y - p.r < tubeY - tubeH / 2) { p.y = tubeY - tubeH / 2 + p.r; p.vy = Math.abs(p.vy); }
+      if (p.y + p.r > tubeY + tubeH / 2) { p.y = tubeY + tubeH / 2 - p.r; p.vy = -Math.abs(p.vy); }
+      if (p.x <= ringX + 10) {
+        ringOpacity = Math.min(1.0, ringOpacity + dt * 0.4);
+      }
+    });
+
+    valMetric3.textContent = `흰 연기 생성도 ${(ringOpacity * 100).toFixed(0)}%`;
+    subMetric3.textContent = "염화 암모늄(NH₄Cl) 고체 링 형성";
+  }
+
+  function drawGasDiff() {
+    const tubeW = width * 0.85;
+    const tubeLeft = width * 0.075;
+    const tubeRight = tubeLeft + tubeW;
+    const tubeY = 220;
+    const tubeH = 80;
+
+    // 유리관 배경
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(tubeLeft, tubeY - tubeH / 2, tubeW, tubeH);
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(tubeLeft, tubeY - tubeH / 2, tubeW, tubeH);
+
+    // 좌측: 암모니아수 솜마개
+    ctx.fillStyle = "#bfdbfe";
+    ctx.fillRect(tubeLeft + 4, tubeY - tubeH / 2 + 4, 30, tubeH - 8);
+    ctx.fillStyle = "#1d4ed8";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("암모니아수(NH₃)", tubeLeft + 60, tubeY - tubeH / 2 - 14);
+    ctx.font = "11px sans-serif";
+    ctx.fillText("(가벼움 / 빠름)", tubeLeft + 60, tubeY - tubeH / 2 + tubeH + 22);
+
+    // 우측: 묽은 염산 솜마개
+    ctx.fillStyle = "#fef3c7";
+    ctx.fillRect(tubeRight - 34, tubeY - tubeH / 2 + 4, 30, tubeH - 8);
+    ctx.fillStyle = "#b45309";
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillText("묽은 염산(HCl)", tubeRight - 60, tubeY - tubeH / 2 - 14);
+    ctx.font = "11px sans-serif";
+    ctx.fillText("(무거움 / 느림)", tubeRight - 60, tubeY - tubeH / 2 + tubeH + 22);
+
+    // 분자 그리기
+    nh3Particles.forEach(p => drawParticle(p, "#2563eb"));
+    hclParticles.forEach(p => drawParticle(p, "#f59e0b"));
+
+    // 생성된 흰색 염화 암모늄 연기 링 (ringX 위치)
+    if (ringOpacity > 0.05) {
+      ctx.save();
+      ctx.fillStyle = `rgba(100, 116, 139, ${ringOpacity * 0.85})`;
+      ctx.fillRect(ringX - 12, tubeY - tubeH / 2 + 2, 24, tubeH - 4);
+
+      // 화살표 및 라벨
+      ctx.strokeStyle = "#dc2626";
+      ctx.fillStyle = "#dc2626";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ringX, tubeY - tubeH / 2 - 30);
+      ctx.lineTo(ringX, tubeY - tubeH / 2 - 6);
+      ctx.stroke();
+
+      ctx.font = "bold 13px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("★ 흰 연기(염화 암모늄 띠) 생성 위치", ringX, tubeY - tubeH / 2 - 38);
+      ctx.font = "11px sans-serif";
+      ctx.fillText("-> 묽은 염산 쪽에 더 가깝게 생김!", ringX, tubeY + tubeH / 2 + 24);
+      ctx.restore();
+    }
+  }
+
+  // ==========================================================================
+  // [모듈 3] 표면 증발 (온도·바람과 증발 속도)
+  // ==========================================================================
+  let liquidParticles = [];
+  let vaporParticles = [];
+  let currentTempC = 25;
+  let currentWind = 1; // 0, 1, 2, 3
+  let evaporatedCount = 0;
+
+  function initEvap() {
+    liquidParticles = [];
+    vaporParticles = [];
+    evaporatedCount = 0;
+
+    const dishW = 340;
+    const dishLeft = width / 2 - dishW / 2;
+    const dishBottom = 340;
+
+    // 수조 내 액체 분자 (60개)
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 12; c++) {
+        liquidParticles.push({
+          x: dishLeft + 25 + c * 25 + (Math.random() - 0.5) * 6,
+          y: dishBottom - 20 - r * 18,
+          vx: (Math.random() - 0.5) * 30,
+          vy: (Math.random() - 0.5) * 30,
+          r: 5.5,
+          color: "#0284c7"
+        });
+      }
+    }
+  }
+
+  function updateEvap(dt) {
+    const dishW = 340;
+    const dishLeft = width / 2 - dishW / 2;
+    const dishRight = dishLeft + dishW;
+    const dishBottom = 340;
+    const liquidSurfaceY = dishBottom - 100;
+
+    const evapProb = (currentTempC / 100) * 0.04 * (1.0 + currentWind * 0.5);
+
+    // 액체 분자 운동
+    for (let i = liquidParticles.length - 1; i >= 0; i--) {
+      const p = liquidParticles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      // 액체 표면 근처에서 기화 조건 만족 시 탈출
+      if (p.y <= liquidSurfaceY + 15 && Math.random() < evapProb * dt * 60) {
+        // 증발 분자로 전환
+        liquidParticles.splice(i, 1);
+        vaporParticles.push({
+          x: p.x,
+          y: p.y,
+          vx: (Math.random() - 0.5) * 40 + currentWind * 80, // 바람에 의해 오른쪽으로 날아감
+          vy: -(40 + Math.random() * 60),
+          r: 4.8,
+          color: "#f59e0b"
+        });
+        evaporatedCount++;
+        continue;
+      }
+
+      // 액체 용기 바운딩
+      if (p.x - p.r < dishLeft + 8) { p.x = dishLeft + 8 + p.r; p.vx = Math.abs(p.vx); }
+      if (p.x + p.r > dishRight - 8) { p.x = dishRight - 8 - p.r; p.vx = -Math.abs(p.vx); }
+      if (p.y - p.r < liquidSurfaceY) { p.y = liquidSurfaceY + p.r; p.vy = Math.abs(p.vy); }
+      if (p.y + p.r > dishBottom - 6) { p.y = dishBottom - 6 - p.r; p.vy = -Math.abs(p.vy); }
+    }
+
+    // 증발된 수증기 분자 운동
+    for (let i = vaporParticles.length - 1; i >= 0; i--) {
+      const vp = vaporParticles[i];
+      vp.x += vp.vx * dt;
+      vp.y += vp.vy * dt;
+
+      // 화면 밖으로 날아가면 제거
+      if (vp.x > width + 20 || vp.y < 30) {
+        vaporParticles.splice(i, 1);
+      }
+    }
+
+    valMetric3.textContent = `증발된 입자 수: ${evaporatedCount}개`;
+    subMetric3.textContent = "표면에서 인력을 끊고 스스로 탈출";
+  }
+
+  function drawEvap() {
+    const dishW = 340;
+    const dishLeft = width / 2 - dishW / 2;
+    const dishRight = dishLeft + dishW;
+    const dishBottom = 340;
+    const liquidSurfaceY = dishBottom - 100;
+
+    // 수조(페트리 접시) 그리기
+    ctx.fillStyle = "rgba(6, 182, 212, 0.15)";
+    ctx.fillRect(dishLeft + 4, liquidSurfaceY, dishW - 8, dishBottom - liquidSurfaceY - 4);
+
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(dishLeft, liquidSurfaceY);
+    ctx.lineTo(dishRight, liquidSurfaceY);
+    ctx.stroke();
+
+    // 접시 테두리
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(dishLeft, liquidSurfaceY, dishW, dishBottom - liquidSurfaceY);
+
+    // 액체 분자 & 기화 분자
+    liquidParticles.forEach(p => drawParticle(p, "#0284c7"));
+    vaporParticles.forEach(p => drawParticle(p, "#f59e0b"));
+
+    // 바람 이펙트 (선 화살표)
+    if (currentWind > 0) {
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.4)";
+      ctx.lineWidth = 2;
+      for (let k = 0; k < 4; k++) {
+        const wy = 150 + k * 35;
+        const wx = (performance.now() * 0.15 * currentWind + k * 80) % width;
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(wx + 40 * currentWind, wy);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#2563eb";
+      ctx.font = "bold 13px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`💨 바람 부는 중 (${windVal.textContent}) -> 증발 촉진`, width / 2 - 120, 110);
+    }
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("물질 표면에서의 기화(증발): 끓는점 미만에서도 표면 입자가 공기 중으로 탈출", width / 2, 45);
+  }
+
+  // --- 분자 그리기 공통 헬퍼 ---
+  function drawParticle(p, color) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 하이라이트
+    ctx.beginPath();
+    ctx.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // --- 메인 루프 ---
+  let lastTimestamp = performance.now();
+
+  function animate(timestamp) {
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.08);
+    lastTimestamp = timestamp;
+
+    if (isRunning) {
+      if (currentTab === "LIQUID_DIFF") updateLiquidDiff(dt);
+      else if (currentTab === "GAS_DIFF") updateGasDiff(dt);
+      else if (currentTab === "EVAP") updateEvap(dt);
+    }
+
+    ctx.clearRect(0, 0, width, height);
+
+    if (currentTab === "LIQUID_DIFF") drawLiquidDiff();
+    else if (currentTab === "GAS_DIFF") drawGasDiff();
+    else if (currentTab === "EVAP") drawEvap();
+
+    requestAnimationFrame(animate);
+  }
+
+  // --- 탭 전환 및 UI 업데이트 ---
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTab = btn.dataset.tab;
+
+      if (currentTab === "LIQUID_DIFF") {
+        btnDrop.style.display = "inline-flex";
+        btnDrop.textContent = "💧 잉크 한 방울 떨어뜨리기";
+        boxTempSlider.style.display = "none";
+        boxWindSlider.style.display = "none";
+
+        lblMetric1.textContent = "온도 조건";
+        valMetric1.textContent = "찬물 15℃ vs 온수 70℃";
+        subMetric1.textContent = "온도차에 의한 열운동 비교";
+
+        lblMetric2.textContent = "입자 평균 속력";
+        valMetric2.textContent = "1.8배 빠름";
+        subMetric2.textContent = "온도가 높을수록 충돌 빈도 증가";
+
+        lblMetric4.textContent = "핵심 탐구 결론";
+        valMetric4.textContent = "온도 ↑ => 확산 속도 ↑";
+        subMetric4.textContent = "온도가 높을수록 입자 운동이 활발함";
+
+        initLiquidDiff();
+      }
+      else if (currentTab === "GAS_DIFF") {
+        btnDrop.style.display = "inline-flex";
+        btnDrop.textContent = "🧪 기체 분자 재투입";
+        boxTempSlider.style.display = "none";
+        boxWindSlider.style.display = "none";
+
+        lblMetric1.textContent = "물질 분자량";
+        valMetric1.textContent = "NH₃(17) vs HCl(36.5)";
+        subMetric1.textContent = "분자 질량 차이 비교";
+
+        lblMetric2.textContent = "입자 평균 속력비";
+        valMetric2.textContent = "약 1.47 : 1 (NH₃가 빠름)";
+        subMetric2.textContent = "가벼운 입자가 더 빠르게 이동";
+
+        lblMetric4.textContent = "핵심 탐구 결론";
+        valMetric4.textContent = "질량 ↓ => 확산 속도 ↑";
+        subMetric4.textContent = "가벼운 분자가 더 멀리 이동하여 만남";
+
+        initGasDiff();
+      }
+      else if (currentTab === "EVAP") {
+        btnDrop.style.display = "none";
+        boxTempSlider.style.display = "flex";
+        boxWindSlider.style.display = "flex";
+
+        lblMetric1.textContent = "현재 수온";
+        valMetric1.textContent = currentTempC + "℃";
+        subMetric1.textContent = "온도가 높을수록 표면 탈출 촉진";
+
+        lblMetric2.textContent = "바람 조건";
+        valMetric2.textContent = windVal.textContent;
+        subMetric2.textContent = "바람이 불면 수증기 즉시 분산";
+
+        lblMetric4.textContent = "핵심 탐구 결론";
+        valMetric4.textContent = "표면 입자의 스스로 탈출";
+        subMetric4.textContent = "온도·바람·표면적이 클수록 증발 빠름";
+
+        initEvap();
+      }
+    });
+  });
+
+  btnDrop.addEventListener("click", () => {
+    if (currentTab === "LIQUID_DIFF") dropInk();
+    else if (currentTab === "GAS_DIFF") initGasDiff();
+  });
+
+  btnPlayPause.addEventListener("click", () => {
+    isRunning = !isRunning;
+    btnPlayPause.textContent = isRunning ? "⏸ 일시정지" : "▶ 재생";
+  });
+
+  btnReset.addEventListener("click", () => {
+    if (currentTab === "LIQUID_DIFF") initLiquidDiff();
+    else if (currentTab === "GAS_DIFF") initGasDiff();
+    else if (currentTab === "EVAP") initEvap();
+  });
+
+  tempSlider.addEventListener("input", e => {
+    currentTempC = parseInt(e.target.value);
+    tempVal.textContent = currentTempC + "℃";
+    valMetric1.textContent = currentTempC + "℃";
+  });
+
+  windSlider.addEventListener("input", e => {
+    currentWind = parseInt(e.target.value);
+    const names = ["무풍", "약풍", "중풍", "강풍"];
+    windVal.textContent = names[currentWind];
+    valMetric2.textContent = names[currentWind];
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  // 초기 시작
+  resizeCanvas();
+  initLiquidDiff();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

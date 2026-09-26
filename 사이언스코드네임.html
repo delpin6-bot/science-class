@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사이언스 코드네임</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#E9EEEA;
+  --panel:#FFFFFF;
+  --ink:#19211D;
+  --muted:#65746C;
+  --line:#C7D1C9;
+  --blue:#3D4EA3;
+  --blue-ink:#FFFFFF;
+  --blue-soft:#DCE1F3;
+  --red:#C0456E;
+  --red-ink:#FFFFFF;
+  --red-soft:#F6DEE7;
+  --gray:#B3BAAC;
+  --gray-soft:#E3E6DC;
+  --trap:#231B30;
+  --card:#FBFBF7;
+  --shadow:0 1px 0 rgba(25,33,29,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161A;
+    --panel:#1A2127;
+    --ink:#E8EEE9;
+    --muted:#93A399;
+    --line:#2D3840;
+    --blue:#5566C4;
+    --blue-soft:#232C4B;
+    --red:#D35A82;
+    --red-soft:#3D2230;
+    --gray:#6E776B;
+    --gray-soft:#2A302B;
+    --trap:#0B0810;
+    --card:#232B31;
+    --shadow:0 1px 0 rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161A; --panel:#1A2127; --ink:#E8EEE9; --muted:#93A399; --line:#2D3840;
+  --blue:#5566C4; --blue-soft:#232C4B; --red:#D35A82; --red-soft:#3D2230;
+  --gray:#6E776B; --gray-soft:#2A302B; --trap:#0B0810; --card:#232B31;
+  --shadow:0 1px 0 rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.app{min-height:100%;display:flex;flex-direction:column;max-width:1100px;margin:0 auto;padding:12px 12px 16px}
+.screen{display:none;flex:1;flex-direction:column;min-height:0}
+.screen.on{display:flex}
+
+/* ---------- 설정 화면 ---------- */
+.mast{padding:26px 4px 20px;border-bottom:2px solid var(--ink)}
+.mast h1{margin:0;font-size:clamp(28px,7vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1}
+.mast p{margin:10px 0 0;color:var(--muted);font-size:15px;line-height:1.6;max-width:62ch}
+.sec{margin-top:22px}
+.sec h2{margin:0 0 10px;font-size:14px;font-weight:700;color:var(--muted)}
+.sets{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.set{
+  position:relative;text-align:left;background:var(--panel);border:1.5px solid var(--line);
+  border-radius:10px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:6px;
+}
+.set[aria-pressed="true"]{border-color:var(--ink);border-width:2.5px;padding:13px 13px 11px}
+.set b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.set span{font-size:13px;color:var(--muted)}
+.set.new{border-style:dashed;align-items:flex-start;justify-content:center;min-height:86px}
+.setbtns{position:absolute;top:8px;right:8px;display:flex;gap:2px}
+.mini{background:none;border:0;padding:4px 6px;font-size:13px;color:var(--muted);border-radius:6px}
+.mini:hover{background:var(--gray-soft)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--panel);border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.go{
+  margin-top:26px;width:100%;padding:17px;border:0;border-radius:10px;
+  background:var(--ink);color:var(--bg);font-size:19px;font-weight:800;letter-spacing:-.01em;
+}
+.go:disabled{opacity:.35;cursor:not-allowed}
+.foot{margin-top:16px;text-align:center}
+.link{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:6px}
+
+/* ---------- 게임 화면 ---------- */
+.bar{display:flex;align-items:stretch;gap:8px;margin-bottom:10px}
+.score{
+  flex:1;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  padding:8px 12px;display:flex;align-items:baseline;gap:9px;min-width:0;
+}
+.score.turn{border-width:3px;padding:6.5px 10.5px}
+.score.b{border-left:7px solid var(--blue)}
+.score.r{border-left:7px solid var(--red)}
+.score.b.turn{border-color:var(--blue)}
+.score.r.turn{border-color:var(--red)}
+.score .n{font-size:27px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.score .t{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score.b .n{color:var(--blue)} .score.r .n{color:var(--red)}
+
+.clue{
+  background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  padding:9px 10px;margin-bottom:10px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;
+}
+.clue input[type=text]{
+  flex:1;min-width:110px;border:0;border-bottom:2px solid var(--line);background:none;
+  padding:6px 2px;font-size:16px;color:var(--ink);
+}
+.clue input[type=text]:focus{outline:none;border-bottom-color:var(--ink)}
+.clue input[type=number]{
+  width:60px;border:0;border-bottom:2px solid var(--line);background:none;padding:6px 2px;
+  font-size:16px;text-align:center;color:var(--ink);
+}
+.clue input[type=number]:focus{outline:none;border-bottom-color:var(--ink)}
+.clue button{border:1.5px solid var(--ink);background:none;border-radius:8px;padding:7px 13px;font-size:14px;font-weight:700}
+.clue .live{font-size:15px;font-weight:700;flex:1;min-width:0}
+.clue .live em{font-style:normal;color:var(--muted);font-weight:500}
+
+.grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:6px;flex:1;min-height:0;align-content:start;
+}
+.cell{
+  position:relative;overflow:hidden;aspect-ratio:1/.78;border:1.5px solid var(--line);
+  border-radius:7px;background:var(--card);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;padding:14px 4px 4px;
+  font-size:clamp(10px,2.1vw,19px);font-weight:700;line-height:1.2;letter-spacing:-.02em;
+  text-align:center;word-break:keep-all;overflow-wrap:anywhere;
+  transition:transform .08s ease;
+}
+.cell:active{transform:scale(.97)}
+.cell .no{
+  position:absolute;top:3px;left:6px;font-size:10px;font-weight:600;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.cell .w{position:relative;z-index:2}
+.cell .stain{
+  position:absolute;inset:0;z-index:1;border-radius:inherit;transform:scale(0);
+  animation:spread .34s cubic-bezier(.22,.9,.3,1) forwards;
+}
+@keyframes spread{to{transform:scale(1)}}
+.cell.done{border-color:transparent;color:#fff;cursor:default;box-shadow:none}
+.cell.done .no{color:rgba(255,255,255,.62)}
+.cell.b .stain{background:var(--blue)}
+.cell.r .stain{background:var(--red)}
+.cell.n .stain{background:var(--gray)}
+.cell.x .stain{background:var(--trap)}
+.cell.n.done{color:#fff}
+.cell.x.done .w{letter-spacing:0}
+.cell.x.done::after{content:"오개념";position:absolute;z-index:3;bottom:3px;left:0;right:0;font-size:10px;font-weight:600;color:#E4A0BC}
+
+.tools{display:flex;gap:7px;margin-top:10px}
+.tool{
+  flex:1;background:var(--panel);border:1.5px solid var(--line);border-radius:9px;
+  padding:12px 6px;font-size:14px;font-weight:700;
+}
+.tool.key{border-color:var(--ink)}
+
+/* ---------- 오버레이 ---------- */
+.ov{
+  position:fixed;inset:0;z-index:50;background:var(--bg);display:none;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px);
+  overflow:auto;
+}
+.ov.on{display:block}
+.ov .box{max-width:760px;margin:0 auto}
+.ov h2{margin:4px 0 14px;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.ov h3{margin:20px 0 6px;font-size:15px;font-weight:700}
+.ov p,.ov li{font-size:15px;line-height:1.65;color:var(--ink);max-width:62ch}
+.ov ul{padding-left:19px;margin:6px 0}
+.ov .note{color:var(--muted);font-size:14px}
+.close{
+  width:100%;margin-top:22px;padding:15px;border:0;border-radius:10px;
+  background:var(--ink);color:var(--bg);font-size:17px;font-weight:800;
+}
+.warn{border:2px solid var(--red);border-radius:9px;padding:10px 12px;color:var(--red);font-size:14px;font-weight:700;margin-bottom:14px}
+.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.kc{
+  aspect-ratio:1/.78;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  padding:12px 3px 3px;position:relative;font-size:clamp(9px,1.9vw,15px);font-weight:700;
+  color:#fff;text-align:center;word-break:keep-all;overflow-wrap:anywhere;line-height:1.15;
+}
+.kc .no{position:absolute;top:2px;left:5px;font-size:9px;font-weight:600;opacity:.7}
+.kc.b{background:var(--blue)} .kc.r{background:var(--red)}
+.kc.n{background:var(--gray)} .kc.x{background:var(--trap)}
+.kc.used{opacity:.3}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0 0;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+textarea{
+  width:100%;min-height:190px;border:1.5px solid var(--line);border-radius:9px;background:var(--panel);
+  color:var(--ink);padding:11px;font:15px/1.6 inherit;resize:vertical;
+}
+.ov input.name{
+  width:100%;border:1.5px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);
+  padding:11px;font:16px inherit;margin-bottom:10px;
+}
+.count{font-size:14px;color:var(--muted);margin-top:7px}
+.row2{display:flex;gap:8px;margin-top:16px}
+.row2 button{flex:1;padding:15px;border-radius:10px;font-size:16px;font-weight:800;border:1.5px solid var(--ink);background:none}
+.row2 button.fill{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.winner{text-align:center;padding:30px 0 8px}
+.winner .big{font-size:clamp(34px,10vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.winner .why{margin-top:12px;font-size:16px;color:var(--muted)}
+
+#setFilter{margin:0 0 14px;}
+#setFilter .fchips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
+#setFilter .fchip{border:1px solid rgba(0,0,0,.18); background:#fff; color:#16202c; border-radius:999px;
+  padding:7px 14px; font:inherit; font-size:13.5px; font-weight:700; cursor:pointer;}
+#setFilter .fchip[aria-pressed="true"]{background:#16202c; color:#fff; border-color:#16202c;}
+#setFilter .fsearch{display:flex; align-items:center; gap:8px; border:1px solid rgba(0,0,0,.18);
+  background:#fff; border-radius:10px; padding:0 12px;}
+#setFilter .fsearch span{font-size:13px; opacity:.6; white-space:nowrap;}
+#setFilter .fsearch input{flex:1; border:0; outline:0; background:transparent; font:inherit;
+  font-size:14px; padding:9px 0; color:#16202c;}
+#setFilter .fnone{font-size:13.5px; opacity:.7; margin:10px 2px 0;}
+</style>
+<script id="kjs-menu-lib">
+/* 수업 게임 서랍 · 공통 메뉴 (학년 → 대단원 → 중단원·차시, 검색)
+   KJSMenu.init({
+     key, items:[{id, grade, unit, mid, title, sub, kind:'unit'|'mid'|'lesson', words:[], tags:[]}],
+     extras:['내 세트'],            // 누르면 게임의 원래 선택 화면(내가 만든 목록)을 보여 줌
+     mount: Element,                // 이 요소 앞에 메뉴를 넣음
+     legacyCss: 'selector, ...',    // 메뉴가 켜져 있을 때 숨길 원래 선택 UI
+     isVisible: () => bool,         // 선택 화면일 때만 메뉴 표시 (생략 가능)
+     observe: Element,              // 화면이 바뀌는지 지켜볼 요소 (생략 가능)
+     mode: 'start' | 'select',      // start: 누르면 바로 시작 / select: 고른 뒤 ▶ 시작
+     onPick(item), onStart(item), startLabel
+   })
+*/
+(function(){
+  var ORDER = {
+    "중1": ["과학과 인류의 지속가능한 삶","생물의 구성과 다양성","열","물질의 상태 변화","힘의 작용","기체의 성질","태양계"],
+    "중2": ["물질의 특성","지권의 변화","빛과 파동","물질의 구성","식물과 에너지","동물과 에너지","전기와 자기","별과 우주"],
+    "중3": ["화학 반응의 규칙과 에너지 변화","기권과 날씨","운동과 에너지","자극과 반응","생식과 유전","에너지 전환과 보존","별과 우주"]
+  };
+  var CSS = [
+    ".km{background:#fff;color:#1b2b2a;border:1.5px solid #dfe3de;border-radius:16px;padding:0 14px 14px;margin:12px 0 16px;",
+    " font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',system-ui,sans-serif;text-align:left;line-height:1.45}",
+    ".km *{box-sizing:border-box}",
+    ".km-nav{position:sticky;top:0;z-index:30;background:#fff;padding:12px 0 10px;border-bottom:1px solid #e6e9e4;border-radius:16px 16px 0 0}",
+    ".km-search{display:flex;align-items:center;gap:8px;background:#f5f7f4;border:1.5px solid #dfe3de;border-radius:12px;padding:0 12px;margin-bottom:8px}",
+    ".km-search:focus-within{border-color:#0CA678;background:#fff}",
+    ".km-search input{flex:1;min-width:0;border:0!important;box-shadow:none!important;outline:0;background:transparent;font:inherit;font-size:16px;padding:10px 0;color:#1b2b2a}",
+    ".km-search button{border:0;background:transparent;font-size:15px;cursor:pointer;color:#6b7672;padding:4px}",
+    ".km-row{display:flex;align-items:flex-start;gap:10px;margin-top:6px}",
+    ".km-row[hidden]{display:none!important}",
+    ".km-lab{flex:none;width:58px;padding-top:7px;font-size:12.5px;font-weight:800;color:#6b7672}",
+    ".km-chips{display:flex;gap:6px;flex-wrap:wrap}",
+    ".km-row>.km-scroll,.km-row>.km-chips{min-width:0;flex:1 1 auto}",
+    ".km-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}",
+    ".km-chip{flex:none;border:1px solid #dfe3de;background:#fff;color:#1b2b2a;border-radius:9px;padding:7px 13px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}",
+    ".km-chip.g[aria-pressed=true]{background:#1b2b2a;color:#fff;border-color:#1b2b2a}",
+    ".km-chip.u[aria-pressed=true]{background:#0CA678;color:#fff;border-color:#0CA678}",
+    ".km-chip.j{font-size:12.5px;padding:5px 10px;border-radius:999px}",
+    ".km-chip.j.m{border-color:#7048E8;color:#5f3dc4}.km-chip.j.un{border-color:#0CA678;color:#0b7a5a}",
+    ".km-sel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;padding:9px 12px;background:#fff8e1;border:1px solid #f3d27a;border-radius:10px;font-size:14px}",
+    ".km-sel[hidden]{display:none!important}",
+    ".km-sel b{font-weight:800}",
+    ".km-go{border:0;background:#1b2b2a;color:#fff;border-radius:9px;padding:8px 16px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-left:auto}",
+    ".km-body{padding-top:6px}",
+    ".km-uh{font-size:14px;font-weight:800;color:#6b7672;margin:14px 0 8px;display:flex;align-items:center;gap:8px}",
+    ".km-uh::after{content:'';flex:1;height:1px;background:#e6e9e4}",
+    ".km-mh{font-size:13.5px;font-weight:800;margin:14px 0 8px 2px;scroll-margin-top:200px}",
+    ".km-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}",
+    ".km-card{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e1e5e0;border-radius:14px;padding:13px 15px;cursor:pointer;font:inherit;color:#1b2b2a;scroll-margin-top:200px;transition:border-color .12s,box-shadow .12s}",
+    ".km-card:hover{border-color:#0CA678;box-shadow:0 4px 14px rgba(0,0,0,.06)}",
+    ".km-card[aria-pressed=true]{border-color:#e8900c;box-shadow:0 0 0 3px #ffe8b0}",
+    ".km-card .k{font-size:12px;font-weight:800;color:#e8900c}",
+    ".km-card .w{font-size:12px;font-weight:800;color:#6b7672}",
+    ".km-card .t{display:block;font-size:17px;font-weight:800;margin:2px 0 3px;letter-spacing:-.01em}",
+    ".km-card .s{display:block;font-size:13px;color:#6b7672}",
+    ".km-card .h{display:block;font-size:12.5px;color:#6b7672;margin-top:5px}",
+    ".km-card.unit{background:linear-gradient(135deg,#eef6f2,#fff);border-color:#0CA678;grid-column:1/-1}",
+    ".km-card.unit .k{color:#0b7a5a}",
+    ".km-card.mid{background:linear-gradient(135deg,#f3f0fb,#fff);border-color:#7048E8;grid-column:1/-1}",
+    ".km-card.mid .k{color:#5f3dc4}",
+    ".km-hit{background:#fff3bf;border-radius:3px}",
+    ".km-empty{color:#6b7672;padding:16px 4px}",
+    ".km-note{font-size:13px;color:#6b7672;margin:8px 2px}",
+    "@media (max-width:640px){.km{padding:0 10px 12px}.km-row{flex-direction:column;gap:4px}.km-lab{width:auto;padding-top:0}.km-grid{grid-template-columns:1fr}.km-mh,.km-card{scroll-margin-top:260px}}",
+    "@media print{.km{display:none!important}}"
+  ].join("\n");
+
+  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function nrm(s){ return String(s || "").toLowerCase().replace(/\s+/g, ""); }
+  function mark(text, q){
+    var t = String(text), i = t.toLowerCase().indexOf(q.toLowerCase());
+    if (!q || i < 0) return esc(t);
+    return esc(t.slice(0, i)) + '<span class="km-hit">' + esc(t.slice(i, i + q.length)) + "</span>" + esc(t.slice(i + q.length));
+  }
+
+  /* 차시 고유 코드: 학년|단원|제목 → 짧은 영문 코드 (QR 주소용, 파일이 바뀌어도 제목이 같으면 그대로) */
+  function hcode(str){
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36);
+  }
+  function itemKey(x){ return [x.grade || "", x.unit || "", x.mid || "", x.title || ""].join("|"); }
+
+  function init(o){
+    if (!document.getElementById("km-style")) { var st = el("style"); st.id = "km-style"; st.textContent = CSS; document.head.appendChild(st); }
+    var items = o.items || [];
+    var grades = ["중1","중2","중3"].filter(function(g){ return items.some(function(x){ return x.grade === g; }); });
+    items.forEach(function(x){ if (["중1","중2","중3"].indexOf(x.grade) < 0 && grades.indexOf(x.grade) < 0) grades.push(x.grade); });
+    (o.extras || []).forEach(function(g){ if (grades.indexOf(g) < 0) grades.push(g); });
+    items.forEach(function(x){
+      x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|"));
+      x.th = nrm([x.unit, x.mid, x.title].join("|"));
+    });
+    items.forEach(function(x){ x.q = hcode(itemKey(x)); });
+    window.KJSMenu._items = items.map(function(x){ return { q: x.q, grade: x.grade, unit: x.unit || "", mid: x.mid || "", title: x.title, kind: x.kind || "lesson" }; });
+    var LS = "km-" + (o.key || location.pathname);
+    var st = { g: grades[0], u: 0, q: "", sel: null };
+    try { var sv = JSON.parse(localStorage.getItem(LS) || "{}"); if (grades.indexOf(sv.g) >= 0) st.g = sv.g; if (sv.u >= 0) st.u = sv.u; } catch(e) {}
+    function save(){ try { localStorage.setItem(LS, JSON.stringify({ g: st.g, u: st.u })); } catch(e) {} }
+
+    var root = el("section", "km"); root.setAttribute("aria-label", "학년 · 단원 · 차시 고르기");
+    var nav = el("div", "km-nav");
+    nav.innerHTML =
+      '<label class="km-search"><span aria-hidden="true">🔍</span><input type="text" placeholder="단원·차시·낱말 검색 (예: 광합성, 보일, 뉴런)" autocomplete="off"><button type="button" hidden aria-label="검색어 지우기">✕</button></label>' +
+      '<div class="km-row"><span class="km-lab">학년</span><div class="km-chips km-g"></div></div>' +
+      '<div class="km-row km-urow"><span class="km-lab">대단원</span><div class="km-scroll km-u"></div></div>' +
+      '<div class="km-row km-jrow"><span class="km-lab">바로가기</span><div class="km-scroll km-j"></div></div>' +
+      '<div class="km-sel" hidden><span>선택: <b></b></span><button type="button" class="km-go"></button></div>';
+    var body = el("div", "km-body");
+    root.appendChild(nav); root.appendChild(body);
+    var mountEl = typeof o.mount === "function" ? o.mount() : o.mount;
+    mountEl.parentNode.insertBefore(root, mountEl);
+
+    var qIn = nav.querySelector("input"), qX = nav.querySelector(".km-search button");
+    var selBox = nav.querySelector(".km-sel"), goBtn = nav.querySelector(".km-go");
+    goBtn.textContent = "▶ " + (o.startLabel || "시작하기");
+    goBtn.onclick = function(){ if (st.sel && o.onStart) o.onStart(st.sel); };
+
+    var legacyStyle = el("style"); document.head.appendChild(legacyStyle);
+    function setLegacy(show){ var t = (!show && o.legacyCss) ? o.legacyCss + "{display:none!important}" : ""; if (legacyStyle.textContent !== t) legacyStyle.textContent = t; }
+
+    function pick(x){
+      if (o.mode === "select") {
+        st.sel = x; if (o.onPick) o.onPick(x);
+        selBox.hidden = false; selBox.querySelector("b").textContent = x.grade + " · " + (x.unit ? x.unit + " · " : "") + x.title;
+        paintSel();
+      } else if (o.onPick) o.onPick(x);
+    }
+    function paintSel(){
+      body.querySelectorAll(".km-card").forEach(function(c){ c.setAttribute("aria-pressed", String(!!st.sel && c._item === st.sel)); });
+    }
+    function card(x, q){
+      var c = el("button", "km-card " + (x.kind || "lesson"));
+      c.type = "button"; c._item = x;
+      var kind = x.kind === "unit" ? "🌳 대단원 종합" : x.kind === "mid" ? "🌿 중단원 종합" : (x.badge || "");
+      c.innerHTML = (q ? '<span class="w">' + esc(x.grade + (x.unit ? " · " + x.unit : "")) + "</span> " : "") +
+        (kind ? '<span class="k">' + esc(kind) + "</span>" : "") +
+        '<span class="t">' + (q ? mark(x.title, q) : esc(x.title)) + "</span>" +
+        (x.sub ? '<span class="s">' + esc(x.sub) + "</span>" : "");
+      if (q) {
+        var hits = (x.words || []).filter(function(w){ return String(w).toLowerCase().indexOf(q.toLowerCase()) >= 0; });
+        var u = []; hits.forEach(function(h){ if (u.indexOf(h) < 0) u.push(h); });
+        if (u.length) c.appendChild(el("span", "h", "찾은 낱말: " + u.slice(0, 5).map(function(w){ return mark(String(w).slice(0, 40), q); }).join(", ") + (u.length > 5 ? " …" : "")));
+      }
+      c.onclick = function(){ pick(x); };
+      return c;
+    }
+    function unitsOf(g){
+      var list = [];
+      items.forEach(function(x){ if (x.grade === g && x.unit && list.indexOf(x.unit) < 0) list.push(x.unit); });
+      var ord = ORDER[g] || [];
+      return list.sort(function(a, b){ var ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+    }
+    function render(){
+      var gBox = nav.querySelector(".km-g"), uBox = nav.querySelector(".km-u"), jBox = nav.querySelector(".km-j");
+      gBox.innerHTML = ""; uBox.innerHTML = ""; jBox.innerHTML = ""; body.innerHTML = "";
+      grades.forEach(function(g){
+        var b = el("button", "km-chip g"); b.type = "button"; b.textContent = g;
+        b.setAttribute("aria-pressed", String(g === st.g && !st.q));
+        b.onclick = function(){ st.g = g; st.u = 0; clearQ(); save(); render(); };
+        gBox.appendChild(b);
+      });
+      var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+      setLegacy(isExtra && !st.q);
+      var units = unitsOf(st.g);
+      if (st.u >= units.length) st.u = 0;
+      nav.querySelector(".km-urow").hidden = !units.length || !!st.q;
+      units.forEach(function(u, i){
+        var b = el("button", "km-chip u"); b.type = "button"; b.textContent = u;
+        b.setAttribute("aria-pressed", String(i === st.u));
+        b.onclick = function(){ st.u = i; save(); render(); };
+        uBox.appendChild(b);
+      });
+      var cur = uBox.children[st.u]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "nearest", block: "nearest" });
+
+      if (st.q) {
+        nav.querySelector(".km-jrow").hidden = true;
+        var q = nrm(st.q);
+        var res = items.filter(function(x){ return x.hay.indexOf(q) >= 0; }).sort(function(a, b){
+          var ka = { unit: 0, mid: 1 }[a.kind]; var kb = { unit: 0, mid: 1 }[b.kind];
+          return ((b.th.indexOf(q) >= 0) - (a.th.indexOf(q) >= 0)) || ((ka == null ? 2 : ka) - (kb == null ? 2 : kb));
+        });
+        body.appendChild(el("div", "km-uh", "‘" + esc(st.q) + "’ 검색 결과 " + res.length + "개"));
+        if (!res.length) body.appendChild(el("p", "km-empty", "찾는 내용이 없습니다. 다른 낱말로 검색해 보세요."));
+        var grid = el("div", "km-grid");
+        res.slice(0, 60).forEach(function(x){ grid.appendChild(card(x, st.q.trim())); });
+        body.appendChild(grid); paintSel(); return;
+      }
+      if (isExtra) {
+        nav.querySelector(".km-jrow").hidden = true;
+        if (o.onExtra) setTimeout(function(){ o.onExtra(st.g); }, 0);
+        body.appendChild(el("p", "km-note", (o.extraNote || "아래에서 직접 만든 목록을 고르거나 새로 만들 수 있습니다.")));
+        return;
+      }
+      var unit = units[st.u];
+      var list = items.filter(function(x){ return x.grade === st.g && (unit ? x.unit === unit : !x.unit); });
+      if (!unit) list = items.filter(function(x){ return x.grade === st.g; });
+      if (unit) body.appendChild(el("div", "km-uh", esc(st.g + " · " + unit)));
+      var groups = [], gmap = {};
+      list.forEach(function(x){
+        var key = x.kind === "unit" ? "__unit" : (x.mid || "");
+        if (!gmap[key]) { gmap[key] = { name: key, list: [] }; groups.push(gmap[key]); }
+        gmap[key].list.push(x);
+      });
+      var jumps = 0;
+      groups.forEach(function(gr, gi){
+        var sec = el("div", "km-sec");
+        if (gr.name && gr.name !== "__unit") {
+          var mh = el("div", "km-mh", esc(gr.name)); sec.appendChild(mh);
+          var jb = el("button", "km-chip j m", "🌿 " + esc(gr.name)); jb.type = "button";
+          jb.onclick = function(){ mh.scrollIntoView({ behavior: "smooth", block: "start" }); };
+          jBox.appendChild(jb); jumps++;
+        }
+        var grid = el("div", "km-grid");
+        gr.list.forEach(function(x){
+          var c = card(x, "");
+          grid.appendChild(c);
+          if (x.kind === "unit") {
+            var ub = el("button", "km-chip j un", "🌳 대단원"); ub.type = "button";
+            ub.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "start" }); };
+            jBox.insertBefore(ub, jBox.firstChild); jumps++;
+          } else if (x.kind !== "mid") {
+            var lb = el("button", "km-chip j", esc(x.short || x.title)); lb.type = "button";
+            lb.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "center" }); };
+            jBox.appendChild(lb); jumps++;
+          }
+        });
+        sec.appendChild(grid); body.appendChild(sec);
+      });
+      nav.querySelector(".km-jrow").hidden = jumps < 2;
+      paintSel();
+    }
+    function clearQ(){ st.q = ""; qIn.value = ""; qX.hidden = true; }
+    qIn.addEventListener("input", function(){ st.q = qIn.value.trim(); qX.hidden = !st.q; render(); });
+    qX.addEventListener("click", function(){ clearQ(); render(); qIn.focus(); });
+
+    function sync(){
+      if (typeof o.mount === "function") {
+        var m = o.mount();
+        if (m && m !== root && m.parentNode && root.nextSibling !== m) m.parentNode.insertBefore(root, m);
+      }
+      var vis = o.isVisible ? !!o.isVisible() : true;
+      var want = vis ? "" : "none";
+      if (root.style.display !== want) root.style.display = want;
+      if (!vis) setLegacy(true); else {
+        var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+        setLegacy(isExtra && !st.q);
+      }
+    }
+    if (o.observe) {
+      var busy = false;
+      new MutationObserver(function(){
+        if (busy) return; busy = true;
+        requestAnimationFrame(function(){ try { sync(); } finally { busy = false; } });
+      }).observe(o.observe, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    }
+    render(); sync();
+    /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
+    try {
+      var qp = new URLSearchParams(location.search).get("q");
+      var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      if (target) {
+        st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
+        render(); sync();
+        setTimeout(function(){
+          pick(target);
+          if (o.mode === "select") {
+            selBox.hidden = false;
+            selBox.style.boxShadow = "0 0 0 3px #f59e0b";
+            var note = selBox.querySelector(".km-qr-note");
+            if (!note) { note = el("span", "km-qr-note", "📱 선생님이 고른 차시예요. 아래 설정을 확인하고 시작하세요."); note.style.cssText = "flex-basis:100%;font-size:12.5px;color:#92400e"; selBox.appendChild(note); }
+            root.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 350);
+      }
+    } catch(e) {}
+    return { refresh: function(newItems){ if (newItems) { items = newItems; items.forEach(function(x){ x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|")); x.th = nrm([x.unit, x.mid, x.title].join("|")); }); } render(); sync(); },
+             root: root, select: function(x){ st.sel = x; paintSel(); } };
+  }
+  window.KJSMenu = { init: init, hcode: hcode };
+})();
+
+</script>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ================= 설정 ================= -->
+<section id="setup" class="screen on">
+  <header class="mast">
+    <h1>사이언스 코드네임</h1>
+    <p>용어 25개가 깔린 판에서, 대표가 말하는 <b>힌트 한 단어와 개수</b>만 듣고 우리 팀 용어를 찾아내는 두 팀 대결 게임입니다.</p>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <div class="sec">
+    <h2>용어 세트</h2>
+    <div class="sets" id="sets"></div>
+  </div>
+
+  <div class="sec">
+    <h2>함정 카드(오개념)</h2>
+    <div class="opts" id="trapOpts">
+      <button class="chip" data-trap="1" aria-pressed="true">1장 — 뽑으면 그 자리에서 패배</button>
+      <button class="chip" data-trap="0" aria-pressed="false">없음 — 순하게 진행</button>
+    </div>
+  </div>
+
+  <button class="go" id="start">판 깔기</button>
+  <div class="foot"><button class="link" id="howto">게임 방법 보기</button></div>
+</section>
+
+<!-- ================= 게임 ================= -->
+<section id="game" class="screen">
+  <div class="bar">
+    <div class="score b" id="sb"><span class="n" id="nb">9</span><span class="t">파랑팀 남은 카드</span></div>
+    <div class="score r" id="sr"><span class="n" id="nr">8</span><span class="t">빨강팀 남은 카드</span></div>
+  </div>
+
+  <div class="clue" id="clueBar"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="tools">
+    <button class="tool key" id="btnKey">정답 카드</button>
+    <button class="tool" id="btnPass">차례 넘기기</button>
+    <button class="tool" id="btnHelp">게임 방법</button>
+    <button class="tool" id="btnNew">새 판</button>
+  </div>
+</section>
+</div>
+
+<!-- ================= 오버레이들 ================= -->
+<div class="ov" id="ovKey"><div class="box">
+  <h2>정답 카드</h2>
+  <div class="warn">대표(스파이마스터)만 보세요. 학생 화면·프로젝터에는 띄우지 않기.</div>
+  <div class="kgrid" id="kgrid"></div>
+  <div class="legend">
+    <span><i style="background:var(--blue)"></i>파랑팀</span>
+    <span><i style="background:var(--red)"></i>빨강팀</span>
+    <span><i style="background:var(--gray)"></i>중립</span>
+    <span id="lgTrap"><i style="background:var(--trap)"></i>함정(오개념)</span>
+    <span>흐린 카드 = 이미 공개됨</span>
+  </div>
+  <button class="close" data-close="ovKey">닫고 게임으로</button>
+</div></div>
+
+<div class="ov" id="ovHelp"><div class="box">
+  <h2>게임 방법</h2>
+  <p>판에는 우리 팀 용어, 상대 팀 용어, 아무것도 아닌 중립 용어가 섞여 있습니다. 어느 것이 누구 것인지는 <b>대표만</b> 정답 카드로 알 수 있습니다.</p>
+  <h3>한 차례는 이렇게</h3>
+  <ul>
+    <li>대표가 힌트 한 단어와 개수를 말합니다. 예: <b>분열 3</b></li>
+    <li>팀원이 상의해서 카드를 고르고 누릅니다.</li>
+    <li>우리 팀 용어면 계속, 아니면 바로 상대 차례로 넘어갑니다.</li>
+    <li>추측은 말한 개수보다 한 번 더 할 수 있습니다.</li>
+  </ul>
+  <h3>힌트 규칙</h3>
+  <ul>
+    <li>판에 적힌 용어를 그대로 말하거나, 그 단어를 쪼개서 말할 수 없습니다.</li>
+    <li>개수는 그 힌트로 이어지는 우리 팀 용어의 수입니다.</li>
+  </ul>
+  <h3>함정 카드</h3>
+  <p>단원의 대표적인 오개념 자리입니다. 누르는 순간 그 팀이 집니다.</p>
+  <h3>교실에서 돌리는 두 가지 방법</h3>
+  <ul>
+    <li><b>선생님이 대표</b> — 선생님 혼자 정답 카드를 보고 두 팀에 번갈아 힌트를 줍니다. 준비가 가장 간단합니다.</li>
+    <li><b>팀별 대표</b> — 양 팀 대표가 함께 교탁에서 정답 카드를 확인하고 자리로 돌아갑니다. 판은 프로젝터로 띄웁니다.</li>
+  </ul>
+  <p class="note">먼저 자기 팀 용어를 모두 찾아낸 팀이 이깁니다.</p>
+  <button class="close" data-close="ovHelp">닫기</button>
+</div></div>
+
+<div class="ov" id="ovEdit"><div class="box">
+  <h2 id="editTitle">내 용어 세트</h2>
+  <input class="name" id="editName" placeholder="세트 이름 (예: 3-2 감수분열)" maxlength="30">
+  <textarea id="editWords" placeholder="용어를 쉼표나 줄바꿈으로 구분해 붙여넣으세요.&#10;&#10;염색체, 염색분체, 상동염색체&#10;감수분열&#10;생식세포"></textarea>
+  <div class="count" id="editCount">0개 — 25개 이상이면 판이 매번 달라집니다(최소 25개)</div>
+  <div class="row2">
+    <button data-close="ovEdit">취소</button>
+    <button class="fill" id="editSave">저장</button>
+  </div>
+</div></div>
+
+<div class="ov" id="ovWin"><div class="box">
+  <div class="winner">
+    <div class="big" id="winBig"></div>
+    <div class="why" id="winWhy"></div>
+  </div>
+  <div class="row2">
+    <button id="winKey">정답 카드 전체 보기</button>
+    <button class="fill" id="winAgain">새 판 깔기</button>
+  </div>
+</div></div>
+
+<script>
+/* ---------------- 기본 용어 세트 ---------------- */
+const BUILTIN = [
+  { id:'air', name:'기권과 날씨', sub:'중3 · 기권, 대기 중의 물, 기압과 바람',
+    words:["기권", "대류권", "성층권", "중간권", "열권", "오존층", "복사평형", "태양복사", "지구복사", "온실효과", "온실기체", "이산화탄소", "메테인", "지구온난화", "포화상태", "포화수증기량", "응결", "이슬점", "상대습도", "건습구습도계", "단열팽창", "구름", "안개", "이슬", "비", "눈", "기압", "토리첼리", "수은기둥", "바람", "해풍", "육풍", "계절풍", "기단", "전선", "한랭전선", "온난전선", "고기압", "저기압", "상승기류", "하강기류", "일기도", "기상위성", "날씨", "기온"] },
+  { id:'force', name:'힘의 작용', sub:'중1 · 힘, 중력, 여러 가지 힘, 평형',
+    words:["힘", "뉴턴", "크기", "방향", "작용점", "화살표", "중력", "무게", "질량", "지구중심", "탄성력", "용수철", "용수철저울", "변형", "마찰력", "접촉면", "거칠기", "부력", "잠긴부피", "구명조끼", "열기구", "번지점프", "미끄럼틀", "힘의평형", "합력", "알짜힘", "작용선", "책상위의책", "낙하산", "줄다리기", "운동상태", "속력", "모양변화", "공기저항", "달에서의무게", "추", "저울", "수평", "평형", "힘의합성", "물체", "정지", "등속"] },
+  { id:'state', name:'물질의 상태 변화', sub:'중1 · 입자 운동, 상태 변화, 열에너지',
+    words:["확산", "증발", "입자운동", "고체", "액체", "기체", "입자배열", "규칙적", "자유롭게", "입자사이거리", "융해", "기화", "응고", "액화", "승화", "융해열", "기화열", "응고열", "액화열", "승화열", "질량보존", "부피변화", "녹는점", "끓는점", "가열곡선", "온도일정", "아이스팩", "드라이아이스", "이슬", "안개", "빨래", "향수", "잉크", "수증기", "얼음", "물", "수증기화상", "냉각", "가열", "입자", "열에너지", "흡수", "방출"] },
+  { id:'heat', name:'열', sub:'중1 · 온도, 열의 이동, 비열과 열팽창',
+    words:["온도", "열", "입자운동", "열평형", "체온계", "고온", "저온", "전도", "대류", "복사", "복사열", "단열", "이중창", "보온병", "스타이로폼", "난방기", "냉방기", "금속", "나무", "비열", "물의비열", "해안지방", "해륙풍", "뚝배기", "냉각수", "열팽창", "부피증가", "입자사이거리", "바이메탈", "철교", "기차선로", "온도계", "섭씨도", "열량", "가열", "냉각", "얼음", "생선", "목욕물", "프라이팬", "손잡이", "적외선", "태양열"] },
+  { id:'cell', name:'생물의 구성과 다양성', sub:'중1 · 세포, 생물다양성, 분류',
+    words:["세포", "핵", "세포막", "세포질", "세포벽", "엽록체", "액포", "조직", "기관", "기관계", "조직계", "개체", "광학현미경", "대물렌즈", "접안렌즈", "재물대", "염색", "표본", "생물다양성", "생물종", "유전적다양성", "생태계다양성", "생태계평형", "서식지파괴", "남획", "외래종", "멸종위기종", "국립공원", "국제협약", "분류", "자연분류", "인위분류", "종", "속", "과", "계", "원핵생물계", "원생생물계", "균계", "식물계", "동물계", "학명", "이명법", "린네"] },
+  { id:'sustain', name:'과학과 인류의 지속가능한 삶', sub:'중1 · 탐구 방법, 과학기술, 지속가능한 삶',
+    words:["문제인식", "가설설정", "탐구설계", "탐구수행", "자료변환", "자료해석", "결론도출", "탐구보고서", "조작변인", "통제변인", "종속변인", "변인통제", "증기기관", "산업혁명", "정보통신", "인공위성", "백신", "항생제", "현미경", "전화기", "인공지능", "증강현실", "사물인터넷", "첨단바이오", "자율주행", "로봇", "빅데이터", "자원고갈", "환경오염", "지구온난화", "기후변화", "태양광발전", "수소연료전지", "탄소포집", "전기자동차", "수거로봇", "업사이클링", "재활용", "재사용", "분리배출", "친환경에너지", "미래세대", "지속가능", "탐구계획서"] },
+  { id:'star2', name:'별과 우주(중2)', sub:'중2 · 별, 은하, 우주',
+    words:["시차", "연주시차", "겉보기등급", "절대등급", "등급", "표면온도", "청색", "붉은색", "황색", "백색", "성운", "방출성운", "반사성운", "암흑성운", "성단", "산개성단", "구상성단", "우리은하", "은하수", "나선팔", "막대나선은하", "외부은하", "허블", "우주팽창", "빅뱅우주론", "인공위성", "우주탐사선", "우주망원경", "우주정거장", "탐사로버", "태양계", "별자리", "천체", "관측", "망원경", "파섹", "광년", "밝기", "거리", "성간물질", "은하", "우주", "탐사", "발사"] },
+  { id:'elec', name:'전기와 자기', sub:'중2 · 마찰 전기, 전류, 저항, 자기',
+    words:["마찰전기", "대전", "대전체", "전자", "전기력", "인력", "척력", "정전기유도", "검전기", "금속박", "전류", "전압", "저항", "암페어", "볼트", "옴", "옴의법칙", "전지", "전류계", "전압계", "도선", "길이", "단면적", "직렬연결", "병렬연결", "전체저항", "콘센트", "자기장", "자기력선", "나침반", "전자석", "코일", "자기력", "전동기", "스위치", "회로", "전기회로", "저항체", "니크롬선", "발광다이오드", "건전지", "감전", "절연체"] },
+  { id:'compo', name:'물질의 구성', sub:'중2 · 원소, 원자, 분자, 이온',
+    words:["원소", "화합물", "원소기호", "화학식", "불꽃반응", "선스펙트럼", "나트륨", "칼륨", "구리", "리튬", "원자", "원자핵", "전자", "양성자", "중성", "분자", "분자식", "물분자", "주기율표", "주기", "족", "원자번호", "금속", "비금속", "광택", "전기전도", "이온", "양이온", "음이온", "전해질", "앙금", "염화은", "황산바륨", "전류", "수용액", "산소", "수소", "탄소", "질소", "철", "금", "은", "염소", "칼슘"] },
+  { id:'light', name:'빛과 파동', sub:'중2 · 반사, 굴절, 거울과 렌즈, 소리',
+    words:["반사", "반사법칙", "입사각", "반사각", "법선", "정반사", "난반사", "굴절", "굴절현상", "신기루", "광원", "상", "실상", "허상", "평면거울", "오목거울", "볼록거울", "도로반사경", "볼록렌즈", "오목렌즈", "돋보기", "근시", "빛의합성", "빛의삼원색", "파동", "파원", "매질", "마루", "골", "진폭", "파장", "진동수", "주기", "헤르츠", "소리의높이", "소리의세기", "음색", "파형", "공기", "진동", "에너지", "스크린", "프리즘"] },
+  { id:'geo', name:'지권의 변화', sub:'중2 · 지권, 광물, 암석, 판',
+    words:["지구계", "지권", "수권", "기권", "생물권", "지각", "맨틀", "외핵", "내핵", "모호면", "시추", "지진파", "운석", "광물", "조암광물", "조흔색", "굳기", "자성", "방해석", "자철석", "석영", "장석", "화성암", "현무암", "화강암", "퇴적암", "층리", "화석", "사암", "석회암", "변성암", "편마암", "대리암", "엽리", "풍화", "토양", "대륙이동설", "베게너", "판게아", "판", "맨틀대류", "발산형경계", "수렴형경계", "보존형경계", "지진", "화산"] },
+  { id:'matter', name:'물질의 특성', sub:'중2 · 밀도, 용해도, 끓는점, 혼합물 분리',
+    words:["물질의특성", "밀도", "질량", "부피", "물넘침법", "눈금실린더", "전자저울", "용해", "용질", "용매", "용액", "용해도", "포화용액", "용해도곡선", "석출", "재결정", "기체용해도", "압력", "온도", "탄산음료", "녹는점", "끓는점", "어는점", "가열곡선", "순물질", "혼합물", "증류", "증류탑", "원유", "분별깔때기", "밀도차", "크로마토그래피", "색소", "거름", "여과", "소금물", "에탄올", "얼음", "기름", "헬륨", "압력솥", "볍씨", "사금"] },
+  { id:'star3', name:'별과 우주', sub:'중3 · 별의 특성, 은하, 우주 탐사',
+    words:["시차", "연주시차", "겉보기등급", "절대등급", "표면온도", "청색별", "붉은색별", "성운", "방출성운", "반사성운", "암흑성운", "성단", "산개성단", "구상성단", "우리은하", "은하수", "나선팔", "막대나선은하", "외부은하", "허블", "우주팽창", "빅뱅우주론", "인공위성", "우주탐사선", "우주망원경", "우주정거장", "탐사로버", "스푸트니크", "아폴로11호", "보이저호", "화성탐사", "위성항법", "형상기억합금", "정수기필터", "에어쿠션", "우주복", "망원경", "별자리", "태양계", "파섹", "광년", "천체", "관측", "우주"] },
+  { id:'energy', name:'에너지 전환과 보존', sub:'중3 · 역학적 에너지와 전기 에너지',
+    words:["위치에너지", "운동에너지", "역학적에너지", "에너지보존", "기준면", "질량", "높이", "속력", "자유낙하", "진자", "롤러코스터", "번지점프", "마찰", "공기저항", "열에너지", "전자기유도", "유도전류", "코일", "자석", "발전기", "전동기", "터빈", "수력발전", "화력발전", "풍력발전", "전기에너지", "빛에너지", "소리에너지", "화학에너지", "소비전력", "전력량", "와트", "와트시", "전등", "전열기", "선풍기", "스피커", "충전", "에너지효율", "전기요금", "발광다이오드", "변환", "일", "중력"] },
+  { id:'sun', name:'태양계', sub:'중1 · 태양계 천체와 지구·달의 운동',
+    words:["태양", "행성", "위성", "소행성", "혜성", "지구형행성", "목성형행성", "광구", "흑점", "쌀알무늬", "코로나", "홍염", "플레어", "태양풍", "오로라", "자기폭풍", "자전", "공전", "일주운동", "연주운동", "황도", "별자리", "삭", "상현달", "망", "하현달", "위상변화", "일식", "월식", "개기일식", "부분월식", "지구", "달", "수성", "금성", "화성", "목성", "토성", "천왕성", "해왕성", "천체망원경", "자전축", "그림자", "태양계", "우주"] },
+  { id:'plant', name:'식물과 에너지', sub:'중2 · 광합성, 호흡, 광합성산물',
+    words:["광합성", "엽록체", "엽록소", "포도당", "녹말", "설탕", "산소", "이산화탄소", "기공", "물관", "체관", "빛에너지", "호흡", "마이토콘드리아", "에너지", "양분", "빛의세기", "온도", "농도", "광합성량", "상추", "검정말", "어둠상자", "에탄올", "아이오딘", "청람색", "탈색", "센서", "LED전등", "가설", "변인통제", "대조실험", "감자", "고구마", "땅콩", "포도", "사탕수수", "당근", "콩", "열대야", "수목원", "스마트팜", "잎세포", "뿌리", "줄기"] },
+  { id:'animal', name:'동물과 에너지', sub:'중2 · 소화, 순환, 호흡, 배설',
+    words:["탄수화물", "단백질", "지방", "무기염류", "바이타민", "포도당", "아미노산", "지방산", "녹말", "아이오딘", "베네딕트", "뷰렛", "수단3", "세포", "조직", "기관", "기관계", "개체", "소화효소", "아밀레이스", "펩신", "트립신", "라이페이스", "쓸개즙", "융털", "암죽관", "소장", "간", "이자", "위", "심장", "동맥", "정맥", "모세혈관", "적혈구", "백혈구", "혈소판", "혈장", "온몸순환", "폐순환", "폐포", "기관지", "횡격막", "들숨", "날숨", "콩팥", "네프론", "사구체", "세뇨관", "방광", "요소", "노폐물"] },
+  { id:'gas', name:'기체의 성질', sub:'중1 · 압력, 보일 법칙, 샤를 법칙',
+    words:["압력", "면적", "기체의압력", "입자", "충돌", "운동", "부피", "온도", "보일법칙", "샤를법칙", "반비례", "비례", "대기압", "수압", "주사기", "피스톤", "압력센서", "그래프", "입자모형", "열기구", "풍선", "뽁뽁이", "공기침대", "과자봉지", "타이어", "축구공", "탁구공", "잠수부", "공기방울", "부레", "스키", "아이젠", "북극곰", "쇠구슬", "페트병", "액체질소", "마시멜로", "감압용기", "에어로켓", "밀폐용기", "달걀", "얼음물", "스포이트", "수은", "유리관"] },
+  { id:'heredity', name:'생식과 유전', sub:'중3 · 세포분열과 멘델 유전',
+    words:['세포분열','체세포분열','감수분열','염색체','염색분체','상동염색체','유전자','DNA','방추사','동원체','간기','세포질분열','생장','재생','2가염색체','생식세포','정자','난자','수정','수정란','난할','배란','착상','태반','발생','형질','순종','잡종','대립형질','우성','열성','분리의법칙','독립의법칙','유전자형','표현형','자가수분','타가수분','완두','가계도','반성유전','색맹','혈액형','상염색체','성염색체','미맹'] },
+  { id:'chem', name:'화학 반응의 규칙', sub:'중3 · 화학 변화와 에너지',
+    words:['물리변화','화학변화','원자','분자','원소','화학식','화학반응식','계수','질량보존법칙','일정성분비법칙','기체반응법칙','앙금생성반응','연소','산화','환원','발열반응','흡열반응','반응물','생성물','부피비','질량비','아보가드로','라부아지에','프루스트','화학에너지','열에너지','온도변화','냉각팩','발열도시락','기체발생','앙금','열분해','전기분해','원자모형','분자모형'] },
+  { id:'motion', name:'운동과 에너지', sub:'중3 · 운동, 일, 역학적 에너지',
+    words:['속력','평균속력','순간속력','등속운동','등속직선운동','자유낙하운동','중력','중력가속도','이동거리','걸린시간','시간기록계','다중섬광사진','질량','무게','일','일률','위치에너지','운동에너지','역학적에너지','에너지보존','기준면','낙하','마찰','빗면','수평면','뉴턴','줄','와트','힘','거리','속력그래프','자유낙하','들어올리기','밀기'] },
+  { id:'nerve', name:'자극과 반응', sub:'중3 · 감각기관과 신경계',
+    words:['감각기관','각막','홍채','동공','수정체','망막','시각세포','맹점','고막','귀속뼈','달팽이관','반고리관','전정기관','후각상피','맛봉오리','피부감각','뉴런','감각뉴런','연합뉴런','운동뉴런','신경계','중추신경','말초신경','대뇌','소뇌','간뇌','중간뇌','연수','척수','무조건반사','의식적반응','호르몬','내분비샘','뇌하수체','갑상샘','이자','인슐린','글루카곤','티록신','항상성'] }
+];
+
+const LS = 'sci-codenames-sets-v1';
+function loadMine(){ try{ return JSON.parse(localStorage.getItem(LS)) || []; }catch(e){ return []; } }
+function saveMine(a){ try{ localStorage.setItem(LS, JSON.stringify(a)); }catch(e){} }
+
+let mine = loadMine();
+let pickedId = BUILTIN[0].id;
+let useTrap = true;
+let editingId = null;
+
+const $ = s => document.querySelector(s);
+const allSets = () => BUILTIN.concat(mine);
+const setById = id => allSets().find(s => s.id === id);
+
+  var SETMETA = {"gas": {"g": "중1", "u": "기체의 성질"}, "sun": {"g": "중1", "u": "태양계"}, "matter": {"g": "중2", "u": "물질의 특성"}, "geo": {"g": "중2", "u": "지권의 변화"}, "light": {"g": "중2", "u": "빛과 파동"}, "compo": {"g": "중2", "u": "물질의 구성"}, "animal": {"g": "중2", "u": "동물과 에너지"}, "plant": {"g": "중2", "u": "식물과 에너지"}, "elec": {"g": "중2", "u": "전기와 자기"}, "star2": {"g": "중2", "u": "별과 우주"}, "heredity": {"g": "중3", "u": "생식과 유전"}, "nerve": {"g": "중3", "u": "자극과 반응"}, "energy": {"g": "중3", "u": "에너지 전환과 보존"}, "star3": {"g": "중3", "u": "별과 우주"}, "chem": {"g": "중3", "u": "화학 반응의 규칙과 에너지 변화"}, "motion": {"g": "중3", "u": "운동과 에너지"}, "sustain": {"g": "중1", "u": "과학과 인류의 지속가능한 삶"}, "cell": {"g": "중1", "u": "생물의 구성과 다양성"}, "heat": {"g": "중1", "u": "열"}, "state": {"g": "중1", "u": "물질의 상태 변화"}, "force": {"g": "중1", "u": "힘의 작용"}, "air": {"g": "중3", "u": "기권과 날씨"}};
+  var fGrade = "전체", fQuery = "";
+  var FGRADES = ["전체","중1","중2","중3","내 세트"];
+  function metaOf(s){ return SETMETA[s.id] || {g:"내 세트", u:"내가 만든 세트"}; }
+  function setHay(s){
+    var extra = "";
+    if(s.words) extra = s.words.join(" ");
+    else if(s.items) extra = s.items.map(function(i){ return i[0] + " " + (i[1]||[]).join(" "); }).join(" ");
+    var m = metaOf(s);
+    return (s.name + " " + (s.sub||"") + " " + m.g + " " + m.u + " " + extra).toLowerCase();
+  }
+  function filteredSets(){
+    var q = fQuery.trim().toLowerCase();
+    return allSets().filter(function(s){
+      var m = metaOf(s);
+      if(fGrade !== "전체" && m.g !== fGrade) return false;
+      if(q && setHay(s).indexOf(q) < 0) return false;
+      return true;
+    });
+  }
+  function ensureFilterBar(){
+    var box = document.getElementById("sets");
+    var bar = document.getElementById("setFilter");
+    if(!bar){
+      bar = document.createElement("div");
+      bar.id = "setFilter";
+      bar.innerHTML = '<div class="fchips"></div>' +
+        '<label class="fsearch"><span>검색</span>' +
+        '<input type="text" id="setSearch" placeholder="단원·용어로 찾기 (예: 광합성, 전류, 보일)" autocomplete="off"></label>';
+      box.parentNode.insertBefore(bar, box);
+      bar.querySelector("#setSearch").addEventListener("input", function(e){
+        fQuery = e.target.value; renderSets();
+      });
+    }
+    var chips = bar.querySelector(".fchips");
+    chips.innerHTML = "";
+    FGRADES.forEach(function(g){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "fchip"; b.textContent = g;
+      b.setAttribute("aria-pressed", String(fGrade === g));
+      b.onclick = function(){ fGrade = g; renderSets(); };
+      chips.appendChild(b);
+    });
+  }
+
+
+/* ---------------- 설정 화면 ---------------- */
+function renderSets(){
+  const box = $('#sets'); box.innerHTML = '';
+    ensureFilterBar();
+    const list = filteredSets();
+    if(list.length && !list.some(function(x){return x.id===pickedId;})) pickedId = list[0].id;
+    if(!list.length){ box.innerHTML = '<p class=\"fnone\">찾는 세트가 없습니다. 검색어를 지우거나 다른 학년을 눌러 보세요.</p>'; return; }
+  list.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'set'; b.setAttribute('aria-pressed', s.id === pickedId);
+    b.innerHTML = `<b></b><span></span>`;
+    b.querySelector('b').textContent = s.name;
+    b.querySelector('span').textContent = (s.sub ? s.sub + ' · ' : '') + s.words.length + '개';
+    b.onclick = () => { pickedId = s.id; renderSets(); };
+    if(!BUILTIN.some(x => x.id === s.id)){
+      const t = document.createElement('span'); t.className = 'setbtns';
+      const e = document.createElement('button'); e.className='mini'; e.textContent='수정'; e.title='수정';
+      e.onclick = ev => { ev.stopPropagation(); openEdit(s.id); };
+      const d = document.createElement('button'); d.className='mini'; d.textContent='삭제'; d.title='삭제';
+      d.onclick = ev => {
+        ev.stopPropagation();
+        if(confirm(`"${s.name}" 세트를 삭제할까요?`)){
+          mine = mine.filter(x => x.id !== s.id); saveMine(mine);
+          if(pickedId === s.id) pickedId = BUILTIN[0].id;
+          renderSets();
+        }
+      };
+      t.append(e, d); b.append(t);
+    }
+    box.append(b);
+  });
+  const n = document.createElement('button');
+  n.className = 'set new';
+  n.innerHTML = `<b>+ 내 용어 세트</b><span>이번 차시 용어를 붙여넣어 만들기</span>`;
+  n.onclick = () => openEdit(null);
+  box.append(n);
+  $('#start').disabled = setById(pickedId).words.length < 25;
+}
+
+document.querySelectorAll('#trapOpts .chip').forEach(c => {
+  c.onclick = () => {
+    useTrap = c.dataset.trap === '1';
+    document.querySelectorAll('#trapOpts .chip').forEach(x =>
+      x.setAttribute('aria-pressed', x === c));
+  };
+});
+
+/* ---------------- 내 세트 편집 ---------------- */
+function parseWords(t){
+  return t.split(/[,\n\r;·]+/).map(w => w.trim()).filter(Boolean)
+          .filter((w,i,a) => a.indexOf(w) === i).slice(0,60);
+}
+function openEdit(id){
+  editingId = id;
+  const s = id ? mine.find(x => x.id === id) : null;
+  $('#editTitle').textContent = s ? '세트 수정' : '내 용어 세트 만들기';
+  $('#editName').value = s ? s.name : '';
+  $('#editWords').value = s ? s.words.join(', ') : '';
+  updCount();
+  show('ovEdit');
+}
+function updCount(){
+  const n = parseWords($('#editWords').value).length;
+  $('#editCount').textContent = n < 25
+    ? `${n}개 — 25개는 있어야 판을 채울 수 있어요`
+    : `${n}개 — 좋습니다. 판마다 25개가 무작위로 뽑힙니다`;
+}
+$('#editWords').addEventListener('input', updCount);
+$('#editSave').onclick = () => {
+  const name = $('#editName').value.trim() || '내 용어 세트';
+  const words = parseWords($('#editWords').value);
+  if(words.length < 25){ alert('용어가 ' + words.length + '개입니다. 25개 이상 넣어 주세요.'); return; }
+  if(editingId){
+    const s = mine.find(x => x.id === editingId); s.name = name; s.words = words; s.sub = '내가 만든 세트';
+    pickedId = editingId;
+  }else{
+    const id = 'my' + Date.now();
+    mine.push({ id, name, sub:'내가 만든 세트', words });
+    pickedId = id;
+  }
+  saveMine(mine); renderSets(); hide('ovEdit');
+};
+
+/* ---------------- 게임 상태 ---------------- */
+let G = null;
+const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+function newGame(){
+  const set = setById(pickedId);
+  const words = shuffle(set.words.slice()).slice(0,25);
+  const first = Math.random() < .5 ? 'b' : 'r';
+  const second = first === 'b' ? 'r' : 'b';
+  const owners = [];
+  for(let i=0;i<9;i++) owners.push(first);
+  for(let i=0;i<8;i++) owners.push(second);
+  if(useTrap){ for(let i=0;i<7;i++) owners.push('n'); owners.push('x'); }
+  else { for(let i=0;i<8;i++) owners.push('n'); }
+  shuffle(owners);
+  G = {
+    cards: words.map((w,i) => ({ w, owner: owners[i], done:false })),
+    turn: first, left: { b:(first==='b'?9:8), r:(first==='r'?9:8) },
+    guesses: null, clue: null, over: false
+  };
+  drawGrid(); update(); showScreen('game');
+}
+
+function drawGrid(){
+  const g = $('#grid'); g.innerHTML = '';
+  G.cards.forEach((c,i) => {
+    const b = document.createElement('button');
+    b.className = 'cell'; b.dataset.i = i;
+    b.innerHTML = `<span class="no">${i+1}</span><span class="w"></span>`;
+    b.querySelector('.w').textContent = c.w;
+    b.onclick = () => pick(i);
+    g.append(b);
+  });
+}
+
+function pick(i){
+  const c = G.cards[i];
+  if(G.over || c.done) return;
+  c.done = true;
+  const el = $(`.cell[data-i="${i}"]`);
+  const st = document.createElement('span'); st.className = 'stain';
+  el.prepend(st);
+  el.classList.add('done', c.owner);
+
+  if(c.owner === G.turn) window.KJS&&KJS.ok(); else window.KJS&&KJS.no(c.owner==='x'?{msg:'함정 카드! 다음엔 꼭 피해요 💪'}:{});
+  if(c.owner === 'x'){ update(); return finish(G.turn === 'b' ? 'r' : 'b', '함정 카드를 뽑았습니다'); }
+  if(c.owner === 'b' || c.owner === 'r'){
+    G.left[c.owner]--;
+    if(G.left[c.owner] === 0){ update(); return finish(c.owner, '자기 팀 용어를 모두 찾았습니다'); }
+  }
+  if(c.owner !== G.turn){ endTurn(); }
+  else if(G.guesses !== null){ G.guesses--; if(G.guesses <= 0) endTurn(); }
+  update();
+}
+
+function endTurn(){ G.turn = G.turn === 'b' ? 'r' : 'b'; G.guesses = null; G.clue = null; }
+$('#btnPass').onclick = () => { if(!G.over){ endTurn(); update(); } };
+
+function finish(win, why){
+  G.over = true;
+  window.KJS && KJS.win({ msg: "🏆 " + (win === 'b' ? '파랑팀' : '빨강팀') + " 승리!" });
+  $('#winBig').textContent = (win === 'b' ? '파랑팀' : '빨강팀') + ' 승리';
+  $('#winBig').style.color = win === 'b' ? 'var(--blue)' : 'var(--red)';
+  $('#winWhy').textContent = why;
+  G.cards.forEach((c,i) => {
+    if(!c.done){
+      const el = $(`.cell[data-i="${i}"]`);
+      el.classList.add('done', c.owner);
+      const st = document.createElement('span'); st.className='stain'; st.style.animation='none'; st.style.transform='scale(1)'; st.style.opacity='.45';
+      el.prepend(st);
+    }
+  });
+  setTimeout(() => show('ovWin'), 520);
+}
+
+/* ---------------- 화면 갱신 ---------------- */
+function update(){
+  $('#nb').textContent = G.left.b;
+  $('#nr').textContent = G.left.r;
+  $('#sb').classList.toggle('turn', !G.over && G.turn === 'b');
+  $('#sr').classList.toggle('turn', !G.over && G.turn === 'r');
+  drawClue();
+}
+
+function drawClue(){
+  const bar = $('#clueBar'); bar.innerHTML = '';
+  if(G.over){ bar.innerHTML = '<span class="live">게임 끝 — 정답 카드에서 남은 용어를 함께 정리해 보세요.</span>'; return; }
+  const team = G.turn === 'b' ? '파랑팀' : '빨강팀';
+  const color = G.turn === 'b' ? 'var(--blue)' : 'var(--red)';
+  if(G.clue){
+    const live = document.createElement('span'); live.className = 'live';
+    live.innerHTML = `<span style="color:${color}">${team}</span> · ${G.clue.word} ${G.clue.num}
+      &nbsp;<em>남은 추측 ${G.guesses}회</em>`;
+    const b = document.createElement('button'); b.textContent = '차례 끝';
+    b.onclick = () => { endTurn(); update(); };
+    bar.append(live, b);
+  }else{
+    const lab = document.createElement('span');
+    lab.className = 'live'; lab.style.flex = '0 0 auto'; lab.style.color = color;
+    lab.textContent = team + ' 힌트';
+    const w = document.createElement('input'); w.type='text'; w.placeholder='한 단어'; w.maxLength=20;
+    const n = document.createElement('input'); n.type='number'; n.min=1; n.max=9; n.placeholder='개';
+    const go = document.createElement('button'); go.textContent = '시작';
+    const submit = () => {
+      const num = Math.max(1, Math.min(9, parseInt(n.value || '1', 10)));
+      G.clue = { word: w.value.trim() || '힌트', num };
+      G.guesses = num + 1; update();
+    };
+    go.onclick = submit;
+    [w,n].forEach(el => el.addEventListener('keydown', e => { if(e.key === 'Enter') submit(); }));
+    bar.append(lab, w, n, go);
+  }
+}
+
+/* ---------------- 정답 카드 ---------------- */
+function drawKey(){
+  const g = $('#kgrid'); g.innerHTML = '';
+  G.cards.forEach((c,i) => {
+    const d = document.createElement('div');
+    d.className = 'kc ' + c.owner + (c.done ? ' used' : '');
+    d.innerHTML = `<span class="no">${i+1}</span>`;
+    const s = document.createElement('span'); s.textContent = c.w; d.append(s);
+    g.append(d);
+  });
+  $('#lgTrap').style.display = useTrap ? '' : 'none';
+}
+
+/* ---------------- 화면 전환 ---------------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  window.scrollTo(0,0);
+}
+function show(id){ $('#'+id).classList.add('on'); }
+function hide(id){ $('#'+id).classList.remove('on'); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => hide(b.dataset.close));
+
+$('#start').onclick = newGame;
+$('#howto').onclick = () => show('ovHelp');
+$('#btnHelp').onclick = () => show('ovHelp');
+$('#btnKey').onclick = () => { drawKey(); show('ovKey'); };
+$('#winKey').onclick = () => { drawKey(); hide('ovWin'); show('ovKey'); };
+$('#winAgain').onclick = () => { hide('ovWin'); newGame(); };
+$('#btnNew').onclick = () => { if(G.over || confirm('지금 판을 접고 새로 깔까요?')) newGame(); };
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on'));
+});
+
+renderSets();
+</script>
+
+<script id="kjs-menu-adapter">
+(function(){
+
+function build(){
+  return BUILTIN.filter(function(s){ return SETMETA[s.id]; }).map(function(s){
+    var m = SETMETA[s.id];
+    return { id: s.id, grade: m.g, unit: m.u, title: s.name, mid: m.m || (m.k ? "" : "📘 단원 핵심 문항"), kind: m.k,
+      short: String(s.name).split(" · ")[0],
+      sub: (s.sub ? s.sub + " · " : "") + (s.items ? s.items.length + "문항" : s.words.length + "개 용어"),
+      words: s.items ? s.items.map(function(i){ return i[0] + " " + i[1].join(" "); }) : s.words };
+  });
+}
+KJSMenu.init({ key: "codename", items: build(), extras: ["내 세트"],
+  mount: function(){ return document.getElementById("setFilter") || document.getElementById("sets"); },
+  legacyCss: "#setFilter, #sets", mode: "select", startLabel: "판 깔기",
+  onPick: function(x){ fGrade = "전체"; fQuery = ""; var si = document.getElementById("setSearch"); if (si) si.value = "";
+    pickedId = x.id; renderSets(); },
+  onStart: function(){ document.getElementById("start").click(); },
+  onExtra: function(){ fGrade = "내 세트"; fQuery = ""; renderSets(); },
+  extraNote: "직접 만든 세트를 고르거나 ‘+ 내 세트’로 새로 만드세요. 고른 뒤 아래 시작 버튼을 누릅니다." });
+
+})();
+</script>
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload();
+});
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+</body>
+</html>

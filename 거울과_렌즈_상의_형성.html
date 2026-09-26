@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>거울과 렌즈의 상 형성 (Optics & Ray Tracing) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 모드 탭 바 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 시뮬레이션 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+      cursor: crosshair;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #2563eb; }
+    .dash-card.c2 { border-top: 3px solid #ef4444; }
+    .dash-card.c3 { border-top: 3px solid #10b981; }
+    .dash-card.c4 { border-top: 3px solid #f59e0b; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .slider-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2563eb;
+      cursor: pointer;
+    }
+
+    .preset-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .preset-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-chip:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 420px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>🔍 거울과 렌즈의 상 형성 (Optics & Ray Tracing)</h1>
+      <p>빛의 굴절과 반사 법칙을 이용한 볼록렌즈, 오목렌즈, 평면거울의 실시간 광선 추적 및 상(Image) 작도 가상실험실</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 렌즈와 거울에서 상이 생기는 원리 (광선 작도법)</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🔎 1. 볼록렌즈의 3대 대표 광선과 상의 성질</h4>
+        <ul>
+          <li><strong>광선 1:</strong> 광축에 평행하게 입사한 빛은 렌즈를 통과한 후 반대편 <strong>초점(F)</strong>을 지난다.</li>
+          <li><strong>광선 2:</strong> 렌즈의 <strong>중심(O)</strong>을 지나는 빛은 꺾이지 않고 그대로 직진한다.</li>
+          <li><strong>광선 3:</strong> 앞쪽 초점(F)을 지나 입사한 빛은 렌즈를 지난 후 <strong>광축에 평행</strong>하게 나아간다.</li>
+          <li><strong>물체 위치($d$)에 따른 상:</strong>
+            <br>• $d > 2f$: $f \sim 2f$ 사이에 <strong>축소된 거꾸로 선 실상</strong> (카메라, 사람의 눈)
+            <br>• $d = 2f$: $2f$ 위치에 <strong>같은 크기의 거꾸로 선 실상</strong> (복사기)
+            <br>• $f < d < 2f$: $2f$ 밖에 <strong>확대된 거꾸로 선 실상</strong> (빔프로젝터)
+            <br>• $d < f$: 물체 뒤쪽에 <strong>확대된 똑바로 선 허상</strong> (돋보기)
+          </li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>🪞 2. 오목렌즈와 평면거울</h4>
+        <ul>
+          <li><strong>오목렌즈:</strong> 빛을 퍼뜨리는 렌즈로, 물체의 위치와 관계없이 항상 물체보다 <strong>작고 똑바로 선 허상</strong>이 생깁니다. (근시 교정용 안경)</li>
+          <li><strong>평면거울:</strong> 빛의 반사 법칙(입사각=반사각)에 의해 거울 면을 기준으로 물체와 거울 사이의 거리와 거울과 상 사이의 거리가 같습니다 ($d_o = d_i$).
+            <br>• 상의 크기는 물체와 같고, <strong>좌우가 바뀌어 보이는 똑바로 선 허상</strong>입니다.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 광학 소자 탭 메뉴 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-mode="CONVEX">🔎 볼록렌즈 (Convex Lens)</button>
+    <button class="tab-btn" data-mode="CONCAVE">👓 오목렌즈 (Concave Lens)</button>
+    <button class="tab-btn" data-mode="MIRROR">🪞 평면거울 (Plane Mirror)</button>
+  </div>
+
+  <!-- 메인 시뮬레이션 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl">물체 거리 ($d_o$)</div>
+      <div class="dash-val" id="dispObjDist">180 cm</div>
+      <div class="dash-sub" id="dispObjDistSub">초점거리 f = 80 cm</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl">상의 위치 ($d_i$) & 거리</div>
+      <div class="dash-val" id="dispImgDist">144.0 cm</div>
+      <div class="dash-sub" id="dispImgDistSub">반대편 f와 2f 사이</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl">상의 종류 및 모습</div>
+      <div class="dash-val" id="dispImgNature" style="color:#ef4444; font-size:1.05rem;">축소된 도립 실상</div>
+      <div class="dash-sub" id="dispImgSub">스크린에 실제로 맺히는 상</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl">배율 & 활용 광학 기기</div>
+      <div class="dash-val" id="dispApparatus" style="color:#059669; font-size:1.0rem;">카메라 (배율 0.8x)</div>
+      <div class="dash-sub" id="dispApparatusSub">필름/센서에 축소 촬영</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <!-- 초점거리 슬라이더 -->
+        <div class="slider-box" id="focalSliderBox">
+          <span>초점거리 ($f$):</span>
+          <input type="range" id="focalSlider" min="50" max="120" step="5" value="80">
+          <span id="focalVal" style="color:#2563eb;">80 cm</span>
+        </div>
+
+        <!-- 촛불 크기 슬라이더 -->
+        <div class="slider-box">
+          <span>물체 높이 ($h_o$):</span>
+          <input type="range" id="heightSlider" min="30" max="80" step="5" value="55">
+          <span id="heightVal">55 cm</span>
+        </div>
+
+        <button class="btn-action" id="btnToggleRays">광선 가이드: ON</button>
+      </div>
+
+      <button class="btn-action" id="btnReset">↺ 처음 위치로</button>
+    </div>
+
+    <!-- 볼록렌즈 대표 위치 프리셋 -->
+    <div class="controls-row" id="lensPresetsRow" style="border-top:1px solid #f1f5f9; padding-top:8px;">
+      <div class="preset-chips">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b;">대표 위치 프리셋:</span>
+        <button class="preset-chip" data-preset="camera">📷 2f 밖 (카메라 - 축소된 실상)</button>
+        <button class="preset-chip" data-preset="copier">📠 2f 지점 (복사기 - 같은 크기 실상)</button>
+        <button class="preset-chip" data-preset="projector">📽️ f ~ 2f 사이 (프로젝터 - 확대된 실상)</button>
+        <button class="preset-chip" data-preset="loupe">🔍 f 안쪽 (돋보기 - 확대된 허상)</button>
+      </div>
+      <div style="font-size:0.75rem; color:#94a3b8;">
+        * 캔버스 위의 빨간 촛불 물체를 마우스/터치로 직접 잡고 좌우로 드래그할 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 광학 모드: "CONVEX", "CONCAVE", "MIRROR"
+  let currentMode = "CONVEX";
+  let showRays = true;
+
+  // 광학 파라미터 (단위: 픽셀, 화면 1cm ≈ 1.2px)
+  let focalLength = 100; // 초점거리 f
+  let objectHeight = 65; // 물체 높이 ho
+  let objectX = 0;       // 렌즈 기준 물체 x 거리 (음수: 좌측)
+
+  // 드래그 상태
+  let isDraggingObject = false;
+
+  // DOM 요소 참조
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const focalSliderBox = document.getElementById("focalSliderBox");
+  const focalSlider = document.getElementById("focalSlider");
+  const focalVal = document.getElementById("focalVal");
+  const heightSlider = document.getElementById("heightSlider");
+  const heightVal = document.getElementById("heightVal");
+  const btnToggleRays = document.getElementById("btnToggleRays");
+  const btnReset = document.getElementById("btnReset");
+  const lensPresetsRow = document.getElementById("lensPresetsRow");
+  const presetChips = document.querySelectorAll(".preset-chip");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const dispObjDist = document.getElementById("dispObjDist");
+  const dispObjDistSub = document.getElementById("dispObjDistSub");
+  const dispImgDist = document.getElementById("dispImgDist");
+  const dispImgDistSub = document.getElementById("dispImgDistSub");
+  const dispImgNature = document.getElementById("dispImgNature");
+  const dispImgSub = document.getElementById("dispImgSub");
+  const dispApparatus = document.getElementById("dispApparatus");
+  const dispApparatusSub = document.getElementById("dispApparatusSub");
+
+  function resetPositions() {
+    focalLength = 100;
+    objectHeight = 65;
+    focalSlider.value = 80;
+    focalVal.textContent = "80 cm";
+    heightSlider.value = 55;
+    heightVal.textContent = "55 cm";
+
+    if (currentMode === "CONVEX") {
+      objectX = -220; // 2f(=200) 밖: 카메라 모드
+    } else if (currentMode === "CONCAVE") {
+      objectX = -180;
+    } else {
+      objectX = -160;
+    }
+    updateDashboard();
+  }
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (objectX === 0) resetPositions();
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // --- 렌즈 공식 계산 (1/f = 1/do + 1/di) ---
+  function computeOptics() {
+    const doVal = Math.abs(objectX); // 물체 거리 (양수)
+    let f = focalLength;
+    let di = 0;
+    let hi = 0;
+    let isReal = true;
+    let mag = 1.0;
+
+    if (currentMode === "CONVEX") {
+      if (Math.abs(doVal - f) < 1.0) {
+        di = Infinity;
+        mag = Infinity;
+      } else {
+        // 1/di = 1/f - 1/do = (do - f) / (f * do)
+        di = (f * doVal) / (doVal - f);
+        mag = Math.abs(di / doVal);
+        hi = -objectHeight * (di / doVal); // 렌즈 공식 부호
+        isReal = di > 0;
+      }
+    } else if (currentMode === "CONCAVE") {
+      // f < 0
+      // 1/di = -1/f - 1/do
+      di = -(f * doVal) / (f + doVal);
+      mag = Math.abs(di / doVal);
+      hi = objectHeight * mag;
+      isReal = false;
+    } else if (currentMode === "MIRROR") {
+      di = -doVal;
+      mag = 1.0;
+      hi = objectHeight;
+      isReal = false;
+    }
+
+    return { doVal, di, hi, mag, isReal };
+  }
+
+  // --- 대시보드 갱신 ---
+  function updateDashboard() {
+    const { doVal, di, hi, mag, isReal } = computeOptics();
+    const scale = 1.0; // 픽셀 -> cm 변환 표시
+
+    dispObjDist.textContent = `${Math.round(doVal * scale)} cm`;
+    dispObjDistSub.textContent = currentMode === "MIRROR" ? "거울과 물체 사이 거리" : `초점거리 f = ${Math.round(focalLength * scale)} cm`;
+
+    if (currentMode === "MIRROR") {
+      dispImgDist.textContent = `${Math.round(doVal * scale)} cm (거울 뒤)`;
+      dispImgDistSub.textContent = "거울면 대칭 위치";
+      dispImgNature.textContent = "같은 크기의 정립 허상";
+      dispImgNature.style.color = "#2563eb";
+      dispImgSub.textContent = "좌우가 바뀌어 보이는 상";
+      dispApparatus.textContent = "평면거울 (배율 1.0x)";
+      dispApparatusSub.textContent = "일상 속 전신거울, 욕실 거울";
+      return;
+    }
+
+    if (currentMode === "CONCAVE") {
+      dispImgDist.textContent = `${Math.abs(Math.round(di * scale))} cm (렌즈 앞)`;
+      dispImgDistSub.textContent = "항상 렌즈와 초점(F) 사이";
+      dispImgNature.textContent = "축소된 정립 허상";
+      dispImgNature.style.color = "#0284c7";
+      dispImgSub.textContent = "빛이 퍼져 렌즈 안을 봐야 보임";
+      dispApparatus.textContent = `근시 교정용 안경 (${mag.toFixed(2)}x)`;
+      dispApparatusSub.textContent = "오목렌즈 (빛을 분산)";
+      return;
+    }
+
+    // 볼록렌즈 (CONVEX)
+    const f = focalLength;
+    if (!isFinite(di)) {
+      dispImgDist.textContent = "무한대 (∞)";
+      dispImgDistSub.textContent = "초점 위치 (빛이 평행하게 나아감)";
+      dispImgNature.textContent = "상이 맺히지 않음";
+      dispImgNature.style.color = "#64748b";
+      dispImgSub.textContent = "초점에 광원을 놓으면 탐조등/손전등";
+      dispApparatus.textContent = "등대 / 탐조등 광원";
+      dispApparatusSub.textContent = "빛을 평행하게 멀리 보냄";
+    }
+    else if (isReal) {
+      dispImgDist.textContent = `${Math.round(di * scale)} cm (렌즈 뒤)`;
+      dispImgNature.style.color = "#ef4444";
+
+      if (doVal > 2 * f) {
+        dispImgDistSub.textContent = "반대편 f ~ 2f 사이";
+        dispImgNature.textContent = "축소된 도립 실상";
+        dispImgSub.textContent = "스크린/센서에 작게 거꾸로 맺힘";
+        dispApparatus.textContent = `카메라 / 사람의 눈 (${mag.toFixed(2)}x)`;
+        dispApparatusSub.textContent = "멀리 있는 물체를 센서에 축소 결상";
+      } else if (Math.abs(doVal - 2 * f) < 4) {
+        dispImgDistSub.textContent = "반대편 정확히 2f 지점";
+        dispImgNature.textContent = "같은 크기의 도립 실상";
+        dispImgSub.textContent = "물체와 상의 크기가 1:1로 동일";
+        dispApparatus.textContent = "복사기 (1.0x 동일 배율)";
+        dispApparatusSub.textContent = "원고를 동일한 크기로 스캔";
+      } else {
+        dispImgDistSub.textContent = "반대편 2f 바깥쪽";
+        dispImgNature.textContent = "확대된 도립 실상";
+        dispImgSub.textContent = "스크린에 크게 거꾸로 맺힘";
+        dispApparatus.textContent = `빔프로젝터 / 영화 영사기 (${mag.toFixed(2)}x)`;
+        dispApparatusSub.textContent = "스크린에 대형 화면 투영";
+      }
+    }
+    else {
+      // 허상 (d < f)
+      dispImgDist.textContent = `${Math.abs(Math.round(di * scale))} cm (렌즈 앞)`;
+      dispImgDistSub.textContent = "물체보다 더 뒤쪽에 위치";
+      dispImgNature.textContent = "확대된 정립 허상";
+      dispImgNature.style.color = "#2563eb";
+      dispImgSub.textContent = "렌즈를 직접 들여다보아야 보임";
+      dispApparatus.textContent = `돋보기 / 현미경 접안렌즈 (${mag.toFixed(2)}x)`;
+      dispApparatusSub.textContent = "물체를 크고 바로 세워 관찰";
+    }
+  }
+
+  // ==========================================================================
+  // [렌더링 엔진]
+  // ==========================================================================
+  function renderAll() {
+    ctx.clearRect(0, 0, width, height);
+
+    const centerX = width / 2;
+    const axisY = height / 2;
+
+    // 1. 광축 (Principal Axis) 가이드선
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(30, axisY);
+    ctx.lineTo(width - 30, axisY);
+    ctx.stroke();
+
+    // 광축 눈금선 (50px 간격)
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "center";
+    for (let gx = centerX - 400; gx <= centerX + 400; gx += 50) {
+      ctx.fillRect(gx, axisY - 3, 1, 6);
+    }
+
+    if (currentMode === "MIRROR") {
+      renderPlaneMirror(centerX, axisY);
+    } else {
+      renderLens(centerX, axisY);
+    }
+  }
+
+  // --- 렌즈 모드 렌더링 (볼록 / 오목) ---
+  function renderLens(cx, cy) {
+    const f = focalLength;
+    const { doVal, di, hi, mag, isReal } = computeOptics();
+
+    // 1. 초점 마커 표시 (F, 2F 좌우 양쪽)
+    drawFocalPoint(cx - f, cy, "F");
+    drawFocalPoint(cx - 2 * f, cy, "2F");
+    drawFocalPoint(cx + f, cy, "F'");
+    drawFocalPoint(cx + 2 * f, cy, "2F'");
+
+    // 2. 렌즈 유리 본체 렌더링
+    drawLensBody(cx, cy, currentMode === "CONVEX");
+
+    // 3. 물체 (촛불/화살표) 렌더링 (좌측, objectX)
+    const objPx = cx + objectX;
+    drawCandle(objPx, cy, objectHeight, true, "물체 (Object)");
+
+    // 4. 상 (Image) 렌더링
+    if (isFinite(di)) {
+      const imgPx = cx + di;
+      const imgH = -hi; // 캔버스 Y좌표계 보정
+      drawImageCandle(imgPx, cy, imgH, isReal, isReal ? "실상 (Real)" : "허상 (Virtual)");
+    }
+
+    // 5. 3대 대표 광선 추적 (Ray Tracing)
+    if (showRays) {
+      drawRayTracing(cx, cy, objPx, objectHeight, di, hi, isReal);
+    }
+  }
+
+  function drawLensBody(cx, cy, isConvex) {
+    ctx.save();
+    const lensH = 300;
+    const lensW = 28;
+
+    ctx.fillStyle = "rgba(186, 230, 253, 0.4)";
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 2.5;
+
+    ctx.beginPath();
+    if (isConvex) {
+      // 볼록렌즈 형태 (양쪽 볼록 호)
+      ctx.moveTo(cx, cy - lensH / 2);
+      ctx.quadraticCurveTo(cx + lensW, cy, cx, cy + lensH / 2);
+      ctx.quadraticCurveTo(cx - lensW, cy, cx, cy - lensH / 2);
+    } else {
+      // 오목렌즈 형태 (양쪽 오목)
+      ctx.moveTo(cx - lensW / 2, cy - lensH / 2);
+      ctx.lineTo(cx + lensW / 2, cy - lensH / 2);
+      ctx.quadraticCurveTo(cx + 4, cy, cx + lensW / 2, cy + lensH / 2);
+      ctx.lineTo(cx - lensW / 2, cy + lensH / 2);
+      ctx.quadraticCurveTo(cx - 4, cy, cx - lensW / 2, cy - lensH / 2);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 렌즈 중심축 점선
+    ctx.strokeStyle = "rgba(2, 132, 199, 0.5)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - lensH / 2 - 15);
+    ctx.lineTo(cx, cy + lensH / 2 + 15);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#0369a1";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(isConvex ? "볼록렌즈" : "오목렌즈", cx, cy - lensH / 2 - 22);
+
+    ctx.restore();
+  }
+
+  function drawFocalPoint(x, y, label) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#2563eb";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#1e40af";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, x, y + 18);
+    ctx.restore();
+  }
+
+  // 촛불 물체 그리기
+  function drawCandle(x, cy, h, isDraggable, label) {
+    ctx.save();
+
+    // 드래그 유도 링
+    if (isDraggable) {
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.35)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, cy - h - 14, 18, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // 초 기둥
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(x - 6, cy - h, 12, h);
+    ctx.strokeStyle = "#991b1b";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - 6, cy - h, 12, h);
+
+    // 심지
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, cy - h);
+    ctx.lineTo(x, cy - h - 6);
+    ctx.stroke();
+
+    // 불꽃
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.moveTo(x - 5, cy - h - 6);
+    ctx.quadraticCurveTo(x - 7, cy - h - 16, x, cy - h - 22);
+    ctx.quadraticCurveTo(x + 7, cy - h - 16, x + 5, cy - h - 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // 속불꽃
+    ctx.fillStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.arc(x, cy - h - 7, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 라벨
+    ctx.fillStyle = "#ef4444";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, x, cy + 22);
+
+    ctx.restore();
+  }
+
+  // 상 (Image) 촛불 그리기
+  function drawImageCandle(x, cy, signedH, isReal, label) {
+    ctx.save();
+
+    const isUpright = signedH > 0;
+    const absH = Math.abs(signedH);
+    const topY = isUpright ? cy - absH : cy + absH;
+
+    // 허상인 경우 반투명 + 점선
+    if (!isReal) {
+      ctx.globalAlpha = 0.65;
+    }
+
+    // 초 기둥
+    ctx.fillStyle = isReal ? "#10b981" : "#0284c7";
+    const bodyTop = isUpright ? cy - absH : cy;
+    ctx.fillRect(x - 5, bodyTop, 10, absH);
+
+    // 불꽃
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    if (isUpright) {
+      ctx.moveTo(x - 4, cy - absH - 4);
+      ctx.quadraticCurveTo(x - 6, cy - absH - 12, x, cy - absH - 18);
+      ctx.quadraticCurveTo(x + 6, cy - absH - 12, x + 4, cy - absH - 4);
+    } else {
+      ctx.moveTo(x - 4, cy + absH + 4);
+      ctx.quadraticCurveTo(x - 6, cy + absH + 12, x, cy + absH + 18);
+      ctx.quadraticCurveTo(x + 6, cy + absH + 12, x + 4, cy + absH + 4);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // 라벨
+    ctx.fillStyle = isReal ? "#059669" : "#0369a1";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, x, isUpright ? cy + 22 : cy - 12);
+
+    ctx.restore();
+  }
+
+  // 3대 대표 광선 추적 (Ray Tracing) 작도
+  function drawRayTracing(cx, cy, ox, ho, di, hi, isReal) {
+    ctx.save();
+    const f = focalLength;
+    const flameY = cy - ho - 12; // 촛불 끝 좌표
+
+    // ==========================================
+    // 광선 1 (빨간색): 광축에 평행 입사 -> 초점(F) 통과
+    // ==========================================
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 2;
+
+    // 1-1. 물체 불꽃 -> 렌즈 중심축
+    ctx.beginPath();
+    ctx.moveTo(ox, flameY);
+    ctx.lineTo(cx, flameY);
+    ctx.stroke();
+
+    // 1-2. 렌즈 -> 굴절 광선
+    if (currentMode === "CONVEX") {
+      ctx.beginPath();
+      ctx.moveTo(cx, flameY);
+      // 반대편 초점 (cx + f, cy)을 통과하는 연장선
+      const slope = (cy - flameY) / f;
+      const targetX = width - 20;
+      ctx.lineTo(targetX, flameY + slope * (targetX - cx));
+      ctx.stroke();
+
+      // 허상인 경우 뒤쪽 연장 점선
+      if (!isReal) {
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, flameY);
+        ctx.lineTo(cx + di, cy - hi - 12);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    } else if (currentMode === "CONCAVE") {
+      // 오목렌즈: 앞쪽 초점(cx - f, cy)으로부터 퍼져나가는 방향
+      const slope = (flameY - cy) / f;
+      ctx.beginPath();
+      ctx.moveTo(cx, flameY);
+      ctx.lineTo(width - 20, flameY + slope * (width - 20 - cx));
+      ctx.stroke();
+
+      // 앞쪽 초점으로의 점선 연장
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, flameY);
+      ctx.lineTo(cx - f, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ==========================================
+    // 광선 2 (파란색): 렌즈 중심(O) 통과 -> 직진
+    // ==========================================
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = 2;
+
+    const slopeCenter = (cy - flameY) / (cx - ox);
+    ctx.beginPath();
+    ctx.moveTo(ox, flameY);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(width - 20, cy + slopeCenter * (width - 20 - cx));
+    ctx.stroke();
+
+    // 허상인 경우 뒤쪽 연장 점선
+    if (!isReal) {
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.4)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + di, cy - hi - 12);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
+  // --- 평면거울 모드 렌더링 ---
+  function renderPlaneMirror(cx, cy) {
+    const doVal = Math.abs(objectX);
+    const ox = cx + objectX;
+    const ix = cx + doVal; // 거울 뒤 대칭 위치
+
+    // 1. 평면거울 수직면 렌더링
+    ctx.save();
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 150);
+    ctx.lineTo(cx, cy + 150);
+    ctx.stroke();
+
+    // 거울 뒷면 빗금 (은도금 반사면 표시)
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1.5;
+    for (let my = cy - 140; my <= cy + 140; my += 14) {
+      ctx.beginPath();
+      ctx.moveTo(cx, my);
+      ctx.lineTo(cx + 10, my + 8);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#0369a1";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("평면거울 (반사면)", cx, cy - 165);
+
+    // 2. 물체 촛불
+    drawCandle(ox, cy, objectHeight, true, "물체 (촛불)");
+
+    // 3. 거울 뒤 상 (대칭 허상)
+    drawImageCandle(ix, cy, objectHeight, false, "허상 (Image)");
+
+    // 4. 반사의 법칙 광선 추적 (입사각 = 반사각)
+    if (showRays) {
+      const flameY = cy - objectHeight - 12;
+
+      // 광선 A (수직 입사 -> 수직 반사)
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ox, flameY);
+      ctx.lineTo(cx, flameY);
+      ctx.stroke();
+
+      // 거울 뒤 점선 연장
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, flameY);
+      ctx.lineTo(ix, flameY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 광선 B (경사 입사 -> 반사각으로 반사)
+      const hitY = cy + 40;
+      ctx.strokeStyle = "#2563eb";
+      ctx.beginPath();
+      ctx.moveTo(ox, flameY);
+      ctx.lineTo(cx, hitY);
+      // 반사 광선
+      const slopeB = (hitY - flameY) / (cx - ox);
+      ctx.lineTo(ox - 60, hitY + slopeB * (ox - 60 - cx));
+      ctx.stroke();
+
+      // 거울 뒤 점선 연장 (상으로 수렴)
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.4)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, hitY);
+      ctx.lineTo(ix, flameY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 거리 등호선 표시 ($d_o = d_i$)
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath();
+    ctx.moveTo(ox, cy + 50);
+    ctx.lineTo(cx, cy + 50);
+    ctx.moveTo(cx, cy + 50);
+    ctx.lineTo(ix, cy + 50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#475569";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`거리 d = ${Math.round(doVal)} cm`, (ox + cx) / 2, cy + 44);
+    ctx.fillText(`거리 d = ${Math.round(doVal)} cm`, (cx + ix) / 2, cy + 44);
+
+    ctx.restore();
+  }
+
+  // --- 마우스/터치 인터랙션 ---
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+
+  function handlePointerDown(e) {
+    const { x, y } = getCanvasCoords(e);
+    const objPx = width / 2 + objectX;
+    const cy = height / 2;
+
+    // 촛불 불꽃 주변 클릭 감지
+    const dist = Math.hypot(x - objPx, y - (cy - objectHeight - 12));
+    if (dist < 45 || (Math.abs(x - objPx) < 25 && y >= cy - objectHeight - 20 && y <= cy + 10)) {
+      isDraggingObject = true;
+    }
+  }
+
+  function handlePointerMove(e) {
+    if (!isDraggingObject) return;
+    const { x } = getCanvasCoords(e);
+    const cx = width / 2;
+
+    // 렌즈 앞(좌측)으로 제한
+    const maxLeftDist = width * 0.45;
+    const minLeftDist = currentMode === "MIRROR" ? 30 : 25;
+
+    const newDist = Math.max(minLeftDist, Math.min(maxLeftDist, cx - x));
+    objectX = -newDist;
+
+    updateDashboard();
+  }
+
+  function handlePointerUp() {
+    isDraggingObject = false;
+  }
+
+  canvas.addEventListener("mousedown", handlePointerDown);
+  window.addEventListener("mousemove", handlePointerMove);
+  window.addEventListener("mouseup", handlePointerUp);
+
+  canvas.addEventListener("touchstart", e => { handlePointerDown(e); e.preventDefault(); }, { passive: false });
+  window.addEventListener("touchmove", e => { if (isDraggingObject) { handlePointerMove(e); e.preventDefault(); } }, { passive: false });
+  window.addEventListener("touchend", handlePointerUp);
+
+  // --- 슬라이더 & 컨트롤 이벤트 ---
+  focalSlider.addEventListener("input", e => {
+    focalLength = parseInt(e.target.value);
+    focalVal.textContent = focalLength + " cm";
+    updateDashboard();
+  });
+
+  heightSlider.addEventListener("input", e => {
+    objectHeight = parseInt(e.target.value);
+    heightVal.textContent = objectHeight + " cm";
+    updateDashboard();
+  });
+
+  btnToggleRays.addEventListener("click", () => {
+    showRays = !showRays;
+    btnToggleRays.textContent = showRays ? "광선 가이드: ON" : "광선 가이드: OFF";
+  });
+
+  btnReset.addEventListener("click", () => resetPositions());
+
+  // 탭 전환
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentMode = btn.dataset.mode;
+
+      if (currentMode === "MIRROR") {
+        focalSliderBox.style.display = "none";
+        lensPresetsRow.style.display = "none";
+      } else {
+        focalSliderBox.style.display = "flex";
+        lensPresetsRow.style.display = currentMode === "CONVEX" ? "flex" : "none";
+      }
+      resetPositions();
+    });
+  });
+
+  // 볼록렌즈 대표 위치 프리셋
+  presetChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      const p = chip.dataset.preset;
+      const f = focalLength;
+      if (p === "camera") objectX = -2.4 * f;
+      else if (p === "copier") objectX = -2.0 * f;
+      else if (p === "projector") objectX = -1.45 * f;
+      else if (p === "loupe") objectX = -0.55 * f;
+      updateDashboard();
+    });
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  // 애니메이션 루프
+  function animate() {
+    renderAll();
+    requestAnimationFrame(animate);
+  }
+
+  resizeCanvas();
+  resetPositions();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

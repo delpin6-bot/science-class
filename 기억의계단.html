@@ -1,0 +1,1639 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+  #stairFilter{margin:0 0 16px;}
+  #stairFilter .fchips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
+  #stairFilter .fchip{border:1px solid var(--line,#31474a); background:var(--surface-2,#17262a);
+    color:var(--ink,#e8f0ee); border-radius:999px; padding:7px 14px; font:inherit; font-size:13.5px;
+    font-weight:700; cursor:pointer;}
+  #stairFilter .fchip[aria-pressed="true"]{background:var(--accent,#e8a33c); color:#17211d; border-color:var(--accent,#e8a33c);}
+  #stairFilter .fsearch{display:flex; align-items:center; gap:8px; border:1px solid var(--line,#31474a);
+    background:var(--surface-2,#17262a); border-radius:10px; padding:0 12px;}
+  #stairFilter .fsearch span{font-size:13px; opacity:.6; white-space:nowrap;}
+  #stairFilter .fsearch input{flex:1; border:0; outline:0; background:transparent; font:inherit;
+    font-size:14px; padding:9px 0; color:inherit;}
+  .fnone{grid-column:1/-1; font-size:14px; opacity:.75;}
+</style><script id="kjs-menu-lib">
+/* 수업 게임 서랍 · 공통 메뉴 (학년 → 대단원 → 중단원·차시, 검색)
+   KJSMenu.init({
+     key, items:[{id, grade, unit, mid, title, sub, kind:'unit'|'mid'|'lesson', words:[], tags:[]}],
+     extras:['내 세트'],            // 누르면 게임의 원래 선택 화면(내가 만든 목록)을 보여 줌
+     mount: Element,                // 이 요소 앞에 메뉴를 넣음
+     legacyCss: 'selector, ...',    // 메뉴가 켜져 있을 때 숨길 원래 선택 UI
+     isVisible: () => bool,         // 선택 화면일 때만 메뉴 표시 (생략 가능)
+     observe: Element,              // 화면이 바뀌는지 지켜볼 요소 (생략 가능)
+     mode: 'start' | 'select',      // start: 누르면 바로 시작 / select: 고른 뒤 ▶ 시작
+     onPick(item), onStart(item), startLabel
+   })
+*/
+(function(){
+  var ORDER = {
+    "중1": ["과학과 인류의 지속가능한 삶","생물의 구성과 다양성","열","물질의 상태 변화","힘의 작용","기체의 성질","태양계"],
+    "중2": ["물질의 특성","지권의 변화","빛과 파동","물질의 구성","식물과 에너지","동물과 에너지","전기와 자기","별과 우주"],
+    "중3": ["화학 반응의 규칙과 에너지 변화","기권과 날씨","운동과 에너지","자극과 반응","생식과 유전","에너지 전환과 보존","별과 우주"]
+  };
+  var CSS = [
+    ".km{background:#fff;color:#1b2b2a;border:1.5px solid #dfe3de;border-radius:16px;padding:0 14px 14px;margin:12px 0 16px;",
+    " font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',system-ui,sans-serif;text-align:left;line-height:1.45}",
+    ".km *{box-sizing:border-box}",
+    ".km-nav{position:sticky;top:0;z-index:30;background:#fff;padding:12px 0 10px;border-bottom:1px solid #e6e9e4;border-radius:16px 16px 0 0}",
+    ".km-search{display:flex;align-items:center;gap:8px;background:#f5f7f4;border:1.5px solid #dfe3de;border-radius:12px;padding:0 12px;margin-bottom:8px}",
+    ".km-search:focus-within{border-color:#0CA678;background:#fff}",
+    ".km-search input{flex:1;min-width:0;border:0!important;box-shadow:none!important;outline:0;background:transparent;font:inherit;font-size:16px;padding:10px 0;color:#1b2b2a}",
+    ".km-search button{border:0;background:transparent;font-size:15px;cursor:pointer;color:#6b7672;padding:4px}",
+    ".km-row{display:flex;align-items:flex-start;gap:10px;margin-top:6px}",
+    ".km-row[hidden]{display:none!important}",
+    ".km-lab{flex:none;width:58px;padding-top:7px;font-size:12.5px;font-weight:800;color:#6b7672}",
+    ".km-chips{display:flex;gap:6px;flex-wrap:wrap}",
+    ".km-row>.km-scroll,.km-row>.km-chips{min-width:0;flex:1 1 auto}",
+    ".km-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}",
+    ".km-chip{flex:none;border:1px solid #dfe3de;background:#fff;color:#1b2b2a;border-radius:9px;padding:7px 13px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}",
+    ".km-chip.g[aria-pressed=true]{background:#1b2b2a;color:#fff;border-color:#1b2b2a}",
+    ".km-chip.u[aria-pressed=true]{background:#0CA678;color:#fff;border-color:#0CA678}",
+    ".km-chip.j{font-size:12.5px;padding:5px 10px;border-radius:999px}",
+    ".km-chip.j.m{border-color:#7048E8;color:#5f3dc4}.km-chip.j.un{border-color:#0CA678;color:#0b7a5a}",
+    ".km-sel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;padding:9px 12px;background:#fff8e1;border:1px solid #f3d27a;border-radius:10px;font-size:14px}",
+    ".km-sel[hidden]{display:none!important}",
+    ".km-sel b{font-weight:800}",
+    ".km-go{border:0;background:#1b2b2a;color:#fff;border-radius:9px;padding:8px 16px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-left:auto}",
+    ".km-body{padding-top:6px}",
+    ".km-uh{font-size:14px;font-weight:800;color:#6b7672;margin:14px 0 8px;display:flex;align-items:center;gap:8px}",
+    ".km-uh::after{content:'';flex:1;height:1px;background:#e6e9e4}",
+    ".km-mh{font-size:13.5px;font-weight:800;margin:14px 0 8px 2px;scroll-margin-top:200px}",
+    ".km-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}",
+    ".km-card{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e1e5e0;border-radius:14px;padding:13px 15px;cursor:pointer;font:inherit;color:#1b2b2a;scroll-margin-top:200px;transition:border-color .12s,box-shadow .12s}",
+    ".km-card:hover{border-color:#0CA678;box-shadow:0 4px 14px rgba(0,0,0,.06)}",
+    ".km-card[aria-pressed=true]{border-color:#e8900c;box-shadow:0 0 0 3px #ffe8b0}",
+    ".km-card .k{font-size:12px;font-weight:800;color:#e8900c}",
+    ".km-card .w{font-size:12px;font-weight:800;color:#6b7672}",
+    ".km-card .t{display:block;font-size:17px;font-weight:800;margin:2px 0 3px;letter-spacing:-.01em}",
+    ".km-card .s{display:block;font-size:13px;color:#6b7672}",
+    ".km-card .h{display:block;font-size:12.5px;color:#6b7672;margin-top:5px}",
+    ".km-card.unit{background:linear-gradient(135deg,#eef6f2,#fff);border-color:#0CA678;grid-column:1/-1}",
+    ".km-card.unit .k{color:#0b7a5a}",
+    ".km-card.mid{background:linear-gradient(135deg,#f3f0fb,#fff);border-color:#7048E8;grid-column:1/-1}",
+    ".km-card.mid .k{color:#5f3dc4}",
+    ".km-hit{background:#fff3bf;border-radius:3px}",
+    ".km-empty{color:#6b7672;padding:16px 4px}",
+    ".km-note{font-size:13px;color:#6b7672;margin:8px 2px}",
+    "@media (max-width:640px){.km{padding:0 10px 12px}.km-row{flex-direction:column;gap:4px}.km-lab{width:auto;padding-top:0}.km-grid{grid-template-columns:1fr}.km-mh,.km-card{scroll-margin-top:260px}}",
+    "@media print{.km{display:none!important}}"
+  ].join("\n");
+
+  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function nrm(s){ return String(s || "").toLowerCase().replace(/\s+/g, ""); }
+  function mark(text, q){
+    var t = String(text), i = t.toLowerCase().indexOf(q.toLowerCase());
+    if (!q || i < 0) return esc(t);
+    return esc(t.slice(0, i)) + '<span class="km-hit">' + esc(t.slice(i, i + q.length)) + "</span>" + esc(t.slice(i + q.length));
+  }
+
+  /* 차시 고유 코드: 학년|단원|제목 → 짧은 영문 코드 (QR 주소용, 파일이 바뀌어도 제목이 같으면 그대로) */
+  function hcode(str){
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36);
+  }
+  function itemKey(x){ return [x.grade || "", x.unit || "", x.mid || "", x.title || ""].join("|"); }
+
+  function init(o){
+    if (!document.getElementById("km-style")) { var st = el("style"); st.id = "km-style"; st.textContent = CSS; document.head.appendChild(st); }
+    var items = o.items || [];
+    var grades = ["중1","중2","중3"].filter(function(g){ return items.some(function(x){ return x.grade === g; }); });
+    items.forEach(function(x){ if (["중1","중2","중3"].indexOf(x.grade) < 0 && grades.indexOf(x.grade) < 0) grades.push(x.grade); });
+    (o.extras || []).forEach(function(g){ if (grades.indexOf(g) < 0) grades.push(g); });
+    items.forEach(function(x){
+      x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|"));
+      x.th = nrm([x.unit, x.mid, x.title].join("|"));
+    });
+    items.forEach(function(x){ x.q = hcode(itemKey(x)); });
+    window.KJSMenu._items = items.map(function(x){ return { q: x.q, grade: x.grade, unit: x.unit || "", mid: x.mid || "", title: x.title, kind: x.kind || "lesson" }; });
+    var LS = "km-" + (o.key || location.pathname);
+    var st = { g: grades[0], u: 0, q: "", sel: null };
+    try { var sv = JSON.parse(localStorage.getItem(LS) || "{}"); if (grades.indexOf(sv.g) >= 0) st.g = sv.g; if (sv.u >= 0) st.u = sv.u; } catch(e) {}
+    function save(){ try { localStorage.setItem(LS, JSON.stringify({ g: st.g, u: st.u })); } catch(e) {} }
+
+    var root = el("section", "km"); root.setAttribute("aria-label", "학년 · 단원 · 차시 고르기");
+    var nav = el("div", "km-nav");
+    nav.innerHTML =
+      '<label class="km-search"><span aria-hidden="true">🔍</span><input type="text" placeholder="단원·차시·낱말 검색 (예: 광합성, 보일, 뉴런)" autocomplete="off"><button type="button" hidden aria-label="검색어 지우기">✕</button></label>' +
+      '<div class="km-row"><span class="km-lab">학년</span><div class="km-chips km-g"></div></div>' +
+      '<div class="km-row km-urow"><span class="km-lab">대단원</span><div class="km-scroll km-u"></div></div>' +
+      '<div class="km-row km-jrow"><span class="km-lab">바로가기</span><div class="km-scroll km-j"></div></div>' +
+      '<div class="km-sel" hidden><span>선택: <b></b></span><button type="button" class="km-go"></button></div>';
+    var body = el("div", "km-body");
+    root.appendChild(nav); root.appendChild(body);
+    var mountEl = typeof o.mount === "function" ? o.mount() : o.mount;
+    mountEl.parentNode.insertBefore(root, mountEl);
+
+    var qIn = nav.querySelector("input"), qX = nav.querySelector(".km-search button");
+    var selBox = nav.querySelector(".km-sel"), goBtn = nav.querySelector(".km-go");
+    goBtn.textContent = "▶ " + (o.startLabel || "시작하기");
+    goBtn.onclick = function(){ if (st.sel && o.onStart) o.onStart(st.sel); };
+
+    var legacyStyle = el("style"); document.head.appendChild(legacyStyle);
+    function setLegacy(show){ var t = (!show && o.legacyCss) ? o.legacyCss + "{display:none!important}" : ""; if (legacyStyle.textContent !== t) legacyStyle.textContent = t; }
+
+    function pick(x){
+      if (o.mode === "select") {
+        st.sel = x; if (o.onPick) o.onPick(x);
+        selBox.hidden = false; selBox.querySelector("b").textContent = x.grade + " · " + (x.unit ? x.unit + " · " : "") + x.title;
+        paintSel();
+      } else if (o.onPick) o.onPick(x);
+    }
+    function paintSel(){
+      body.querySelectorAll(".km-card").forEach(function(c){ c.setAttribute("aria-pressed", String(!!st.sel && c._item === st.sel)); });
+    }
+    function card(x, q){
+      var c = el("button", "km-card " + (x.kind || "lesson"));
+      c.type = "button"; c._item = x;
+      var kind = x.kind === "unit" ? "🌳 대단원 종합" : x.kind === "mid" ? "🌿 중단원 종합" : (x.badge || "");
+      c.innerHTML = (q ? '<span class="w">' + esc(x.grade + (x.unit ? " · " + x.unit : "")) + "</span> " : "") +
+        (kind ? '<span class="k">' + esc(kind) + "</span>" : "") +
+        '<span class="t">' + (q ? mark(x.title, q) : esc(x.title)) + "</span>" +
+        (x.sub ? '<span class="s">' + esc(x.sub) + "</span>" : "");
+      if (q) {
+        var hits = (x.words || []).filter(function(w){ return String(w).toLowerCase().indexOf(q.toLowerCase()) >= 0; });
+        var u = []; hits.forEach(function(h){ if (u.indexOf(h) < 0) u.push(h); });
+        if (u.length) c.appendChild(el("span", "h", "찾은 낱말: " + u.slice(0, 5).map(function(w){ return mark(String(w).slice(0, 40), q); }).join(", ") + (u.length > 5 ? " …" : "")));
+      }
+      c.onclick = function(){ pick(x); };
+      return c;
+    }
+    function unitsOf(g){
+      var list = [];
+      items.forEach(function(x){ if (x.grade === g && x.unit && list.indexOf(x.unit) < 0) list.push(x.unit); });
+      var ord = ORDER[g] || [];
+      return list.sort(function(a, b){ var ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+    }
+    function render(){
+      var gBox = nav.querySelector(".km-g"), uBox = nav.querySelector(".km-u"), jBox = nav.querySelector(".km-j");
+      gBox.innerHTML = ""; uBox.innerHTML = ""; jBox.innerHTML = ""; body.innerHTML = "";
+      grades.forEach(function(g){
+        var b = el("button", "km-chip g"); b.type = "button"; b.textContent = g;
+        b.setAttribute("aria-pressed", String(g === st.g && !st.q));
+        b.onclick = function(){ st.g = g; st.u = 0; clearQ(); save(); render(); };
+        gBox.appendChild(b);
+      });
+      var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+      setLegacy(isExtra && !st.q);
+      var units = unitsOf(st.g);
+      if (st.u >= units.length) st.u = 0;
+      nav.querySelector(".km-urow").hidden = !units.length || !!st.q;
+      units.forEach(function(u, i){
+        var b = el("button", "km-chip u"); b.type = "button"; b.textContent = u;
+        b.setAttribute("aria-pressed", String(i === st.u));
+        b.onclick = function(){ st.u = i; save(); render(); };
+        uBox.appendChild(b);
+      });
+      var cur = uBox.children[st.u]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "nearest", block: "nearest" });
+
+      if (st.q) {
+        nav.querySelector(".km-jrow").hidden = true;
+        var q = nrm(st.q);
+        var res = items.filter(function(x){ return x.hay.indexOf(q) >= 0; }).sort(function(a, b){
+          var ka = { unit: 0, mid: 1 }[a.kind]; var kb = { unit: 0, mid: 1 }[b.kind];
+          return ((b.th.indexOf(q) >= 0) - (a.th.indexOf(q) >= 0)) || ((ka == null ? 2 : ka) - (kb == null ? 2 : kb));
+        });
+        body.appendChild(el("div", "km-uh", "‘" + esc(st.q) + "’ 검색 결과 " + res.length + "개"));
+        if (!res.length) body.appendChild(el("p", "km-empty", "찾는 내용이 없습니다. 다른 낱말로 검색해 보세요."));
+        var grid = el("div", "km-grid");
+        res.slice(0, 60).forEach(function(x){ grid.appendChild(card(x, st.q.trim())); });
+        body.appendChild(grid); paintSel(); return;
+      }
+      if (isExtra) {
+        nav.querySelector(".km-jrow").hidden = true;
+        if (o.onExtra) setTimeout(function(){ o.onExtra(st.g); }, 0);
+        body.appendChild(el("p", "km-note", (o.extraNote || "아래에서 직접 만든 목록을 고르거나 새로 만들 수 있습니다.")));
+        return;
+      }
+      var unit = units[st.u];
+      var list = items.filter(function(x){ return x.grade === st.g && (unit ? x.unit === unit : !x.unit); });
+      if (!unit) list = items.filter(function(x){ return x.grade === st.g; });
+      if (unit) body.appendChild(el("div", "km-uh", esc(st.g + " · " + unit)));
+      var groups = [], gmap = {};
+      list.forEach(function(x){
+        var key = x.kind === "unit" ? "__unit" : (x.mid || "");
+        if (!gmap[key]) { gmap[key] = { name: key, list: [] }; groups.push(gmap[key]); }
+        gmap[key].list.push(x);
+      });
+      var jumps = 0;
+      groups.forEach(function(gr, gi){
+        var sec = el("div", "km-sec");
+        if (gr.name && gr.name !== "__unit") {
+          var mh = el("div", "km-mh", esc(gr.name)); sec.appendChild(mh);
+          var jb = el("button", "km-chip j m", "🌿 " + esc(gr.name)); jb.type = "button";
+          jb.onclick = function(){ mh.scrollIntoView({ behavior: "smooth", block: "start" }); };
+          jBox.appendChild(jb); jumps++;
+        }
+        var grid = el("div", "km-grid");
+        gr.list.forEach(function(x){
+          var c = card(x, "");
+          grid.appendChild(c);
+          if (x.kind === "unit") {
+            var ub = el("button", "km-chip j un", "🌳 대단원"); ub.type = "button";
+            ub.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "start" }); };
+            jBox.insertBefore(ub, jBox.firstChild); jumps++;
+          } else if (x.kind !== "mid") {
+            var lb = el("button", "km-chip j", esc(x.short || x.title)); lb.type = "button";
+            lb.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "center" }); };
+            jBox.appendChild(lb); jumps++;
+          }
+        });
+        sec.appendChild(grid); body.appendChild(sec);
+      });
+      nav.querySelector(".km-jrow").hidden = jumps < 2;
+      paintSel();
+    }
+    function clearQ(){ st.q = ""; qIn.value = ""; qX.hidden = true; }
+    qIn.addEventListener("input", function(){ st.q = qIn.value.trim(); qX.hidden = !st.q; render(); });
+    qX.addEventListener("click", function(){ clearQ(); render(); qIn.focus(); });
+
+    function sync(){
+      if (typeof o.mount === "function") {
+        var m = o.mount();
+        if (m && m !== root && m.parentNode && root.nextSibling !== m) m.parentNode.insertBefore(root, m);
+      }
+      var vis = o.isVisible ? !!o.isVisible() : true;
+      var want = vis ? "" : "none";
+      if (root.style.display !== want) root.style.display = want;
+      if (!vis) setLegacy(true); else {
+        var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+        setLegacy(isExtra && !st.q);
+      }
+    }
+    if (o.observe) {
+      var busy = false;
+      new MutationObserver(function(){
+        if (busy) return; busy = true;
+        requestAnimationFrame(function(){ try { sync(); } finally { busy = false; } });
+      }).observe(o.observe, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    }
+    render(); sync();
+    /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
+    try {
+      var qp = new URLSearchParams(location.search).get("q");
+      var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      if (target) {
+        st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
+        render(); sync();
+        setTimeout(function(){
+          pick(target);
+          if (o.mode === "select") {
+            selBox.hidden = false;
+            selBox.style.boxShadow = "0 0 0 3px #f59e0b";
+            var note = selBox.querySelector(".km-qr-note");
+            if (!note) { note = el("span", "km-qr-note", "📱 선생님이 고른 차시예요. 아래 설정을 확인하고 시작하세요."); note.style.cssText = "flex-basis:100%;font-size:12.5px;color:#92400e"; selBox.appendChild(note); }
+            root.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 350);
+      }
+    } catch(e) {}
+    return { refresh: function(newItems){ if (newItems) { items = newItems; items.forEach(function(x){ x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|")); x.th = nrm([x.unit, x.mid, x.title].join("|")); }); } render(); sync(); },
+             root: root, select: function(x){ st.sel = x; paintSel(); } };
+  }
+  window.KJSMenu = { init: init, hcode: hcode };
+})();
+
+</script>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head><body>
+<title>기억의 계단</title>
+<style>
+  :root{
+    --bg:#16242a;
+    --surface:#1e3138;
+    --surface-2:#24414b;
+    --surface-3:#2c4e59;
+    --ink:#f2ebda;
+    --ink-dim:#9fb3b9;
+    --ink-faint:#6e8288;
+    --accent:#e3a857;
+    --accent-strong:#f0be73;
+    --accent-ink:#1b1206;
+    --line:rgba(242,235,218,.14);
+    --line-strong:rgba(242,235,218,.26);
+    --danger:#c1493f;
+    --success:#7c9a5b;
+    --sys-digest:#d08b3f;
+    --sys-circu:#c1493f;
+    --sys-respir:#4c8fa3;
+    --sys-excrete:#7c9a5b;
+    --sys-plum:#8a5a7c;
+    --sys-slate:#5b6f96;
+    --serif:"Batang","바탕","AppleMyungjo",ui-serif,"Nanum Myeongjo",Georgia,serif;
+    --body:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Apple SD Gothic Neo",sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(227,168,87,.10), transparent 60%),
+      radial-gradient(ellipse 120% 90% at 50% 110%, rgba(0,0,0,.35), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    padding:32px 18px 48px;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:920px;display:flex;flex-direction:column;gap:18px;}
+
+  header.top{display:flex;flex-direction:column;gap:4px;text-align:center;}
+  header.top .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  header.top h1{
+    font-family:var(--serif);font-weight:400;
+    font-size:clamp(28px,5.4vw,42px);margin:2px 0 0;color:var(--ink);
+    text-wrap:balance;
+  }
+  header.top p{margin:4px 0 0;color:var(--ink-dim);font-size:14px;}
+
+  .stage{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:clamp(18px,4vw,34px);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.03);
+    position:relative;
+    overflow:hidden;
+  }
+  .stage::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%);
+  }
+
+  .banner{
+    display:flex;gap:10px;align-items:flex-start;
+    background:rgba(193,73,63,.14);border:1px solid rgba(193,73,63,.4);
+    color:#f0c9c4;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;
+  }
+  .banner button{margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;font-size:16px;line-height:1;}
+
+  /* ---------- topic select ---------- */
+  .topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+  .topic-card{
+    display:flex;flex-direction:column;gap:8px;text-align:left;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:14px;
+    padding:16px 16px 14px;cursor:pointer;color:var(--ink);
+    font-family:var(--body);position:relative;
+  }
+  .topic-card:hover, .topic-card:focus-visible{border-color:var(--line-strong);transform:translateY(-1px);}
+  .topic-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .topic-card .bar{width:30px;height:5px;border-radius:3px;background:var(--c);}
+  .topic-card .name{font-size:17px;font-weight:700;padding-right:44px;}
+  .topic-card .en{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase;}
+  .topic-card .path{font-size:12px;color:var(--ink-dim);line-height:1.5;}
+  .topic-card.selected{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset;}
+  .topic-card .mine-tag{
+    position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.06em;color:var(--ink-faint);background:var(--surface-3);
+    border-radius:5px;padding:2px 6px;
+  }
+  .card-actions{position:absolute;top:12px;right:12px;display:flex;gap:4px;}
+  .icon-btn{
+    width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;
+  }
+  .icon-btn:hover{color:var(--ink);border-color:var(--line-strong);}
+  .confirm-del{
+    position:absolute;inset:0;background:rgba(22,36,42,.94);border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;text-align:center;
+  }
+  .confirm-del span{font-size:13px;color:var(--ink);}
+  .confirm-del .row{display:flex;gap:8px;}
+
+  .add-card{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    background:transparent;border:1.5px dashed var(--line-strong);border-radius:14px;
+    color:var(--ink-dim);cursor:pointer;min-height:118px;font-family:var(--body);
+  }
+  .add-card:hover{color:var(--ink);border-color:var(--accent);}
+  .add-card .plus{font-size:22px;color:var(--accent);}
+  .add-card .lbl{font-size:13.5px;font-weight:700;}
+  .add-card .sub{font-size:11px;color:var(--ink-faint);}
+
+  .settings-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);}
+  .setting{display:flex;flex-direction:column;gap:6px;}
+  .setting label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase;}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .seg button{
+    background:transparent;border:none;color:var(--ink-dim);font-family:var(--mono);
+    font-size:13px;padding:6px 12px;cursor:pointer;
+  }
+  .seg button + button{border-left:1px solid var(--line);}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;}
+
+  .start-btn{
+    margin-top:20px;width:100%;padding:15px;border-radius:12px;border:none;
+    background:var(--accent);color:var(--accent-ink);font-family:var(--body);
+    font-size:17px;font-weight:700;cursor:pointer;letter-spacing:.01em;
+  }
+  .start-btn:disabled{background:var(--surface-3);color:var(--ink-faint);cursor:not-allowed;}
+  .start-btn:not(:disabled):hover{background:var(--accent-strong);}
+
+  /* ---------- meta / spec tag row ---------- */
+  .spec-row{
+    display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+    font-family:var(--mono);font-size:12px;color:var(--ink-dim);
+    margin-bottom:18px;
+  }
+  .spec-row .tag{background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:3px 9px;}
+  .spec-row .sys-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:middle;}
+  .change-topic{
+    margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--body);font-size:12.5px;border-radius:8px;padding:6px 11px;cursor:pointer;
+  }
+  .change-topic:hover{color:var(--ink);border-color:var(--line-strong);}
+
+  /* ---------- builder ---------- */
+  .build-title{font-family:var(--serif);font-size:22px;margin:0 0 2px;}
+  .build-sub{color:var(--ink-dim);font-size:13px;margin:0 0 20px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+  .field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase;}
+  .field input[type=text]{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--ink);
+    font-family:var(--body);font-size:15px;padding:10px 12px;
+  }
+  .field input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent;}
+  .field-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .field-row .field{flex:1 1 200px;}
+  .swatches{display:flex;gap:8px;}
+  .swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--s);}
+  .swatch[aria-pressed="true"]{border-color:var(--ink);}
+
+  .step-rows{display:flex;flex-direction:column;gap:8px;}
+  .step-row{
+    display:flex;align-items:center;gap:10px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  }
+  .step-row .num{font-family:var(--mono);color:var(--accent);width:20px;text-align:center;font-size:13px;flex:none;}
+  .step-row input[type=text]{
+    flex:1;background:transparent;border:none;color:var(--ink);font-family:var(--body);
+    font-size:14.5px;padding:6px 4px;min-width:0;
+  }
+  .step-row input[type=text]:focus{outline:none;}
+  .thumb-slot{flex:none;position:relative;}
+  .thumb-slot img{width:38px;height:38px;border-radius:8px;object-fit:cover;display:block;border:1px solid var(--line);}
+  .thumb-btn{
+    width:38px;height:38px;border-radius:8px;border:1px dashed var(--line-strong);background:var(--surface);
+    color:var(--ink-faint);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .thumb-btn:hover{color:var(--ink);border-color:var(--accent);}
+  .thumb-remove{
+    position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;
+    background:var(--danger);color:#fff;border:none;font-size:10px;line-height:1;cursor:pointer;
+  }
+  .row-del{
+    flex:none;width:26px;height:26px;border-radius:7px;background:none;border:1px solid var(--line);
+    color:var(--ink-faint);cursor:pointer;font-size:13px;
+  }
+  .row-del:not(:disabled):hover{color:var(--danger);border-color:var(--danger);}
+  .row-del:disabled{opacity:.3;cursor:not-allowed;}
+  .step-tools{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .add-step-btn{
+    background:none;border:1px dashed var(--line-strong);color:var(--ink-dim);border-radius:9px;
+    padding:8px 14px;font-family:var(--body);font-size:13px;cursor:pointer;
+  }
+  .add-step-btn:not(:disabled):hover{color:var(--ink);border-color:var(--accent);}
+  .add-step-btn:disabled{opacity:.35;cursor:not-allowed;}
+  .step-count{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);}
+  .build-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+
+  /* ---------- memorize ---------- */
+  .memorize-title{text-align:center;font-family:var(--serif);font-size:20px;margin:0 0 4px;}
+  .memorize-sub{text-align:center;color:var(--ink-dim);font-size:13px;margin:0 0 20px;}
+  .memo-list{display:flex;flex-direction:column;gap:8px;max-width:440px;margin:0 auto;}
+  .memo-list li{
+    list-style:none;display:flex;align-items:center;gap:12px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 14px;
+  }
+  .memo-list .num{font-family:var(--mono);color:var(--accent);width:20px;text-align:right;flex:none;}
+  .memo-list img{width:32px;height:32px;border-radius:7px;object-fit:cover;flex:none;}
+  .memo-list .word{font-size:16px;font-weight:700;}
+  .timer-ring{display:flex;justify-content:center;margin:20px 0 6px;}
+  .timer-ring svg{width:56px;height:56px;}
+  .timer-ring circle{fill:none;stroke-width:5;}
+  .timer-ring .track{stroke:var(--surface-3);}
+  .timer-ring .bar{stroke:var(--accent);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear;}
+  .timer-ring text{fill:var(--ink);font-family:var(--mono);font-size:15px;}
+  .skip-row{display:flex;justify-content:center;}
+  .skip-btn{
+    background:none;border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--body);font-size:13px;border-radius:20px;padding:8px 18px;cursor:pointer;
+  }
+  .skip-btn:not(:disabled):hover{color:var(--ink);border-color:var(--line-strong);}
+
+  /* ---------- staircase ---------- */
+  .stair-outer{overflow-x:auto;padding:6px 2px 14px;margin:0 -4px 6px;}
+  .stair{display:flex;align-items:flex-end;gap:6px;min-width:min-content;padding:0 4px;}
+  .step{
+    --h:calc(56px + var(--i) * 18px);
+    flex:0 0 auto;width:78px;display:flex;flex-direction:column;align-items:center;
+  }
+  .step .tread{
+    width:100%;height:var(--h);border-radius:8px 8px 4px 4px;
+    background:var(--surface-2);border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    padding-top:7px;gap:4px;position:relative;
+    transition:background .25s, border-color .25s, box-shadow .25s;
+  }
+  .step .idx{font-family:var(--mono);font-size:10px;color:var(--ink-faint);}
+  .step .thumb{width:26px;height:26px;border-radius:6px;object-fit:cover;}
+  .step .label{font-size:12px;font-weight:700;text-align:center;line-height:1.22;padding:0 3px;word-break:keep-all;min-height:2.2em;display:flex;align-items:center;}
+  .step.current .tread{border-color:var(--accent);box-shadow:0 0 0 3px rgba(227,168,87,.18);}
+  .step.done .tread{background:var(--surface-3);border-color:var(--success);}
+  .step.done .label{color:var(--ink);}
+  .step .marker{
+    width:26px;height:26px;border-radius:50%;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:13px;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);margin-bottom:-13px;opacity:0;transform:scale(.5);
+    transition:opacity .3s, transform .3s;
+  }
+  .step.current .marker{opacity:1;transform:scale(1);}
+  @keyframes pop{0%{transform:scale(.7);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .step.just-done .tread{animation:pop .35s ease;}
+
+  /* ---------- lives / progress ---------- */
+  .hud{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px;flex-wrap:wrap;gap:10px;}
+  .progress-text{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);}
+  .progress-text b{color:var(--ink);}
+  .lives{display:flex;gap:5px;align-items:center;}
+  .lives .dot{width:11px;height:11px;border-radius:50%;background:var(--surface-3);border:1px solid var(--line);}
+  .lives .dot.spent{background:var(--danger);border-color:var(--danger);}
+
+  .prompt{text-align:center;font-size:15px;color:var(--ink-dim);margin:14px 0 12px;min-height:20px;}
+  .prompt b{color:var(--accent);font-weight:700;}
+  .prompt.wrong-msg{color:var(--danger);}
+  .prompt.right-msg{color:var(--success);}
+
+  .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:580px;margin:0 auto;}
+  @media (max-width:480px){.choices{grid-template-columns:1fr;}}
+  .choice{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
+    padding:14px;font-family:var(--body);font-size:16px;font-weight:700;color:var(--ink);
+    cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .choice img{width:34px;height:34px;border-radius:7px;object-fit:cover;flex:none;}
+  .choice:hover{border-color:var(--line-strong);}
+  .choice:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .choice.right{background:var(--success);border-color:var(--success);color:#0f1a0c;}
+  .choice.wrong{background:var(--danger);border-color:var(--danger);color:#1c0b09;animation:shake .32s;}
+  .choice[disabled]{cursor:default;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+
+  /* ---------- result ---------- */
+  .result{text-align:center;padding:10px 0 4px;}
+  .result .badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:64px;height:64px;border-radius:50%;font-size:30px;margin-bottom:14px;
+  }
+  .result.success .badge{background:var(--success);}
+  .result.fail .badge{background:var(--danger);}
+  .result h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 6px;}
+  .result p.sub{color:var(--ink-dim);font-size:14px;margin:0 0 20px;}
+  .answer-strip{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 24px;}
+  .answer-strip .chip{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 12px 6px 6px;font-size:13px;display:flex;gap:6px;align-items:center;
+  }
+  .answer-strip .chip img{width:22px;height:22px;border-radius:5px;object-fit:cover;}
+  .answer-strip .chip .n{font-family:var(--mono);color:var(--accent);}
+  .answer-strip .arrow{color:var(--ink-faint);align-self:center;}
+  .result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--body);font-size:14.5px;font-weight:700;border-radius:11px;
+    padding:12px 20px;cursor:pointer;border:1px solid var(--line);
+  }
+  .btn.primary{background:var(--accent);color:var(--accent-ink);border:none;}
+  .btn.primary:hover{background:var(--accent-strong);}
+  .btn.ghost{background:transparent;color:var(--ink-dim);}
+  .btn.ghost:hover{color:var(--ink);border-color:var(--line-strong);}
+
+  footer.note{text-align:center;color:var(--ink-faint);font-size:11.5px;margin-top:2px;font-family:var(--mono);}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">중1~중3 과학 · 순서 기억 게임</div>
+    <h1>기억의 계단</h1>
+    <p>순서가 중요한 과정을 차례대로 외우고, 한 칸씩 올라가 보세요.</p>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <div class="stage" id="stage"></div>
+
+  <footer class="note">직접 주제를 만들어 어떤 단원에도 쓸 수 있어요</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "stairs_custom_topics_v1";
+  var MAX_STEPS = 10, MIN_STEPS = 3;
+  var COLORS = [
+    {k:"digest",  v:"var(--sys-digest)"},
+    {k:"circu",   v:"var(--sys-circu)"},
+    {k:"respir",  v:"var(--sys-respir)"},
+    {k:"excrete", v:"var(--sys-excrete)"},
+    {k:"plum",    v:"var(--sys-plum)"},
+    {k:"slate",   v:"var(--sys-slate)"}
+  ];
+
+  function toStepObjs(words){ return words.map(function(w){ return {label:w, img:null}; }); }
+
+  var PRESETS = [
+    { key:"plan_form", name:"탐구 계획서 쓰는 순서", en:"Inquiry Plan", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["탐구 문제 정하기","가설 세우기","준비물 정하기","실험 과정 정하기","다르게 할 조건 정하기","같게 할 조건 정하기","주의할 점 쓰기"]) },
+    { key:"sci_civil", name:"과학이 문명을 바꾸는 흐름", en:"Science to Civilization", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["과학적 원리의 발견","기술의 발달","기기의 발명","생활의 변화","인류 문명의 발달"]) },
+    { key:"plant_level", name:"식물의 구성 단계", en:"Plant Organization", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["세포","조직","조직계","기관","개체"]) },
+    { key:"micro_use", name:"현미경으로 관찰하는 순서", en:"Using a Microscope", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["가장 낮은 배율의 대물렌즈 선택","표본을 재물대에 올리기","옆에서 보며 대물렌즈를 표본에 가깝게","접안렌즈를 보며 조동 나사로 초점","미동 나사로 선명하게","높은 배율로 바꾸어 관찰"]) },
+    { key:"onion_slide", name:"양파 표피 세포 표본 만들기", en:"Onion Cell Slide", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["받침유리에 물 한 방울","양파 표피를 얇게 벗겨 올리기","덮개유리를 비스듬히 덮기","아세트올세인 떨어뜨리기","거름종이로 남은 액 흡수","현미경으로 관찰"]) },
+    { key:"conduction", name:"전도로 열이 전달되는 과정", en:"Conduction", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["막대 한쪽 끝을 가열","가열된 쪽 입자 운동이 활발해짐","이웃한 입자와 충돌","옆 입자의 운동도 활발해짐","반대쪽 끝까지 열이 전달"]) },
+    { key:"convection", name:"대류로 물이 데워지는 과정", en:"Convection", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["아래쪽 물을 가열","데워진 물의 부피가 커짐","밀도가 작아져 위로 올라감","위쪽 찬물이 아래로 내려옴","순환하며 전체가 데워짐"]) },
+    { key:"bimetal_alarm", name:"바이메탈 화재경보기의 작동", en:"Bimetal Alarm", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["주변 온도가 올라감","두 금속이 팽창","덜 늘어나는 금속 쪽으로 휨","접점이 닿아 회로 연결","경보가 울림"]) },
+    { key:"heat_curve", name:"얼음을 가열할 때의 변화", en:"Heating Curve", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["얼음의 온도 상승","녹는점에서 온도 일정(융해)","물의 온도 상승","끓는점에서 온도 일정(기화)","수증기의 온도 상승"]) },
+    { key:"melt_boil", name:"고체가 기체가 될 때 입자 배열", en:"Particles in State Change", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["규칙적으로 배열된 고체","배열이 흐트러짐(융해)","비교적 자유롭게 움직이는 액체","입자 사이가 멀어짐(기화)","매우 자유롭게 움직이는 기체"]) },
+    { key:"spring_scale", name:"용수철저울로 무게 재기", en:"Spring Scale", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["영점 조절하기","물체를 고리에 걸기","용수철이 늘어남","움직임이 멈출 때까지 기다리기","눈금 읽기"]) },
+    { key:"float_sink", name:"물체가 뜨는지 가라앉는지 알기", en:"Float or Sink", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["물체에 중력이 작용","물체가 물에 잠김","물이 위로 미는 부력 작용","부력과 중력의 크기 비교","부력이 크면 뜨고 작으면 가라앉음"]) },
+    { key:"planet_order", name:"태양에서 가까운 행성 순서", en:"Planet Order", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["수성","금성","지구","화성","목성","토성","천왕성","해왕성"]) },
+    { key:"lunar_eclipse", name:"월식이 진행되는 순서", en:"Lunar Eclipse", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["보름달","달이 지구 그림자에 들어가기 시작","부분 월식","개기 월식(붉은 달)","그림자에서 빠져나옴","다시 보름달"]) },
+    { key:"density_exp", name:"밀도를 구하는 실험 순서", en:"Measuring Density", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["전자저울로 질량 측정","눈금실린더에 물을 넣고 눈금 읽기","물체를 넣고 눈금 읽기","늘어난 눈금으로 부피 구하기","질량 ÷ 부피로 밀도 계산"]) },
+    { key:"recrystal", name:"재결정으로 순수한 고체 얻기", en:"Recrystallization", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["불순물이 섞인 고체를 뜨거운 물에 녹임","녹지 않은 물질을 거름","용액을 천천히 식힘","용해도가 작아져 결정 석출","걸러서 결정만 얻음"]) },
+    { key:"distill", name:"물과 에탄올을 증류로 분리하기", en:"Distillation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["혼합물 가열","끓는점이 낮은 에탄올이 먼저 기화","냉각기에서 액화","시험관에 에탄올이 모임","온도가 더 오르면 물이 끓음"]) },
+    { key:"earth_layer", name:"지구 내부 층 (겉에서 속으로)", en:"Earth's Layers", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["지각","모호면","맨틀","외핵","내핵"]) },
+    { key:"sedimentary", name:"퇴적암이 만들어지는 과정", en:"Sedimentary Rock", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["암석의 풍화와 침식","물질의 운반","바다·호수 바닥에 퇴적","위에 쌓인 무게로 다짐","알갱이가 붙어 굳음","퇴적암"]) },
+    { key:"see_object", name:"물체를 보는 과정", en:"Seeing an Object", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["광원에서 빛이 나옴","빛이 물체에 도달","물체 표면에서 빛이 반사","반사된 빛이 눈으로 들어옴","물체를 봄"]) },
+    { key:"refraction", name:"빛이 공기에서 물로 들어갈 때", en:"Refraction", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["빛이 공기 속을 진행","물 표면에 비스듬히 도달","속력이 느려짐","법선 쪽으로 꺾임","물속에서 진행"]) },
+    { key:"cation", name:"원자가 양이온이 되는 과정", en:"Forming a Cation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["중성 원자","전자를 잃음","양성자 수가 전자 수보다 많아짐","전체가 (+)전하를 띰","양이온"]) },
+    { key:"periodic_hist", name:"주기율표가 만들어진 과정", en:"Periodic Table History", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["라부아지에의 원소 분류","되베라이너의 세 쌍 원소","뉴랜즈의 옥타브설","멘델레예프의 원자량 순 배열","모즐리의 원자 번호 순 배열"]) },
+    { key:"pulmonary", name:"폐순환 경로", en:"Pulmonary Circulation", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["우심실","폐동맥","폐의 모세혈관","폐정맥","좌심방"]) },
+    { key:"starch_dig", name:"녹말이 소화·흡수되는 과정", en:"Starch Digestion", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["입에서 녹말","아밀레이스가 엿당으로 분해","소장에서 포도당으로 분해","융털의 모세혈관으로 흡수","심장을 거쳐 온몸으로"]) },
+    { key:"protein_dig", name:"단백질이 소화되는 과정", en:"Protein Digestion", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["위에서 단백질","펩신이 분해 시작","이자액의 트립신이 분해","소장에서 아미노산으로","융털로 흡수"]) },
+    { key:"inhale", name:"들숨이 일어나는 과정", en:"Inhalation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["갈비뼈가 올라가고 횡격막이 내려감","흉강의 부피가 커짐","흉강의 압력이 낮아짐","폐가 부풀어 부피가 커짐","공기가 폐로 들어옴"]) },
+    { key:"friction_elec", name:"마찰 전기가 생기는 과정", en:"Static Electricity", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["두 물체를 마찰","전자가 한 물체에서 다른 물체로 이동","전자를 잃은 물체는 (+)전하","전자를 얻은 물체는 (-)전하","두 물체가 서로 끌어당김"]) },
+    { key:"electroscope", name:"검전기로 대전 여부 확인하기", en:"Electroscope", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["대전체를 금속판에 가까이","정전기 유도가 일어남","금속박에 같은 종류의 전하가 모임","금속박끼리 밀어냄","금속박이 벌어짐"]) },
+    { key:"electromagnet", name:"전자석 만들기", en:"Electromagnet", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["철못에 에나멜선 감기","양 끝 피복 벗기기","전지에 연결","전류가 흐름","철못이 자석이 됨"]) },
+    { key:"parallax", name:"연주 시차로 별까지 거리 구하기", en:"Annual Parallax", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["6개월 간격으로 별 관측","배경 별에 대한 위치 변화 측정","시차 구하기","시차의 절반 = 연주 시차","연주 시차로 거리 계산"]) },
+    { key:"star_color", name:"표면 온도가 높은 별의 색 순서", en:"Star Colors", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["청색","청백색","백색","황백색","황색","주황색","적색"]) },
+    { key:"mass_cons", name:"앙금 생성으로 질량 보존 확인", en:"Conservation of Mass", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["두 수용액의 질량 측정","두 수용액 섞기","앙금 생성","반응 후 질량 측정","반응 전후 질량이 같음 확인"]) },
+    { key:"hand_warmer", name:"손난로가 따뜻해지는 과정", en:"Hand Warmer", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["포장을 뜯음","공기가 들어감","철가루가 산소와 반응","열이 방출됨","손난로가 따뜻해짐"]) },
+    { key:"sea_breeze", name:"낮에 해풍이 부는 과정", en:"Sea Breeze", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["햇빛이 비침","육지가 바다보다 빨리 데워짐","육지 위 공기가 상승해 기압이 낮아짐","바다 쪽 기압이 상대적으로 높음","바다에서 육지로 바람이 붊"]) },
+    { key:"cold_front", name:"한랭 전선이 지날 때 날씨", en:"Cold Front", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["따뜻한 공기가 머무름","찬 공기가 파고듦","따뜻한 공기가 빠르게 상승","적운형 구름 발달","소나기와 돌풍","기온이 내려감"]) },
+    { key:"ticker_tape", name:"시간기록계로 속력 구하기", en:"Ticker Timer", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["종이테이프를 물체에 연결","물체를 운동시킴","일정한 시간마다 점이 찍힘","같은 개수의 점마다 자르기","테이프 길이 재기","속력 계산"]) },
+    { key:"fall_speed", name:"자유 낙하하는 물체의 속력", en:"Free Fall Speed", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["0초: 0 m/s","1초: 9.8 m/s","2초: 19.6 m/s","3초: 29.4 m/s","4초: 39.2 m/s"]) },
+    { key:"eye_path", name:"빛이 눈으로 들어가 보이기까지", en:"Path of Light in the Eye", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["각막","동공","수정체","유리체","망막","시각 신경","대뇌"]) },
+    { key:"glucose_high", name:"혈당량이 높을 때 조절 과정", en:"Blood Sugar Control", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["식사 후 혈당량 증가","이자에서 인슐린 분비","간에서 포도당을 글리코젠으로 저장","세포가 포도당을 흡수","혈당량이 정상으로"]) },
+    { key:"fert_implant", name:"수정에서 착상까지", en:"Fertilization to Implantation", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["배란","수란관에서 수정","난할","포배","자궁에 도착","착상"]) },
+    { key:"coaster", name:"롤러코스터의 에너지 전환", en:"Roller Coaster Energy", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["꼭대기: 위치 에너지 최대","내려가며 운동 에너지 증가","바닥: 운동 에너지 최대","올라가며 위치 에너지 증가","다음 꼭대기"]) },
+    { key:"generator", name:"발전기에서 전기가 만들어지는 과정", en:"Generator", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["터빈이 회전","발전기의 자석이 회전","코일 속 자기장 변화","유도 전류 발생","전기 에너지 공급"]) },
+    { key:"big_bang", name:"빅뱅 이후 우주의 변화", en:"After the Big Bang", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["대폭발","우주의 팽창과 냉각","원자 생성","별과 은하 생성","지금도 계속 팽창"]) },
+    { key:"magnitude", name:"밝은 별부터 등급 순서", en:"Star Magnitude", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["-1등급","0등급","1등급","2등급","3등급","6등급"]) },
+    { key:"chem_eq", name:"화학 반응식 쓰는 순서", en:"Writing Equations", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["반응물과 생성물 확인", "화학식으로 나타내기", "화살표로 연결", "원자 수 비교", "계수 맞추기", "원자 수 확인"]) },
+    { key:"cloud_make", name:"구름이 만들어지는 과정", en:"Cloud Formation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["지표면 가열", "공기 상승", "단열 팽창", "기온 하강", "이슬점 도달", "수증기 응결", "구름 생성"]) },
+    { key:"atmos_layer", name:"기권의 층 (아래에서 위로)", en:"Atmosphere Layers", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["지표", "대류권", "성층권", "중간권", "열권"]) },
+    { key:"free_fall", name:"자유 낙하 물체의 에너지 전환", en:"Free Fall Energy", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["높은 곳에 정지", "위치 에너지 최대", "떨어지기 시작", "위치 에너지 감소", "운동 에너지 증가", "바닥 직전 운동 에너지 최대"]) },
+    { key:"inq_steps", name:"과학적 탐구 방법의 순서", en:"Scientific Inquiry", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["문제 인식", "가설 설정", "탐구 설계", "탐구 수행", "자료 해석", "결론 도출", "결과 발표"]) },
+    { key:"bio_level", name:"생물의 구성 단계 (동물)", en:"Levels of Organization", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["세포", "조직", "기관", "기관계", "개체"]) },
+    { key:"classify", name:"생물 분류 단계", en:"Classification", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["종", "속", "과", "목", "강", "문", "계"]) },
+    { key:"heat_eq", name:"열평형에 이르는 과정", en:"Thermal Equilibrium", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["온도가 다른 두 물체 접촉", "고온 물체가 열 방출", "저온 물체가 열 흡수", "두 물체 온도 차 감소", "온도가 같아짐", "열의 이동 멈춤"]) },
+    { key:"water_state", name:"물의 상태 변화 순서", en:"States of Water", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["얼음", "융해", "물", "기화", "수증기", "액화", "이슬"]) },
+    { key:"sep_mix", name:"혼합물 분리 과정 고르기", en:"Separation", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["혼합물 확인", "성질 차이 찾기", "분리 방법 선택", "분리 장치 준비", "분리 실험", "순물질 얻기"]) },
+    { key:"rock_cycle", name:"암석이 만들어지는 과정", en:"Rock Cycle", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["마그마", "화성암", "풍화와 침식", "퇴적물", "퇴적암", "열과 압력", "변성암"]) },
+    { key:"sound_path", name:"소리가 전달되는 과정", en:"Sound Path", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["물체의 진동", "공기의 진동", "귓바퀴", "고막", "귓속뼈", "달팽이관", "소리 인식"]) },
+    { key:"ion_test", name:"앙금으로 이온 확인하기", en:"Ion Test", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["수용액 준비", "시약 떨어뜨리기", "앙금 생성 관찰", "앙금 색 확인", "이온 판단"]) },
+    { key:"circuit_build", name:"전기 회로 꾸미기", en:"Circuit", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["전지 준비", "스위치 연결", "저항 연결", "전류계 직렬 연결", "전압계 병렬 연결", "측정값 기록"]) },
+    { key:"path_reflex", name:"자극에서 반응까지", en:"Stimulus to Response", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["자극", "감각 기관", "감각 뉴런", "연합 뉴런", "운동 뉴런", "반응 기관", "반응"]) },
+    { key:"path_knee", name:"무릎 반사의 경로", en:"Knee Reflex", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["자극", "감각 뉴런", "척수", "운동 뉴런", "다리 근육", "반응"]) },
+    { key:"moon_phase", name:"달의 위상 변화 순서", en:"Moon Phases", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["삭", "초승달", "상현달", "보름달", "하현달", "그믐달"]) },
+    { key:"energy_hydro", name:"수력 발전의 에너지 전환", en:"Hydroelectric Power", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["물의 위치 에너지", "물의 운동 에너지", "터빈 회전", "발전기 작동", "전기 에너지", "가정에 공급"]) },
+    { key:"space_history", name:"우주 탐사의 역사", en:"Space Exploration", color:"var(--sys-plum)", builtin:true,
+      steps: toStepObjs(["스푸트니크 1호", "최초 유인 우주 비행", "아폴로 11호 달 착륙", "보이저호 발사", "허블 우주 망원경", "화성 로버 탐사"]) },
+    { key:"ph_make", name:"광합성이 일어나는 순서", en:"Photosynthesis", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["엽록소가 빛에너지 흡수", "이산화 탄소와 물 도착", "포도당 생성", "녹말로 바뀜", "엽록체에 저장"]) },
+    { key:"ph_move", name:"광합성산물의 이동 경로", en:"Translocation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["포도당", "녹말로 저장", "밤에 설탕으로", "체관을 따라 이동", "뿌리·줄기·열매에 저장"]) },
+    { key:"ph_test", name:"광합성산물 확인 실험", en:"Starch Test", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["어둠상자 씌우기", "잎 따서 자르기", "에탄올에 넣고 물중탕", "증류수로 헹구기", "아이오딘 용액 떨어뜨리기", "청람색 확인"]) },
+    { key:"ph_co2", name:"이산화 탄소가 들어오는 길", en:"CO2 Pathway", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["공기 중 이산화 탄소", "잎의 기공", "잎세포", "엽록체", "광합성에 사용"]) },
+    { key:"mitosis", name:"체세포 분열 과정", en:"Mitosis", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["간기", "전기", "중기", "후기", "말기", "세포질 분열"]) },
+    { key:"meiosis", name:"생식세포 분열 과정", en:"Meiosis", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["간기 DNA 복제", "감수 1분열", "딸세포 2개", "감수 2분열", "딸세포 4개", "생식세포 완성"]) },
+    { key:"develop", name:"사람의 발생 과정", en:"Development", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["수정", "난할", "포배", "착상", "태반 형성", "태아", "출산"]) },
+    { key:"observe", name:"세포 분열 관찰 실험", en:"Observation", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["재료 채취", "고정", "해리", "염색", "분리", "압착", "관찰"]) },
+    { key:"gas_press", name:"압력을 높이면", en:"Boyle's Law", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["압력 높임", "부피 감소", "입자 사이 거리 감소", "충돌 횟수 증가", "기체 압력 증가"]) },
+    { key:"gas_temp", name:"온도를 높이면", en:"Charles's Law", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["온도 높임", "입자 운동 빨라짐", "충돌 세기 증가", "부피 증가", "풍선 팽팽"]) },
+    { key:"gas_balloon", name:"열기구가 뜨는 과정", en:"Hot Air Balloon", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["풍선 속 공기 가열", "기체 온도 상승", "기체 부피 증가", "공기 일부 빠져나감", "열기구 가벼워짐", "위로 떠오름"]) },
+    { key:"gas_boyle", name:"보일의 실험 과정", en:"Boyle's Experiment", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["J자 유리관 제작", "수은 붓기", "공기에 가해지는 압력 증가", "갇힌 공기 부피 감소", "반비례 관계 발견"]) },
+    { key:"digest",  name:"소화 경로", en:"Digestive Tract", color:"var(--sys-digest)", builtin:true,
+      steps: toStepObjs(["입","식도","위","소장","대장","직장","항문"]) },
+    { key:"circu",   name:"온몸 순환 경로", en:"Systemic Circulation", color:"var(--sys-circu)", builtin:true,
+      steps: toStepObjs(["좌심실","대동맥","동맥","모세혈관","정맥","대정맥","우심방"]) },
+    { key:"respir",  name:"호흡 경로", en:"Airway", color:"var(--sys-respir)", builtin:true,
+      steps: toStepObjs(["코","인두","후두","기관","기관지","세기관지","폐포"]) },
+    { key:"excrete", name:"배설 경로", en:"Urinary Path", color:"var(--sys-excrete)", builtin:true,
+      steps: toStepObjs(["사구체","보먼주머니","세뇨관","콩팥깔대기","오줌관","방광","요도"]) }
+  ];
+
+  var RIGHT_MSGS = ["정확해요!","좋아요!","맞았어요!","잘 기억했네요!","계속 올라가볼까요?"];
+  var WRONG_MSGS = ["다시 생각해볼까요?","한 번 더 떠올려보세요.","순서를 다시 떠올려봐요."];
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+  // ---------------- custom topic storage ----------------
+  var customTopics = [];
+  function loadCustom(){
+    try{
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      customTopics = raw ? JSON.parse(raw) : [];
+    }catch(e){ customTopics = []; }
+  }
+  function persistCustom(){
+    try{
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(customTopics));
+      return true;
+    }catch(e){ return false; }
+  }
+  function allTopics(){ return PRESETS.concat(customTopics); }
+  function getTopic(key){
+    var found = null;
+    allTopics().forEach(function(t){ if (t.key === key) found = t; });
+    return found;
+  }
+
+  // ---------------- image handling ----------------
+  function fileToCompressedDataUrl(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 220;
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#1e3138";
+        ctx.fillRect(0,0,cw,ch);
+        ctx.drawImage(img, 0, 0, cw, ch);
+        cb(canvas.toDataURL("image/jpeg", 0.72));
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------------- state ----------------
+  var state = {
+    phase: "select",       // select | build | memorize | play | result
+    topicKey: null,
+    maxMiss: 5,
+    memoSec: 12,
+    stepIndex: 0,
+    mistakes: 0,
+    result: null,
+    timeLeft: 0,
+    choiceOrder: null,
+    lastMsg: "",
+    lastMsgType: "",
+    banner: null,
+    confirmDeleteId: null,
+    build: null             // {editId,name,en,color,steps:[{label,img}]}
+  };
+
+  var stageEl = document.getElementById("stage");
+  var memoTimerHandle = null;
+
+  function render(){
+    if (state.phase === "select") renderSelect();
+    else if (state.phase === "build") renderBuild();
+    else if (state.phase === "memorize") renderMemorize();
+    else if (state.phase === "play") renderPlay();
+    else if (state.phase === "result") renderResult();
+    saveSnapshot();
+  }
+
+  function bannerHtml(){
+    if (!state.banner) return "";
+    return '<div class="banner"><span>' + esc(state.banner) + '</span><button id="bannerClose">×</button></div>';
+  }
+  function bindBanner(){
+    var b = document.getElementById("bannerClose");
+    if (b) b.addEventListener("click", function(){ state.banner = null; render(); });
+  }
+
+  // ---------------- select ----------------
+
+  var STAIRMETA = {"gas_press":{"g":"중1","u":"기체의 성질"},"gas_temp":{"g":"중1","u":"기체의 성질"},"gas_balloon":{"g":"중1","u":"기체의 성질"},"gas_boyle":{"g":"중1","u":"기체의 성질"},"moon_phase":{"g":"중1","u":"태양계"},"sep_mix":{"g":"중2","u":"물질의 특성"},"rock_cycle":{"g":"중2","u":"지권의 변화"},"sound_path":{"g":"중2","u":"빛과 파동"},"ion_test":{"g":"중2","u":"물질의 구성"},"circuit_build":{"g":"중2","u":"전기와 자기"},"digest":{"g":"중2","u":"동물과 에너지"},"circu":{"g":"중2","u":"동물과 에너지"},"respir":{"g":"중2","u":"동물과 에너지"},"excrete":{"g":"중2","u":"동물과 에너지"},"ph_make":{"g":"중2","u":"식물과 에너지"},"ph_move":{"g":"중2","u":"식물과 에너지"},"ph_test":{"g":"중2","u":"식물과 에너지"},"ph_co2":{"g":"중2","u":"식물과 에너지"},"mitosis":{"g":"중3","u":"생식과 유전"},"meiosis":{"g":"중3","u":"생식과 유전"},"develop":{"g":"중3","u":"생식과 유전"},"observe":{"g":"중3","u":"생식과 유전"},"path_reflex":{"g":"중3","u":"자극과 반응"},"path_knee":{"g":"중3","u":"자극과 반응"},"energy_hydro":{"g":"중3","u":"에너지 전환과 보존"},"space_history":{"g":"중3","u":"별과 우주"},"inq_steps":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"bio_level":{"g":"중1","u":"생물의 구성과 다양성"},"classify":{"g":"중1","u":"생물의 구성과 다양성"},"heat_eq":{"g":"중1","u":"열"},"water_state":{"g":"중1","u":"물질의 상태 변화"},"chem_eq":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"cloud_make":{"g":"중3","u":"기권과 날씨"},"atmos_layer":{"g":"중3","u":"기권과 날씨"},"free_fall":{"g":"중3","u":"운동과 에너지"},"plan_form":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"sci_civil":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"plant_level":{"g":"중1","u":"생물의 구성과 다양성"},"micro_use":{"g":"중1","u":"생물의 구성과 다양성"},"onion_slide":{"g":"중1","u":"생물의 구성과 다양성"},"conduction":{"g":"중1","u":"열"},"convection":{"g":"중1","u":"열"},"bimetal_alarm":{"g":"중1","u":"열"},"heat_curve":{"g":"중1","u":"물질의 상태 변화"},"melt_boil":{"g":"중1","u":"물질의 상태 변화"},"spring_scale":{"g":"중1","u":"힘의 작용"},"float_sink":{"g":"중1","u":"힘의 작용"},"planet_order":{"g":"중1","u":"태양계"},"lunar_eclipse":{"g":"중1","u":"태양계"},"density_exp":{"g":"중2","u":"물질의 특성"},"recrystal":{"g":"중2","u":"물질의 특성"},"distill":{"g":"중2","u":"물질의 특성"},"earth_layer":{"g":"중2","u":"지권의 변화"},"sedimentary":{"g":"중2","u":"지권의 변화"},"see_object":{"g":"중2","u":"빛과 파동"},"refraction":{"g":"중2","u":"빛과 파동"},"cation":{"g":"중2","u":"물질의 구성"},"periodic_hist":{"g":"중2","u":"물질의 구성"},"pulmonary":{"g":"중2","u":"동물과 에너지"},"starch_dig":{"g":"중2","u":"동물과 에너지"},"protein_dig":{"g":"중2","u":"동물과 에너지"},"inhale":{"g":"중2","u":"동물과 에너지"},"friction_elec":{"g":"중2","u":"전기와 자기"},"electroscope":{"g":"중2","u":"전기와 자기"},"electromagnet":{"g":"중2","u":"전기와 자기"},"parallax":{"g":"중2","u":"별과 우주"},"star_color":{"g":"중2","u":"별과 우주"},"mass_cons":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"hand_warmer":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"sea_breeze":{"g":"중3","u":"기권과 날씨"},"cold_front":{"g":"중3","u":"기권과 날씨"},"ticker_tape":{"g":"중3","u":"운동과 에너지"},"fall_speed":{"g":"중3","u":"운동과 에너지"},"eye_path":{"g":"중3","u":"자극과 반응"},"glucose_high":{"g":"중3","u":"자극과 반응"},"fert_implant":{"g":"중3","u":"생식과 유전"},"coaster":{"g":"중3","u":"에너지 전환과 보존"},"generator":{"g":"중3","u":"에너지 전환과 보존"},"big_bang":{"g":"중3","u":"별과 우주"},"magnitude":{"g":"중3","u":"별과 우주"}};
+  var FGRADES = ["전체","중1","중2","중3","내 주제"];
+  var fGrade = "전체", fQuery = "", fFocus = false;
+  function stairMeta(t){ return STAIRMETA[t.key] || {g:"내 주제", u:"내가 만든 주제"}; }
+  function stairHay(t){
+    var m = stairMeta(t);
+    var words = (t.steps||[]).map(function(x){ return x.label; }).join(" ");
+    return (t.name + " " + (t.en||"") + " " + m.g + " " + m.u + " " + words).toLowerCase();
+  }
+  function stairVisible(t){
+    var m = stairMeta(t), q = fQuery.trim().toLowerCase();
+    if (fGrade !== "전체" && m.g !== fGrade) return false;
+    if (q && stairHay(t).indexOf(q) < 0) return false;
+    return true;
+  }
+  function stairFilterHtml(){
+    return '<div id="stairFilter">' +
+      '<div class="fchips">' + FGRADES.map(function(g){
+        return '<button type="button" class="fchip" data-fg="' + g + '" aria-pressed="' + (fGrade===g) + '">' + g + '</button>';
+      }).join("") + '</div>' +
+      '<label class="fsearch"><span>검색</span>' +
+      '<input type="text" id="stairSearch" value="' + esc(fQuery) + '" ' +
+      'placeholder="주제·단계로 찾기 (예: 광합성, 반사, 암석)" autocomplete="off"></label>' +
+    '</div>';
+  }
+
+  function renderSelect(){
+    var html = bannerHtml();
+    html += stairFilterHtml();
+    var shownPre = PRESETS.filter(stairVisible);
+    var shownCus = customTopics.filter(stairVisible);
+    html += '<div class="topic-grid">';
+    shownPre.forEach(function(t){ html += topicCardHtml(t); });
+    shownCus.forEach(function(t){ html += topicCardHtml(t); });
+    if (!shownPre.length && !shownCus.length) {
+      html += '<p class="fnone">찾는 주제가 없습니다. 검색어를 지우거나 다른 학년을 눌러 보세요.</p>';
+    }
+    html += '<button class="add-card" id="addTopicBtn">' +
+      '<span class="plus">+</span><span class="lbl">내 주제 만들기</span>' +
+      '<span class="sub">단어 · 순서 · 이미지 직접 입력</span></button>';
+    html += '</div>';
+
+    html += '<div class="settings-row">' +
+      '<div class="setting"><label>허용 오답</label><div class="seg" data-seg="miss">' +
+        [3,5,7].map(function(n){ return '<button aria-pressed="' + (state.maxMiss===n) + '" data-val="' + n + '">' + n + '회</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="setting"><label>외우는 시간</label><div class="seg" data-seg="memo">' +
+        [8,12,18].map(function(n){ return '<button aria-pressed="' + (state.memoSec===n) + '" data-val="' + n + '">' + n + '초</button>'; }).join("") +
+      '</div></div>' +
+    '</div>';
+
+    html += '<button class="start-btn" id="startBtn"' + (state.topicKey ? "" : " disabled") + '>시작하기</button>';
+
+    stageEl.innerHTML = html;
+    bindBanner();
+
+    stageEl.querySelectorAll("[data-fg]").forEach(function(el){
+      el.addEventListener("click", function(){ fGrade = el.getAttribute("data-fg"); fFocus = false; render(); });
+    });
+    var sb = document.getElementById("stairSearch");
+    if (sb) {
+      sb.addEventListener("input", function(e){ fQuery = e.target.value; fFocus = true; render(); });
+      if (fFocus) { sb.focus(); sb.setSelectionRange(sb.value.length, sb.value.length); }
+    }
+
+    stageEl.querySelectorAll(".topic-card").forEach(function(el){
+      el.addEventListener("click", function(ev){
+        if (ev.target.closest(".card-actions") || ev.target.closest(".confirm-del")) return;
+        state.topicKey = el.getAttribute("data-topic");
+        render();
+      });
+    });
+    stageEl.querySelectorAll("[data-edit]").forEach(function(el){
+      el.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        openBuilder(getTopic(el.getAttribute("data-edit")));
+      });
+    });
+    stageEl.querySelectorAll("[data-ask-del]").forEach(function(el){
+      el.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        state.confirmDeleteId = el.getAttribute("data-ask-del");
+        render();
+      });
+    });
+    stageEl.querySelectorAll("[data-del]").forEach(function(el){
+      el.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        var id = el.getAttribute("data-del");
+        customTopics = customTopics.filter(function(t){ return t.key !== id; });
+        if (state.topicKey === id) state.topicKey = null;
+        state.confirmDeleteId = null;
+        persistCustom();
+        render();
+      });
+    });
+    stageEl.querySelectorAll("[data-cancel-del]").forEach(function(el){
+      el.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        state.confirmDeleteId = null;
+        render();
+      });
+    });
+
+    var addBtn = document.getElementById("addTopicBtn");
+    if (addBtn) addBtn.addEventListener("click", function(){ openBuilder(null); });
+
+    stageEl.querySelectorAll('[data-seg]').forEach(function(seg){
+      var kind = seg.getAttribute("data-seg");
+      seg.querySelectorAll("button").forEach(function(b){
+        b.addEventListener("click", function(){
+          var v = parseInt(b.getAttribute("data-val"), 10);
+          if (kind === "miss") state.maxMiss = v; else state.memoSec = v;
+          render();
+        });
+      });
+    });
+    var startBtn = document.getElementById("startBtn");
+    if (startBtn) startBtn.addEventListener("click", startMemorize);
+  }
+
+  function topicCardHtml(t){
+    var sel = state.topicKey === t.key ? " selected" : "";
+    var pathPreview = t.steps.map(function(s){ return s.label || "?"; }).join(" → ");
+    var actions = "";
+    if (!t.builtin){
+      if (state.confirmDeleteId === t.key){
+        actions = '<div class="confirm-del">' +
+          '<span>이 주제를 삭제할까요?</span>' +
+          '<div class="row">' +
+            '<button class="btn primary" data-del="' + t.key + '" style="padding:7px 14px;font-size:12.5px;">삭제</button>' +
+            '<button class="btn ghost" data-cancel-del="1" style="padding:7px 14px;font-size:12.5px;">취소</button>' +
+          '</div></div>';
+      } else {
+        actions = '<div class="card-actions">' +
+          '<button class="icon-btn" data-edit="' + t.key + '" title="수정">✎</button>' +
+          '<button class="icon-btn" data-ask-del="' + t.key + '" title="삭제">🗑</button>' +
+        '</div>';
+      }
+    }
+    return '<button class="topic-card' + sel + '" style="--c:' + t.color + '" data-topic="' + t.key + '">' +
+      '<span class="bar"></span>' +
+      (t.builtin ? '' : '<span class="mine-tag">내 주제</span>') +
+      '<span class="name">' + esc(t.name) + '</span>' +
+      '<span class="en">' + esc(t.en || "CUSTOM") + ' · ' + t.steps.length + ' STEPS</span>' +
+      '<span class="path">' + esc(pathPreview) + '</span>' +
+      actions +
+    '</button>';
+  }
+
+  // ---------------- builder ----------------
+  function openBuilder(existing){
+    if (existing){
+      state.build = {
+        editId: existing.key, name: existing.name, en: existing.en || "",
+        color: existing.color,
+        steps: existing.steps.map(function(s){ return {label:s.label, img:s.img}; })
+      };
+    } else {
+      state.build = {
+        editId: null, name: "", en: "", color: COLORS[Math.floor(Math.random()*COLORS.length)].v,
+        steps: [0,1,2,3,4,5,6].map(function(){ return {label:"", img:null}; })
+      };
+    }
+    state.phase = "build";
+    render();
+  }
+
+  function renderBuild(){
+    var b = state.build;
+    var html = '<div class="build-title">' + (b.editId ? "주제 수정하기" : "내 주제 만들기") + '</div>';
+    html += '<div class="build-sub">순서대로 외울 단어를 입력하세요. 이미지는 선택이에요.</div>';
+
+    html += '<div class="field-row">' +
+      '<div class="field"><label>주제 이름</label><input type="text" id="fName" value="' + esc(b.name) + '" placeholder="예: 별의 진화 단계" maxlength="40"></div>' +
+      '<div class="field"><label>보조 라벨 (선택)</label><input type="text" id="fEn" value="' + esc(b.en) + '" placeholder="예: STAR LIFE CYCLE" maxlength="30"></div>' +
+    '</div>';
+
+    html += '<div class="field"><label>색상</label><div class="swatches">' +
+      COLORS.map(function(c){
+        return '<button class="swatch" style="--s:' + c.v + '" aria-pressed="' + (b.color===c.v) + '" data-color="' + c.v + '"></button>';
+      }).join("") + '</div></div>';
+
+    html += '<div class="field"><label>단계 (' + b.steps.length + '/' + MAX_STEPS + ')</label><div class="step-rows">';
+    b.steps.forEach(function(s, i){
+      html += '<div class="step-row">' +
+        '<span class="num">' + (i+1) + '</span>' +
+        '<div class="thumb-slot">' +
+          (s.img ?
+            ('<img src="' + s.img + '" alt=""><button class="thumb-remove" data-rmimg="' + i + '">×</button>')
+            : ('<button class="thumb-btn" data-addimg="' + i + '" title="이미지 추가">＋</button>')
+          ) +
+          '<input type="file" accept="image/*" data-fileinput="' + i + '" style="display:none;">' +
+        '</div>' +
+        '<input type="text" data-steplabel="' + i + '" value="' + esc(s.label) + '" placeholder="단어를 입력하세요" maxlength="20">' +
+        '<button class="row-del" data-rmstep="' + i + '"' + (b.steps.length<=MIN_STEPS?" disabled":"") + ' title="단계 삭제">✕</button>' +
+      '</div>';
+    });
+    html += '</div>';
+    html += '<div class="step-tools">' +
+      '<button class="add-step-btn" id="addStepBtn"' + (b.steps.length>=MAX_STEPS?" disabled":"") + '>+ 단계 추가</button>' +
+      '<span class="step-count">최소 ' + MIN_STEPS + '단계 · 최대 ' + MAX_STEPS + '단계</span>' +
+    '</div>' +
+    '<div class="hint">이미지는 이 브라우저에만 저장돼요(자동 축소). 다른 기기에서는 보이지 않아요.</div>' +
+    '</div>';
+
+    html += '<div class="build-actions">' +
+      '<button class="btn primary" id="saveBuildBtn">저장하고 목록으로</button>' +
+      '<button class="btn ghost" id="cancelBuildBtn">취소</button>' +
+    '</div>';
+
+    stageEl.innerHTML = html;
+
+    document.getElementById("fName").addEventListener("input", function(e){ state.build.name = e.target.value; });
+    document.getElementById("fEn").addEventListener("input", function(e){ state.build.en = e.target.value; });
+
+    stageEl.querySelectorAll("[data-color]").forEach(function(el){
+      el.addEventListener("click", function(){ state.build.color = el.getAttribute("data-color"); render(); });
+    });
+    stageEl.querySelectorAll("[data-steplabel]").forEach(function(el){
+      el.addEventListener("input", function(){
+        var i = parseInt(el.getAttribute("data-steplabel"), 10);
+        state.build.steps[i].label = el.value;
+      });
+    });
+    stageEl.querySelectorAll("[data-rmstep]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var i = parseInt(el.getAttribute("data-rmstep"), 10);
+        if (state.build.steps.length > MIN_STEPS){
+          state.build.steps.splice(i, 1);
+          render();
+        }
+      });
+    });
+    stageEl.querySelectorAll("[data-addimg]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var i = el.getAttribute("data-addimg");
+        var input = stageEl.querySelector('[data-fileinput="' + i + '"]');
+        if (input) input.click();
+      });
+    });
+    stageEl.querySelectorAll("[data-rmimg]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var i = parseInt(el.getAttribute("data-rmimg"), 10);
+        state.build.steps[i].img = null;
+        render();
+      });
+    });
+    stageEl.querySelectorAll("[data-fileinput]").forEach(function(el){
+      el.addEventListener("change", function(){
+        var i = parseInt(el.getAttribute("data-fileinput"), 10);
+        var file = el.files && el.files[0];
+        if (!file) return;
+        fileToCompressedDataUrl(file, function(dataUrl){
+          state.build.steps[i].img = dataUrl;
+          render();
+        });
+      });
+    });
+
+    var addStepBtn = document.getElementById("addStepBtn");
+    if (addStepBtn) addStepBtn.addEventListener("click", function(){
+      if (state.build.steps.length < MAX_STEPS){
+        state.build.steps.push({label:"", img:null});
+        render();
+      }
+    });
+
+    document.getElementById("cancelBuildBtn").addEventListener("click", function(){
+      state.build = null;
+      state.phase = "select";
+      render();
+    });
+    document.getElementById("saveBuildBtn").addEventListener("click", saveBuild);
+  }
+
+  function saveBuild(){
+    var b = state.build;
+    var name = b.name.trim();
+    var steps = b.steps.map(function(s){ return {label: s.label.trim(), img: s.img}; });
+    var emptyIdx = -1;
+    steps.forEach(function(s, i){ if (!s.label && emptyIdx === -1) emptyIdx = i; });
+
+    if (!name){ state.banner = "주제 이름을 입력해 주세요."; render(); return; }
+    if (emptyIdx !== -1){ state.banner = (emptyIdx+1) + "번 단계의 단어를 입력해 주세요."; render(); return; }
+    if (steps.length < MIN_STEPS){ state.banner = "최소 " + MIN_STEPS + "단계 이상 입력해 주세요."; render(); return; }
+
+    var key = b.editId || ("custom_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+    var topic = { key:key, name:name, en:b.en.trim(), color:b.color, builtin:false, steps:steps };
+
+    if (b.editId){
+      customTopics = customTopics.map(function(t){ return t.key === b.editId ? topic : t; });
+    } else {
+      customTopics.push(topic);
+    }
+    var ok = persistCustom();
+    state.topicKey = key;
+    state.build = null;
+    state.phase = "select";
+    state.banner = ok ? null : "이미지 저장 공간이 부족해 이번 주제는 브라우저를 새로고침하면 사라질 수 있어요.";
+    render();
+  }
+
+  // ---------------- shared ----------------
+  function specRow(){
+    var t = getTopic(state.topicKey);
+    return '<div class="spec-row">' +
+      '<span class="tag"><span class="sys-dot" style="--c:' + t.color + '"></span>' + esc(t.name) + '</span>' +
+      '<span class="tag">' + esc(t.en || "CUSTOM") + '</span>' +
+      '<span class="tag">오답 허용 ' + state.maxMiss + '회</span>' +
+      '<button class="change-topic" id="changeTopic">주제 바꾸기</button>' +
+    '</div>';
+  }
+  function bindChangeTopic(){
+    var b = document.getElementById("changeTopic");
+    if (b) b.addEventListener("click", function(){
+      clearMemoTimer();
+      state.phase = "select";
+      state.stepIndex = 0; state.mistakes = 0; state.result = null;
+      render();
+    });
+  }
+
+  function startMemorize(){
+    state.phase = "memorize";
+    state.timeLeft = state.memoSec;
+    render();
+    clearMemoTimer();
+    memoTimerHandle = setInterval(function(){
+      state.timeLeft -= 1;
+      if (state.timeLeft <= 0){
+        clearMemoTimer();
+        startPlay();
+      } else {
+        updateTimerRing();
+      }
+    }, 1000);
+  }
+  function clearMemoTimer(){
+    if (memoTimerHandle){ clearInterval(memoTimerHandle); memoTimerHandle = null; }
+  }
+
+  function renderMemorize(){
+    var t = getTopic(state.topicKey);
+    var r = 24, c = 2 * Math.PI * r;
+    var html = specRow();
+    html += '<div class="memorize-title">' + esc(t.name) + '을(를) 순서대로 외워보세요</div>';
+    html += '<div class="memorize-sub">이 순서가 그대로 계단 문제로 나옵니다</div>';
+    html += '<ol class="memo-list">' + t.steps.map(function(s,i){
+      return '<li><span class="num">' + (i+1) + '</span>' +
+        (s.img ? ('<img src="' + s.img + '" alt="">') : '') +
+        '<span class="word">' + esc(s.label) + '</span></li>';
+    }).join("") + '</ol>';
+    html += '<div class="timer-ring"><svg viewBox="0 0 56 56">' +
+      '<circle class="track" cx="28" cy="28" r="' + r + '"></circle>' +
+      '<circle class="bar" id="ringBar" cx="28" cy="28" r="' + r + '" stroke-dasharray="' + c + '" stroke-dashoffset="0"></circle>' +
+      '<text x="28" y="33" text-anchor="middle" id="ringText">' + state.timeLeft + '</text>' +
+    '</svg></div>';
+    html += '<div class="skip-row"><button class="skip-btn" id="skipBtn">외우기 끝, 바로 시작</button></div>';
+    stageEl.innerHTML = html;
+    bindChangeTopic();
+    var skip = document.getElementById("skipBtn");
+    if (skip) skip.addEventListener("click", function(){ clearMemoTimer(); startPlay(); });
+    updateTimerRing();
+  }
+  function updateTimerRing(){
+    var bar = document.getElementById("ringBar");
+    var txt = document.getElementById("ringText");
+    if (!bar || !txt) return;
+    var r = 24, c = 2 * Math.PI * r;
+    var frac = Math.max(0, state.timeLeft / state.memoSec);
+    bar.setAttribute("stroke-dashoffset", (c * (1 - frac)).toFixed(1));
+    txt.textContent = Math.max(0, state.timeLeft);
+  }
+
+  function startPlay(){
+    state.phase = "play";
+    state.stepIndex = 0;
+    state.mistakes = 0;
+    state.lastMsg = "";
+    state.lastMsgType = "";
+    rollChoices();
+    render();
+  }
+
+  function rollChoices(){
+    var t = getTopic(state.topicKey);
+    var correct = t.steps[state.stepIndex];
+    var pool = t.steps.filter(function(s){ return s.label !== correct.label; });
+    var distractors = shuffle(pool).slice(0, Math.min(3, pool.length));
+    state.choiceOrder = shuffle([correct].concat(distractors));
+  }
+
+  function renderPlay(){
+    var t = getTopic(state.topicKey);
+    var html = specRow();
+
+    html += '<div class="stair-outer"><div class="stair">';
+    t.steps.forEach(function(s, i){
+      var done = i < state.stepIndex;
+      var current = i === state.stepIndex;
+      var cls = "step" + (done ? " done" : "") + (current ? " current" : "");
+      html += '<div class="' + cls + '" style="--i:' + i + '">' +
+        '<div class="marker">🥾</div>' +
+        '<div class="tread"><div class="idx">' + (i+1) + '</div>' +
+          (done && s.img ? ('<img class="thumb" src="' + s.img + '" alt="">') : '') +
+          '<div class="label">' + (done ? esc(s.label) : (current ? "?" : "")) + '</div>' +
+        '</div></div>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="hud">' +
+      '<div class="progress-text"><b>' + state.stepIndex + '</b> / ' + t.steps.length + ' 단계 완료</div>' +
+      '<div class="lives">' + Array.from({length: state.maxMiss}).map(function(_, i){
+        return '<span class="dot' + (i < state.mistakes ? " spent" : "") + '"></span>';
+      }).join("") + '</div>' +
+    '</div>';
+
+    var promptCls = "prompt" + (state.lastMsgType === "right" ? " right-msg" : state.lastMsgType === "wrong" ? " wrong-msg" : "");
+    var promptText = state.lastMsg || ('<b>' + (state.stepIndex + 1) + '번째</b> 순서는 무엇일까요?');
+    html += '<div class="' + promptCls + '">' + promptText + '</div>';
+
+    html += '<div class="choices">' + state.choiceOrder.map(function(s){
+      return '<button class="choice" data-word="' + esc(s.label) + '">' +
+        (s.img ? ('<img src="' + s.img + '" alt="">') : '') +
+        '<span>' + esc(s.label) + '</span></button>';
+    }).join("") + '</div>';
+
+    stageEl.innerHTML = html;
+    bindChangeTopic();
+
+    stageEl.querySelectorAll(".choice").forEach(function(btn){
+      btn.addEventListener("click", function(){ handleChoice(btn); });
+    });
+  }
+
+  function handleChoice(btn){
+    var t = getTopic(state.topicKey);
+    var correct = t.steps[state.stepIndex].label;
+    var word = btn.getAttribute("data-word");
+    stageEl.querySelectorAll(".choice").forEach(function(b){ b.disabled = true; });
+
+    if (word === correct){
+      btn.classList.add("right"); window.KJS&&KJS.ok({toast:false});
+      state.lastMsg = pick(RIGHT_MSGS);
+      state.lastMsgType = "right";
+      setTimeout(function(){
+        state.stepIndex += 1;
+        if (state.stepIndex >= t.steps.length){
+          state.phase = "result";
+          state._winPlayed = false; state.result = "success";
+          render();
+        } else {
+          rollChoices();
+          render();
+          var justDone = stageEl.querySelectorAll(".step")[state.stepIndex - 1];
+          if (justDone) justDone.classList.add("just-done");
+        }
+      }, 520);
+    } else {
+      btn.classList.add("wrong"); window.KJS&&KJS.no({toast:false});
+      state.mistakes += 1;
+      state.lastMsg = pick(WRONG_MSGS);
+      state.lastMsgType = "wrong";
+      if (state.mistakes >= state.maxMiss){
+        setTimeout(function(){
+          state.phase = "result";
+          state.result = "fail";
+          render();
+        }, 650);
+      } else {
+        setTimeout(function(){ render(); }, 650);
+      }
+    }
+  }
+
+  function renderResult(){
+    var t = getTopic(state.topicKey);
+    var success = state.result === "success";
+    if (success && !state._winPlayed) { state._winPlayed = true; window.KJS && KJS.win({ msg: "🏆 " + t.name + " 완주!" }); }
+    if (!success) state._winPlayed = false;
+    var html = specRow();
+    html += '<div class="result ' + (success ? "success" : "fail") + '">' +
+      '<div class="badge">' + (success ? "🏁" : "🔍") + '</div>' +
+      '<h2>' + (success ? esc(t.name) + " 완주!" : "이번엔 여기까지") + '</h2>' +
+      '<p class="sub">' + (success ?
+        ('오답 ' + state.mistakes + '회로 ' + t.steps.length + '단계를 모두 올랐어요.') :
+        ('오답 ' + state.maxMiss + '회를 모두 사용했어요. 순서를 다시 확인해볼까요?')) +
+      '</p>' +
+      '<div class="answer-strip">' + t.steps.map(function(s, i){
+        return (i>0 ? '<span class="arrow">→</span>' : '') +
+          '<span class="chip">' + (s.img ? ('<img src="' + s.img + '" alt="">') : '') +
+          '<span class="n">' + (i+1) + '</span>' + esc(s.label) + '</span>';
+      }).join("") + '</div>' +
+      '<div class="result-actions">' +
+        '<button class="btn primary" id="retryBtn">같은 주제 다시</button>' +
+        '<button class="btn ghost" id="otherBtn">다른 주제 선택</button>' +
+      '</div>' +
+    '</div>';
+    stageEl.innerHTML = html;
+    bindChangeTopic();
+    document.getElementById("retryBtn").addEventListener("click", startMemorize);
+    document.getElementById("otherBtn").addEventListener("click", function(){
+      state.phase = "select";
+      state.stepIndex = 0; state.mistakes = 0; state.result = null;
+      render();
+    });
+  }
+
+  // ---- resume across republish (best-effort) ----
+  function saveSnapshot(){
+    try{
+      if (window.claude && window.claude.hot && window.claude.hot.snapshot){
+        window.claude.hot.snapshot({
+          phase: (state.phase === "build" ? "select" : state.phase),
+          topicKey: state.topicKey, maxMiss: state.maxMiss,
+          memoSec: state.memoSec, stepIndex: state.stepIndex, mistakes: state.mistakes
+        });
+      }
+    }catch(e){}
+  }
+
+  function boot(saved){
+    loadCustom();
+    if (saved && saved.topicKey && getTopic(saved.topicKey)){
+      state.topicKey = saved.topicKey;
+      state.maxMiss = saved.maxMiss || 5;
+      state.memoSec = saved.memoSec || 12;
+    }
+    state.phase = "select";
+    render();
+  }
+
+  try{
+    if (window.claude && window.claude.hot && window.claude.hot.ready){
+      window.claude.hot.ready(function(){ boot(window.claude.hot.data || {}); });
+    } else {
+      boot((window.claude && window.claude.hot && window.claude.hot.data) || {});
+    }
+  }catch(e){ boot({}); }
+})();
+</script>
+
+
+<script id="kjs-menu-adapter">
+(function(){
+var TOPICS = [{"key":"plan_form","name":"탐구 계획서 쓰는 순서","en":"Inquiry Plan","steps":["탐구 문제 정하기","가설 세우기","준비물 정하기","실험 과정 정하기","다르게 할 조건 정하기","같게 할 조건 정하기","주의할 점 쓰기"]},{"key":"sci_civil","name":"과학이 문명을 바꾸는 흐름","en":"Science to Civilization","steps":["과학적 원리의 발견","기술의 발달","기기의 발명","생활의 변화","인류 문명의 발달"]},{"key":"plant_level","name":"식물의 구성 단계","en":"Plant Organization","steps":["세포","조직","조직계","기관","개체"]},{"key":"micro_use","name":"현미경으로 관찰하는 순서","en":"Using a Microscope","steps":["가장 낮은 배율의 대물렌즈 선택","표본을 재물대에 올리기","옆에서 보며 대물렌즈를 표본에 가깝게","접안렌즈를 보며 조동 나사로 초점","미동 나사로 선명하게","높은 배율로 바꾸어 관찰"]},{"key":"onion_slide","name":"양파 표피 세포 표본 만들기","en":"Onion Cell Slide","steps":["받침유리에 물 한 방울","양파 표피를 얇게 벗겨 올리기","덮개유리를 비스듬히 덮기","아세트올세인 떨어뜨리기","거름종이로 남은 액 흡수","현미경으로 관찰"]},{"key":"conduction","name":"전도로 열이 전달되는 과정","en":"Conduction","steps":["막대 한쪽 끝을 가열","가열된 쪽 입자 운동이 활발해짐","이웃한 입자와 충돌","옆 입자의 운동도 활발해짐","반대쪽 끝까지 열이 전달"]},{"key":"convection","name":"대류로 물이 데워지는 과정","en":"Convection","steps":["아래쪽 물을 가열","데워진 물의 부피가 커짐","밀도가 작아져 위로 올라감","위쪽 찬물이 아래로 내려옴","순환하며 전체가 데워짐"]},{"key":"bimetal_alarm","name":"바이메탈 화재경보기의 작동","en":"Bimetal Alarm","steps":["주변 온도가 올라감","두 금속이 팽창","덜 늘어나는 금속 쪽으로 휨","접점이 닿아 회로 연결","경보가 울림"]},{"key":"heat_curve","name":"얼음을 가열할 때의 변화","en":"Heating Curve","steps":["얼음의 온도 상승","녹는점에서 온도 일정(융해)","물의 온도 상승","끓는점에서 온도 일정(기화)","수증기의 온도 상승"]},{"key":"melt_boil","name":"고체가 기체가 될 때 입자 배열","en":"Particles in State Change","steps":["규칙적으로 배열된 고체","배열이 흐트러짐(융해)","비교적 자유롭게 움직이는 액체","입자 사이가 멀어짐(기화)","매우 자유롭게 움직이는 기체"]},{"key":"spring_scale","name":"용수철저울로 무게 재기","en":"Spring Scale","steps":["영점 조절하기","물체를 고리에 걸기","용수철이 늘어남","움직임이 멈출 때까지 기다리기","눈금 읽기"]},{"key":"float_sink","name":"물체가 뜨는지 가라앉는지 알기","en":"Float or Sink","steps":["물체에 중력이 작용","물체가 물에 잠김","물이 위로 미는 부력 작용","부력과 중력의 크기 비교","부력이 크면 뜨고 작으면 가라앉음"]},{"key":"planet_order","name":"태양에서 가까운 행성 순서","en":"Planet Order","steps":["수성","금성","지구","화성","목성","토성","천왕성","해왕성"]},{"key":"lunar_eclipse","name":"월식이 진행되는 순서","en":"Lunar Eclipse","steps":["보름달","달이 지구 그림자에 들어가기 시작","부분 월식","개기 월식(붉은 달)","그림자에서 빠져나옴","다시 보름달"]},{"key":"density_exp","name":"밀도를 구하는 실험 순서","en":"Measuring Density","steps":["전자저울로 질량 측정","눈금실린더에 물을 넣고 눈금 읽기","물체를 넣고 눈금 읽기","늘어난 눈금으로 부피 구하기","질량 ÷ 부피로 밀도 계산"]},{"key":"recrystal","name":"재결정으로 순수한 고체 얻기","en":"Recrystallization","steps":["불순물이 섞인 고체를 뜨거운 물에 녹임","녹지 않은 물질을 거름","용액을 천천히 식힘","용해도가 작아져 결정 석출","걸러서 결정만 얻음"]},{"key":"distill","name":"물과 에탄올을 증류로 분리하기","en":"Distillation","steps":["혼합물 가열","끓는점이 낮은 에탄올이 먼저 기화","냉각기에서 액화","시험관에 에탄올이 모임","온도가 더 오르면 물이 끓음"]},{"key":"earth_layer","name":"지구 내부 층 (겉에서 속으로)","en":"Earth's Layers","steps":["지각","모호면","맨틀","외핵","내핵"]},{"key":"sedimentary","name":"퇴적암이 만들어지는 과정","en":"Sedimentary Rock","steps":["암석의 풍화와 침식","물질의 운반","바다·호수 바닥에 퇴적","위에 쌓인 무게로 다짐","알갱이가 붙어 굳음","퇴적암"]},{"key":"see_object","name":"물체를 보는 과정","en":"Seeing an Object","steps":["광원에서 빛이 나옴","빛이 물체에 도달","물체 표면에서 빛이 반사","반사된 빛이 눈으로 들어옴","물체를 봄"]},{"key":"refraction","name":"빛이 공기에서 물로 들어갈 때","en":"Refraction","steps":["빛이 공기 속을 진행","물 표면에 비스듬히 도달","속력이 느려짐","법선 쪽으로 꺾임","물속에서 진행"]},{"key":"cation","name":"원자가 양이온이 되는 과정","en":"Forming a Cation","steps":["중성 원자","전자를 잃음","양성자 수가 전자 수보다 많아짐","전체가 (+)전하를 띰","양이온"]},{"key":"periodic_hist","name":"주기율표가 만들어진 과정","en":"Periodic Table History","steps":["라부아지에의 원소 분류","되베라이너의 세 쌍 원소","뉴랜즈의 옥타브설","멘델레예프의 원자량 순 배열","모즐리의 원자 번호 순 배열"]},{"key":"pulmonary","name":"폐순환 경로","en":"Pulmonary Circulation","steps":["우심실","폐동맥","폐의 모세혈관","폐정맥","좌심방"]},{"key":"starch_dig","name":"녹말이 소화·흡수되는 과정","en":"Starch Digestion","steps":["입에서 녹말","아밀레이스가 엿당으로 분해","소장에서 포도당으로 분해","융털의 모세혈관으로 흡수","심장을 거쳐 온몸으로"]},{"key":"protein_dig","name":"단백질이 소화되는 과정","en":"Protein Digestion","steps":["위에서 단백질","펩신이 분해 시작","이자액의 트립신이 분해","소장에서 아미노산으로","융털로 흡수"]},{"key":"inhale","name":"들숨이 일어나는 과정","en":"Inhalation","steps":["갈비뼈가 올라가고 횡격막이 내려감","흉강의 부피가 커짐","흉강의 압력이 낮아짐","폐가 부풀어 부피가 커짐","공기가 폐로 들어옴"]},{"key":"friction_elec","name":"마찰 전기가 생기는 과정","en":"Static Electricity","steps":["두 물체를 마찰","전자가 한 물체에서 다른 물체로 이동","전자를 잃은 물체는 (+)전하","전자를 얻은 물체는 (-)전하","두 물체가 서로 끌어당김"]},{"key":"electroscope","name":"검전기로 대전 여부 확인하기","en":"Electroscope","steps":["대전체를 금속판에 가까이","정전기 유도가 일어남","금속박에 같은 종류의 전하가 모임","금속박끼리 밀어냄","금속박이 벌어짐"]},{"key":"electromagnet","name":"전자석 만들기","en":"Electromagnet","steps":["철못에 에나멜선 감기","양 끝 피복 벗기기","전지에 연결","전류가 흐름","철못이 자석이 됨"]},{"key":"parallax","name":"연주 시차로 별까지 거리 구하기","en":"Annual Parallax","steps":["6개월 간격으로 별 관측","배경 별에 대한 위치 변화 측정","시차 구하기","시차의 절반 = 연주 시차","연주 시차로 거리 계산"]},{"key":"star_color","name":"표면 온도가 높은 별의 색 순서","en":"Star Colors","steps":["청색","청백색","백색","황백색","황색","주황색","적색"]},{"key":"mass_cons","name":"앙금 생성으로 질량 보존 확인","en":"Conservation of Mass","steps":["두 수용액의 질량 측정","두 수용액 섞기","앙금 생성","반응 후 질량 측정","반응 전후 질량이 같음 확인"]},{"key":"hand_warmer","name":"손난로가 따뜻해지는 과정","en":"Hand Warmer","steps":["포장을 뜯음","공기가 들어감","철가루가 산소와 반응","열이 방출됨","손난로가 따뜻해짐"]},{"key":"sea_breeze","name":"낮에 해풍이 부는 과정","en":"Sea Breeze","steps":["햇빛이 비침","육지가 바다보다 빨리 데워짐","육지 위 공기가 상승해 기압이 낮아짐","바다 쪽 기압이 상대적으로 높음","바다에서 육지로 바람이 붊"]},{"key":"cold_front","name":"한랭 전선이 지날 때 날씨","en":"Cold Front","steps":["따뜻한 공기가 머무름","찬 공기가 파고듦","따뜻한 공기가 빠르게 상승","적운형 구름 발달","소나기와 돌풍","기온이 내려감"]},{"key":"ticker_tape","name":"시간기록계로 속력 구하기","en":"Ticker Timer","steps":["종이테이프를 물체에 연결","물체를 운동시킴","일정한 시간마다 점이 찍힘","같은 개수의 점마다 자르기","테이프 길이 재기","속력 계산"]},{"key":"fall_speed","name":"자유 낙하하는 물체의 속력","en":"Free Fall Speed","steps":["0초: 0 m/s","1초: 9.8 m/s","2초: 19.6 m/s","3초: 29.4 m/s","4초: 39.2 m/s"]},{"key":"eye_path","name":"빛이 눈으로 들어가 보이기까지","en":"Path of Light in the Eye","steps":["각막","동공","수정체","유리체","망막","시각 신경","대뇌"]},{"key":"glucose_high","name":"혈당량이 높을 때 조절 과정","en":"Blood Sugar Control","steps":["식사 후 혈당량 증가","이자에서 인슐린 분비","간에서 포도당을 글리코젠으로 저장","세포가 포도당을 흡수","혈당량이 정상으로"]},{"key":"fert_implant","name":"수정에서 착상까지","en":"Fertilization to Implantation","steps":["배란","수란관에서 수정","난할","포배","자궁에 도착","착상"]},{"key":"coaster","name":"롤러코스터의 에너지 전환","en":"Roller Coaster Energy","steps":["꼭대기: 위치 에너지 최대","내려가며 운동 에너지 증가","바닥: 운동 에너지 최대","올라가며 위치 에너지 증가","다음 꼭대기"]},{"key":"generator","name":"발전기에서 전기가 만들어지는 과정","en":"Generator","steps":["터빈이 회전","발전기의 자석이 회전","코일 속 자기장 변화","유도 전류 발생","전기 에너지 공급"]},{"key":"big_bang","name":"빅뱅 이후 우주의 변화","en":"After the Big Bang","steps":["대폭발","우주의 팽창과 냉각","원자 생성","별과 은하 생성","지금도 계속 팽창"]},{"key":"magnitude","name":"밝은 별부터 등급 순서","en":"Star Magnitude","steps":["-1등급","0등급","1등급","2등급","3등급","6등급"]},{"key":"chem_eq","name":"화학 반응식 쓰는 순서","en":"Writing Equations","steps":["반응물과 생성물 확인","화학식으로 나타내기","화살표로 연결","원자 수 비교","계수 맞추기","원자 수 확인"]},{"key":"cloud_make","name":"구름이 만들어지는 과정","en":"Cloud Formation","steps":["지표면 가열","공기 상승","단열 팽창","기온 하강","이슬점 도달","수증기 응결","구름 생성"]},{"key":"atmos_layer","name":"기권의 층 (아래에서 위로)","en":"Atmosphere Layers","steps":["지표","대류권","성층권","중간권","열권"]},{"key":"free_fall","name":"자유 낙하 물체의 에너지 전환","en":"Free Fall Energy","steps":["높은 곳에 정지","위치 에너지 최대","떨어지기 시작","위치 에너지 감소","운동 에너지 증가","바닥 직전 운동 에너지 최대"]},{"key":"inq_steps","name":"과학적 탐구 방법의 순서","en":"Scientific Inquiry","steps":["문제 인식","가설 설정","탐구 설계","탐구 수행","자료 해석","결론 도출","결과 발표"]},{"key":"bio_level","name":"생물의 구성 단계 (동물)","en":"Levels of Organization","steps":["세포","조직","기관","기관계","개체"]},{"key":"classify","name":"생물 분류 단계","en":"Classification","steps":["종","속","과","목","강","문","계"]},{"key":"heat_eq","name":"열평형에 이르는 과정","en":"Thermal Equilibrium","steps":["온도가 다른 두 물체 접촉","고온 물체가 열 방출","저온 물체가 열 흡수","두 물체 온도 차 감소","온도가 같아짐","열의 이동 멈춤"]},{"key":"water_state","name":"물의 상태 변화 순서","en":"States of Water","steps":["얼음","융해","물","기화","수증기","액화","이슬"]},{"key":"sep_mix","name":"혼합물 분리 과정 고르기","en":"Separation","steps":["혼합물 확인","성질 차이 찾기","분리 방법 선택","분리 장치 준비","분리 실험","순물질 얻기"]},{"key":"rock_cycle","name":"암석이 만들어지는 과정","en":"Rock Cycle","steps":["마그마","화성암","풍화와 침식","퇴적물","퇴적암","열과 압력","변성암"]},{"key":"sound_path","name":"소리가 전달되는 과정","en":"Sound Path","steps":["물체의 진동","공기의 진동","귓바퀴","고막","귓속뼈","달팽이관","소리 인식"]},{"key":"ion_test","name":"앙금으로 이온 확인하기","en":"Ion Test","steps":["수용액 준비","시약 떨어뜨리기","앙금 생성 관찰","앙금 색 확인","이온 판단"]},{"key":"circuit_build","name":"전기 회로 꾸미기","en":"Circuit","steps":["전지 준비","스위치 연결","저항 연결","전류계 직렬 연결","전압계 병렬 연결","측정값 기록"]},{"key":"path_reflex","name":"자극에서 반응까지","en":"Stimulus to Response","steps":["자극","감각 기관","감각 뉴런","연합 뉴런","운동 뉴런","반응 기관","반응"]},{"key":"path_knee","name":"무릎 반사의 경로","en":"Knee Reflex","steps":["자극","감각 뉴런","척수","운동 뉴런","다리 근육","반응"]},{"key":"moon_phase","name":"달의 위상 변화 순서","en":"Moon Phases","steps":["삭","초승달","상현달","보름달","하현달","그믐달"]},{"key":"energy_hydro","name":"수력 발전의 에너지 전환","en":"Hydroelectric Power","steps":["물의 위치 에너지","물의 운동 에너지","터빈 회전","발전기 작동","전기 에너지","가정에 공급"]},{"key":"space_history","name":"우주 탐사의 역사","en":"Space Exploration","steps":["스푸트니크 1호","최초 유인 우주 비행","아폴로 11호 달 착륙","보이저호 발사","허블 우주 망원경","화성 로버 탐사"]},{"key":"ph_make","name":"광합성이 일어나는 순서","en":"Photosynthesis","steps":["엽록소가 빛에너지 흡수","이산화 탄소와 물 도착","포도당 생성","녹말로 바뀜","엽록체에 저장"]},{"key":"ph_move","name":"광합성산물의 이동 경로","en":"Translocation","steps":["포도당","녹말로 저장","밤에 설탕으로","체관을 따라 이동","뿌리·줄기·열매에 저장"]},{"key":"ph_test","name":"광합성산물 확인 실험","en":"Starch Test","steps":["어둠상자 씌우기","잎 따서 자르기","에탄올에 넣고 물중탕","증류수로 헹구기","아이오딘 용액 떨어뜨리기","청람색 확인"]},{"key":"ph_co2","name":"이산화 탄소가 들어오는 길","en":"CO2 Pathway","steps":["공기 중 이산화 탄소","잎의 기공","잎세포","엽록체","광합성에 사용"]},{"key":"mitosis","name":"체세포 분열 과정","en":"Mitosis","steps":["간기","전기","중기","후기","말기","세포질 분열"]},{"key":"meiosis","name":"생식세포 분열 과정","en":"Meiosis","steps":["간기 DNA 복제","감수 1분열","딸세포 2개","감수 2분열","딸세포 4개","생식세포 완성"]},{"key":"develop","name":"사람의 발생 과정","en":"Development","steps":["수정","난할","포배","착상","태반 형성","태아","출산"]},{"key":"observe","name":"세포 분열 관찰 실험","en":"Observation","steps":["재료 채취","고정","해리","염색","분리","압착","관찰"]},{"key":"gas_press","name":"압력을 높이면","en":"Boyle's Law","steps":["압력 높임","부피 감소","입자 사이 거리 감소","충돌 횟수 증가","기체 압력 증가"]},{"key":"gas_temp","name":"온도를 높이면","en":"Charles's Law","steps":["온도 높임","입자 운동 빨라짐","충돌 세기 증가","부피 증가","풍선 팽팽"]},{"key":"gas_balloon","name":"열기구가 뜨는 과정","en":"Hot Air Balloon","steps":["풍선 속 공기 가열","기체 온도 상승","기체 부피 증가","공기 일부 빠져나감","열기구 가벼워짐","위로 떠오름"]},{"key":"gas_boyle","name":"보일의 실험 과정","en":"Boyle's Experiment","steps":["J자 유리관 제작","수은 붓기","공기에 가해지는 압력 증가","갇힌 공기 부피 감소","반비례 관계 발견"]},{"key":"digest","name":"소화 경로","en":"Digestive Tract","steps":["입","식도","위","소장","대장","직장","항문"]},{"key":"circu","name":"온몸 순환 경로","en":"Systemic Circulation","steps":["좌심실","대동맥","동맥","모세혈관","정맥","대정맥","우심방"]},{"key":"respir","name":"호흡 경로","en":"Airway","steps":["코","인두","후두","기관","기관지","세기관지","폐포"]},{"key":"excrete","name":"배설 경로","en":"Urinary Path","steps":["사구체","보먼주머니","세뇨관","콩팥깔대기","오줌관","방광","요도"]}];
+var META = {"gas_press":{"g":"중1","u":"기체의 성질"},"gas_temp":{"g":"중1","u":"기체의 성질"},"gas_balloon":{"g":"중1","u":"기체의 성질"},"gas_boyle":{"g":"중1","u":"기체의 성질"},"moon_phase":{"g":"중1","u":"태양계"},"sep_mix":{"g":"중2","u":"물질의 특성"},"rock_cycle":{"g":"중2","u":"지권의 변화"},"sound_path":{"g":"중2","u":"빛과 파동"},"ion_test":{"g":"중2","u":"물질의 구성"},"circuit_build":{"g":"중2","u":"전기와 자기"},"digest":{"g":"중2","u":"동물과 에너지"},"circu":{"g":"중2","u":"동물과 에너지"},"respir":{"g":"중2","u":"동물과 에너지"},"excrete":{"g":"중2","u":"동물과 에너지"},"ph_make":{"g":"중2","u":"식물과 에너지"},"ph_move":{"g":"중2","u":"식물과 에너지"},"ph_test":{"g":"중2","u":"식물과 에너지"},"ph_co2":{"g":"중2","u":"식물과 에너지"},"mitosis":{"g":"중3","u":"생식과 유전"},"meiosis":{"g":"중3","u":"생식과 유전"},"develop":{"g":"중3","u":"생식과 유전"},"observe":{"g":"중3","u":"생식과 유전"},"path_reflex":{"g":"중3","u":"자극과 반응"},"path_knee":{"g":"중3","u":"자극과 반응"},"energy_hydro":{"g":"중3","u":"에너지 전환과 보존"},"space_history":{"g":"중3","u":"별과 우주"},"inq_steps":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"bio_level":{"g":"중1","u":"생물의 구성과 다양성"},"classify":{"g":"중1","u":"생물의 구성과 다양성"},"heat_eq":{"g":"중1","u":"열"},"water_state":{"g":"중1","u":"물질의 상태 변화"},"chem_eq":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"cloud_make":{"g":"중3","u":"기권과 날씨"},"atmos_layer":{"g":"중3","u":"기권과 날씨"},"free_fall":{"g":"중3","u":"운동과 에너지"},"plan_form":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"sci_civil":{"g":"중1","u":"과학과 인류의 지속가능한 삶"},"plant_level":{"g":"중1","u":"생물의 구성과 다양성"},"micro_use":{"g":"중1","u":"생물의 구성과 다양성"},"onion_slide":{"g":"중1","u":"생물의 구성과 다양성"},"conduction":{"g":"중1","u":"열"},"convection":{"g":"중1","u":"열"},"bimetal_alarm":{"g":"중1","u":"열"},"heat_curve":{"g":"중1","u":"물질의 상태 변화"},"melt_boil":{"g":"중1","u":"물질의 상태 변화"},"spring_scale":{"g":"중1","u":"힘의 작용"},"float_sink":{"g":"중1","u":"힘의 작용"},"planet_order":{"g":"중1","u":"태양계"},"lunar_eclipse":{"g":"중1","u":"태양계"},"density_exp":{"g":"중2","u":"물질의 특성"},"recrystal":{"g":"중2","u":"물질의 특성"},"distill":{"g":"중2","u":"물질의 특성"},"earth_layer":{"g":"중2","u":"지권의 변화"},"sedimentary":{"g":"중2","u":"지권의 변화"},"see_object":{"g":"중2","u":"빛과 파동"},"refraction":{"g":"중2","u":"빛과 파동"},"cation":{"g":"중2","u":"물질의 구성"},"periodic_hist":{"g":"중2","u":"물질의 구성"},"pulmonary":{"g":"중2","u":"동물과 에너지"},"starch_dig":{"g":"중2","u":"동물과 에너지"},"protein_dig":{"g":"중2","u":"동물과 에너지"},"inhale":{"g":"중2","u":"동물과 에너지"},"friction_elec":{"g":"중2","u":"전기와 자기"},"electroscope":{"g":"중2","u":"전기와 자기"},"electromagnet":{"g":"중2","u":"전기와 자기"},"parallax":{"g":"중2","u":"별과 우주"},"star_color":{"g":"중2","u":"별과 우주"},"mass_cons":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"hand_warmer":{"g":"중3","u":"화학 반응의 규칙과 에너지 변화"},"sea_breeze":{"g":"중3","u":"기권과 날씨"},"cold_front":{"g":"중3","u":"기권과 날씨"},"ticker_tape":{"g":"중3","u":"운동과 에너지"},"fall_speed":{"g":"중3","u":"운동과 에너지"},"eye_path":{"g":"중3","u":"자극과 반응"},"glucose_high":{"g":"중3","u":"자극과 반응"},"fert_implant":{"g":"중3","u":"생식과 유전"},"coaster":{"g":"중3","u":"에너지 전환과 보존"},"generator":{"g":"중3","u":"에너지 전환과 보존"},"big_bang":{"g":"중3","u":"별과 우주"},"magnitude":{"g":"중3","u":"별과 우주"}};
+
+function clickWhere(sel, test){ var els = document.querySelectorAll(sel); for (var i = 0; i < els.length; i++) { if (test(els[i])) { els[i].click(); return true; } } return false; }
+function plain(t){ return String(t).replace(/^[①-⑳]\s*/, ""); }
+
+var items = TOPICS.filter(function(t){ return META[t.key]; }).map(function(t){
+  var m = META[t.key];
+  return { id: t.key, grade: m.g, unit: m.u, title: t.name,
+    sub: t.steps.length + "단계 · " + t.steps.slice(0, 3).join(" → ") + " …", words: t.steps, ref: t };
+});
+var stage = document.getElementById("stage");
+KJSMenu.init({ key: "stairs", items: items, extras: ["내 주제"],
+  mount: function(){ return document.getElementById("stairFilter"); },
+  legacyCss: "#stairFilter, #stage .topic-grid", mode: "select", startLabel: "시작하기",
+  isVisible: function(){ return !!stage.querySelector(".topic-grid"); }, observe: stage,
+  onPick: function(x){ clickWhere("[data-fg]", function(e){ return e.getAttribute("data-fg") === "전체"; });
+    clickWhere(".topic-card", function(e){ return e.getAttribute("data-topic") === x.id; }); },
+  onStart: function(){ var s = document.getElementById("startBtn"); if (s) s.click(); },
+  onExtra: function(){ clickWhere("[data-fg]", function(e){ return e.getAttribute("data-fg") === "내 주제"; }); },
+  extraNote: "직접 만든 주제를 고르거나 새로 만드세요. 고른 뒤 아래 시작하기를 누릅니다." });
+
+})();
+</script>
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload();
+});
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+</body></html>

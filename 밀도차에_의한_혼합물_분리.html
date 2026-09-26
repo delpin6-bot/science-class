@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>밀도차에 의한 혼합물 분리 (Separation by Density) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 탭 메뉴 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 캔버스 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #2563eb; }
+    .dash-card.c2 { border-top: 3px solid #10b981; }
+    .dash-card.c3 { border-top: 3px solid #f59e0b; }
+    .dash-card.c4 { border-top: 3px solid #ef4444; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+    .btn-action.primary {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .btn-action.primary:hover { background: #1e293b; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 420px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>⚖️ 밀도차에 의한 혼합물 분리 (Separation by Density)</h1>
+      <p>서로 섞이지 않는 액체의 밀도 탑(Density Column) 및 분별 깔때기 조작 분리 시뮬레이터</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 밀도의 정의와 밀도차를 이용한 물질 분리 원리</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🧪 1. 밀도의 성질과 밀도 탑</h4>
+        <ul>
+          <li><strong>밀도:</strong> 물질의 질량을 부피로 나눈 고유한 물리량 ($D = M / V$).</li>
+          <li><strong>뜨고 가라앉는 원리:</strong> 밀도가 <strong>작은 물질은 위로 뜨고</strong>, 밀도가 <strong>큰 물질은 아래로 가라앉음</strong>.</li>
+          <li><strong>액체 밀도 순서:</strong>
+            <br>• 에탄올 ($0.79\text{ g/cm}^3$) < 식용유 ($0.92\text{ g/cm}^3$) < 물 ($1.00\text{ g/cm}^3$) < 사염화 탄소 ($1.59\text{ g/cm}^3$)
+          </li>
+          <li><strong>고체 위치:</strong> 플라스틱($0.95$)은 식용유와 물 사이에 뜨고, 쇠구슬($7.8$)은 맨 바닥에 가라앉음.</li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>🍶 2. 분별 깔때기와 생활 속 분리 예시</h4>
+        <ul>
+          <li><strong>분별 깔때기 사용법 (서로 섞이지 않는 액체):</strong>
+            <br>1. 콕을 열어 <strong>밀도가 큰 아래층 액체(물)</strong>를 비커에 먼저 받음.
+            <br>2. 두 액체의 <strong>경계면 액체는 버림</strong>.
+            <br>3. <strong>밀도가 작은 위층 액체(기름)</strong>는 깔때기 <strong>위쪽 주둥이로 따라냄</strong>.
+          </li>
+          <li><strong>생활 속 활용:</strong> 소금물로 좋은 볍씨 고르기, 키질로 곡식과 쭉정이 분리, 바다 오일펜스로 유출 기름 차단, 사금 채취.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모드 탭 바 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="COLUMN">🧪 1. 다층 밀도 탑 (액체 & 고체 층 분리)</button>
+    <button class="tab-btn" data-tab="FUNNEL">🍶 2. 분별 깔때기 조작 실험 (물과 식용유 분리)</button>
+  </div>
+
+  <!-- 메인 캔버스 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl">상층 물질 (밀도 최소)</div>
+      <div class="dash-val" id="dispTopMat" style="color:#f59e0b;">에탄올 (0.79 g/cm³)</div>
+      <div class="dash-sub">밀도가 가장 작아 맨 위에 뜸</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl">하층 물질 (밀도 최대)</div>
+      <div class="dash-val" id="dispBottomMat" style="color:#2563eb;">사염화 탄소 (1.59 g/cm³)</div>
+      <div class="dash-sub">밀도가 가장 커서 맨 바닥에 위치</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl">분리 장치 상태</div>
+      <div class="dash-val" id="dispDeviceStatus">평형 층 분리 완료</div>
+      <div class="dash-sub" id="dispDeviceSub">서로 섞이지 않고 층 형성</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl">생활 속 분리 원리</div>
+      <div class="dash-val" id="dispRealLife" style="font-size:1.05rem; color:#10b981;">좋은 볍씨 고르기</div>
+      <div class="dash-sub">소금물에 쭉정이는 뜨고 볍씨는 가라앉음</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <!-- 조작 버튼들 -->
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="btn-action primary" id="btnActionMain">💎 고체 아이템 투입 (플라스틱/쇠구슬/코르크)</button>
+        <button class="btn-action" id="btnReset">↺ 처음으로</button>
+      </div>
+
+      <div style="font-size:0.8rem; color:#64748b;" id="tipText">
+        * 각 물질 층을 클릭하면 해당 물질의 정밀 밀도와 성질을 확인할 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 탭: "COLUMN" (밀도 탑) 또는 "FUNNEL" (분별 깔때기)
+  let currentTab = "COLUMN";
+
+  // 밀도 탑 액체 층 데이터 (밀도 오름차순: 위 -> 아래)
+  const DENSITY_LAYERS = [
+    { name: "에탄올 (Ethanol)", density: 0.79, color: "rgba(168, 85, 247, 0.45)", labelColor: "#7e22ce" },
+    { name: "식용유 (Cooking Oil)", density: 0.92, color: "rgba(250, 204, 21, 0.65)", labelColor: "#a16207" },
+    { name: "물 (Water)", density: 1.00, color: "rgba(56, 189, 248, 0.55)", labelColor: "#0369a1" },
+    { name: "사염화 탄소 (CCl₄)", density: 1.59, color: "rgba(239, 68, 68, 0.45)", labelColor: "#b91c1c" }
+  ];
+
+  // 투입 가능한 고체 아이템들
+  let solidItems = [];
+
+  // 분별 깔때기 상태
+  let valveOpen = false;
+  let waterLevel = 110; // 물 양 (아래층)
+  let oilLevel = 90;    // 기름 양 (위층)
+  let beakerWater = 0;  // 비커에 받아진 물 양
+
+  // DOM 요소 참조
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const btnActionMain = document.getElementById("btnActionMain");
+  const btnReset = document.getElementById("btnReset");
+  const tipText = document.getElementById("tipText");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const dispTopMat = document.getElementById("dispTopMat");
+  const dispBottomMat = document.getElementById("dispBottomMat");
+  const dispDeviceStatus = document.getElementById("dispDeviceStatus");
+  const dispDeviceSub = document.getElementById("dispDeviceSub");
+  const dispRealLife = document.getElementById("dispRealLife");
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    initSolidItems();
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  function initSolidItems() {
+    solidItems = [
+      { name: "코르크 (0.24)", density: 0.24, y: 70, targetY: 70, color: "#d97706", r: 12 },
+      { name: "플라스틱 (0.95)", density: 0.95, y: 70, targetY: 70, color: "#059669", r: 13 },
+      { name: "쇠구슬 (7.8)", density: 7.8, y: 70, targetY: 70, color: "#475569", r: 11 }
+    ];
+  }
+
+  // --- 대시보드 갱신 ---
+  function updateDashboard() {
+    if (currentTab === "COLUMN") {
+      dispTopMat.textContent = "에탄올 (0.79 g/cm³)";
+      dispBottomMat.textContent = "사염화 탄소 (1.59 g/cm³)";
+      dispDeviceStatus.textContent = "4단 밀도 탑 안정화";
+      dispDeviceSub.textContent = "밀도 순: 에탄올 < 식용유 < 물 < CCl₄";
+      dispRealLife.textContent = "바다 위 유출 기름 분리";
+    } else {
+      dispTopMat.textContent = "식용유 (위층, 0.92 g/cm³)";
+      dispBottomMat.textContent = "물 (아래층, 1.00 g/cm³)";
+      dispDeviceStatus.textContent = valveOpen ? "밸브 열림 (물 배출 중...)" : "밸브 닫힘 (대기 중)";
+      dispDeviceSub.textContent = valveOpen ? "밀도가 큰 물이 먼저 비커로 낙하" : "콕을 열어 아래층 물을 분리하세요";
+      dispRealLife.textContent = "분별 깔때기 조작 (화학 실험)";
+    }
+  }
+
+  // ==========================================================================
+  // [모드 1] 밀도 탑 렌더링 (COLUMN)
+  // ==========================================================================
+  function drawDensityColumn(dt) {
+    ctx.save();
+
+    // 배경
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🧪 서로 섞이지 않는 액체들의 4층 밀도 탑과 고체의 뜨고 가라앉음", width / 2, 30);
+
+    const cx = width / 2;
+    const cylW = 200;
+    const cylH = 340;
+    const cylBottom = height - 55;
+    const cylTop = cylBottom - cylH;
+    const cylLeft = cx - cylW / 2;
+    const cylRight = cx + cylW / 2;
+
+    const layerH = (cylH - 30) / 4; // 각 층 높이
+
+    // 4개 액체 층 그리기 (위에서 아래로)
+    DENSITY_LAYERS.forEach((layer, idx) => {
+      const ly = cylTop + 30 + idx * layerH;
+
+      ctx.fillStyle = layer.color;
+      ctx.fillRect(cylLeft + 3, ly, cylW - 6, layerH);
+
+      // 경계선
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cylLeft + 3, ly);
+      ctx.lineTo(cylRight - 3, ly);
+      ctx.stroke();
+
+      // 라벨
+      ctx.fillStyle = layer.labelColor;
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`• ${layer.name} (${layer.density.toFixed(2)} g/cm³)`, cylRight + 20, ly + layerH / 2 + 4);
+    });
+
+    // 고체 아이템 침강 애니메이션
+    solidItems.forEach((item, i) => {
+      // 밀도에 따른 평형 Y 위치 계산
+      let targetY = cylTop + 45; // 에탄올 위
+      if (item.density > 0.79 && item.density < 0.92) targetY = cylTop + 30 + layerH * 0.8;
+      else if (item.density > 0.92 && item.density < 1.00) targetY = cylTop + 30 + layerH * 1.5; // 식용유와 물 사이
+      else if (item.density > 1.00 && item.density < 1.59) targetY = cylTop + 30 + layerH * 2.6; // 물과 CCl4 사이
+      else if (item.density > 1.59) targetY = cylBottom - 16; // 바닥
+
+      // 부드러운 낙하 이동
+      item.y += (targetY - item.y) * dt * 3.5;
+
+      const itemX = cx - 45 + i * 45;
+
+      ctx.beginPath();
+      ctx.arc(itemX, item.y, item.r, 0, Math.PI * 2);
+      ctx.fillStyle = item.color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(item.name.split(" ")[0], itemX, item.y);
+
+      // 설명 태그
+      ctx.fillStyle = "#334155";
+      ctx.font = "11px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${item.name} ➔`, cylLeft - 15, item.y);
+    });
+
+    // 메스실린더 유리벽
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cylLeft, cylTop);
+    ctx.lineTo(cylLeft, cylBottom);
+    ctx.lineTo(cylRight, cylBottom);
+    ctx.lineTo(cylRight, cylTop);
+    ctx.stroke();
+
+    // 실린더 받침대
+    ctx.fillStyle = "#cbd5e1";
+    ctx.fillRect(cx - 130, cylBottom, 260, 14);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.strokeRect(cx - 130, cylBottom, 260, 14);
+
+    ctx.restore();
+  }
+
+  // ==========================================================================
+  // [모드 2] 분별 깔때기 조작 렌더링 (FUNNEL)
+  // ==========================================================================
+  function drawSeparatoryFunnel(dt) {
+    ctx.save();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🍶 분별 깔때기를 이용한 물과 식용유의 분리 조작", width / 2, 30);
+
+    const cx = width / 2;
+    const funnelTop = 60;
+    const funnelH = 210;
+    const funnelBottom = funnelTop + funnelH;
+
+    // 밸브가 열려 있으면 물이 비커로 빠져나감
+    if (valveOpen && waterLevel > 0) {
+      const dropRate = dt * 25;
+      waterLevel = Math.max(0, waterLevel - dropRate);
+      beakerWater = Math.min(110, beakerWater + dropRate);
+
+      if (waterLevel <= 0) {
+        valveOpen = false; // 물이 다 빠지면 밸브 자동 차단
+        alert("💧 물이 모두 분리되었습니다! 경계면 액체는 버리고 위쪽 식용유는 주둥이로 따라냅니다.");
+      }
+    }
+
+    // 1. 분별 깔때기 유리 윤곽선 (서양 배 모양)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - 65, funnelTop);
+    ctx.quadraticCurveTo(cx - 85, funnelTop + 80, cx - 25, funnelBottom - 40);
+    ctx.lineTo(cx - 10, funnelBottom); // 콕 부분
+    ctx.lineTo(cx - 10, funnelBottom + 45); // 긴 줄기(stem)
+    ctx.lineTo(cx + 10, funnelBottom + 45);
+    ctx.lineTo(cx + 10, funnelBottom);
+    ctx.lineTo(cx + 25, funnelBottom - 40);
+    ctx.quadraticCurveTo(cx + 85, funnelTop + 80, cx + 65, funnelTop);
+    ctx.closePath();
+
+    // 깔때기 내부 액체 채우기
+    ctx.clip();
+
+    // 위층: 식용유 (노란색, 밀도 0.92)
+    ctx.fillStyle = "rgba(250, 204, 21, 0.75)";
+    ctx.fillRect(cx - 100, funnelTop + 20, 200, oilLevel);
+
+    // 아래층: 물 (파란색, 밀도 1.00)
+    ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
+    ctx.fillRect(cx - 100, funnelTop + 20 + oilLevel, 200, waterLevel + 100);
+
+    ctx.restore();
+
+    // 깔때기 외벽 선
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 65, funnelTop);
+    ctx.quadraticCurveTo(cx - 85, funnelTop + 80, cx - 25, funnelBottom - 40);
+    ctx.lineTo(cx - 8, funnelBottom);
+    ctx.lineTo(cx - 8, funnelBottom + 45);
+    ctx.moveTo(cx + 8, funnelBottom + 45);
+    ctx.lineTo(cx + 8, funnelBottom);
+    ctx.lineTo(cx + 25, funnelBottom - 40);
+    ctx.quadraticCurveTo(cx + 85, funnelTop + 80, cx + 65, funnelTop);
+    ctx.stroke();
+
+    // 상단 마개
+    ctx.fillStyle = "#cbd5e1";
+    ctx.fillRect(cx - 20, funnelTop - 18, 40, 18);
+    ctx.strokeRect(cx - 20, funnelTop - 18, 40, 18);
+
+    // 콕 (Stopcock 밸브) 렌더링
+    const valveY = funnelBottom + 8;
+    ctx.fillStyle = valveOpen ? "#22c55e" : "#ef4444";
+    ctx.fillRect(cx - 26, valveY - 7, 52, 14);
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 26, valveY - 7, 52, 14);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(valveOpen ? "열림 (ON)" : "닫힘 (OFF)", cx, valveY + 3.5);
+
+    // 물줄기 (콕이 열려있을 때 비커로 떨어짐)
+    if (valveOpen && waterLevel > 0) {
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx, funnelBottom + 45);
+      ctx.lineTo(cx, height - 100);
+      ctx.stroke();
+    }
+
+    // 2. 하단 비커 (Beaker)
+    const bkW = 140;
+    const bkH = 95;
+    const bkBottom = height - 30;
+    const bkTop = bkBottom - bkH;
+    const bkLeft = cx - bkW / 2;
+
+    // 비커 내부 받아진 물
+    if (beakerWater > 0) {
+      const curWaterH = (beakerWater / 110) * (bkH - 20);
+      ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
+      ctx.fillRect(bkLeft + 3, bkBottom - curWaterH, bkW - 6, curWaterH);
+    }
+
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(bkLeft, bkTop);
+    ctx.lineTo(bkLeft, bkBottom);
+    ctx.lineTo(bkLeft + bkW, bkBottom);
+    ctx.lineTo(bkLeft + bkW, bkTop);
+    ctx.stroke();
+
+    // 안내 라벨
+    ctx.fillStyle = "#a16207";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("▲ 식용유 층 (밀도 0.92 g/cm³, 위층)", cx + 75, funnelTop + 60);
+
+    ctx.fillStyle = "#0369a1";
+    ctx.fillText("▲ 물 층 (밀도 1.00 g/cm³, 아래층)", cx + 75, funnelTop + 140);
+
+    ctx.fillStyle = "#334155";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("받아진 물 (밀도 큼)", cx, bkBottom + 20);
+
+    ctx.restore();
+  }
+
+  // --- 메인 루프 ---
+  let lastTimestamp = performance.now();
+
+  function animate(timestamp) {
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.08);
+    lastTimestamp = timestamp;
+
+    ctx.clearRect(0, 0, width, height);
+
+    if (currentTab === "COLUMN") {
+      drawDensityColumn(dt);
+    } else {
+      drawSeparatoryFunnel(dt);
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // --- 이벤트 리스너 ---
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTab = btn.dataset.tab;
+
+      if (currentTab === "COLUMN") {
+        btnActionMain.textContent = "💎 고체 아이템 투입 (플라스틱/쇠구슬/코르크)";
+        tipText.textContent = "* 밀도가 작은 물질은 위에 뜨고, 밀도가 큰 물질은 아래에 가라앉습니다.";
+      } else {
+        btnActionMain.textContent = "🍶 분별 깔때기 콕(밸브) 열기 / 닫기";
+        tipText.textContent = "* 밸브를 열어 아래층 물을 비커에 먼저 분리하세요.";
+      }
+      updateDashboard();
+    });
+  });
+
+  btnActionMain.addEventListener("click", () => {
+    if (currentTab === "COLUMN") {
+      initSolidItems();
+    } else {
+      valveOpen = !valveOpen;
+      updateDashboard();
+    }
+  });
+
+  btnReset.addEventListener("click", () => {
+    initSolidItems();
+    valveOpen = false;
+    waterLevel = 110;
+    oilLevel = 90;
+    beakerWater = 0;
+    updateDashboard();
+  });
+
+  // 캔버스 클릭으로 밸브 조작
+  canvas.addEventListener("click", e => {
+    if (currentTab === "FUNNEL") {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const cx = width / 2;
+      const valveY = 278;
+
+      if (Math.abs(clickX - cx) < 35 && Math.abs(clickY - valveY) < 25) {
+        valveOpen = !valveOpen;
+        updateDashboard();
+      }
+    }
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  resizeCanvas();
+  updateDashboard();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

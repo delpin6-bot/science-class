@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>화학 결합 가상실험실 (Chemical Bonding Simulation)</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --covalent: #0284c7;
+      --ionic: #7c3aed;
+      --stable-green: #10b981;
+      --unstable-red: #ef4444;
+      --gold: #d97706;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 14px 12px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 상단 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .badge.covalent { background: #e0f2fe; color: var(--covalent); }
+    .badge.ionic { background: #f3e8ff; color: var(--ionic); }
+
+    .title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .btn-help {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border-color);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #e2e8f0; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #1e3a8a;
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 6px; font-size: 0.98rem; font-weight: 800; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+    }
+    .theory-card b { display: block; margin-bottom: 4px; font-size: 0.88rem; }
+
+    /* 상단 컨트롤 툴바 */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+    .opt-btn {
+      border: 1.5px solid var(--border-color);
+      background: #f8fafc;
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .opt-btn:hover { background: #e2e8f0; }
+    .opt-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    /* 시뮬레이션 캔버스 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .canvas-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 4px;
+    }
+    .hud-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hud-formula-badge {
+      font-size: 1.05rem;
+      font-weight: 800;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hud-status-badge {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    .hud-status-badge.stable {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .hud-status-badge.unstable {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    #bondCanvas {
+      width: 100%;
+      height: 500px;
+      background: #fdfdfd;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+    #bondCanvas:active {
+      cursor: grabbing;
+    }
+
+    /* 원자 추가 팔레트 (하단 트레이) */
+    .palette-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .palette-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .palette-atoms {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .atom-btn {
+      border: 1.5px solid var(--border-color);
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 800;
+      transition: all 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .atom-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .atom-btn .dot-preview {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* 프리셋 물질 선택 바 */
+    .preset-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .preset-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #334155;
+    }
+    .preset-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .preset-chip {
+      border: 1px solid var(--border-color);
+      background: #f8fafc;
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-chip:hover {
+      background: #e2e8f0;
+    }
+    .preset-chip.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #e2e8f0; }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn.danger {
+      color: var(--unstable-red);
+      border-color: #fca5a5;
+      background: #fff5f5;
+    }
+    .btn.danger:hover { background: #fee2e2; }
+
+    @media (max-width: 768px) {
+      #bondCanvas { height: 430px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>화학 결합 시뮬레이션 <span class="badge">자바실험실 모델</span></h1>
+      <p>원자들을 드래그해 공유 결합과 이온 결합을 만들고, 옥텟 규칙(8전자 안정성)을 확인하세요.</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 실험의 처음 화면으로">↺ 처음으로</button>
+    <button class="btn-help" id="btnHelpToggle">결합 원리 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 결합 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>화학 결합과 옥텟 규칙 (Octet Rule)</h3>
+    <p>18족 비활성 기체(Ne, Ar 등)를 제외한 원자들은 최외각 전자 껍질에 <b>8개의 전자(수소는 2개)</b>를 채워 가장 안정한 전자 배치를 이루려는 <b>옥텟 규칙</b>을 만족하기 위해 화학 결합을 형성합니다.</p>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <b style="color:var(--covalent);">🔵 공유 결합 (비금속 + 비금속)</b>
+        전자를 잃기 어려운 비금속 원자들이 서로 전자를 내놓아 <b>공유 전자쌍</b>을 이루며 옥텟 규칙을 만족합니다. (예: H₂, O₂, H₂O, CH₄, CO₂)
+      </div>
+      <div class="theory-card">
+        <b style="color:var(--ionic);">🟣 이온 결합 (금속 + 비금속)</b>
+        전자를 잃기 쉬운 금속 원자가 전자를 비금속 원자에게 주어 <b>양이온과 음이온</b>이 된 후, 정전기적 인력으로 결합합니다. (예: NaCl, MgO, CaCl₂)
+      </div>
+    </div>
+  </div>
+
+  <!-- 컨트롤 툴바 -->
+  <div class="toolbar">
+    <div class="tool-group">
+      <span>표시 모드:</span>
+      <button class="opt-btn active" id="btnModeShell">원자 전자껍질 모형</button>
+      <button class="opt-btn" id="btnModeLewis">루이스 전자점식</button>
+    </div>
+    <div class="tool-group">
+      <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+        <input type="checkbox" id="chkShowWarning" checked>
+        <span style="font-size:0.82rem;">불안정한 경우 빨간색 표시</span>
+      </label>
+      <button class="btn danger" id="btnUnbondBtn">✂️ 결합 풀기</button>
+      <button class="btn" id="btnClearBtn">🗑️ 캔버스 비우기</button>
+      <button class="btn" id="btnResetBtn">↺ 초기화 (H₂O)</button>
+    </div>
+  </div>
+
+  <!-- 메인 시뮬레이션 캔버스 카드 -->
+  <div class="sim-card">
+    <div class="canvas-hud">
+      <div class="hud-title">
+        <span>현재 결합 물질:</span>
+        <span class="hud-formula-badge" id="hudFormula">H₂O</span>
+        <span id="hudCompoundName" style="color:var(--text-muted); font-size:0.88rem;">(물, 공유 결합)</span>
+      </div>
+      <div id="hudStatusArea">
+        <span class="hud-status-badge stable" id="hudStatus">모든 원자 안정 (옥텟 만족)</span>
+      </div>
+    </div>
+
+    <canvas id="bondCanvas"></canvas>
+  </div>
+
+  <!-- 원자 추가 팔레트 (하단 트레이) -->
+  <div class="palette-card">
+    <div class="palette-head">
+      <span>🧪 원자 추가 팔레트 (클릭하여 캔버스에 추가 후 드래그하여 결합하세요)</span>
+      <span style="font-size:0.75rem;">원자를 가까이 가져가면 자석처럼 스냅 결합됩니다.</span>
+    </div>
+    <div class="palette-atoms" id="paletteBar">
+      <!-- JS로 동적 생성 -->
+    </div>
+  </div>
+
+  <!-- 교과서 대표 화합물 프리셋 -->
+  <div class="preset-card">
+    <div class="preset-title">📚 교과서 대표 화합물 원클릭 템플릿</div>
+    <div class="preset-btns">
+      <span style="font-size:0.8rem; font-weight:700; color:var(--covalent); align-self:center;">공유결합:</span>
+      <button class="preset-chip" data-preset="H2">H₂ (수소)</button>
+      <button class="preset-chip" data-preset="O2">O₂ (산소, 이중결합)</button>
+      <button class="preset-chip" data-preset="N2">N₂ (질소, 삼중결합)</button>
+      <button class="preset-chip active" data-preset="H2O">H₂O (물)</button>
+      <button class="preset-chip" data-preset="CH4">CH₄ (메테인)</button>
+      <button class="preset-chip" data-preset="NH3">NH₃ (암모니아)</button>
+      <button class="preset-chip" data-preset="CO2">CO₂ (이산화 탄소)</button>
+      <button class="preset-chip" data-preset="HCl">HCl (염화 수소)</button>
+      <button class="preset-chip" data-preset="HF">HF (플루오린화 수소)</button>
+
+      <span style="font-size:0.8rem; font-weight:700; color:var(--ionic); align-self:center; margin-left:8px;">이온결합:</span>
+      <button class="preset-chip" data-preset="NaCl">NaCl (염화 나트륨)</button>
+      <button class="preset-chip" data-preset="MgO">MgO (산화 마그네슘)</button>
+      <button class="preset-chip" data-preset="CaCl2">CaCl₂ (염화 칼슘)</button>
+      <button class="preset-chip" data-preset="LiF">LiF (플루오린화 리튬)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상단 네비게이션 서랍 버튼 -->
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('실험을 초기 상태로 되돌립니다.')) location.reload();
+});
+</script>
+
+<script>
+(() => {
+  // ==========================================
+  // 1. 원소 정의 데이터베이스 (화학적 성질)
+  // ==========================================
+  const ATOM_DEFS = {
+    H:  { sym: 'H',  num: 1,  name: '수소',       valE: 1, targetE: 2, type: 'nonmetal', color: '#f1f5f9', border: '#64748b', textColor: '#0f172a' },
+    C:  { sym: 'C',  num: 6,  name: '탄소',       valE: 4, targetE: 8, type: 'nonmetal', color: '#334155', border: '#1e293b', textColor: '#ffffff' },
+    N:  { sym: 'N',  num: 7,  name: '질소',       valE: 5, targetE: 8, type: 'nonmetal', color: '#3b82f6', border: '#1d4ed8', textColor: '#ffffff' },
+    O:  { sym: 'O',  num: 8,  name: '산소',       valE: 6, targetE: 8, type: 'nonmetal', color: '#ef4444', border: '#b91c1c', textColor: '#ffffff' },
+    F:  { sym: 'F',  num: 9,  name: '플루오린',   valE: 7, targetE: 8, type: 'nonmetal', color: '#10b981', border: '#047857', textColor: '#ffffff' },
+    Cl: { sym: 'Cl', num: 17, name: '염소',       valE: 7, targetE: 8, type: 'nonmetal', color: '#059669', border: '#065f46', textColor: '#ffffff' },
+    Li: { sym: 'Li', num: 3,  name: '리튬',       valE: 1, targetE: 0, type: 'metal',    color: '#a855f7', border: '#7e22ce', textColor: '#ffffff' },
+    Na: { sym: 'Na', num: 11, name: '나트륨',     valE: 1, targetE: 0, type: 'metal',    color: '#8b5cf6', border: '#6d28d9', textColor: '#ffffff' },
+    Mg: { sym: 'Mg', num: 12, name: '마그네슘',   valE: 2, targetE: 0, type: 'metal',    color: '#f59e0b', border: '#b45309', textColor: '#ffffff' },
+    Ca: { sym: 'Ca', num: 20, name: '칼슘',       valE: 2, targetE: 0, type: 'metal',    color: '#d97706', border: '#92400e', textColor: '#ffffff' },
+    Ne: { sym: 'Ne', num: 10, name: '네온(비활성)', valE: 8, targetE: 8, type: 'noble',    color: '#06b6d4', border: '#0891b2', textColor: '#ffffff' }
+  };
+
+  // 대표 화합물 사전 (화학식 & 이름 자동 인식)
+  const COMPOUND_DICT = {
+    'H2': '수소 기체 (단일 공유 결합)',
+    'O2': '산소 기체 (이중 공유 결합)',
+    'N2': '질소 기체 (삼중 공유 결합)',
+    'H2O': '물 (단일 공유 결합 2개)',
+    'CH4': '메테인 (단일 공유 결합 4개)',
+    'NH3': '암모니아 (단일 공유 결합 3개)',
+    'CO2': '이산화 탄소 (이중 공유 결합 2개)',
+    'HCl': '염화 수소 (단일 공유 결합)',
+    'HF': '플루오린화 수소 (단일 공유 결합)',
+    'Cl2': '염소 기체 (단일 공유 결합)',
+    'NaCl': '염화 나트륨 (이온 결합, Na⁺ + Cl⁻)',
+    'MgO': '산화 마그네슘 (이온 결합, Mg²⁺ + O²⁻)',
+    'CaCl2': '염화 칼슘 (이온 결합, Ca²⁺ + 2Cl⁻)',
+    'LiF': '플루오린화 리튬 (이온 결합, Li⁺ + F⁻)',
+    'Na2O': '산화 나트륨 (이온 결합, 2Na⁺ + O²⁻)'
+  };
+
+  // ==========================================
+  // 2. 캔버스 및 시뮬레이션 상태
+  // ==========================================
+  const canvas = document.getElementById('bondCanvas');
+  const ctx = canvas.getContext('2d');
+  let dpr = window.devicePixelRatio || 1;
+  let width = 960;
+  let height = 500;
+
+  let displayMode = 'shell'; // 'shell' or 'lewis'
+  let showRedWarning = true;
+
+  let atoms = [];
+  let bonds = []; // { a1: id, a2: id, type: 'covalent'|'ionic', order: 1|2|3 }
+  let nextAtomId = 1;
+
+  // 드래그 상태
+  let draggedAtom = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  // DOM
+  const hudFormula = document.getElementById('hudFormula');
+  const hudCompoundName = document.getElementById('hudCompoundName');
+  const hudStatus = document.getElementById('hudStatus');
+  const btnModeShell = document.getElementById('btnModeShell');
+  const btnModeLewis = document.getElementById('btnModeLewis');
+  const chkShowWarning = document.getElementById('chkShowWarning');
+  const btnHelpToggle = document.getElementById('btnHelpToggle');
+  const theoryBox = document.getElementById('theoryBox');
+
+  // ==========================================
+  // 3. 캔버스 해상도 조정
+  // ==========================================
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width > 0 ? rect.width : (canvas.parentElement ? canvas.parentElement.clientWidth - 28 : 960);
+    height = 500;
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  // ==========================================
+  // 4. 원자 클래스 정의
+  // ==========================================
+  class Atom {
+    constructor(sym, x, y) {
+      this.id = nextAtomId++;
+      this.def = ATOM_DEFS[sym];
+      this.x = x;
+      this.y = y;
+      this.vx = 0;
+      this.vy = 0;
+      this.radius = 26; // 원자핵 반지름
+      this.shellRadius = this.def.sym === 'H' ? 44 : 58; // 최외각 껍질 반지름
+    }
+
+    // 공유 결합 및 이온 결합 상태를 종합하여 현재 원자가 소유/공유하는 전자 수 계산
+    getEffectiveElectrons() {
+      // 이 원자가 맺고 있는 결합 탐색
+      const myBonds = bonds.filter(b => b.a1 === this.id || b.a2 === this.id);
+
+      if (this.def.type === 'metal') {
+        // 금속: 이온 결합 시 전자를 완전히 내보내어 0개가 됨 (안쪽 껍질은 꽉 참)
+        const ionicBondCount = myBonds.filter(b => b.type === 'ionic').length;
+        if (ionicBondCount > 0) return 0; // 옥텟 만족 상태(전부 비움)
+        return this.def.valE;
+      }
+
+      if (this.def.type === 'noble') {
+        return this.def.valE;
+      }
+
+      // 비금속 원자:
+      // 기본 최외각 전자 + 공유 결합으로 추가로 공유받은 전자 + 이온 결합으로 금속에게서 받은 전자
+      let e = this.def.valE;
+      myBonds.forEach(b => {
+        if (b.type === 'covalent') {
+          // 공유 결합 차수(order: 1, 2, 3)만큼 상대방의 전자를 공유받음
+          e += b.order;
+        } else if (b.type === 'ionic') {
+          // 금속으로부터 전자를 양도받음
+          const otherId = b.a1 === this.id ? b.a2 : b.a1;
+          const other = atoms.find(a => a.id === otherId);
+          if (other && other.def.type === 'metal') {
+            e += (other.def.valE / Math.max(1, bonds.filter(x => x.a1 === other.id || x.a2 === other.id).length));
+          }
+        }
+      });
+      return Math.round(e);
+    }
+
+    isStable() {
+      const e = this.getEffectiveElectrons();
+      if (this.def.type === 'metal') {
+        // 금속은 최외각 전자를 모두 내보냈거나(0개) 결합 없이 홀로 있을 땐 불안정
+        return e === 0;
+      }
+      return e === this.def.targetE;
+    }
+  }
+
+  // ==========================================
+  // 5. 결합 판정 및 스냅 알고리즘
+  // ==========================================
+  function tryFormBond(a1, a2) {
+    if (a1.id === a2.id) return;
+    // 이미 결합되어 있는지 확인
+    const exists = bonds.some(b => (b.a1 === a1.id && b.a2 === a2.id) || (b.a1 === a2.id && b.a2 === a1.id));
+    if (exists) return;
+
+    // 18족 비활성 기체는 결합하지 않음
+    if (a1.def.type === 'noble' || a2.def.type === 'noble') return;
+
+    const dx = a2.x - a1.x;
+    const dy = a2.y - a1.y;
+    const dist = Math.hypot(dx, dy);
+
+    // 스냅 거리 임계치
+    const snapDist = a1.shellRadius + a2.shellRadius;
+
+    if (dist < snapDist * 1.15) {
+      // 결합 유형 판정:
+      // (1) 금속 + 비금속 -> 이온 결합
+      // (2) 비금속 + 비금속 -> 공유 결합
+      // (3) 금속 + 금속 -> 결합 형성 안함
+      if ((a1.def.type === 'metal' && a2.def.type === 'nonmetal') || (a1.def.type === 'nonmetal' && a2.def.type === 'metal')) {
+        bonds.push({ a1: a1.id, a2: a2.id, type: 'ionic', order: 1 });
+      } else if (a1.def.type === 'nonmetal' && a2.def.type === 'nonmetal') {
+        // 공유 결합 형성 (산소끼리는 이중결합, 질소끼리는 삼중결합 등 지능형 결합 차수 설정)
+        let order = 1;
+        if (a1.def.sym === 'O' && a2.def.sym === 'O') order = 2;
+        else if (a1.def.sym === 'N' && a2.def.sym === 'N') order = 3;
+        else if ((a1.def.sym === 'C' && a2.def.sym === 'O') || (a1.def.sym === 'O' && a2.def.sym === 'C')) order = 2;
+
+        bonds.push({ a1: a1.id, a2: a2.id, type: 'covalent', order: order });
+      }
+    }
+  }
+
+  // 결합된 원자 간 적정 거리 유지 (스프링-댐퍼 물리)
+  function updateBondPhysics() {
+    bonds.forEach(b => {
+      const a1 = atoms.find(a => a.id === b.a1);
+      const a2 = atoms.find(a => a.id === b.a2);
+      if (!a1 || !a2) return;
+
+      const dx = a2.x - a1.x;
+      const dy = a2.y - a1.y;
+      const dist = Math.hypot(dx, dy) || 1;
+
+      // 이상적인 결합 거리
+      let idealDist = (a1.shellRadius + a2.shellRadius) * 0.72; // 공유 결합: 껍질 겹침
+      if (b.type === 'ionic') {
+        idealDist = (a1.radius + a2.shellRadius) * 1.05; // 이온 결합: 구 표면 접촉
+      }
+
+      const diff = dist - idealDist;
+      const force = diff * 0.12;
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+
+      if (a1 !== draggedAtom) { a1.x += fx * 0.5; a1.y += fy * 0.5; }
+      if (a2 !== draggedAtom) { a2.x -= fx * 0.5; a2.y -= fy * 0.5; }
+    });
+  }
+
+  // ==========================================
+  // 6. 화학식 분석 및 HUD 갱신
+  // ==========================================
+  function updateHUD() {
+    if (atoms.length === 0) {
+      hudFormula.textContent = '-';
+      hudCompoundName.textContent = '(원자를 캔버스에 추가하세요)';
+      hudStatus.className = 'hud-status-badge';
+      hudStatus.textContent = '원자 없음';
+      return;
+    }
+
+    // 화학식 집계: 원소별 개수
+    const counts = {};
+    atoms.forEach(a => {
+      counts[a.def.sym] = (counts[a.def.sym] || 0) + 1;
+    });
+
+    // 힐 방식 정렬: C, H 우선, 그 외 알파벳순 (단, 무기염류는 양이온 금속 먼저)
+    const syms = Object.keys(counts);
+    syms.sort((a, b) => {
+      const metalA = ATOM_DEFS[a].type === 'metal';
+      const metalB = ATOM_DEFS[b].type === 'metal';
+      if (metalA && !metalB) return -1;
+      if (!metalA && metalB) return 1;
+      if (a === 'C') return -1;
+      if (b === 'C') return 1;
+      if (a === 'H') return -1;
+      if (b === 'H') return 1;
+      return a.localeCompare(b);
+    });
+
+    let formulaStr = '';
+    syms.forEach(s => {
+      formulaStr += s + (counts[s] > 1 ? counts[s] : '');
+    });
+
+    hudFormula.textContent = formulaStr;
+
+    // 사전에서 물질 이름 조회
+    const nameMatch = COMPOUND_DICT[formulaStr] || '임의의 분자 / 혼합물';
+    hudCompoundName.textContent = `(${nameMatch})`;
+
+    // 모든 원자의 옥텟 만족 여부 판정
+    const allStable = atoms.every(a => a.isStable());
+    if (allStable) {
+      hudStatus.className = 'hud-status-badge stable';
+      hudStatus.textContent = '✓ 모든 원자 안정 (옥텟 규칙 만족)';
+    } else {
+      hudStatus.className = 'hud-status-badge unstable';
+      hudStatus.textContent = '⚠ 일부 원자 불안정 (옥텟 불만족)';
+    }
+  }
+
+  // ==========================================
+  // 7. 렌더링 엔진 (Canvas 2D)
+  // ==========================================
+  function renderAll() {
+    ctx.clearRect(0, 0, width, height);
+
+    // 은은한 사각 배경 그리드
+    ctx.strokeStyle = '#f1f5f9';
+    ctx.lineWidth = 1;
+    const step = 30;
+    for (let x = 0; x < width; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = 0; y < height; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+
+    // 1. 결합 선/영역 렌더링
+    bonds.forEach(b => {
+      const a1 = atoms.find(a => a.id === b.a1);
+      const a2 = atoms.find(a => a.id === b.a2);
+      if (!a1 || !a2) return;
+
+      if (displayMode === 'lewis') {
+        // 루이스 식: 결합선 표시
+        drawLewisBondLine(ctx, a1, a2, b.order, b.type);
+      } else {
+        // 보어 전자껍질 식: 공유 영역 및 이온 인력 표시
+        drawShellBondIndicator(ctx, a1, a2, b.type, b.order);
+      }
+    });
+
+    // 2. 각 원자 렌더링
+    atoms.forEach(atom => {
+      if (displayMode === 'lewis') {
+        drawLewisAtom(ctx, atom);
+      } else {
+        drawShellAtom(ctx, atom);
+      }
+    });
+  }
+
+  // ------------------------------------------------
+  // (A) 보어 전자 껍질 모형 렌더링
+  // ------------------------------------------------
+  function drawShellAtom(ctx, atom) {
+    const isStable = atom.isStable();
+    const effectiveE = atom.getEffectiveElectrons();
+
+    ctx.save();
+
+    // 1. 최외각 전자 껍질 원형 궤도
+    ctx.beginPath();
+    ctx.arc(atom.x, atom.y, atom.shellRadius, 0, Math.PI * 2);
+    if (!isStable && showRedWarning) {
+      ctx.strokeStyle = '#f87171'; // 불안정 빨간 테두리 (자바실험실 특징)
+      ctx.lineWidth = 2.0;
+    } else {
+      ctx.strokeStyle = isStable ? '#60a5fa' : '#94a3b8';
+      ctx.lineWidth = 1.5;
+    }
+    ctx.setLineDash(atom.def.type === 'metal' && effectiveE === 0 ? [4, 4] : []);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. 원자핵 중심 구
+    ctx.beginPath();
+    ctx.arc(atom.x, atom.y, atom.radius, 0, Math.PI * 2);
+    ctx.fillStyle = atom.def.color;
+    ctx.fill();
+
+    // 불안정 경고 시 테두리 색상
+    if (!isStable && showRedWarning) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3.0;
+    } else {
+      ctx.strokeStyle = atom.def.border;
+      ctx.lineWidth = 2.0;
+    }
+    ctx.stroke();
+
+    // 3. 원소 기호 및 전하 텍스트
+    ctx.fillStyle = (!isStable && showRedWarning) ? '#ef4444' : atom.def.textColor;
+    ctx.font = 'bold 19px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    let symText = atom.def.sym;
+    // 이온 결합 시 전하 표시
+    if (atom.def.type === 'metal' && effectiveE === 0) {
+      symText += (atom.def.valE > 1 ? `${atom.def.valE}+` : '+');
+    } else if (atom.def.type === 'nonmetal' && effectiveE === 8 && bonds.some(b => (b.a1 === atom.id || b.a2 === atom.id) && b.type === 'ionic')) {
+      const charge = 8 - atom.def.valE;
+      symText += (charge > 1 ? `${charge}-` : '-');
+    }
+    ctx.fillText(symText, atom.x, atom.y);
+
+    // 4. 최외각 전자들 배치 (원형 껍질 위)
+    drawShellElectrons(ctx, atom, effectiveE, isStable);
+
+    ctx.restore();
+  }
+
+  function drawShellElectrons(ctx, atom, count, isStable) {
+    if (count <= 0) return; // 금속 양이온은 최외각 전자 방출로 0개
+
+    // 원형 껍질 위에 균일 또는 사방으로 배치
+    const num = Math.min(8, count);
+    const r = atom.shellRadius;
+
+    for (let i = 0; i < num; i++) {
+      const angle = (i / num) * Math.PI * 2 - Math.PI / 2;
+      const ex = atom.x + Math.cos(angle) * r;
+      const ey = atom.y + Math.sin(angle) * r;
+
+      ctx.beginPath();
+      ctx.arc(ex, ey, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = (!isStable && showRedWarning) ? '#ef4444' : '#2563eb';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+  }
+
+  function drawShellBondIndicator(ctx, a1, a2, type, order) {
+    ctx.save();
+    if (type === 'covalent') {
+      // 껍질 겹침 중심에 공유 전자쌍 강조
+      const midX = (a1.x + a2.x) / 2;
+      const midY = (a1.y + a2.y) / 2;
+
+      ctx.beginPath();
+      ctx.arc(midX, midY, 14, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.fill();
+
+      // 공유 전자쌍 개수 점 표시 (order * 2 개)
+      const eCount = order * 2;
+      const perpAngle = Math.atan2(a2.y - a1.y, a2.x - a1.x) + Math.PI / 2;
+      for (let k = 0; k < eCount; k++) {
+        const offset = (k - (eCount - 1) / 2) * 8;
+        const px = midX + Math.cos(perpAngle) * offset;
+        const py = midY + Math.sin(perpAngle) * offset;
+
+        ctx.beginPath();
+        ctx.arc(px, py, 4.2, 0, Math.PI * 2);
+        ctx.fillStyle = '#0284c7';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    } else {
+      // 이온 결합: 정전기적 인력 번개/점선 화살표 연결
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(a1.x, a1.y);
+      ctx.lineTo(a2.x, a2.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+
+  // ------------------------------------------------
+  // (B) 루이스 전자점식 렌더링
+  // ------------------------------------------------
+  function drawLewisAtom(ctx, atom) {
+    const isStable = atom.isStable();
+    ctx.save();
+
+    // 중심 기호
+    ctx.fillStyle = (!isStable && showRedWarning) ? '#ef4444' : '#0f172a';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(atom.def.sym, atom.x, atom.y);
+
+    // 사방 비공유 전자쌍 점 렌더링 (동서남북)
+    const effectiveE = atom.getEffectiveElectrons();
+    const d = 22; // 점 거리
+
+    // 결합에 참여하지 않은 홀전자/비공유 전자쌍 대략적 시각화
+    const positions = [
+      { x: atom.x, y: atom.y - d }, // 북
+      { x: atom.x + d, y: atom.y }, // 동
+      { x: atom.x, y: atom.y + d }, // 남
+      { x: atom.x - d, y: atom.y }  // 서
+    ];
+
+    const dotsToDraw = Math.min(8, effectiveE);
+    for (let i = 0; i < dotsToDraw; i++) {
+      const pos = positions[i % 4];
+      const offset = Math.floor(i / 4) * 6 - 3;
+      ctx.beginPath();
+      ctx.arc(pos.x + offset, pos.y + offset, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = (!isStable && showRedWarning) ? '#ef4444' : '#2563eb';
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawLewisBondLine(ctx, a1, a2, order, type) {
+    ctx.save();
+    const dx = a2.x - a1.x;
+    const dy = a2.y - a1.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 1) return;
+
+    const perpX = -dy / dist;
+    const perpY = dx / dist;
+
+    ctx.strokeStyle = type === 'ionic' ? '#7c3aed' : '#0f172a';
+    ctx.lineWidth = type === 'ionic' ? 2 : 3;
+    if (type === 'ionic') ctx.setLineDash([4, 4]);
+
+    const lineGap = 6;
+    for (let i = 0; i < order; i++) {
+      const offset = (i - (order - 1) / 2) * lineGap;
+      ctx.beginPath();
+      ctx.moveTo(a1.x + perpX * offset, a1.y + perpY * offset);
+      ctx.lineTo(a2.x + perpX * offset, a2.y + perpY * offset);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ==========================================
+  // 8. 사용자 인터랙션 (드래그 앤 드롭)
+  // ==========================================
+  function getCanvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+
+  function handleStart(e) {
+    const pos = getCanvasPos(e);
+    // 가장 가까운 원자 선택 (위쪽 원자 우선)
+    for (let i = atoms.length - 1; i >= 0; i--) {
+      const a = atoms[i];
+      if (Math.hypot(pos.x - a.x, pos.y - a.y) < a.shellRadius + 5) {
+        draggedAtom = a;
+        dragOffsetX = pos.x - a.x;
+        dragOffsetY = pos.y - a.y;
+        // 선택한 원자를 배열 맨 뒤로 옮겨 가장 위에 그리도록 처리
+        atoms.splice(i, 1);
+        atoms.push(a);
+        break;
+      }
+    }
+  }
+
+  function handleMove(e) {
+    if (!draggedAtom) return;
+    const pos = getCanvasPos(e);
+    draggedAtom.x = Math.max(30, Math.min(width - 30, pos.x - dragOffsetX));
+    draggedAtom.y = Math.max(30, Math.min(height - 30, pos.y - dragOffsetY));
+
+    // 이동 중 다른 원자와 결합 형성 시도
+    atoms.forEach(other => {
+      if (other !== draggedAtom) {
+        tryFormBond(draggedAtom, other);
+      }
+    });
+
+    updateHUD();
+  }
+
+  function handleEnd() {
+    draggedAtom = null;
+  }
+
+  canvas.addEventListener('mousedown', handleStart);
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('mouseup', handleEnd);
+
+  canvas.addEventListener('touchstart', e => { handleStart(e); if (draggedAtom) e.preventDefault(); }, { passive: false });
+  window.addEventListener('touchmove', e => { if (draggedAtom) { handleMove(e); e.preventDefault(); } }, { passive: false });
+  window.addEventListener('touchend', handleEnd);
+
+  // ==========================================
+  // 9. 애니메이션 루프
+  // ==========================================
+  function loop() {
+    updateBondPhysics();
+    renderAll();
+    requestAnimationFrame(loop);
+  }
+
+  // ==========================================
+  // 10. 프리셋 로딩 시스템
+  // ==========================================
+  function loadPreset(name) {
+    atoms = [];
+    bonds = [];
+    nextAtomId = 1;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    switch(name) {
+      case 'H2':
+        atoms.push(new Atom('H', cx - 40, cy));
+        atoms.push(new Atom('H', cx + 40, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        break;
+      case 'O2':
+        atoms.push(new Atom('O', cx - 50, cy));
+        atoms.push(new Atom('O', cx + 50, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 2 });
+        break;
+      case 'N2':
+        atoms.push(new Atom('N', cx - 50, cy));
+        atoms.push(new Atom('N', cx + 50, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 3 });
+        break;
+      case 'H2O':
+        atoms.push(new Atom('O', cx, cy - 20));
+        atoms.push(new Atom('H', cx - 65, cy + 45));
+        atoms.push(new Atom('H', cx + 65, cy + 45));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 3, type: 'covalent', order: 1 });
+        break;
+      case 'CH4':
+        atoms.push(new Atom('C', cx, cy));
+        atoms.push(new Atom('H', cx, cy - 75));
+        atoms.push(new Atom('H', cx + 75, cy));
+        atoms.push(new Atom('H', cx, cy + 75));
+        atoms.push(new Atom('H', cx - 75, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 3, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 4, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 5, type: 'covalent', order: 1 });
+        break;
+      case 'NH3':
+        atoms.push(new Atom('N', cx, cy - 20));
+        atoms.push(new Atom('H', cx - 65, cy + 45));
+        atoms.push(new Atom('H', cx, cy + 65));
+        atoms.push(new Atom('H', cx + 65, cy + 45));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 3, type: 'covalent', order: 1 });
+        bonds.push({ a1: 1, a2: 4, type: 'covalent', order: 1 });
+        break;
+      case 'CO2':
+        atoms.push(new Atom('C', cx, cy));
+        atoms.push(new Atom('O', cx - 90, cy));
+        atoms.push(new Atom('O', cx + 90, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 2 });
+        bonds.push({ a1: 1, a2: 3, type: 'covalent', order: 2 });
+        break;
+      case 'HCl':
+        atoms.push(new Atom('H', cx - 50, cy));
+        atoms.push(new Atom('Cl', cx + 50, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        break;
+      case 'HF':
+        atoms.push(new Atom('H', cx - 45, cy));
+        atoms.push(new Atom('F', cx + 45, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'covalent', order: 1 });
+        break;
+      case 'NaCl':
+        atoms.push(new Atom('Na', cx - 60, cy));
+        atoms.push(new Atom('Cl', cx + 60, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'ionic', order: 1 });
+        break;
+      case 'MgO':
+        atoms.push(new Atom('Mg', cx - 60, cy));
+        atoms.push(new Atom('O', cx + 60, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'ionic', order: 1 });
+        break;
+      case 'CaCl2':
+        atoms.push(new Atom('Ca', cx, cy));
+        atoms.push(new Atom('Cl', cx - 85, cy));
+        atoms.push(new Atom('Cl', cx + 85, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'ionic', order: 1 });
+        bonds.push({ a1: 1, a2: 3, type: 'ionic', order: 1 });
+        break;
+      case 'LiF':
+        atoms.push(new Atom('Li', cx - 55, cy));
+        atoms.push(new Atom('F', cx + 55, cy));
+        bonds.push({ a1: 1, a2: 2, type: 'ionic', order: 1 });
+        break;
+    }
+
+    updateHUD();
+  }
+
+  // ==========================================
+  // 11. 원자 팔레트 버튼 생성
+  // ==========================================
+  const paletteBar = document.getElementById('paletteBar');
+  Object.keys(ATOM_DEFS).forEach(sym => {
+    const def = ATOM_DEFS[sym];
+    const btn = document.createElement('button');
+    btn.className = 'atom-btn';
+    btn.innerHTML = `
+      <span class="dot-preview" style="background:${def.border};"></span>
+      <span>${def.sym}</span>
+      <span style="font-size:0.7rem; font-weight:normal; color:#64748b;">(${def.name})</span>
+    `;
+    btn.onclick = () => {
+      // 캔버스 중앙 근처 임의 위치에 추가
+      const rx = width / 2 + (Math.random() - 0.5) * 160;
+      const ry = height / 2 + (Math.random() - 0.5) * 120;
+      const newAtom = new Atom(sym, rx, ry);
+      atoms.push(newAtom);
+
+      // 기존 원자들과 스냅 결합 확인
+      atoms.forEach(other => {
+        if (other !== newAtom) tryFormBond(newAtom, other);
+      });
+
+      updateHUD();
+    };
+    paletteBar.appendChild(btn);
+  });
+
+  // ==========================================
+  // 12. UI 조작 이벤트
+  // ==========================================
+  // 모드 변경
+  btnModeShell.addEventListener('click', () => {
+    displayMode = 'shell';
+    btnModeShell.classList.add('active');
+    btnModeLewis.classList.remove('active');
+  });
+
+  btnModeLewis.addEventListener('click', () => {
+    displayMode = 'lewis';
+    btnModeLewis.classList.add('active');
+    btnModeShell.classList.remove('active');
+  });
+
+  chkShowWarning.addEventListener('change', e => {
+    showRedWarning = e.target.checked;
+  });
+
+  // 프리셋 버튼
+  document.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      loadPreset(e.target.dataset.preset);
+    });
+  });
+
+  // 결합 풀기
+  document.getElementById('btnUnbondBtn').addEventListener('click', () => {
+    bonds = [];
+    // 원자들을 살짝 사방으로 흩어지게 이동
+    atoms.forEach(a => {
+      a.x += (Math.random() - 0.5) * 60;
+      a.y += (Math.random() - 0.5) * 60;
+    });
+    updateHUD();
+  });
+
+  // 캔버스 비우기
+  document.getElementById('btnClearBtn').addEventListener('click', () => {
+    atoms = [];
+    bonds = [];
+    nextAtomId = 1;
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
+    updateHUD();
+  });
+
+  // 초기화 (H2O)
+  document.getElementById('btnResetBtn').addEventListener('click', () => {
+    document.querySelectorAll('[data-preset]').forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === 'H2O');
+    });
+    loadPreset('H2O');
+  });
+
+  // 원리 설명 토글
+  btnHelpToggle.addEventListener('click', () => {
+    theoryBox.classList.toggle('active');
+    btnHelpToggle.textContent = theoryBox.classList.contains('active') ? '결합 원리 닫기 ▴' : '결합 원리 보기 ▾';
+  });
+
+  // ==========================================
+  // 13. 초기 구동
+  // ==========================================
+  resizeCanvas();
+  loadPreset('H2O');
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>콩팥단위(네프론)에서 물질의 이동 - 자바실험실(Javalab) 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #059669;
+      --accent: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: #2563eb;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 자바실험실 시뮬레이션 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .mode-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mode-pill {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mode-pill.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .mode-pill.mode-warning.active {
+      background: var(--accent);
+      border-color: #b45309;
+      color: #ffffff;
+    }
+    .mode-pill.mode-danger.active {
+      background: var(--danger);
+      border-color: #b91c1c;
+      color: #ffffff;
+    }
+
+    /* 캔버스 영역 */
+    .canvas-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 640px;
+      min-height: 480px;
+    }
+
+    canvas#nephronCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* 자바실험실 하단 컨트롤 바 */
+    .javalab-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .radio-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .radio-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .radio-label:hover {
+      background: #e2e8f0;
+    }
+    .radio-label input[type="radio"] {
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+
+    .run-btn-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #0f172a;
+      cursor: pointer;
+      background: #e2e8f0;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+
+    .extra-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-btn {
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* 실시간 상태 안내 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+    .info-banner.warning {
+      background: #fffbeb;
+      border-left-color: var(--accent);
+      color: #92400e;
+    }
+    .info-banner.danger {
+      background: #fef2f2;
+      border-left-color: var(--danger);
+      color: #991b1b;
+    }
+
+    /* 3단계 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 0.98rem;
+    }
+
+    .badge-step {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .step-1 { background: #dc2626; }
+    .step-2 { background: #059669; }
+    .step-3 { background: #b45309; }
+
+    .mechanism-card p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .mechanism-meta {
+      font-size: 0.81rem;
+      background: #f8fafc;
+      padding: 7px 10px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.5;
+    }
+
+    /* 성분 농도 비교 분석표 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.84rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.data-table tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    .tag-yes {
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.76rem;
+    }
+
+    .tag-no {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.76rem;
+    }
+
+    .tag-100 {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.76rem;
+    }
+
+    /* 캔버스 플로팅 툴팁 */
+    #canvasTooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(5px);
+      color: #ffffff;
+      padding: 9px 13px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      max-width: 280px;
+      z-index: 100;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transform: translate(-50%, -120%);
+      transition: opacity 0.15s ease;
+    }
+
+    #canvasTooltip strong {
+      display: block;
+      color: #60a5fa;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    @media (max-width: 860px) {
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+      .javalab-bar {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 서랍 버튼 및 타이틀 -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>🔬 자바실험실(Javalab) 콩팥단위 물질 이동 모델</span>
+      <span class="nav-badge">2024-10-09 표준 도해</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <button class="nav-btn" id="btnReload" title="시뮬레이션 처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 자바실험실 시뮬레이션 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>콩팥단위(네프론)에서 물질의 이동</h2>
+          <span class="sim-date">2024-10-09</span>
+        </div>
+
+        <div class="mode-pills">
+          <button class="mode-pill active" data-mode="normal">정상 상태</button>
+          <button class="mode-pill mode-warning" data-mode="diabetes">당뇨 상태 (포도당 유출)</button>
+          <button class="mode-pill mode-danger" data-mode="nephritis">사구체신염 (단백뇨/혈뇨)</button>
+        </div>
+      </div>
+
+      <!-- 메인 캔버스 뷰포트 -->
+      <div class="canvas-wrapper">
+        <canvas id="nephronCanvas" width="1160" height="640"></canvas>
+        <div id="canvasTooltip"></div>
+      </div>
+
+      <!-- 자바실험실 하단 컨트롤러 -->
+      <div class="javalab-bar">
+        <label class="run-btn-label">
+          <input type="checkbox" id="chkRun" checked> Run
+        </label>
+
+        <div class="radio-group" id="filterRadios">
+          <label class="radio-label">
+            <input type="radio" name="substance" value="all" checked> None
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="water">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#38bdf8;"></span> 물
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="urea">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f97316;"></span> 요소
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="rbc">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ef4444;"></span> 혈구
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="protein">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e40af;"></span> 단백질
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="glucose">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#9333ea;"></span> 포도당
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="amino">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#0d9488;"></span> 아미노산
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="substance" value="salt">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;"></span> 기타 노폐물
+          </label>
+        </div>
+
+        <div class="extra-tools">
+          <button class="speed-btn" id="btnSpeed">속도: 1.0x (슬로우)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 안내 배너 -->
+    <div id="infoBanner" class="info-banner">
+      <span id="bannerText"><strong>[자바실험실 정식 모델]</strong> 인체 ➔ 콩팥 단면 ➔ 네프론으로 이어지는 구조와 사구체의 백색 여과 구멍, 헨레고리 세뇨관, 모세혈관망(적색➔자색➔청색)의 이동을 관찰하세요.</span>
+    </div>
+
+    <!-- 배설 3단계 메커니즘 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-step step-1">1</span>
+          <span>여과 (Filtration)</span>
+        </div>
+        <p>붉은색 사구체(토리)의 미세한 백색 여과 구멍을 통해 작은 분자들이 노란색 보먼주머니로 걸러집니다.</p>
+        <div class="mechanism-meta">
+          <strong>여과 물질 (원뇨):</strong> 물, 포도당, 아미노산, 무기염류(기타 노폐물), 요소<br>
+          <strong>여과 안 됨 (혈관 잔류):</strong> 혈구(적혈구), 고분자 단백질
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-step step-2">2</span>
+          <span>재흡수 (Reabsorption)</span>
+        </div>
+        <p>세뇨관이 모세혈관망과 교차하며 주행할 때, 몸에 유익한 물질이 혈액으로 100% 되돌아옵니다.</p>
+        <div class="mechanism-meta">
+          <strong>100% 전량 재흡수:</strong> 포도당, 아미노산 (정상 오줌 0%)<br>
+          <strong>대부분 재흡수 (약 99%):</strong> 물, 무기염류
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-step step-3">3</span>
+          <span>분비 (Secretion)</span>
+        </div>
+        <p>모세혈관의 혈액에 남아있던 노폐물(요소)이 세뇨관 속으로 능동 투입되어 집합관으로 배출됩니다.</p>
+        <div class="mechanism-meta">
+          <strong>결과:</strong> 집합관을 거치면서 수분이 추가 흡수되어 <strong>요소가 약 60배 농축</strong>된 오줌이 배출됩니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 성분 농도 비교 분석표 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 혈장 vs 여과액(원뇨) vs 오줌 성분 농도 비교 (%)</span>
+        <span class="table-sub">* 교과서 표준 탐구 데이터</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>성분 (물질)</th>
+              <th>혈장 (%) [혈액]</th>
+              <th>여과액 (원뇨, %) [보먼주머니]</th>
+              <th>오줌 (%) [집합관 배출]</th>
+              <th>여과 여부</th>
+              <th>재흡수율 (%)</th>
+              <th>생리학적 핵심 설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-protein">
+              <td><span style="color:#1e40af;">■</span> <strong>단백질</strong></td>
+              <td>7.0 ~ 8.0</td>
+              <td>0</td>
+              <td>0</td>
+              <td><span class="tag-no">여과 안 됨</span></td>
+              <td>-</td>
+              <td>크기가 커서 사구체 구멍을 통과하지 못함 (사구체신염 시 검출)</td>
+            </tr>
+            <tr id="row-rbc">
+              <td><span style="color:#ef4444;">●</span> <strong>혈구(적혈구)</strong></td>
+              <td>세포 성분</td>
+              <td>0</td>
+              <td>0</td>
+              <td><span class="tag-no">여과 안 됨</span></td>
+              <td>-</td>
+              <td>세포 크기가 커서 여과 불가 (혈뇨 발생 시 사구체 손상)</td>
+            </tr>
+            <tr id="row-glucose">
+              <td><span style="color:#9333ea;">●</span> <strong>포도당</strong></td>
+              <td>0.1</td>
+              <td>0.1</td>
+              <td>0</td>
+              <td><span class="tag-yes">여과 됨</span></td>
+              <td><span class="tag-100">100%</span></td>
+              <td>세뇨관 통과 중 모세혈관으로 100% 전량 재흡수됨 (당뇨 시 배출)</td>
+            </tr>
+            <tr id="row-amino">
+              <td><span style="color:#0d9488;">●</span> <strong>아미노산</strong></td>
+              <td>0.05</td>
+              <td>0.05</td>
+              <td>0</td>
+              <td><span class="tag-yes">여과 됨</span></td>
+              <td><span class="tag-100">100%</span></td>
+              <td>단백질의 기본 영양소로 모세혈관으로 100% 전량 재흡수됨</td>
+            </tr>
+            <tr id="row-water">
+              <td><span style="color:#38bdf8;">●</span> <strong>물</strong></td>
+              <td>90 ~ 93</td>
+              <td>90 ~ 93</td>
+              <td>95</td>
+              <td><span class="tag-yes">여과 됨</span></td>
+              <td>약 99%</td>
+              <td>체내 수분 유지를 위해 대부분 모세혈관으로 회수됨</td>
+            </tr>
+            <tr id="row-urea">
+              <td><span style="color:#f97316;">●</span> <strong>요소</strong></td>
+              <td>0.03</td>
+              <td>0.03</td>
+              <td>1.8 ~ 2.0</td>
+              <td><span class="tag-yes">여과 됨</span></td>
+              <td>약 50%</td>
+              <td>수분 재흡수와 분비로 농도가 <strong>약 60배 고농도로 농축</strong>되어 집합관 배출</td>
+            </tr>
+            <tr id="row-salt">
+              <td><span style="color:#16a34a;">●</span> <strong>기타 노폐물 (무기염류)</strong></td>
+              <td>0.72</td>
+              <td>0.72</td>
+              <td>1.0 ~ 1.5</td>
+              <td><span class="tag-yes">여과 됨</span></td>
+              <td>약 99%</td>
+              <td>체액 삼투압 균형을 위해 필요한 만큼 대부분 재흡수됨</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.getElementById('nephronCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('canvasTooltip');
+    const bannerText = document.getElementById('bannerText');
+    const infoBanner = document.getElementById('infoBanner');
+
+    // 상태 관리
+    let isRunning = true;
+    let speedMultiplier = 1.0;
+    let activeFilter = 'all'; // 'all', 'water', 'urea', 'rbc', 'protein', 'glucose', 'amino', 'salt'
+    let activeMode = 'normal'; // 'normal', 'diabetes', 'nephritis'
+
+    // 가상 해상도 (1160 x 640)
+    const V_WIDTH = 1160;
+    const V_HEIGHT = 640;
+
+    // 물질별 색상 및 시각 정의
+    const SUBSTANCES = {
+      water:   { name: '물', color: '#38bdf8', stroke: '#0284c7', size: 4.2 },
+      urea:    { name: '요소', color: '#f97316', stroke: '#ea580c', size: 4.8 },
+      rbc:     { name: '혈구', color: '#ef4444', stroke: '#b91c1c', size: 8.5 },
+      protein: { name: '단백질', color: '#1e40af', stroke: '#172554', size: 7.2 },
+      glucose: { name: '포도당', color: '#9333ea', stroke: '#6b21a8', size: 5.4 },
+      amino:   { name: '아미노산', color: '#0d9488', stroke: '#0f766e', size: 5.4 },
+      salt:    { name: '기타 노폐물', color: '#16a34a', stroke: '#15803d', size: 5.0 }
+    };
+
+    function drawSubstanceParticle(c, x, y, type, scale = 1.0) {
+      const info = SUBSTANCES[type];
+      if (!info) return;
+      const s = info.size * scale;
+
+      c.save();
+      c.fillStyle = info.color;
+      c.strokeStyle = info.stroke;
+      c.lineWidth = 1.2;
+
+      c.beginPath();
+      if (type === 'protein') {
+        c.roundRect(x - s, y - s, s * 2, s * 2, 2.5);
+        c.fill();
+        c.stroke();
+      } else if (type === 'rbc') {
+        c.ellipse(x, y, s * 1.15, s * 0.85, 0, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        c.beginPath();
+        c.ellipse(x, y, s * 0.55, s * 0.40, 0, 0, Math.PI * 2);
+        c.fillStyle = 'rgba(153, 27, 27, 0.45)';
+        c.fill();
+      } else {
+        c.arc(x, y, s, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        c.beginPath();
+        c.arc(x - s * 0.35, y - s * 0.35, s * 0.35, 0, Math.PI * 2);
+        c.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        c.fill();
+      }
+      c.restore();
+    }
+
+    // ==========================================
+    // 자바실험실 네프론 유로 경로 (Path Waypoints)
+    // ==========================================
+    // 1. 혈류 경로 (수입소동맥 -> 사구체 -> 모세혈관 -> 정맥)
+    const pathBlood = [
+      { x: 410, y: 145 },
+      { x: 530, y: 145 },
+      { x: 580, y: 165 }, // 사구체 중심
+      // 여과되지 않고 하단 수출소동맥으로 통과
+      { x: 550, y: 195 },
+      { x: 535, y: 240 },
+      { x: 535, y: 300 }, // 수직 하강 후 우측 턴
+      { x: 620, y: 300 },
+      { x: 710, y: 300 }, // 하행 세뇨관 교차
+      { x: 770, y: 300 }, // 상행 세뇨관 교차
+      { x: 840, y: 300 },
+      { x: 840, y: 365 }, // U턴
+      { x: 770, y: 365 },
+      { x: 710, y: 365 },
+      { x: 650, y: 365 }, // 청색 정맥 턴 구역
+      { x: 630, y: 340 },
+      { x: 530, y: 340 },
+      { x: 410, y: 340 }  // 콩팥 정맥 출구
+    ];
+
+    // 2. 세뇨관 통과 -> 오줌 배출 경로 (요소, 기타 노폐물, 미량의 수분)
+    const pathTubuleToUrine = [
+      { x: 410, y: 145 },
+      { x: 580, y: 165 }, // 사구체
+      // 백색 구멍을 통해 보먼주머니로 여과!
+      { x: 630, y: 165 },
+      { x: 670, y: 165 }, // 세뇨관 입구
+      { x: 710, y: 185 },
+      { x: 710, y: 300 }, // 모세혈관 교차점
+      { x: 710, y: 470 }, // 헨레고리 하행
+      // 헨레고리 바닥 턴
+      { x: 715, y: 510 },
+      { x: 740, y: 520 },
+      { x: 765, y: 510 },
+      { x: 770, y: 470 }, // 헨레고리 상행
+      { x: 770, y: 365 }, // 모세혈관 교차점
+      { x: 770, y: 185 },
+      { x: 820, y: 175 },
+      { x: 910, y: 175 }, // 집합관 합류
+      { x: 935, y: 175 },
+      { x: 935, y: 350 },
+      { x: 935, y: 550 }  // 최종 오줌 배출
+    ];
+
+    // 3. 재흡수 경로 (포도당, 아미노산 100% 회수)
+    // 사구체 여과 -> 세뇨관 -> 모세혈관 교차점에서 100% 혈관으로 흡수 -> 콩팥 정맥
+    const pathReabsorb = [
+      { x: 410, y: 145 },
+      { x: 580, y: 165 },
+      { x: 630, y: 165 }, // 여과
+      { x: 670, y: 165 },
+      { x: 710, y: 185 },
+      { x: 710, y: 300 }, // 모세혈관과의 교차점 (100% 재흡수 발생!)
+      // 모세혈관으로 진입하여 혈류와 합류
+      { x: 770, y: 300 },
+      { x: 840, y: 300 },
+      { x: 840, y: 365 },
+      { x: 770, y: 365 },
+      { x: 650, y: 365 },
+      { x: 630, y: 340 },
+      { x: 530, y: 340 },
+      { x: 410, y: 340 }  // 콩팥 정맥으로 안전하게 귀환
+    ];
+
+    // 4. 분비 경로 (모세혈관의 노폐물이 세뇨관으로 투입)
+    const pathSecrete = [
+      { x: 410, y: 145 },
+      { x: 580, y: 165 },
+      { x: 535, y: 300 },
+      { x: 710, y: 300 },
+      { x: 840, y: 300 },
+      { x: 840, y: 365 },
+      { x: 770, y: 365 }, // 상행 세뇨관 교차점에서 능동 분비 투입!
+      { x: 770, y: 250 },
+      { x: 770, y: 185 },
+      { x: 820, y: 175 },
+      { x: 935, y: 175 },
+      { x: 935, y: 550 }
+    ];
+
+    function compilePolyline(pts) {
+      const lens = [0];
+      let sum = 0;
+      for (let i = 1; i < pts.length; i++) {
+        sum += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        lens.push(sum);
+      }
+      return { pts, lens, total: sum };
+    }
+
+    const TRACKS = {
+      blood: compilePolyline(pathBlood),
+      urine: compilePolyline(pathTubuleToUrine),
+      reabsorb: compilePolyline(pathReabsorb),
+      secrete: compilePolyline(pathSecrete)
+    };
+
+    function sampleTrack(track, p) {
+      const clamped = Math.max(0, Math.min(1, p));
+      const target = clamped * track.total;
+      const { pts, lens } = track;
+
+      let l = 0, r = lens.length - 1;
+      while (l <= r) {
+        const m = (l + r) >> 1;
+        if (lens[m] < target) l = m + 1;
+        else r = m - 1;
+      }
+      const idx = Math.max(1, l);
+      const p1 = pts[idx - 1];
+      const p2 = pts[idx];
+      const segLen = lens[idx] - lens[idx - 1];
+      const t = segLen === 0 ? 0 : (target - lens[idx - 1]) / segLen;
+
+      return {
+        x: p1.x + (p2.x - p1.x) * t,
+        y: p1.y + (p2.y - p1.y) * t
+      };
+    }
+
+    // 파티클 클래스 (1/10 슬로우 모션)
+    class JavalabParticle {
+      constructor(type) {
+        this.type = type;
+        this.reset();
+        this.progress = Math.random();
+      }
+
+      reset() {
+        this.progress = 0;
+        // 슬로우 모션 (1/10 속도)
+        this.speed = 0.00007 + Math.random() * 0.00003;
+
+        if (this.type === 'protein' || this.type === 'rbc') {
+          if (activeMode === 'nephritis' && Math.random() < 0.40) {
+            this.trackKey = 'urine'; // 사구체신염: 단백뇨/혈뇨
+          } else {
+            this.trackKey = 'blood'; // 정상: 여과되지 않음
+          }
+        } else if (this.type === 'glucose' || this.type === 'amino') {
+          if (activeMode === 'diabetes' && this.type === 'glucose' && Math.random() < 0.45) {
+            this.trackKey = 'urine'; // 당뇨: 포도당 유출
+          } else {
+            this.trackKey = 'reabsorb'; // 정상: 100% 재흡수
+          }
+        } else if (this.type === 'water') {
+          this.trackKey = Math.random() < 0.90 ? 'reabsorb' : 'urine';
+        } else if (this.type === 'urea') {
+          const r = Math.random();
+          if (r < 0.35) this.trackKey = 'secrete';
+          else if (r < 0.75) this.trackKey = 'urine';
+          else this.trackKey = 'reabsorb';
+        } else {
+          this.trackKey = Math.random() < 0.85 ? 'reabsorb' : 'urine';
+        }
+
+        this.jx = (Math.random() - 0.5) * 6;
+        this.jy = (Math.random() - 0.5) * 6;
+      }
+
+      update(dt) {
+        this.progress += this.speed * dt * speedMultiplier;
+        if (this.progress >= 1.0) {
+          this.reset();
+        }
+      }
+
+      draw(c, filter) {
+        const track = TRACKS[this.trackKey];
+        const pos = sampleTrack(track, this.progress);
+        const isSelected = (filter === 'all' || filter === this.type);
+        const alpha = isSelected ? 1.0 : 0.10;
+
+        c.save();
+        c.globalAlpha = alpha;
+
+        const px = pos.x + this.jx;
+        const py = pos.y + this.jy;
+
+        if (filter === this.type) {
+          c.beginPath();
+          c.arc(px, py, 11, 0, Math.PI * 2);
+          c.fillStyle = SUBSTANCES[this.type].color;
+          c.globalAlpha = 0.35;
+          c.fill();
+          c.globalAlpha = 1.0;
+        }
+
+        drawSubstanceParticle(c, px, py, this.type, 1.0);
+        c.restore();
+      }
+    }
+
+    const particles = [];
+    function populateParticles() {
+      particles.length = 0;
+      const COUNTS = {
+        water: 36,
+        urea: 32,
+        rbc: 24,
+        protein: 20,
+        glucose: 28,
+        amino: 20,
+        salt: 24
+      };
+      if (activeMode === 'diabetes') COUNTS.glucose += 25;
+
+      Object.keys(COUNTS).forEach(type => {
+        for (let i = 0; i < COUNTS[type]; i++) {
+          particles.push(new JavalabParticle(type));
+        }
+      });
+    }
+    populateParticles();
+
+    // ==========================================
+    // 자바실험실(Javalab) 캔버스 1:1 그래픽 렌더링
+    // ==========================================
+    function renderJavalabScene() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // (A) 좌측 인체 실루엣 및 콩팥 해부도 렌더링
+      drawAnatomicalContext(ctx);
+
+      // (B) 우측 자바실험실 네프론 배관망 렌더링
+      drawJavalabNephron(ctx);
+    }
+
+    // 좌측 인체 및 콩팥 단면
+    function drawAnatomicalContext(c) {
+      c.save();
+
+      // 1. 인체 실루엣
+      const hx = 120;
+      const hy = 350;
+
+      // 머리
+      c.fillStyle = '#f1f5f9';
+      c.strokeStyle = '#cbd5e1';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.arc(hx, hy - 160, 24, 0, Math.PI * 2);
+      c.fill(); c.stroke();
+
+      // 몸통 및 사지
+      c.beginPath();
+      c.moveTo(hx - 22, hy - 130);
+      c.lineTo(hx - 55, hy - 40);
+      c.lineTo(hx - 48, hy + 40);
+      c.lineTo(hx - 32, hy + 40);
+      c.lineTo(hx - 20, hy - 50);
+      c.lineTo(hx - 20, hy + 130);
+      c.lineTo(hx - 6, hy + 130);
+      c.lineTo(hx, hy + 20);
+      c.lineTo(hx + 6, hy + 130);
+      c.lineTo(hx + 20, hy + 130);
+      c.lineTo(hx + 20, hy - 50);
+      c.lineTo(hx + 32, hy + 40);
+      c.lineTo(hx + 48, hy + 40);
+      c.lineTo(hx + 55, hy - 40);
+      c.lineTo(hx + 22, hy - 130);
+      c.closePath();
+      c.fillStyle = '#f8fafc';
+      c.fill();
+      c.stroke();
+
+      // 인체 내부 콩팥 (양쪽 콩팥)
+      drawMiniKidney(c, hx - 16, hy - 30, '#ef4444');
+      drawMiniKidney(c, hx + 16, hy - 30, '#ef4444');
+
+      // 오줌관 및 방광
+      c.strokeStyle = '#f59e0b';
+      c.lineWidth = 1.8;
+      c.beginPath();
+      c.moveTo(hx - 14, hy - 25);
+      c.quadraticCurveTo(hx - 18, hy + 10, hx - 4, hy + 35);
+      c.moveTo(hx + 14, hy - 25);
+      c.quadraticCurveTo(hx + 18, hy + 10, hx + 4, hy + 35);
+      c.stroke();
+
+      // 방광
+      c.fillStyle = '#ef4444';
+      c.beginPath();
+      c.ellipse(hx, hy + 40, 10, 8, 0, 0, Math.PI * 2);
+      c.fill();
+
+      // 2. 인체 콩팥 -> 확대 콩팥으로 이어지는 녹색 곡선 화살표
+      drawGreenCurvedArrow(c, hx + 22, hy - 30, 240, hy - 10);
+
+      // 3. 확대 콩팥 단면 (Kidney Cross-section)
+      const kx = 285;
+      const ky = 340;
+
+      // 콩팥 외형 (적갈색 강낭콩 형태)
+      c.beginPath();
+      c.moveTo(kx - 35, ky - 95);
+      c.bezierCurveTo(kx + 45, ky - 100, kx + 75, ky - 40, kx + 75, ky + 10);
+      c.bezierCurveTo(kx + 75, ky + 70, kx + 35, ky + 95, kx - 10, ky + 95);
+      c.bezierCurveTo(kx - 35, ky + 95, kx - 40, ky + 40, kx - 30, ky + 5);
+      c.bezierCurveTo(kx - 25, ky - 30, kx - 45, ky - 70, kx - 35, ky - 95);
+      c.closePath();
+      c.fillStyle = '#b91c1c';
+      c.fill();
+      c.lineWidth = 3;
+      c.strokeStyle = '#881337';
+      c.stroke();
+
+      // 콩팥 겉질/속질 피라미드 음영
+      c.save();
+      c.clip();
+      c.fillStyle = '#f87171';
+      c.beginPath();
+      c.arc(kx + 15, ky, 65, 0, Math.PI * 2);
+      c.fill();
+
+      // 속질 방사형 주름
+      c.strokeStyle = '#b91c1c';
+      c.lineWidth = 2;
+      for (let a = -0.4; a <= 0.4; a += 0.15) {
+        c.beginPath();
+        c.moveTo(kx, ky);
+        c.lineTo(kx + 65 * Math.cos(a), ky + 65 * Math.sin(a));
+        c.stroke();
+      }
+      c.restore();
+
+      // 콩팥깔때기 및 오줌관 (황금빛 깔때기)
+      c.fillStyle = '#fde047';
+      c.strokeStyle = '#ca8a04';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(kx - 20, ky - 20);
+      c.quadraticCurveTo(kx + 10, ky, kx - 15, ky + 30);
+      c.lineTo(kx - 25, ky + 120);
+      c.lineTo(kx - 35, ky + 120);
+      c.lineTo(kx - 25, ky + 25);
+      c.closePath();
+      c.fill();
+      c.stroke();
+
+      // 콩팥 동맥(적색) 및 정맥(청색)
+      c.fillStyle = '#dc2626';
+      c.fillRect(kx - 55, ky - 35, 35, 14);
+      c.fillStyle = '#2563eb';
+      c.fillRect(kx - 60, ky - 15, 40, 14);
+
+      // 콩팥 겉질의 녹색 확대 원 (네프론 위치 표시)
+      c.beginPath();
+      c.arc(kx - 10, ky - 75, 14, 0, Math.PI * 2);
+      c.strokeStyle = '#10b981';
+      c.lineWidth = 3;
+      c.stroke();
+
+      // 4. 겉질 확대원 -> 우측 네프론으로 이어지는 긴 녹색 곡선 화살표
+      drawGreenCurvedArrow(c, kx + 4, ky - 75, 420, 145);
+
+      c.restore();
+    }
+
+    function drawMiniKidney(c, x, y, color) {
+      c.save();
+      c.fillStyle = color;
+      c.beginPath();
+      c.ellipse(x, y, 7, 12, 0.2, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+
+    function drawGreenCurvedArrow(c, x1, y1, x2, y2) {
+      c.save();
+      c.strokeStyle = '#6ee7b7';
+      c.lineWidth = 3.5;
+      c.beginPath();
+      c.moveTo(x1, y1);
+      c.quadraticCurveTo((x1 + x2) / 2, Math.min(y1, y2) - 40, x2, y2);
+      c.stroke();
+
+      // 화살촉
+      const ang = Math.atan2(y2 - (Math.min(y1, y2) - 40), x2 - (x1 + x2) / 2);
+      c.fillStyle = '#10b981';
+      c.beginPath();
+      c.moveTo(x2, y2);
+      c.lineTo(x2 - 10 * Math.cos(ang - Math.PI / 6), y2 - 10 * Math.sin(ang - Math.PI / 6));
+      c.lineTo(x2 - 10 * Math.cos(ang + Math.PI / 6), y2 - 10 * Math.sin(ang + Math.PI / 6));
+      c.closePath();
+      c.fill();
+      c.restore();
+    }
+
+    // 우측 자바실험실 네프론 구조
+    function drawJavalabNephron(c) {
+      c.save();
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+
+      // ==========================================
+      // 1. 모세혈관망 (배경 뒤편으로 지나가는 혈관)
+      // ==========================================
+      // (1) 사구체 하단 -> 모세혈관 수직 및 가로 상단 궤적 (적색 #ff0000)
+      c.lineWidth = 26;
+      c.strokeStyle = '#ff0000';
+      c.beginPath();
+      c.moveTo(560, 195);
+      c.lineTo(535, 240);
+      c.lineTo(535, 300);
+      c.lineTo(840, 300);
+      c.arcTo(855, 300, 855, 330, 20);
+      c.arcTo(855, 365, 835, 365, 20);
+      c.stroke();
+
+      // (2) 모세혈관 하단 그라데이션 (적색 -> 자색 -> 청색)
+      // 840에서 650으로 이동하는 구간
+      const gradCap = c.createLinearGradient(835, 365, 650, 365);
+      gradCap.addColorStop(0.0, '#ff0000');
+      gradCap.addColorStop(0.45, '#ec4899');
+      gradCap.addColorStop(0.70, '#8b5cf6');
+      gradCap.addColorStop(1.0, '#3b82f6');
+
+      c.strokeStyle = gradCap;
+      c.beginPath();
+      c.moveTo(835, 365);
+      c.lineTo(650, 365);
+      c.stroke();
+
+      // (3) 콩팥 정맥 (청색 수평 출구: x: 650 -> 405, y: 340)
+      c.strokeStyle = '#60a5fa';
+      c.beginPath();
+      c.moveTo(650, 365);
+      c.bezierCurveTo(630, 365, 630, 340, 610, 340);
+      c.lineTo(405, 340);
+      c.stroke();
+
+      // ==========================================
+      // 2. 세뇨관 (노란색 루프 - 헨레고리)
+      // ==========================================
+      c.lineWidth = 26;
+      c.strokeStyle = '#fde047'; // 자바실험실 특유의 산뜻한 노랑
+      c.beginPath();
+      c.moveTo(665, 165);
+      c.lineTo(710, 185);
+      c.lineTo(710, 470);
+      // 헨레고리 깊은 U자형 턴
+      c.arcTo(710, 520, 740, 520, 30);
+      c.arcTo(770, 520, 770, 470, 30);
+      c.lineTo(770, 185);
+      c.lineTo(820, 175);
+      c.lineTo(920, 175);
+      c.stroke();
+
+      // ==========================================
+      // 3. 집합관 (우측 굵은 노란색 수직관)
+      // ==========================================
+      c.lineWidth = 45;
+      c.strokeStyle = '#fde047';
+      c.beginPath();
+      c.moveTo(935, 75);
+      c.lineTo(935, 545);
+      c.stroke();
+
+      // ==========================================
+      // 4. 수입소동맥 & 사구체(토리, 적색 구형)
+      // ==========================================
+      // 수입소동맥 (상단 수평 적색 배관)
+      c.lineWidth = 28;
+      c.strokeStyle = '#ff0000';
+      c.beginPath();
+      c.moveTo(405, 145);
+      c.lineTo(580, 145);
+      c.stroke();
+
+      // 사구체 (Glomerulus, 큰 빨간 원)
+      const gx = 590;
+      const gy = 165;
+      const gr = 48;
+
+      c.fillStyle = '#ff0000';
+      c.beginPath();
+      c.arc(gx, gy, gr, 0, Math.PI * 2);
+      c.fill();
+
+      // 사구체 우측의 백색 여과 구멍들 (White Filtration Pores)
+      // 자바실험실 스크린샷 1:1 재현
+      c.fillStyle = '#ffffff';
+      const poreCoords = [
+        { dx: 18, dy: -32 }, { dx: 30, dy: -24 },
+        { dx: 12, dy: -18 }, { dx: 26, dy: -12 }, { dx: 38, dy: -8 },
+        { dx: 16, dy: -2 },  { dx: 30, dy: 2 },   { dx: 42, dy: 6 },
+        { dx: 12, dy: 14 },  { dx: 26, dy: 18 },  { dx: 38, dy: 22 },
+        { dx: 18, dy: 28 },  { dx: 32, dy: 32 }
+      ];
+      poreCoords.forEach(p => {
+        c.beginPath();
+        c.arc(gx + p.dx, gy + p.dy, 3.2, 0, Math.PI * 2);
+        c.fill();
+      });
+
+      // ==========================================
+      // 5. 보먼주머니 (사구체를 감싼 노란색 C-Cup)
+      // ==========================================
+      const bInner = 58;
+      const bOuter = 78;
+
+      c.fillStyle = '#fde047';
+      c.beginPath();
+      c.arc(gx, gy, bOuter, Math.PI * 1.68, Math.PI * 0.32, false);
+      c.lineTo(gx + bInner * Math.cos(Math.PI * 0.32), gy + bInner * Math.sin(Math.PI * 0.32));
+      c.arc(gx, gy, bInner, Math.PI * 0.32, Math.PI * 1.68, true);
+      c.closePath();
+      c.fill();
+
+      // 라벨 텍스트
+      c.font = 'bold 12.5px sans-serif';
+      c.fillStyle = '#ffffff';
+      c.textAlign = 'center';
+      c.fillText('토리(사구체)', gx - 8, gy + 4);
+
+      c.fillStyle = '#854d0e';
+      c.fillText('보먼주머니', gx + 82, gy - 20);
+
+      c.fillText('세뇨관', 710, 140);
+      c.fillText('집합관', 935, 60);
+
+      c.fillStyle = '#b91c1c';
+      c.textAlign = 'left';
+      c.fillText('수입소동맥', 415, 125);
+
+      c.fillStyle = '#1d4ed8';
+      c.fillText('콩팥 정맥', 415, 325);
+
+      c.restore();
+    }
+
+    // ==========================================
+    // 애니메이션 루프 (속도 1/10 적용)
+    // ==========================================
+    let lastTime = performance.now();
+    function animate(now) {
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      if (isRunning) {
+        particles.forEach(p => p.update(dt));
+      }
+
+      renderJavalabScene();
+
+      // 파티클 렌더링
+      particles.forEach(p => p.draw(ctx, activeFilter));
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // ==========================================
+    // 인터랙션 (호버 툴팁 및 컨트롤 바)
+    // ==========================================
+    const TOOLTIP_ZONES = [
+      {
+        id: 'glomerulus',
+        title: '토리 (사구체, Glomerulus)',
+        desc: '혈액이 유입되는 모세혈관 뭉치입니다. 표면의 미세한 구멍을 통해 작은 분자들이 보먼주머니로 <strong>여과</strong>됩니다.',
+        bounds: { x: 540, y: 115, w: 100, h: 100 }
+      },
+      {
+        id: 'bowman',
+        title: '보먼주머니 (Bowman\'s Capsule)',
+        desc: '사구체를 감싸고 있는 C자형 주머니입니다. 여과액(원뇨: 물, 포도당, 아미노산, 요소 등)을 받아 세뇨관으로 보냅니다.',
+        bounds: { x: 630, y: 100, w: 60, h: 130 }
+      },
+      {
+        id: 'tubule',
+        title: '세뇨관 및 헨레고리',
+        desc: '여과액이 지나가는 긴 관입니다. 모세혈관과 교차하며 포도당과 아미노산을 <strong>100% 모세혈관으로 전량 재흡수</strong>합니다.',
+        bounds: { x: 690, y: 160, w: 100, h: 360 }
+      },
+      {
+        id: 'capillary',
+        title: '세뇨관 주위 모세혈관망',
+        desc: '동맥혈(적색)에서 물질 교환(자색)을 거쳐 정맥혈(청색)로 변하며, 세뇨관으로부터 재흡수된 영양분을 회수합니다.',
+        bounds: { x: 520, y: 280, w: 340, h: 100 }
+      },
+      {
+        id: 'collecting',
+        title: '집합관 (Collecting Duct)',
+        desc: '오줌이 모여 콩팥깔때기로 내려가는 관입니다. 수분이 추가 재흡수되어 요소가 고농도로 농축된 오줌이 배출됩니다.',
+        bounds: { x: 910, y: 70, w: 50, h: 480 }
+      }
+    ];
+
+    function handlePointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = V_WIDTH / rect.width;
+      const scaleY = V_HEIGHT / rect.height;
+
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      if (!clientX || !clientY) return;
+
+      const mx = (clientX - rect.left) * scaleX;
+      const my = (clientY - rect.top) * scaleY;
+
+      let match = null;
+      for (const reg of TOOLTIP_ZONES) {
+        if (mx >= reg.bounds.x && mx <= reg.bounds.x + reg.bounds.w &&
+            my >= reg.bounds.y && my <= reg.bounds.y + reg.bounds.h) {
+          match = reg;
+          break;
+        }
+      }
+
+      if (match) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${clientX - rect.left}px`;
+        tooltip.style.top = `${clientY - rect.top}px`;
+        tooltip.innerHTML = `<strong>${match.title}</strong>${match.desc}`;
+      } else {
+        tooltip.style.display = 'none';
+      }
+    }
+
+    canvas.addEventListener('mousemove', handlePointer);
+    canvas.addEventListener('touchmove', handlePointer, { passive: true });
+    canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    canvas.addEventListener('touchend', () => { tooltip.style.display = 'none'; });
+
+    // 라디오 버튼 필터 제어
+    const radioInputs = document.querySelectorAll('input[name="substance"]');
+    const tableRows = document.querySelectorAll('.data-table tbody tr');
+
+    const GUIDE_TEXTS = {
+      all: '<strong>[전체 보기 (None)]</strong> 모든 물질의 유동을 관찰합니다. 포도당·아미노산은 세뇨관에서 모세혈관으로 100% 재흡수됩니다.',
+      water: '<strong>[물 추적]</strong> 사구체 구멍으로 대량 여과된 뒤, 약 99%가 세뇨관에서 모세혈관으로 재흡수되고 1%만 집합관으로 배출됩니다.',
+      urea: '<strong>[요소 추적]</strong> 사구체에서 여과되고 모세혈관에서 분비되며, 수분이 재흡수되어 집합관에서 <strong>약 60배 농축</strong>됩니다.',
+      rbc: '<strong>[혈구(적혈구) 추적]</strong> 크기가 커서 사구체의 백색 구멍을 통과하지 못하고 모세혈관을 거쳐 콩팥 정맥으로 직행합니다. (오줌 검출 0%)',
+      protein: '<strong>[단백질 추적]</strong> 고분자 물질로 사구체에서 여과되지 않습니다. 사구체신염 시 벽 손상으로 오줌에 누출(단백뇨)됩니다.',
+      glucose: '<strong>[포도당 추적]</strong> 사구체에서 100% 여과되지만, 세뇨관 통과 중 <strong>모세혈관으로 100% 전량 재흡수</strong>되어 오줌에는 0%입니다.',
+      amino: '<strong>[아미노산 추적]</strong> 사구체에서 여과된 후, 세뇨관에서 능동 수송으로 <strong>100% 전량 재흡수</strong>됩니다.',
+      salt: '<strong>[기타 노폐물(무기염류)]</strong> 사구체에서 여과된 후, 체액 삼투압 균형을 위해 필요한 만큼 대부분(약 99%) 재흡수됩니다.'
+    };
+
+    radioInputs.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        activeFilter = e.target.value;
+        bannerText.innerHTML = GUIDE_TEXTS[activeFilter] || GUIDE_TEXTS.all;
+
+        tableRows.forEach(row => {
+          if (activeFilter === 'all') {
+            row.style.backgroundColor = '';
+            row.style.outline = 'none';
+          } else if (row.id === `row-${activeFilter}`) {
+            row.style.backgroundColor = '#eff6ff';
+            row.style.outline = '2px solid #2563eb';
+          } else {
+            row.style.backgroundColor = '';
+            row.style.outline = 'none';
+          }
+        });
+      });
+    });
+
+    // Run 체크박스 제어
+    const chkRun = document.getElementById('chkRun');
+    chkRun.addEventListener('change', (e) => {
+      isRunning = e.target.checked;
+    });
+
+    // 속도 버튼
+    const btnSpeed = document.getElementById('btnSpeed');
+    const SPEED_LIST = [0.5, 1.0, 2.0];
+    let spdIdx = 1;
+    btnSpeed.addEventListener('click', () => {
+      spdIdx = (spdIdx + 1) % SPEED_LIST.length;
+      speedMultiplier = SPEED_LIST[spdIdx];
+      btnSpeed.textContent = `속도: ${speedMultiplier.toFixed(1)}x (슬로우)`;
+    });
+
+    // 병리 상태 토글
+    const modePills = document.querySelectorAll('.mode-pill');
+    modePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        modePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeMode = pill.dataset.mode;
+        populateParticles();
+
+        if (activeMode === 'diabetes') {
+          bannerText.innerHTML = '<strong>[당뇨 상태 시뮬레이션]</strong> 혈중 포도당 농도가 너무 높아 세뇨관 수송체가 포화되었습니다. 미처 재흡수되지 못한 포도당이 집합관(오줌)으로 유출되는 현상을 관찰하세요!';
+          infoBanner.className = 'info-banner warning';
+        } else if (activeMode === 'nephritis') {
+          bannerText.innerHTML = '<strong>[사구체신염 시뮬레이션]</strong> 사구체 막 손상으로 평소 통과하지 못하던 <strong>단백질과 혈구</strong>가 보먼주머니로 누출되어 오줌으로 배출되는 <strong>단백뇨/혈뇨</strong>가 발생합니다!';
+          infoBanner.className = 'info-banner danger';
+        } else {
+          bannerText.innerHTML = GUIDE_TEXTS[activeFilter] || GUIDE_TEXTS.all;
+          infoBanner.className = 'info-banner';
+        }
+      });
+    });
+
+  })();
+  </script>
+</body>
+</html>

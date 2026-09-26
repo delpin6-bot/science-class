@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>직류 전동기 2 (DC Motor 2) · 자바실험실 복각</title>
+<style>
+:root {
+  --bg: #edf2f7;
+  --surface: #ffffff;
+  --line: #cbd5e1;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --red: #ef4444;
+  --blue: #2563eb;
+  --green: #16a34a;
+  --magenta: #d946ef;
+  --radius: 12px;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ==========================================================================
+   상단 헤더
+   ========================================================================== */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 20;
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-badge {
+  background: #f1f5f9;
+  color: #3b82f6;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-date {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-top {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-top:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-top.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: #bfdbfe;
+}
+
+/* ==========================================================================
+   원리 설명 접이식 패널
+   ========================================================================== */
+.theory-panel {
+  display: none;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 16px 24px;
+  animation: slideDown 0.22s ease-out forwards;
+  z-index: 15;
+}
+
+.theory-panel.show { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.theory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.theory-card {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+
+.theory-card h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theory-card p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   메인 3D 뷰포트
+   ========================================================================== */
+.main-wrapper {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 58px);
+  background: #edf2f7;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-container {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.canvas-container:active { cursor: grabbing; }
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 좌상단 자석 극성 변경 버튼 (스크린샷 오리지널 1:1) */
+.magnet-toggles {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+
+.btn-magnet-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  transition: all 0.15s;
+}
+
+.btn-magnet-toggle:hover {
+  background: #ffffff;
+  border-color: #2563eb;
+  transform: scale(1.02);
+}
+
+.magnet-badge {
+  display: inline-flex;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.magnet-badge span {
+  padding: 1px 5px;
+}
+
+.badge-s { background: #2563eb; }
+.badge-n { background: #ef4444; }
+
+/* 3D 회전 안내 힌트 */
+.hint-badge {
+  position: absolute;
+  top: 100px;
+  left: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   실시간 물리 대시보드 HUD 플로팅 카드
+   ========================================================================== */
+.hud-card {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 310px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.hud-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 5px;
+}
+
+.hud-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 800;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.hud-label { color: var(--muted); font-weight: 600; }
+.hud-value { font-weight: 800; color: #0f172a; }
+
+.hud-desc {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #475569;
+  border-left: 3px solid var(--primary);
+}
+
+/* ==========================================================================
+   하단 조작 컨트롤 바 (스크린샷 오리지널 1:1 복각)
+   ========================================================================== */
+.bottom-bar {
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+  position: relative;
+  z-index: 10;
+}
+
+.bottom-checkboxes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.chk-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.chk-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #94a3b8;
+  border-radius: 4px;
+  outline: none;
+  margin: 0;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  background: #fff;
+  transition: all 0.15s;
+}
+
+.chk-item input[type="checkbox"]:checked {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.chk-item input[type="checkbox"]:checked::before {
+  content: "✓";
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* 라벨 색상 지정 (스크린샷 오리지널) */
+.lbl-field { color: #16a34a; }     /* 자기장: 초록 */
+.lbl-current { color: #0f172a; }   /* 전류: 검정 */
+.lbl-force { color: #ef4444; }     /* 힘: 빨강 */
+.lbl-torque { color: #d946ef; }    /* 토크: 자홍 */
+.lbl-run { color: #1e293b; }       /* Run */
+
+/* 각도 조절 슬라이더 */
+.angle-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.angle-slider-group span {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.angle-slider-group input[type="range"] {
+  -webkit-appearance: none;
+  width: 100px;
+  height: 6px;
+  border-radius: 3px;
+  background: #cbd5e1;
+  outline: none;
+  cursor: pointer;
+}
+
+.angle-slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ctrl {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.btn-ctrl:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  header { padding: 8px 14px; }
+  h1 { font-size: 16px; }
+  .magnet-toggles { top: 8px; left: 10px; }
+  .hint-badge { display: none; }
+  .hud-card {
+    top: auto;
+    bottom: 70px;
+    right: 10px;
+    width: calc(100vw - 20px);
+    max-width: 290px;
+    padding: 10px;
+  }
+  .bottom-bar {
+    padding: 8px 12px;
+    justify-content: center;
+  }
+  .bottom-checkboxes {
+    gap: 10px;
+    justify-content: center;
+  }
+}
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<!-- 상단 헤더 -->
+<header>
+  <div class="brand-wrap">
+    <span class="brand-badge">자바실험실 3D</span>
+    <h1>
+      직류 전동기 2
+      <span class="sub-date">(DC Motor 2)</span>
+    </h1>
+  </div>
+  <div class="unified-nav-actions header-actions">
+    <button class="btn-top" id="theoryToggleBtn" onclick="toggleTheory()">
+      <span>📖 원리 설명 보기 ▾</span>
+    </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+<!-- 원리 설명 접이식 패널 -->
+<div class="theory-panel" id="theoryPanel">
+  <div class="theory-grid">
+    <div class="theory-card">
+      <h3>✋ 오른손 손바닥 법칙 (전자기력)</h3>
+      <p>
+        자기장 속에 놓인 도선에 전류가 흐를 때 받는 힘입니다.<br>
+        <strong>네 손가락</strong>: 자기장 방향 ($\vec{B}$, N극 $\to$ S극)<br>
+        <strong>엄지손가락</strong>: 전류 방향 ($I$)<br>
+        <strong>손바닥이 미는 방향</strong>: 전자기력 방향 ($\vec{F}$)
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>🔄 짝힘과 돌림힘(토크)</h3>
+      <p>
+        코일의 왼쪽 도선(전류 유입)은 <strong>아래쪽 힘</strong>을, 오른쪽 도선(전류 유출)은 <strong>위쪽 힘</strong>을 받습니다.
+        이 반대 방향의 두 힘이 <strong>돌림힘(토크)</strong>을 발생시켜 코일이 시계 방향으로 회전합니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>⚡ 정류자(Commutator)의 핵심 역할</h3>
+      <p>
+        코일이 반 바퀴(180°) 돌 때마다 <strong>정류자의 분할 틈새를 지나 브러시와의 연결 극성이 자동으로 바뀝니다</strong>.
+        전류 방향이 뒤집히므로 항상 한쪽 방향으로 멈추지 않고 360° 연속 회전하게 됩니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 3D 뷰포트 -->
+<div class="main-wrapper">
+  <div class="canvas-container" id="canvasContainer">
+    <canvas id="simCanvas"></canvas>
+
+    <!-- 좌상단 자석 극성 토글 버튼 2개 (스크린샷 오리지널 1:1) -->
+    <div class="magnet-toggles">
+      <button class="btn-magnet-toggle" onclick="toggleLeftMagnet()" title="왼쪽 자석 극성 반전">
+        <span>왼쪽 자석:</span>
+        <div class="magnet-badge" id="badgeLeftMag">
+          <span class="badge-s">S</span><span class="badge-n">N</span>
+        </div>
+      </button>
+      <button class="btn-magnet-toggle" onclick="toggleRightMagnet()" title="오른쪽 자석 극성 반전">
+        <span>오른쪽 자석:</span>
+        <div class="magnet-badge" id="badgeRightMag">
+          <span class="badge-s">S</span><span class="badge-n">N</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="hint-badge">
+      <span>🔄 마우스/터치 드래그로 360° 자유 시점 회전 (휠: 줌)</span>
+    </div>
+
+    <!-- 실시간 물리 대시보드 HUD 플로팅 카드 -->
+    <div class="hud-card" id="hudCard">
+      <div class="hud-title">
+        <span id="hudStatusTitle">직류 전동기 상태</span>
+        <span class="hud-tag" id="hudTag">정류 작동</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">코일 회전각 (θ)</span>
+        <span class="hud-value" id="hudAngle">30.0°</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">자기장 방향</span>
+        <span class="hud-value" style="color: #16a34a;" id="hudMagDir">왼쪽(N) → 오른쪽(S)</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">전자기력 (F)</span>
+        <span class="hud-value" style="color: #ef4444;" id="hudForceDir">좌: 아래(↓) / 우: 위(↑)</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">돌림힘 토크 (τ)</span>
+        <span class="hud-value" style="color: #d946ef;" id="hudTorqueVal">최대 대비 86%</span>
+      </div>
+      <div class="hud-desc" id="hudDesc">
+        정류자에 의해 왼쪽 도선은 항상 아래로, 오른쪽 도선은 항상 위로 힘을 받아 <strong>시계 방향 회전력</strong>을 유지합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 컨트롤 바 (스크린샷 오리지널 1:1) -->
+  <footer class="bottom-bar">
+    <div class="bottom-checkboxes">
+      <!-- 1. 자기장 (초록) -->
+      <label class="chk-item lbl-field">
+        <input type="checkbox" id="chkField" checked onchange="STATE.showField = this.checked">
+        <span>자기장</span>
+      </label>
+
+      <!-- 2. 전류 (검정) -->
+      <label class="chk-item lbl-current">
+        <input type="checkbox" id="chkCurrent" checked onchange="STATE.showCurrent = this.checked">
+        <span>전류</span>
+      </label>
+
+      <!-- 3. 힘, 전자기력 (빨강) -->
+      <label class="chk-item lbl-force">
+        <input type="checkbox" id="chkForce" checked onchange="STATE.showForce = this.checked">
+        <span>힘, 전자기력</span>
+      </label>
+
+      <!-- 4. 돌림힘, 토크 (자홍) -->
+      <label class="chk-item lbl-torque">
+        <input type="checkbox" id="chkTorque" checked onchange="STATE.showTorque = this.checked">
+        <span>돌림힘, 토크 (Torque)</span>
+      </label>
+
+      <!-- 5. Run 체크박스 -->
+      <label class="chk-item lbl-run" style="margin-left: 8px;">
+        <input type="checkbox" id="chkRun" onchange="toggleRun(this.checked)">
+        <span>Run</span>
+      </label>
+
+      <!-- 코일 수동 회전 슬라이더 -->
+      <div class="angle-slider-group">
+        <span>각도 조절</span>
+        <input type="range" id="angleSlider" min="0" max="360" value="30" oninput="onAngleSlider(this.value)">
+      </div>
+    </div>
+
+    <div class="bottom-actions">
+      <button class="btn-ctrl" onclick="resetMotor()" title="각도 및 시점 리셋">
+        <span>리셋</span>
+      </button>
+      <button class="btn-ctrl" onclick="toggleFullscreen()" title="전체화면">
+        <span>⛶</span>
+      </button>
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   1. 상태 관리 및 3D 파라미터
+   ========================================================================== */
+const STATE = {
+  // 시각화 토글 (스크린샷 4대 체크박스)
+  showField: true,
+  showCurrent: true,
+  showForce: true,
+  showTorque: true,
+  isRunning: false,
+  
+  // 자석 극성 (left: N안쪽/S바깥, right: S안쪽/N바깥)
+  // leftPoleIn: 1 (N극 안쪽), -1 (S극 안쪽)
+  // rightPoleIn: -1 (S극 안쪽), 1 (N극 안쪽)
+  leftPoleIn: 1,    // 1=N, -1=S
+  rightPoleIn: -1,  // -1=S, 1=N
+  
+  // 코일 회전각 theta (라디안, 0 = 수평)
+  theta: 30 * Math.PI / 180,
+  speed: 0.035,     // 회전 속도
+  
+  // 3D 카메라 궤도 (스크린샷 오리지널 시점 기준)
+  camera: {
+    yaw: -0.28,     // 약간 우측에서 비스듬히 바라봄
+    pitch: 0.38,    // 앙각
+    targetYaw: -0.28,
+    targetPitch: 0.38,
+    distance: 690,
+    targetDist: 690,
+    fov: 690,
+    defaultYaw: -0.28,
+    defaultPitch: 0.38,
+    defaultDist: 690
+  },
+  
+  isDragging: false,
+  lastMouseX: 0,
+  lastMouseY: 0
+};
+
+/* ==========================================================================
+   2. 3D 원근 투영 엔진
+   ========================================================================== */
+function project3D(x, y, z, cx, cy) {
+  const cam = STATE.camera;
+  
+  // 1. Yaw 회전
+  const cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
+  const x1 = x * cosY - z * sinY;
+  const z1 = x * sinY + z * cosY;
+  
+  // 2. Pitch 회전
+  const cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
+  const y2 = y * cosP - z1 * sinP;
+  const z2 = y * sinP + z1 * cosP;
+  
+  // 3. 투영
+  const depth = cam.distance + z2;
+  const scale = cam.fov / Math.max(10, depth);
+  
+  return {
+    x: cx + x1 * scale,
+    y: cy - y2 * scale, // 화면 Y 반전
+    depth: z2,
+    scale: scale
+  };
+}
+
+/* ==========================================================================
+   3. 기하 모델 상수
+   ========================================================================== */
+// 코일 루프 제원 (회전축: Z축, z = -75 ~ +55)
+const COIL_R = 64;   // 코일 반경
+const COIL_Z_BACK = -80;
+const COIL_Z_FRONT = 55;
+const COMMUTATOR_Z = 125; // 정류자 위치
+
+// 좌우 자석 블록 위치
+const MAG_X_LEFT = -175;
+const MAG_X_RIGHT = 175;
+const MAG_W = 75;
+const MAG_H = 115;
+const MAG_D = 135;
+
+/* ==========================================================================
+   4. 물리 엔진: 자기장 왜곡 및 힘/토크 계산
+   ========================================================================== */
+// 정류자 스위칭 상태 계산
+function getCommutatorState(th) {
+  // th % 2PI
+  const norm = ((th % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  
+  // 사점 (Dead point): 코일이 거의 수직(90도, 270도)일 때 브러시 틈새 통과
+  const angleToVertical = Math.min(
+    Math.abs(norm - Math.PI * 0.5),
+    Math.abs(norm - Math.PI * 1.5)
+  );
+  
+  const isDeadPoint = angleToVertical < (3.5 * Math.PI / 180);
+  
+  // 정류자에 의한 전류 방향 계수: 수평 쪽 반주기(1), 반대 반주기(-1)
+  const currentSign = (norm < Math.PI * 0.5 || norm >= Math.PI * 1.5) ? 1.0 : -1.0;
+  
+  return { isDeadPoint, currentSign };
+}
+
+// 자기장 총 방향: 왼쪽 N, 오른쪽 S일 때 +X 방향 (+1.0)
+function getBaseBDir() {
+  if (STATE.leftPoleIn === 1 && STATE.rightPoleIn === -1) return 1.0;  // N -> S (우측)
+  if (STATE.leftPoleIn === -1 && STATE.rightPoleIn === 1) return -1.0; // S <- N (좌측)
+  return 0.0; // 같은 극끼리 마주봄 (자기장 상쇄/왜곡)
+}
+
+/* ==========================================================================
+   5. 렌더링 파이프라인
+   ========================================================================== */
+const canvas = document.getElementById("simCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+  const container = document.getElementById("canvasContainer");
+  const dpr = window.devicePixelRatio || 1;
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+function render() {
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  const h = canvas.height / (window.devicePixelRatio || 1);
+  const cx = w / 2;
+  const cy = h / 2 - 10;
+  
+  // 카메라 감쇠 보간
+  const cam = STATE.camera;
+  cam.yaw += (cam.targetYaw - cam.yaw) * 0.12;
+  cam.pitch += (cam.targetPitch - cam.pitch) * 0.12;
+  cam.distance += (cam.targetDist - cam.distance) * 0.12;
+  
+  // Run 실행 시 코일 회전
+  if (STATE.isRunning) {
+    const bDir = getBaseBDir();
+    const comm = getCommutatorState(STATE.theta);
+    // 토크에 따른 회전 방향
+    const rotDir = bDir * (comm.isDeadPoint ? 0.3 : 1.0);
+    STATE.theta += STATE.speed * rotDir;
+    
+    // 각도 슬라이더 동기화
+    const deg = Math.round((((STATE.theta % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) * 180 / Math.PI);
+    document.getElementById("angleSlider").value = deg;
+    document.getElementById("hudAngle").textContent = deg.toFixed(1) + "°";
+  }
+  
+  // 배경 클리어
+  ctx.fillStyle = "#edf2f7";
+  ctx.fillRect(0, 0, w, h);
+  
+  // ------------------------------------------------------------------------
+  // 3D 렌더링 (Z-Depth Painter's Algorithm)
+  // ------------------------------------------------------------------------
+  
+  // 1. 하단 배터리 및 브러시 전선 회로 그리기
+  drawCircuitAndBattery(cx, cy);
+  
+  // 2. 좌우 곡면 영구자석 블록 그리기
+  drawMagnets(cx, cy);
+  
+  // 3. 자기력선 왜곡 다발 그리기 (체크박스 켜짐 시)
+  if (STATE.showField) {
+    drawMagneticFieldLines(cx, cy);
+  }
+  
+  // 4. 회전 코일 루프 및 반원형 정류자 그리기
+  drawArmatureAndCommutator(cx, cy);
+  
+  // 5. 물리 벡터 화살표 그리기 (전류, 전자기력, 토크)
+  drawVectorArrows(cx, cy);
+  
+  updateHUD();
+  
+  requestAnimationFrame(render);
+}
+
+// --------------------------------------------------------------------------
+// 6. 하단 배터리 & L자형 브러시 지지대 회로 렌더링
+// --------------------------------------------------------------------------
+function drawCircuitAndBattery(cx, cy) {
+  ctx.save();
+  
+  // L자형 금속 브러시 지지대 (회색 금속판)
+  // 왼쪽 브러시 (x: -28), 오른쪽 브러시 (x: +28) at z: COMMUTATOR_Z
+  const brushL_contact = project3D(-16, 0, COMMUTATOR_Z, cx, cy);
+  const brushL_base1   = project3D(-42, -50, COMMUTATOR_Z, cx, cy);
+  const brushL_base2   = project3D(-75, -50, COMMUTATOR_Z + 30, cx, cy);
+  
+  const brushR_contact = project3D(16, 0, COMMUTATOR_Z, cx, cy);
+  const brushR_base1   = project3D(42, -50, COMMUTATOR_Z, cx, cy);
+  const brushR_base2   = project3D(75, -50, COMMUTATOR_Z + 30, cx, cy);
+  
+  // 브러시 금속 브래킷 드로잉
+  function drawLBrush(contact, b1, b2) {
+    ctx.beginPath();
+    ctx.moveTo(contact.x, contact.y);
+    ctx.lineTo(b1.x, b1.y);
+    ctx.lineTo(b2.x, b2.y);
+    ctx.lineTo(b2.x - 15, b2.y);
+    ctx.lineTo(b1.x - 15, b1.y);
+    ctx.lineTo(contact.x - 4, contact.y);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(203, 213, 225, 0.9)";
+    ctx.fill();
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  drawLBrush(brushL_contact, brushL_base1, brushL_base2);
+  drawLBrush(brushR_contact, brushR_base1, brushR_base2);
+  
+  // 배터리 위치 (하단 바닥)
+  const battPos = project3D(0, -90, COMMUTATOR_Z + 75, cx, cy);
+  const bW = 68 * battPos.scale;
+  const bH = 30 * battPos.scale;
+  
+  // 배터리 원통 몸체
+  const bGrad = ctx.createLinearGradient(0, battPos.y - bH/2, 0, battPos.y + bH/2);
+  bGrad.addColorStop(0, "#334155");
+  bGrad.addColorStop(0.3, "#0f172a");
+  bGrad.addColorStop(0.8, "#1e293b");
+  bGrad.addColorStop(1, "#020617");
+  
+  ctx.fillStyle = bGrad;
+  ctx.fillRect(battPos.x - bW/2, battPos.y - bH/2, bW, bH);
+  
+  // +극 황금색 단자 (왼쪽)
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(battPos.x - bW/2 - 7, battPos.y - bH * 0.25, 7, bH * 0.5);
+  ctx.fillRect(battPos.x - bW/2, battPos.y - bH/2, 16, bH);
+  
+  // -극 은색 단자 (오른쪽)
+  ctx.fillStyle = "#cbd5e1";
+  ctx.fillRect(battPos.x + bW/2 - 12, battPos.y - bH/2, 12, bH);
+  
+  // + 라벨
+  ctx.font = "bold 15px sans-serif";
+  ctx.fillStyle = "#0f172a";
+  ctx.fillText("+", battPos.x - bW/2 + 5, battPos.y + 5);
+  
+  // 연결 도선 (빨간색 +, 파란색 -)
+  ctx.lineWidth = 4.2;
+  ctx.lineCap = "round";
+  
+  // 빨간색 도선 (+극 -> 왼쪽 브러시)
+  ctx.beginPath();
+  ctx.moveTo(battPos.x - bW/2 - 6, battPos.y);
+  ctx.lineTo(brushL_base2.x - 70, battPos.y);
+  ctx.lineTo(brushL_base2.x, brushL_base2.y);
+  ctx.strokeStyle = "#ef4444";
+  ctx.stroke();
+  
+  // 파란색 도선 (-극 -> 오른쪽 브러시)
+  ctx.beginPath();
+  ctx.moveTo(battPos.x + bW/2, battPos.y);
+  ctx.lineTo(brushR_base2.x + 70, battPos.y);
+  ctx.lineTo(brushR_base2.x, brushR_base2.y);
+  ctx.strokeStyle = "#3b82f6";
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+// --------------------------------------------------------------------------
+// 7. 좌우 곡면 영구자석 블록 렌더링
+// --------------------------------------------------------------------------
+function drawMagnets(cx, cy) {
+  // 왼쪽 자석 (x: MAG_X_LEFT)
+  drawSingleMagnetBlock(MAG_X_LEFT, STATE.leftPoleIn, true, cx, cy);
+  // 오른쪽 자석 (x: MAG_X_RIGHT)
+  drawSingleMagnetBlock(MAG_X_RIGHT, STATE.rightPoleIn, false, cx, cy);
+}
+
+function drawSingleMagnetBlock(centerX, poleIn, isLeft, cx, cy) {
+  const w = MAG_W;
+  const h = MAG_H;
+  const d = MAG_D;
+  const hw = w / 2;
+  const hh = h / 2;
+  const hd = d / 2;
+  
+  ctx.save();
+  
+  // 안쪽 극 색상 & 바깥쪽 극 색상
+  // poleIn === 1: 안쪽이 N(빨강), 바깥쪽이 S(파랑)
+  // poleIn === -1: 안쪽이 S(파랑), 바깥쪽이 N(빨강)
+  const colorIn = (poleIn === 1) ? "#dc2626" : "#2563eb";
+  const colorOut = (poleIn === 1) ? "#2563eb" : "#dc2626";
+  const labelIn = (poleIn === 1) ? "N" : "S";
+  const labelOut = (poleIn === 1) ? "S" : "N";
+  
+  // 3D 큐브 면 꼭짓점 투영
+  const corners = [
+    { x: centerX - hw, y: hh,  z: -hd },
+    { x: centerX + hw, y: hh,  z: -hd },
+    { x: centerX + hw, y: hh,  z:  hd },
+    { x: centerX - hw, y: hh,  z:  hd },
+    { x: centerX - hw, y: -hh, z: -hd },
+    { x: centerX + hw, y: -hh, z: -hd },
+    { x: centerX + hw, y: -hh, z:  hd },
+    { x: centerX - hw, y: -hh, z:  hd }
+  ].map(p => project3D(p.x, p.y, p.z, cx, cy));
+  
+  // 앞면 (Z = +hd)
+  ctx.beginPath();
+  ctx.moveTo(corners[3].x, corners[3].y);
+  ctx.lineTo(corners[2].x, corners[2].y);
+  ctx.lineTo(corners[6].x, corners[6].y);
+  ctx.lineTo(corners[7].x, corners[7].y);
+  ctx.closePath();
+  
+  // 반반 색상 채우기
+  const gradFront = ctx.createLinearGradient(corners[3].x, 0, corners[2].x, 0);
+  if (isLeft) {
+    gradFront.addColorStop(0, colorOut);
+    gradFront.addColorStop(0.5, colorOut);
+    gradFront.addColorStop(0.51, colorIn);
+    gradFront.addColorStop(1, colorIn);
+  } else {
+    gradFront.addColorStop(0, colorIn);
+    gradFront.addColorStop(0.5, colorIn);
+    gradFront.addColorStop(0.51, colorOut);
+    gradFront.addColorStop(1, colorOut);
+  }
+  ctx.fillStyle = gradFront;
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "#0f172a";
+  ctx.stroke();
+  
+  // 윗면 (Y = +hh)
+  ctx.beginPath();
+  ctx.moveTo(corners[0].x, corners[0].y);
+  ctx.lineTo(corners[1].x, corners[1].y);
+  ctx.lineTo(corners[2].x, corners[2].y);
+  ctx.lineTo(corners[3].x, corners[3].y);
+  ctx.closePath();
+  ctx.fillStyle = isLeft ? colorIn : colorOut;
+  ctx.globalAlpha = 0.85;
+  ctx.fill();
+  ctx.globalAlpha = 1.0;
+  ctx.stroke();
+  
+  // 안쪽 곡면 기둥 (오목한 형태의 자극면 시각화)
+  const innerFaceX = isLeft ? corners[2].x : corners[3].x;
+  const innerFaceY = (corners[2].y + corners[6].y) / 2;
+  
+  // 전면 자극 텍스트 (S / N)
+  ctx.font = "900 28px 'Pretendard', sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  if (isLeft) {
+    // 바깥쪽 S, 안쪽 N
+    ctx.fillText(labelOut, (corners[3].x + corners[7].x) / 2 + 18, (corners[3].y + corners[7].y) / 2);
+    ctx.fillText(labelIn,  (corners[2].x + corners[6].x) / 2 - 18, (corners[2].y + corners[6].y) / 2);
+  } else {
+    // 안쪽 S, 바깥쪽 N
+    ctx.fillText(labelIn,  (corners[3].x + corners[7].x) / 2 + 18, (corners[3].y + corners[7].y) / 2);
+    ctx.fillText(labelOut, (corners[2].x + corners[6].x) / 2 - 18, (corners[2].y + corners[6].y) / 2);
+  }
+  
+  ctx.restore();
+}
+
+// --------------------------------------------------------------------------
+// 8. 녹색 자기력선 왜곡 렌더링 (도선 주변 합성 왜곡 시각화)
+// --------------------------------------------------------------------------
+function drawMagneticFieldLines(cx, cy) {
+  const bDir = getBaseBDir();
+  if (Math.abs(bDir) < 0.1) return; // 자극이 일치하지 않을 때
+  
+  const th = STATE.theta;
+  const comm = getCommutatorState(th);
+  
+  // 코일의 좌우 도선 위치
+  const w1 = { x: -COIL_R * Math.cos(th), y: -COIL_R * Math.sin(th) };
+  const w2 = { x:  COIL_R * Math.cos(th), y:  COIL_R * Math.sin(th) };
+  
+  ctx.save();
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = "rgba(22, 163, 74, 0.88)"; // 선명한 초록색
+  
+  // 7가닥의 높이별 자기력선
+  const yLevels = [-45, -30, -15, 0, 15, 30, 45];
+  const zLevels = [-50, -10, 30]; // 3D 깊이감
+  
+  zLevels.forEach(z0 => {
+    yLevels.forEach(y0 => {
+      ctx.beginPath();
+      let first = true;
+      const xStart = MAG_X_LEFT + MAG_W * 0.5;
+      const xEnd = MAG_X_RIGHT - MAG_W * 0.5;
+      const numPts = 32;
+      
+      for (let i = 0; i <= numPts; i++) {
+        const xCur = xStart + (xEnd - xStart) * (i / numPts);
+        
+        // 도선에 흐르는 전류에 의한 자기력선 국소 수직 왜곡
+        let dyWarp = 0;
+        if (!comm.isDeadPoint) {
+          // 도선 1 주변
+          const d1 = Math.hypot(xCur - w1.x, y0 - w1.y);
+          const warp1 = (comm.currentSign * 550) / (d1 * d1 + 250);
+          dyWarp += warp1 * (xCur - w1.x);
+          
+          // 도선 2 주변
+          const d2 = Math.hypot(xCur - w2.x, y0 - w2.y);
+          const warp2 = (-comm.currentSign * 550) / (d2 * d2 + 250);
+          dyWarp += warp2 * (xCur - w2.x);
+        }
+        
+        const yCur = y0 + dyWarp * 0.15;
+        const p2D = project3D(xCur, yCur, z0, cx, cy);
+        
+        if (first) { ctx.moveTo(p2D.x, p2D.y); first = false; }
+        else ctx.lineTo(p2D.x, p2D.y);
+      }
+      ctx.stroke();
+    });
+  });
+  
+  ctx.restore();
+}
+
+// --------------------------------------------------------------------------
+// 9. 회전 코일 루프 및 반원형 정류자(Split-Ring) 렌더링
+// --------------------------------------------------------------------------
+function drawArmatureAndCommutator(cx, cy) {
+  const th = STATE.theta;
+  const cosT = Math.cos(th);
+  const sinT = Math.sin(th);
+  
+  // 코일 직사각형 4개 꼭짓점
+  // 도선 1 (왼쪽): x = -COIL_R * cosT, y = -COIL_R * sinT
+  // 도선 2 (오른쪽): x = +COIL_R * cosT, y = +COIL_R * sinT
+  const p1_front = project3D(-COIL_R * cosT, -COIL_R * sinT, COIL_Z_FRONT, cx, cy);
+  const p1_back  = project3D(-COIL_R * cosT, -COIL_R * sinT, COIL_Z_BACK, cx, cy);
+  const p2_back  = project3D( COIL_R * cosT,  COIL_R * sinT, COIL_Z_BACK, cx, cy);
+  const p2_front = project3D( COIL_R * cosT,  COIL_R * sinT, COIL_Z_FRONT, cx, cy);
+  
+  // 정류자 연결 리드선 (코일 앞면 -> 중심 축 -> 정류자)
+  const lead1_hub = project3D(-14 * cosT, -14 * sinT, COMMUTATOR_Z - 18, cx, cy);
+  const lead2_hub = project3D( 14 * cosT,  14 * sinT, COMMUTATOR_Z - 18, cx, cy);
+  
+  ctx.save();
+  ctx.lineWidth = 3.6;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#b45309"; // 구리 도선 색상
+  
+  // 코일 루프 그리기
+  ctx.beginPath();
+  ctx.moveTo(lead1_hub.x, lead1_hub.y);
+  ctx.lineTo(p1_front.x, p1_front.y);
+  ctx.lineTo(p1_back.x, p1_back.y);
+  ctx.lineTo(p2_back.x, p2_back.y);
+  ctx.lineTo(p2_front.x, p2_front.y);
+  ctx.lineTo(lead2_hub.x, lead2_hub.y);
+  ctx.stroke();
+  
+  // 반원형 정류자 (Split-Ring Commutator) 2개 링 렌더링
+  const commRadius = 15;
+  const numRingPts = 20;
+  
+  // 반원 링 1 (리드선 1에 연결)
+  ctx.beginPath();
+  for (let i = 0; i <= numRingPts; i++) {
+    const a = (th - Math.PI * 0.45) + (i / numRingPts) * (Math.PI * 0.9);
+    const rx = commRadius * Math.cos(a);
+    const ry = commRadius * Math.sin(a);
+    const p = project3D(rx, ry, COMMUTATOR_Z, cx, cy);
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  }
+  ctx.lineWidth = 5.2;
+  ctx.strokeStyle = "#d97706"; // 황동색 정류자 링
+  ctx.stroke();
+  
+  // 반원 링 2 (리드선 2에 연결, 반대편 반원)
+  ctx.beginPath();
+  for (let i = 0; i <= numRingPts; i++) {
+    const a = (th + Math.PI * 0.55) + (i / numRingPts) * (Math.PI * 0.9);
+    const rx = commRadius * Math.cos(a);
+    const ry = commRadius * Math.sin(a);
+    const p = project3D(rx, ry, COMMUTATOR_Z, cx, cy);
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  }
+  ctx.lineWidth = 5.2;
+  ctx.strokeStyle = "#b45309";
+  ctx.stroke();
+  
+  // 중앙 회전축 샤프트
+  const shaftBack = project3D(0, 0, COIL_Z_BACK - 25, cx, cy);
+  const shaftFront = project3D(0, 0, COMMUTATOR_Z + 20, cx, cy);
+  ctx.beginPath();
+  ctx.moveTo(shaftBack.x, shaftBack.y);
+  ctx.lineTo(shaftFront.x, shaftFront.y);
+  ctx.lineWidth = 2.0;
+  ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+// --------------------------------------------------------------------------
+// 10. 물리 벡터 화살표 렌더링 (전류, 전자기력, 토크)
+// --------------------------------------------------------------------------
+function drawVectorArrows(cx, cy) {
+  const th = STATE.theta;
+  const cosT = Math.cos(th);
+  const sinT = Math.sin(th);
+  const comm = getCommutatorState(th);
+  const bDir = getBaseBDir();
+  
+  // 도선 1 (왼쪽) 및 도선 2 (오른쪽)의 중심점
+  const midZ = (COIL_Z_FRONT + COIL_Z_BACK) * 0.5;
+  const w1_3D = { x: -COIL_R * cosT, y: -COIL_R * sinT, z: midZ };
+  const w2_3D = { x:  COIL_R * cosT, y:  COIL_R * sinT, z: midZ };
+  
+  const p1 = project3D(w1_3D.x, w1_3D.y, w1_3D.z, cx, cy);
+  const p2 = project3D(w2_3D.x, w2_3D.y, w2_3D.z, cx, cy);
+  
+  ctx.save();
+  
+  // ------------------------------------------------------------------------
+  // A. 전류 벡터 화살표 (검은색 화살표)
+  // ------------------------------------------------------------------------
+  if (STATE.showCurrent && !comm.isDeadPoint) {
+    const curDir = comm.currentSign; // 1: 도선1 안쪽(-Z), 도선2 바깥(+Z)
+    
+    // 도선 1 전류 화살표
+    const c1_start = project3D(w1_3D.x, w1_3D.y, midZ + 25 * curDir, cx, cy);
+    const c1_end   = project3D(w1_3D.x, w1_3D.y, midZ - 25 * curDir, cx, cy);
+    drawArrow(c1_start.x, c1_start.y, c1_end.x, c1_end.y, "#0f172a", 3.8, 8);
+    
+    // 도선 2 전류 화살표
+    const c2_start = project3D(w2_3D.x, w2_3D.y, midZ - 25 * curDir, cx, cy);
+    const c2_end   = project3D(w2_3D.x, w2_3D.y, midZ + 25 * curDir, cx, cy);
+    drawArrow(c2_start.x, c2_start.y, c2_end.x, c2_end.y, "#0f172a", 3.8, 8);
+  }
+  
+  // ------------------------------------------------------------------------
+  // B. 힘, 전자기력 벡터 (빨간색 수직 화살표)
+  // ------------------------------------------------------------------------
+  if (STATE.showForce && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
+    // F = I L x B
+    // bDir=1(+X), curDir=1(-Z for wire1): F1 = -Z x +X = -Y (아래쪽)
+    // F2 = +Z x +X = +Y (위쪽)
+    const forceSign = comm.currentSign * bDir;
+    const forceLen = 50;
+    
+    // 도선 1 전자기력 (수직)
+    const f1_tip = project3D(w1_3D.x, w1_3D.y - forceLen * forceSign, w1_3D.z, cx, cy);
+    drawArrow(p1.x, p1.y, f1_tip.x, f1_tip.y, "#ef4444", 4.2, 10);
+    
+    // 도선 2 전자기력 (수직)
+    const f2_tip = project3D(w2_3D.x, w2_3D.y + forceLen * forceSign, w2_3D.z, cx, cy);
+    drawArrow(p2.x, p2.y, f2_tip.x, f2_tip.y, "#ef4444", 4.2, 10);
+  }
+  
+  // ------------------------------------------------------------------------
+  // C. 돌림힘, 토크 벡터 (자홍색 회전 접선 화살표)
+  // ------------------------------------------------------------------------
+  if (STATE.showTorque && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
+    // 토크의 유효 크기 tau ~ |cos(theta)|
+    // 접선 방향 단위 벡터: (-sinT, cosT)
+    const torqueMag = 52 * Math.abs(cosT);
+    const rotSign = comm.currentSign * bDir;
+    
+    if (torqueMag > 4) {
+      // 도선 1 접선 화살표
+      const t1_tip = project3D(
+        w1_3D.x - torqueMag * (-sinT) * rotSign,
+        w1_3D.y - torqueMag * ( cosT) * rotSign,
+        w1_3D.z, cx, cy
+      );
+      drawArrow(p1.x, p1.y, t1_tip.x, t1_tip.y, "#d946ef", 4.2, 10);
+      
+      // 도선 2 접선 화살표
+      const t2_tip = project3D(
+        w2_3D.x + torqueMag * (-sinT) * rotSign,
+        w2_3D.y + torqueMag * ( cosT) * rotSign,
+        w2_3D.z, cx, cy
+      );
+      drawArrow(p2.x, p2.y, t2_tip.x, t2_tip.y, "#d946ef", 4.2, 10);
+    }
+  }
+  
+  ctx.restore();
+}
+
+// 2D 화살표 그리기 헬퍼
+function drawArrow(x1, y1, x2, y2, color, width = 3, headLen = 8) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 3) return;
+  
+  const angle = Math.atan2(dy, dx);
+  
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineWidth = width;
+  ctx.strokeStyle = color;
+  ctx.stroke();
+  
+  // 화살표 머리 (삼각형)
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+/* ==========================================================================
+   11. 마우스 및 터치 인터랙션 (Orbit Controls)
+   ========================================================================== */
+const container = document.getElementById("canvasContainer");
+
+container.addEventListener("mousedown", (e) => {
+  STATE.isDragging = true;
+  STATE.lastMouseX = e.clientX;
+  STATE.lastMouseY = e.clientY;
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!STATE.isDragging) return;
+  const dx = e.clientX - STATE.lastMouseX;
+  const dy = e.clientY - STATE.lastMouseY;
+  
+  STATE.camera.targetYaw += dx * 0.007;
+  STATE.camera.targetPitch += dy * 0.007;
+  STATE.camera.targetPitch = Math.max(0.1, Math.min(1.2, STATE.camera.targetPitch));
+  
+  STATE.lastMouseX = e.clientX;
+  STATE.lastMouseY = e.clientY;
+});
+
+window.addEventListener("mouseup", () => { STATE.isDragging = false; });
+
+// 휠 줌
+container.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  STATE.camera.targetDist += e.deltaY * 0.5;
+  STATE.camera.targetDist = Math.max(400, Math.min(1150, STATE.camera.targetDist));
+}, { passive: false });
+
+// 모바일 터치
+container.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 1) {
+    STATE.isDragging = true;
+    STATE.lastMouseX = e.touches[0].clientX;
+    STATE.lastMouseY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+window.addEventListener("touchmove", (e) => {
+  if (e.touches.length === 1 && STATE.isDragging) {
+    const dx = e.touches[0].clientX - STATE.lastMouseX;
+    const dy = e.touches[0].clientY - STATE.lastMouseY;
+    STATE.camera.targetYaw += dx * 0.008;
+    STATE.camera.targetPitch += dy * 0.008;
+    STATE.camera.targetPitch = Math.max(0.1, Math.min(1.2, STATE.camera.targetPitch));
+    STATE.lastMouseX = e.touches[0].clientX;
+    STATE.lastMouseY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+window.addEventListener("touchend", () => { STATE.isDragging = false; });
+
+/* ==========================================================================
+   12. 조작 핸들러
+   ========================================================================== */
+function toggleRun(checked) {
+  STATE.isRunning = checked;
+}
+
+function onAngleSlider(val) {
+  STATE.theta = (val * Math.PI) / 180;
+  document.getElementById("hudAngle").textContent = parseFloat(val).toFixed(1) + "°";
+}
+
+function toggleLeftMagnet() {
+  STATE.leftPoleIn *= -1;
+  const b = document.getElementById("badgeLeftMag");
+  if (STATE.leftPoleIn === 1) {
+    b.innerHTML = '<span class="badge-s">S</span><span class="badge-n">N</span>';
+  } else {
+    b.innerHTML = '<span class="badge-n">N</span><span class="badge-s">S</span>';
+  }
+}
+
+function toggleRightMagnet() {
+  STATE.rightPoleIn *= -1;
+  const b = document.getElementById("badgeRightMag");
+  if (STATE.rightPoleIn === -1) {
+    b.innerHTML = '<span class="badge-s">S</span><span class="badge-n">N</span>';
+  } else {
+    b.innerHTML = '<span class="badge-n">N</span><span class="badge-s">S</span>';
+  }
+}
+
+function resetMotor() {
+  STATE.theta = 30 * Math.PI / 180;
+  document.getElementById("angleSlider").value = 30;
+  STATE.camera.targetYaw = STATE.camera.defaultYaw;
+  STATE.camera.targetPitch = STATE.camera.defaultPitch;
+  STATE.camera.targetDist = STATE.camera.defaultDist;
+  STATE.isRunning = false;
+  document.getElementById("chkRun").checked = false;
+}
+
+function toggleTheory() {
+  const panel = document.getElementById("theoryPanel");
+  const btn = document.getElementById("theoryToggleBtn");
+  panel.classList.toggle("show");
+  btn.classList.toggle("active");
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+function updateHUD() {
+  const th = STATE.theta;
+  const comm = getCommutatorState(th);
+  const bDir = getBaseBDir();
+  
+  const statusTitle = document.getElementById("hudStatusTitle");
+  const tag = document.getElementById("hudTag");
+  const magDir = document.getElementById("hudMagDir");
+  const forceDir = document.getElementById("hudForceDir");
+  const torqueVal = document.getElementById("hudTorqueVal");
+  const desc = document.getElementById("hudDesc");
+  
+  if (Math.abs(bDir) < 0.1) {
+    magDir.textContent = "자기장 상쇄 (같은 극 마주봄)";
+    forceDir.textContent = "힘 없음";
+    torqueVal.textContent = "0 %";
+    tag.textContent = "정지";
+    desc.innerHTML = "양쪽 자석이 같은 극을 마주보고 있어 <strong>코일 영역의 자기장이 상쇄</strong>되어 전동기가 회전하지 않습니다.";
+    return;
+  }
+  
+  magDir.textContent = (bDir > 0) ? "왼쪽(N) → 오른쪽(S)" : "오른쪽(N) → 왼쪽(S)";
+  
+  if (comm.isDeadPoint) {
+    tag.textContent = "사점 (Dead Point)";
+    tag.style.background = "#fee2e2";
+    tag.style.color = "#dc2626";
+    forceDir.textContent = "브러시 틈새 (전류 일시 차단)";
+    torqueVal.textContent = "0 % (관성으로 통과)";
+    desc.innerHTML = "코일이 수직이 되어 <strong>정류자의 분할 틈새를 통과하는 순간</strong>입니다. 토크는 0이지만 회전 관성에 의해 통과하며 극성이 반전됩니다.";
+  } else {
+    tag.textContent = "정류 작동";
+    tag.style.background = "#eff6ff";
+    tag.style.color = "#2563eb";
+    
+    const pct = Math.round(Math.abs(Math.cos(th)) * 100);
+    torqueVal.textContent = "최대 대비 " + pct + " %";
+    
+    const fSign = comm.currentSign * bDir;
+    if (fSign > 0) {
+      forceDir.textContent = "좌: 아래(↓) / 우: 위(↑)";
+      desc.innerHTML = "왼쪽 도선은 아래로, 오른쪽 도선은 위로 힘을 받아 <strong>시계 방향 토크</strong>가 발생합니다.";
+    } else {
+      forceDir.textContent = "좌: 위(↑) / 우: 아래(↓)";
+      desc.innerHTML = "자기장 또는 전류 방향이 반전되어 <strong>반시계 방향 토크</strong>가 발생합니다.";
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// 초기화 실행
+// --------------------------------------------------------------------------
+window.addEventListener("DOMContentLoaded", () => {
+  resizeCanvas();
+  requestAnimationFrame(render);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>자석과 전자석 · 자바실험실 복각</title>
+<style>
+:root {
+  --bg: #edf7ee;
+  --surface: #ffffff;
+  --line: #cbd5e1;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --panel-bg: #fef3c7;
+  --panel-border: #fde68a;
+  --red: #ef4444;
+  --blue: #2563eb;
+  --green: #15803d;
+  --radius: 12px;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #f8fafc;
+  color: var(--ink);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ==========================================================================
+   상단 헤더
+   ========================================================================== */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 20;
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-badge {
+  background: #f1f5f9;
+  color: #3b82f6;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-date {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-top {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-top:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-top.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: #bfdbfe;
+}
+
+/* ==========================================================================
+   원리 설명 접이식 패널
+   ========================================================================== */
+.theory-panel {
+  display: none;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 16px 24px;
+  animation: slideDown 0.22s ease-out forwards;
+  z-index: 15;
+}
+
+.theory-panel.show { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.theory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.theory-card {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+
+.theory-card h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theory-card p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   메인 레이아웃: 좌측 툴박스 + 캔버스
+   ========================================================================== */
+.main-wrapper {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 58px);
+  background: #edf7ee;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-area {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   좌측 툴박스 도구 패널 (스크린샷 오리지널 5종)
+   ========================================================================== */
+.left-toolbox {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 110px;
+  background: rgba(254, 243, 199, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+
+.tool-slot {
+  width: 100%;
+  height: 68px;
+  background: #ffffff;
+  border: 2px solid #fde68a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-slot:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  transform: scale(1.02);
+}
+
+.tool-slot.active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.tool-slot canvas {
+  pointer-events: none;
+  width: 90px;
+  height: 60px;
+}
+
+/* ==========================================================================
+   하단 조작 컨트롤 바 (스크린샷 1:1 오리지널)
+   ========================================================================== */
+.bottom-bar {
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+  position: relative;
+  z-index: 10;
+}
+
+.bottom-left-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.drag-hint {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chk-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+.chk-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #94a3b8;
+  border-radius: 4px;
+  outline: none;
+  margin: 0;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  background: #fff;
+  transition: all 0.15s;
+}
+
+.chk-label input[type="checkbox"]:checked {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.chk-label input[type="checkbox"]:checked::before {
+  content: "✓";
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.bottom-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ctrl {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.btn-ctrl:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   실시간 물리 대시보드 HUD 플로팅 카드
+   ========================================================================== */
+.hud-card {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.hud-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 5px;
+}
+
+.hud-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 800;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.hud-label { color: var(--muted); font-weight: 600; }
+.hud-value { font-weight: 800; color: #0f172a; }
+
+.hud-desc {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #475569;
+  border-left: 3px solid var(--primary);
+}
+
+@media (max-width: 768px) {
+  header { padding: 8px 14px; }
+  h1 { font-size: 16px; }
+  .left-toolbox {
+    width: 82px;
+    top: 10px;
+    left: 10px;
+  }
+  .tool-slot { height: 54px; }
+  .hud-card {
+    top: auto;
+    bottom: 70px;
+    right: 10px;
+    width: 260px;
+    padding: 10px;
+  }
+  .bottom-bar {
+    padding: 8px 12px;
+    justify-content: center;
+  }
+}
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<!-- 상단 헤더 -->
+<header>
+  <div class="brand-wrap">
+    <span class="brand-badge">자바실험실</span>
+    <h1>
+      자석과 전자석
+      <span class="sub-date">(Magnet and Electromagnet)</span>
+    </h1>
+  </div>
+  <div class="unified-nav-actions header-actions">
+    <button class="btn-top" id="theoryToggleBtn" onclick="toggleTheory()">
+      <span>📖 원리 설명 보기 ▾</span>
+    </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+<!-- 원리 설명 접이식 패널 -->
+<div class="theory-panel" id="theoryPanel">
+  <div class="theory-grid">
+    <div class="theory-card">
+      <h3>🧲 자석과 전자석의 공통 원리</h3>
+      <p>
+        속이 보이지 않는 상자 안에 영구자석과 전자석이 들어있다면 밖에서 구별하기 어렵습니다.
+        영구자석(원자 내 전자의 스핀/운동)과 전자석(도선 속 전하의 흐름) 모두 <strong>'전하의 운동'</strong>에 의해 자기장이 생성되기 때문입니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>⚡ 전자석의 특별한 장점</h3>
+      <p>
+        <strong>1. 제어 가능:</strong> 전류를 끄면 자석의 성질이 사라집니다.<br>
+        <strong>2. 세기 조절:</strong> 코일을 촘촘히 많이 감거나 큰 전류를 흘릴수록 자기장이 강해집니다.<br>
+        <strong>3. 극성 반전:</strong> 전류의 방향을 바꾸면 N극과 S극이 뒤바뀝니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>🧭 나침반 바늘의 정렬</h3>
+      <p>
+        나침반의 <strong>빨간색 자침은 N극</strong>입니다.
+        자기력선은 N극에서 나와서 S극으로 들어가므로, 나침반의 N극(빨간색)은 자기력선의 접선 방향(S극을 향함)을 일제히 가리킵니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 인터랙티브 영역 -->
+<div class="main-wrapper">
+  <div class="canvas-area" id="canvasArea">
+    <canvas id="simCanvas"></canvas>
+
+    <!-- 좌측 세로형 툴박스 도구 패널 (5종 선택 슬롯) -->
+    <div class="left-toolbox" id="toolbox">
+      <div class="tool-slot active" id="slot0" onclick="selectTool(0)" title="영구 막대자석">
+        <canvas id="thumb0"></canvas>
+      </div>
+      <div class="tool-slot" id="slot1" onclick="selectTool(1)" title="전류가 흐르지 않는 코일 (자기장 없음)">
+        <canvas id="thumb1"></canvas>
+      </div>
+      <div class="tool-slot" id="slot2" onclick="selectTool(2)" title="전자석 (배터리 1개 + 보통 코일)">
+        <canvas id="thumb2"></canvas>
+      </div>
+      <div class="tool-slot" id="slot3" onclick="selectTool(3)" title="강력 전자석 (배터리 1개 + 촘촘한 코일)">
+        <canvas id="thumb3"></canvas>
+      </div>
+      <div class="tool-slot" id="slot4" onclick="selectTool(4)" title="자유 탐구 이동식 나침반">
+        <canvas id="thumb4"></canvas>
+      </div>
+    </div>
+
+    <!-- 실시간 HUD 정보 카드 -->
+    <div class="hud-card" id="hudCard">
+      <div class="hud-title">
+        <span id="hudToolTitle">영구 막대자석</span>
+        <span class="hud-tag" id="hudTag">Permanent</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">자기장 발생 원리</span>
+        <span class="hud-value" id="hudPrinciple">전자 스핀/운동</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">자기장 세기 (B)</span>
+        <span class="hud-value" id="hudStrength">표준 세기 (M = 1.0)</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-label">현재 회전 각도</span>
+        <span class="hud-value" id="hudAngle">0° (수평)</span>
+      </div>
+      <div class="hud-desc" id="hudDesc">
+        영구자석 주위로 <strong>N극(빨간색)에서 뻗어나와 S극(파란색)으로 들어가는 자기력선</strong>이 형성됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 컨트롤 바 (스크린샷 오리지널 1:1) -->
+  <footer class="bottom-bar">
+    <div class="bottom-left-group">
+      <div class="drag-hint">
+        <span>드래그하여 이동, 클릭하여 회전</span>
+      </div>
+
+      <label class="chk-label">
+        <input type="checkbox" id="chkCompassMatrix" checked onchange="toggleCompassMatrix(this.checked)">
+        <span>나침반 매트릭스</span>
+      </label>
+
+      <label class="chk-label">
+        <input type="checkbox" id="chkFieldLines" checked onchange="toggleFieldLines(this.checked)">
+        <span>자기력선</span>
+      </label>
+    </div>
+
+    <div class="bottom-right-group">
+      <button class="btn-ctrl" onclick="resetObject()" title="위치 및 회전각 초기화">
+        <span>리셋</span>
+      </button>
+      <button class="btn-ctrl" onclick="toggleFullscreen()" title="전체화면">
+        <span>⛶</span>
+      </button>
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   1. 상태 관리
+   ========================================================================== */
+const STATE = {
+  currentTool: 0,           // 0:막대자석, 1:코일(전류X), 2:전자석(보통), 3:전자석(촘촘), 4:탐구나침반
+  showCompassMatrix: true,
+  showFieldLines: true,
+  
+  // 메인 오브젝트 (자석/전자석) 상태
+  obj: {
+    x: 0,
+    y: 0,
+    angle: 0,               // 0, 90, 180, 270 deg (라디안)
+    targetAngle: 0,
+    width: 120,
+    height: 40,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    hasMoved: false
+  },
+  
+  // 슬롯 4 (자유 탐구 이동식 대형 나침반)
+  probeCompass: {
+    x: 0,
+    y: 0,
+    radius: 32,
+    angle: 0,
+    isDragging: false
+  }
+};
+
+/* ==========================================================================
+   2. 물리 엔진: 자기 쌍극자 및 복합 자계 계산
+   ========================================================================== */
+// 물체 중심(obj.x, obj.y) 기준 (px, py)에서의 자기장 벡터 (Bx, By) 계산
+function getMagneticFieldAt(px, py) {
+  const tool = STATE.currentTool;
+  
+  // 슬롯 1 (코일만 있고 배터리 없음): 전류가 흐르지 않아 자기장 = 0
+  if (tool === 1) {
+    return { bx: 0, by: 0, mag: 0 };
+  }
+  
+  // 자기 모멘트 세기 M
+  let M = 1.0;
+  if (tool === 3) M = 2.0;       // 촘촘한 코일은 2배 강함
+  else if (tool === 0 || tool === 2) M = 1.0;
+  
+  const ox = STATE.obj.x;
+  const oy = STATE.obj.y;
+  const theta = STATE.obj.angle;
+  
+  // 1. 상대 변위 벡터
+  const dx = px - ox;
+  const dy = py - oy;
+  
+  // 2. 물체의 로컬 좌표계로 회전 (물체 중심이 원점, 자석 축이 X축)
+  const cosT = Math.cos(-theta);
+  const sinT = Math.sin(-theta);
+  const lx = dx * cosT - dy * sinT;
+  const ly = dx * sinT + dy * cosT;
+  
+  // 유한한 쌍극자 모델 (N극 at +d, S극 at -d)
+  const d = 35.0; // 자석 양극 사이 거리 절반
+  
+  // N극 (+d, 0)
+  const rx1 = lx - d;
+  const ry1 = ly;
+  const r1 = Math.max(12, Math.hypot(rx1, ry1));
+  
+  // S극 (-d, 0)
+  const rx2 = lx + d;
+  const ry2 = ly;
+  const r2 = Math.max(12, Math.hypot(rx2, ry2));
+  
+  // B_local = q_m * ( r1/r1^3 - r2/r2^3 )
+  const scale = M * 14000.0;
+  const bx_local = scale * ( (rx1 / (r1*r1*r1)) - (rx2 / (r2*r2*r2)) );
+  const by_local = scale * ( (ry1 / (r1*r1*r1)) - (ry2 / (r2*r2*r2)) );
+  
+  // 3. 원래 화면 좌표계로 역회전
+  const cosR = Math.cos(theta);
+  const sinR = Math.sin(theta);
+  const Bx = bx_local * cosR - by_local * sinR;
+  const By = bx_local * sinR + by_local * cosR;
+  
+  const mag = Math.hypot(Bx, By);
+  return { bx: Bx, by: By, mag: mag };
+}
+
+/* ==========================================================================
+   3. 캔버스 초기화 및 리사이징
+   ========================================================================== */
+const canvas = document.getElementById("simCanvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  const area = document.getElementById("canvasArea");
+  const dpr = window.devicePixelRatio || 1;
+  const w = area.clientWidth;
+  const h = area.clientHeight;
+  
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+  
+  // 첫 초기화 시 중앙 배치
+  if (STATE.obj.x === 0 && STATE.obj.y === 0) {
+    STATE.obj.x = w * 0.58;
+    STATE.obj.y = h * 0.50;
+    STATE.probeCompass.x = w * 0.35;
+    STATE.probeCompass.y = h * 0.35;
+  }
+}
+
+window.addEventListener("resize", resize);
+
+/* ==========================================================================
+   4. 렌더링 루프
+   ========================================================================== */
+function animate() {
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  const h = canvas.height / (window.devicePixelRatio || 1);
+  
+  // 부드러운 각도 회전 보간
+  const diff = STATE.obj.targetAngle - STATE.obj.angle;
+  STATE.obj.angle += diff * 0.22;
+  
+  // 배경 클리어 (연한 민트 그린)
+  ctx.fillStyle = "#edf7ee";
+  ctx.fillRect(0, 0, w, h);
+  
+  // 1. 나침반 매트릭스 렌더링
+  if (STATE.showCompassMatrix) {
+    drawCompassMatrix(w, h);
+  }
+  
+  // 2. 자기력선 렌더링 (전류가 흐르지 않는 코일 제외)
+  if (STATE.showFieldLines && STATE.currentTool !== 1) {
+    drawMagneticFieldLines();
+  }
+  
+  // 3. 중심 메인 오브젝트 렌더링 (막대자석 or 전자석)
+  drawMainObject();
+  
+  // 4. 슬롯 4일 때 자유 탐구 나침반 렌더링
+  if (STATE.currentTool === 4) {
+    drawProbeCompass();
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+/* ==========================================================================
+   5. 나침반 매트릭스 렌더링 (Hexagonal Staggered Grid)
+   ========================================================================== */
+function drawCompassMatrix(w, h) {
+  const spacingX = 58;
+  const spacingY = 50;
+  const radius = 17;
+  
+  const startX = 140; // 좌측 툴박스 여백
+  const startY = 35;
+  
+  const rows = Math.ceil(h / spacingY) + 1;
+  const cols = Math.ceil((w - startX) / spacingX) + 1;
+  
+  for (let r = 0; r < rows; r++) {
+    const y = startY + r * spacingY;
+    const offsetX = (r % 2 === 1) ? spacingX * 0.5 : 0;
+    
+    for (let c = 0; c < cols; c++) {
+      const x = startX + c * spacingX + offsetX;
+      if (x > w + 20) continue;
+      
+      // 자석/전자석 본체 바로 아래에 가려지는 나침반은 시각적 깔끔함을 위해 연하게 처리
+      const distToObj = Math.hypot(x - STATE.obj.x, y - STATE.obj.y);
+      const isUnderObj = distToObj < 45;
+      
+      // 자기장 벡터
+      const field = getMagneticFieldAt(x, y);
+      
+      // 나침반 바늘 각도: 자기장이 0이면 기본 북쪽(수평 우측 등) 안정 자세
+      let needleAngle = 0;
+      if (field.mag > 0.001) {
+        needleAngle = Math.atan2(field.by, field.bx);
+      }
+      
+      ctx.save();
+      ctx.translate(x, y);
+      if (isUnderObj) ctx.globalAlpha = 0.25;
+      
+      // 나침반 외곽 흰색 원반
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.fill();
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.stroke();
+      
+      // 나침반 자침 회전
+      ctx.rotate(needleAngle);
+      
+      // N극 (선명한 빨간색 마름모 - 오른쪽 화살표)
+      ctx.beginPath();
+      ctx.moveTo(0, -3.2);
+      ctx.lineTo(radius - 2.5, 0);
+      ctx.lineTo(0, 3.2);
+      ctx.closePath();
+      ctx.fillStyle = "#ef4444";
+      ctx.fill();
+      
+      // S극 (연한 회색/흰색 마름모 - 왼쪽)
+      ctx.beginPath();
+      ctx.moveTo(0, -3.2);
+      ctx.lineTo(-(radius - 2.5), 0);
+      ctx.lineTo(0, 3.2);
+      ctx.closePath();
+      ctx.fillStyle = "#94a3b8";
+      ctx.fill();
+      
+      // 중앙 회색 피벗 점
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = "#475569";
+      ctx.fill();
+      
+      ctx.restore();
+    }
+  }
+}
+
+/* ==========================================================================
+   6. 녹색 자기력선(Magnetic Field Lines) 렌더링
+   ========================================================================== */
+function drawMagneticFieldLines() {
+  const ox = STATE.obj.x;
+  const oy = STATE.obj.y;
+  const theta = STATE.obj.angle;
+  const tool = STATE.currentTool;
+  
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.rotate(theta);
+  
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = "rgba(21, 128, 61, 0.9)"; // 선명한 짙은 녹색
+  
+  // 극간 거리 (N at +d, S at -d)
+  const d = 35.0;
+  
+  // 촘촘한 코일이면 더 많은 자기력선 다발 표시
+  const lineLoops = (tool === 3) 
+    ? [20, 35, 55, 80, 115, 160, 220, 300]
+    : [22, 40, 65, 95, 140, 200];
+    
+  lineLoops.forEach(bRadius => {
+    // 윗쪽 대칭 루프 & 아랫쪽 대칭 루프
+    [-1, 1].forEach(side => {
+      ctx.beginPath();
+      const numPts = 60;
+      let started = false;
+      
+      for (let i = 0; i <= numPts; i++) {
+        const t = (i / numPts) * Math.PI; // 0 ~ PI
+        // 타원형 쌍극자 유선 보간
+        const lx = Math.cos(t) * (d + bRadius * 0.45);
+        const ly = side * Math.sin(t) * bRadius;
+        
+        if (!started) {
+          ctx.moveTo(lx, ly);
+          started = true;
+        } else {
+          ctx.lineTo(lx, ly);
+        }
+      }
+      ctx.stroke();
+    });
+  });
+  
+  // 양 극 바깥쪽으로 뻗어 나가는 축 방향 발산선
+  const outerLineY = [0, -18, 18, -36, 36];
+  outerLineY.forEach(yOff => {
+    // N극 쪽에서 뻗어나감 (+X)
+    ctx.beginPath();
+    ctx.moveTo(d + 15, yOff * 0.3);
+    ctx.quadraticCurveTo(d + 80, yOff * 0.8, d + 220, yOff * 2.2);
+    ctx.stroke();
+    
+    // S극 쪽으로 들어옴 (-X)
+    ctx.beginPath();
+    ctx.moveTo(-d - 15, yOff * 0.3);
+    ctx.quadraticCurveTo(-d - 80, yOff * 0.8, -d - 220, yOff * 2.2);
+    ctx.stroke();
+  });
+  
+  ctx.restore();
+}
+
+/* ==========================================================================
+   7. 중심 오브젝트 드로잉 (막대자석 / 코일 / 전자석 2종)
+   ========================================================================== */
+function drawMainObject() {
+  const { x, y, angle } = STATE.obj;
+  const tool = STATE.currentTool;
+  
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  
+  if (tool === 0) {
+    // ----------------------------------------------------------------------
+    // [슬롯 0] 영구 막대자석 (S극 파랑 좌측, N극 빨강 우측)
+    // ----------------------------------------------------------------------
+    const w = 110;
+    const h = 36;
+    
+    // 그림자
+    ctx.shadowColor = "rgba(0, 0, 0, 0.18)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    
+    // 왼쪽 S극 (파란색)
+    ctx.fillStyle = "#3b82f6";
+    ctx.fillRect(-w/2, -h/2, w/2, h);
+    
+    // 오른쪽 N극 (빨간색)
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(0, -h/2, w/2, h);
+    
+    ctx.shadowColor = "transparent";
+    
+    // 테두리
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#1e293b";
+    ctx.strokeRect(-w/2, -h/2, w, h);
+    
+    // 중간 분할선
+    ctx.beginPath();
+    ctx.moveTo(0, -h/2);
+    ctx.lineTo(0, h/2);
+    ctx.stroke();
+    
+    // 텍스트 라벨 (S, N)
+    ctx.font = "900 18px 'Pretendard', sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("S", -w/4, 0);
+    ctx.fillText("N", w/4, 0);
+    
+  } else if (tool === 1 || tool === 2 || tool === 3) {
+    // ----------------------------------------------------------------------
+    // [슬롯 1, 2, 3] 코일 / 전자석 모델
+    // ----------------------------------------------------------------------
+    const w = 110;
+    const h = 32;
+    
+    // 그림자
+    ctx.shadowColor = "rgba(0, 0, 0, 0.16)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    
+    // 1. 회색 철심 (Iron Core)
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillRect(-w/2, -h/2, w, h);
+    ctx.shadowColor = "transparent";
+    
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#475569";
+    ctx.strokeRect(-w/2, -h/2, w, h);
+    
+    // 2. 구리 코일 권선 렌더링
+    const numTurns = (tool === 3) ? 14 : ((tool === 2) ? 7 : 6);
+    const coilSpan = w - 16;
+    const turnSpacing = coilSpan / numTurns;
+    
+    ctx.lineWidth = 3.2;
+    ctx.strokeStyle = (tool === 1) ? "#b45309" : "#dc2626"; // 활성 시 선명한 빨간색 코일
+    ctx.lineCap = "round";
+    
+    for (let i = 0; i < numTurns; i++) {
+      const cx = -w/2 + 8 + i * turnSpacing;
+      ctx.beginPath();
+      // 비스듬히 감겨 돌아가는 코일 루프
+      ctx.moveTo(cx, -h/2 - 4);
+      ctx.lineTo(cx + turnSpacing * 0.7, h/2 + 4);
+      ctx.stroke();
+    }
+    
+    // 3. 배터리 연결부 (슬롯 2, 3일 때만 배터리 부착)
+    if (tool === 2 || tool === 3) {
+      // 도선 인출선
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = "#dc2626";
+      
+      // 왼쪽 선 -> 배터리 -극
+      ctx.beginPath();
+      ctx.moveTo(-w/2 + 8, h/2 + 4);
+      ctx.lineTo(-w/2 + 8, h/2 + 20);
+      ctx.lineTo(-24, h/2 + 20);
+      ctx.stroke();
+      
+      // 오른쪽 선 -> 배터리 +극
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 8, h/2 + 4);
+      ctx.lineTo(w/2 - 8, h/2 + 20);
+      ctx.lineTo(24, h/2 + 20);
+      ctx.stroke();
+      
+      // 배터리 몸체 (검은색 원통)
+      const bw = 48;
+      const bh = 20;
+      const by = h/2 + 10;
+      
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-bw/2, by, bw, bh);
+      ctx.strokeStyle = "#334155";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-bw/2, by, bw, bh);
+      
+      // 배터리 양극 금색 단자 (+극, 오른쪽)
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillRect(bw/2 - 12, by, 12, bh);
+      
+      // 배터리 캡 돌출
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillRect(bw/2, by + 5, 4, 10);
+      
+      // 전자석 극성 안내 태그
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillStyle = "#1d4ed8";
+      ctx.fillText("S", -w/2 - 14, 0);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillText("N", w/2 + 14, 0);
+    } else {
+      // 전류 없음 코일
+      // 끊어진 전선
+      ctx.lineWidth = 2.0;
+      ctx.strokeStyle = "#b45309";
+      ctx.beginPath();
+      ctx.moveTo(-w/2 + 8, h/2 + 4);
+      ctx.lineTo(-w/2 + 8, h/2 + 18);
+      ctx.moveTo(w/2 - 8, h/2 + 4);
+      ctx.lineTo(w/2 - 8, h/2 + 18);
+      ctx.stroke();
+      
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillStyle = "#64748b";
+      ctx.textAlign = "center";
+      ctx.fillText("전류 없음 (자기장 = 0)", 0, h/2 + 20);
+    }
+  } else if (tool === 4) {
+    // 슬롯 4에서는 중심에 기본 막대자석을 두고, 별도의 탐구 나침반이 활성화됨
+    // 기본 막대자석 그대로 드로잉
+    const w = 110;
+    const h = 36;
+    ctx.fillStyle = "#3b82f6";
+    ctx.fillRect(-w/2, -h/2, w/2, h);
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(0, -h/2, w/2, h);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#1e293b";
+    ctx.strokeRect(-w/2, -h/2, w, h);
+    ctx.beginPath();
+    ctx.moveTo(0, -h/2);
+    ctx.lineTo(0, h/2);
+    ctx.stroke();
+    ctx.font = "900 18px 'Pretendard', sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("S", -w/4, 0);
+    ctx.fillText("N", w/4, 0);
+  }
+  
+  ctx.restore();
+}
+
+/* ==========================================================================
+   8. 자유 탐구 나침반 (슬롯 4 단독 프로브)
+   ========================================================================== */
+function drawProbeCompass() {
+  const { x, y, radius } = STATE.probeCompass;
+  const field = getMagneticFieldAt(x, y);
+  
+  let angle = 0;
+  if (field.mag > 0.001) {
+    angle = Math.atan2(field.by, field.bx);
+  }
+  
+  ctx.save();
+  ctx.translate(x, y);
+  
+  // 큰 그림자
+  ctx.shadowColor = "rgba(0, 0, 0, 0.22)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+  
+  // 나침반 케이스
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "#0284c7"; // 밝은 하늘색 테두리
+  ctx.stroke();
+  
+  // 십자 방위 표시
+  ctx.strokeStyle = "#e2e8f0";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-radius + 5, 0); ctx.lineTo(radius - 5, 0);
+  ctx.moveTo(0, -radius + 5); ctx.lineTo(0, radius - 5);
+  ctx.stroke();
+  
+  // 자침 회전
+  ctx.rotate(angle);
+  
+  // N극 (선명한 빨강)
+  ctx.beginPath();
+  ctx.moveTo(0, -6);
+  ctx.lineTo(radius - 4, 0);
+  ctx.lineTo(0, 6);
+  ctx.closePath();
+  ctx.fillStyle = "#ef4444";
+  ctx.fill();
+  
+  // S극 (연한 회색)
+  ctx.beginPath();
+  ctx.moveTo(0, -6);
+  ctx.lineTo(-(radius - 4), 0);
+  ctx.lineTo(0, 6);
+  ctx.closePath();
+  ctx.fillStyle = "#94a3b8";
+  ctx.fill();
+  
+  // 중앙 금속 피벗
+  ctx.beginPath();
+  ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#1e293b";
+  ctx.fill();
+  
+  ctx.restore();
+}
+
+/* ==========================================================================
+   9. 마우스 및 터치 인터랙션 (드래그하여 이동, 클릭하여 90도 회전)
+   ========================================================================== */
+const canvasArea = document.getElementById("canvasArea");
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
+}
+
+// 마우스/터치 시작
+function onPointerDown(e) {
+  const p = getPos(e);
+  
+  // 1. 슬롯 4일 때 탐구 나침반 드래그 체크
+  if (STATE.currentTool === 4) {
+    const distProbe = Math.hypot(p.x - STATE.probeCompass.x, p.y - STATE.probeCompass.y);
+    if (distProbe < STATE.probeCompass.radius + 8) {
+      STATE.probeCompass.isDragging = true;
+      return;
+    }
+  }
+  
+  // 2. 메인 오브젝트 드래그/클릭 체크
+  const distObj = Math.hypot(p.x - STATE.obj.x, p.y - STATE.obj.y);
+  if (distObj < 70) {
+    STATE.obj.isDragging = true;
+    STATE.obj.hasMoved = false;
+    STATE.obj.dragStartX = p.x;
+    STATE.obj.dragStartY = p.y;
+    canvasArea.style.cursor = "grabbing";
+  }
+}
+
+// 포인터 이동
+function onPointerMove(e) {
+  const p = getPos(e);
+  
+  if (STATE.probeCompass.isDragging) {
+    STATE.probeCompass.x = p.x;
+    STATE.probeCompass.y = p.y;
+    return;
+  }
+  
+  if (STATE.obj.isDragging) {
+    const moved = Math.hypot(p.x - STATE.obj.dragStartX, p.y - STATE.obj.dragStartY);
+    if (moved > 5) {
+      STATE.obj.hasMoved = true;
+    }
+    STATE.obj.x = p.x;
+    STATE.obj.y = p.y;
+  } else {
+    // 커서 상태 업데이트
+    const distObj = Math.hypot(p.x - STATE.obj.x, p.y - STATE.obj.y);
+    if (distObj < 70) {
+      canvasArea.style.cursor = "grab";
+    } else {
+      canvasArea.style.cursor = "default";
+    }
+  }
+}
+
+// 포인터 업
+function onPointerUp(e) {
+  if (STATE.probeCompass.isDragging) {
+    STATE.probeCompass.isDragging = false;
+    return;
+  }
+  
+  if (STATE.obj.isDragging) {
+    STATE.obj.isDragging = false;
+    canvasArea.style.cursor = "grab";
+    
+    // 단순 클릭(이동 없이 클릭) 시 90도 회전
+    if (!STATE.obj.hasMoved) {
+      rotateObject();
+    }
+  }
+}
+
+// 90도씩 회전 핸들러
+function rotateObject() {
+  STATE.obj.targetAngle += Math.PI * 0.5; // +90도 회전
+  
+  // 각도 라벨 갱신
+  const deg = Math.round((((STATE.obj.targetAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) * 180 / Math.PI);
+  document.getElementById("hudAngle").textContent = deg + "°";
+}
+
+canvasArea.addEventListener("mousedown", onPointerDown);
+window.addEventListener("mousemove", onPointerMove);
+window.addEventListener("mouseup", onPointerUp);
+
+canvasArea.addEventListener("touchstart", onPointerDown, { passive: true });
+window.addEventListener("touchmove", onPointerMove, { passive: true });
+window.addEventListener("touchend", onPointerUp, { passive: true });
+
+/* ==========================================================================
+   10. 툴박스 도구 선택 및 UI 핸들러
+   ========================================================================== */
+function selectTool(index) {
+  STATE.currentTool = index;
+  
+  // 슬롯 하이라이트
+  for (let i = 0; i < 5; i++) {
+    const slot = document.getElementById("slot" + i);
+    slot.classList.toggle("active", i === index);
+  }
+  
+  // HUD 카드 정보 업데이트
+  const hudTitle = document.getElementById("hudToolTitle");
+  const hudTag = document.getElementById("hudTag");
+  const hudPrinciple = document.getElementById("hudPrinciple");
+  const hudStrength = document.getElementById("hudStrength");
+  const hudDesc = document.getElementById("hudDesc");
+  
+  if (index === 0) {
+    hudTitle.textContent = "영구 막대자석";
+    hudTag.textContent = "Permanent Magnet";
+    hudPrinciple.textContent = "전자 스핀/운동";
+    hudStrength.textContent = "표준 세기 (M = 1.0)";
+    hudDesc.innerHTML = "영구자석 주위로 <strong>N극(빨간색)에서 나와 S극(파란색)으로 들어가는 자기력선</strong>이 안정적으로 형성됩니다.";
+  } else if (index === 1) {
+    hudTitle.textContent = "전류 없는 코일";
+    hudTag.textContent = "No Current";
+    hudPrinciple.textContent = "전류 미공급 (I = 0)";
+    hudStrength.textContent = "자기장 없음 (B = 0)";
+    hudDesc.innerHTML = "코일에 전류가 흐르지 않으면 <strong>자석의 성질이 완전히 사라져</strong> 주위 나침반들이 전혀 반응하지 않습니다.";
+  } else if (index === 2) {
+    hudTitle.textContent = "전자석 (보통 감음)";
+    hudTag.textContent = "Electromagnet Normal";
+    hudPrinciple.textContent = "도선 속 전하의 이동";
+    hudStrength.textContent = "표준 전자석 (M = 1.0)";
+    hudDesc.innerHTML = "코일에 전류가 흘러 <strong>막대자석과 완전히 동일한 자기장</strong>을 형성합니다. (오른손 법칙에 의해 우측 N극, 좌측 S극)";
+  } else if (index === 3) {
+    hudTitle.textContent = "강력 전자석 (촘촘한 코일)";
+    hudTag.textContent = "Dense Coil (2x)";
+    hudPrinciple.textContent = "코일 권선 수 2배 증가";
+    hudStrength.textContent = "강력한 전자석 (M = 2.0)";
+    hudDesc.innerHTML = "코일의 감은 수가 많아져 <strong>자기력선 다발이 훨씬 넓고 촘촘하게 확장</strong>되어 나침반을 더 강력하게 끌어당깁니다.";
+  } else if (index === 4) {
+    hudTitle.textContent = "자유 탐구 나침반 모드";
+    hudTag.textContent = "Compass Probe";
+    hudPrinciple.textContent = "국소 자기장 벡터 탐색";
+    hudStrength.textContent = "막대자석 + 대형 나침반";
+    hudDesc.innerHTML = "화면의 <strong>큰 나침반을 마우스나 손가락으로 드래그</strong>하여 원하는 지점의 자기장 방향과 극성을 정밀하게 탐구하세요.";
+  }
+}
+
+function toggleCompassMatrix(checked) {
+  STATE.showCompassMatrix = checked;
+}
+
+function toggleFieldLines(checked) {
+  STATE.showFieldLines = checked;
+}
+
+function resetObject() {
+  const area = document.getElementById("canvasArea");
+  STATE.obj.x = area.clientWidth * 0.58;
+  STATE.obj.y = area.clientHeight * 0.50;
+  STATE.obj.targetAngle = 0;
+  STATE.obj.angle = 0;
+  STATE.probeCompass.x = area.clientWidth * 0.35;
+  STATE.probeCompass.y = area.clientHeight * 0.35;
+  document.getElementById("hudAngle").textContent = "0° (수평)";
+}
+
+function toggleTheory() {
+  const panel = document.getElementById("theoryPanel");
+  const btn = document.getElementById("theoryToggleBtn");
+  panel.classList.toggle("show");
+  btn.classList.toggle("active");
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+/* ==========================================================================
+   11. 좌측 툴박스 썸네일 프리뷰 그리기
+   ========================================================================== */
+function drawThumbnails() {
+  for (let i = 0; i < 5; i++) {
+    const thumbCanvas = document.getElementById("thumb" + i);
+    thumbCanvas.width = 90;
+    thumbCanvas.height = 60;
+    const tctx = thumbCanvas.getContext("2d");
+    
+    tctx.clearRect(0, 0, 90, 60);
+    
+    if (i === 0) {
+      // 막대자석
+      tctx.fillStyle = "#3b82f6";
+      tctx.fillRect(15, 20, 30, 20);
+      tctx.fillStyle = "#ef4444";
+      tctx.fillRect(45, 20, 30, 20);
+      tctx.strokeStyle = "#1e293b";
+      tctx.strokeRect(15, 20, 60, 20);
+      tctx.font = "bold 11px sans-serif";
+      tctx.fillStyle = "#fff";
+      tctx.fillText("S", 25, 34);
+      tctx.fillText("N", 55, 34);
+    } else if (i === 1) {
+      // 코일만
+      tctx.fillStyle = "#94a3b8";
+      tctx.fillRect(16, 22, 58, 16);
+      tctx.lineWidth = 2;
+      tctx.strokeStyle = "#b45309";
+      for (let k = 0; k < 5; k++) {
+        tctx.beginPath();
+        tctx.moveTo(22 + k * 10, 20);
+        tctx.lineTo(26 + k * 10, 40);
+        tctx.stroke();
+      }
+    } else if (i === 2) {
+      // 전자석 보통
+      tctx.fillStyle = "#94a3b8";
+      tctx.fillRect(16, 16, 58, 15);
+      tctx.lineWidth = 2;
+      tctx.strokeStyle = "#dc2626";
+      for (let k = 0; k < 5; k++) {
+        tctx.beginPath();
+        tctx.moveTo(22 + k * 10, 14);
+        tctx.lineTo(26 + k * 10, 33);
+        tctx.stroke();
+      }
+      // 배터리
+      tctx.fillStyle = "#0f172a";
+      tctx.fillRect(30, 38, 26, 12);
+      tctx.fillStyle = "#f59e0b";
+      tctx.fillRect(56, 41, 3, 6);
+    } else if (i === 3) {
+      // 전자석 촘촘
+      tctx.fillStyle = "#94a3b8";
+      tctx.fillRect(16, 16, 58, 15);
+      tctx.lineWidth = 1.8;
+      tctx.strokeStyle = "#dc2626";
+      for (let k = 0; k < 10; k++) {
+        tctx.beginPath();
+        tctx.moveTo(20 + k * 5.2, 14);
+        tctx.lineTo(23 + k * 5.2, 33);
+        tctx.stroke();
+      }
+      // 배터리
+      tctx.fillStyle = "#0f172a";
+      tctx.fillRect(30, 38, 26, 12);
+      tctx.fillStyle = "#f59e0b";
+      tctx.fillRect(56, 41, 3, 6);
+    } else if (i === 4) {
+      // 나침반
+      tctx.beginPath();
+      tctx.arc(45, 30, 18, 0, Math.PI * 2);
+      tctx.fillStyle = "#fff";
+      tctx.fill();
+      tctx.strokeStyle = "#0284c7";
+      tctx.lineWidth = 2;
+      tctx.stroke();
+      // 바늘
+      tctx.beginPath();
+      tctx.moveTo(45, 30-4); tctx.lineTo(45+14, 30); tctx.lineTo(45, 30+4);
+      tctx.fillStyle = "#ef4444"; tctx.fill();
+      tctx.beginPath();
+      tctx.moveTo(45, 30-4); tctx.lineTo(45-14, 30); tctx.lineTo(45, 30+4);
+      tctx.fillStyle = "#94a3b8"; tctx.fill();
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// 초기화 실행
+// --------------------------------------------------------------------------
+window.addEventListener("DOMContentLoaded", () => {
+  resize();
+  drawThumbnails();
+  selectTool(0);
+  requestAnimationFrame(animate);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>기체 분자 운동 모형 (Gas Molecule Motion Model)</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --color-a: #38bdf8;
+      --color-a-glow: rgba(56, 189, 248, 0.4);
+      --color-b: #fb923c;
+      --color-b-glow: rgba(251, 146, 60, 0.4);
+      --accent: #10b981;
+      --danger: #ef4444;
+      --border: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title-group h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #2563eb; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #60a5fa; margin-bottom: 8px; font-size: 1rem; }
+    .theory-box ul { margin-left: 20px; }
+    .theory-box li { margin-bottom: 4px; }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chamber-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chamber-card.card-a { border-left: 5px solid var(--color-a); }
+    .chamber-card.card-b { border-right: 5px solid var(--color-b); }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .card-a .card-header { color: var(--color-a); }
+    .card-b .card-header { color: var(--color-b); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .stat-item {
+      background: var(--card-bg);
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .divider-status {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    /* 캔버스 영역 */
+    .canvas-container {
+      position: relative;
+      background: #020617;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 380px;
+      cursor: default;
+    }
+
+    /* 캔버스 상단 안내 배너 */
+    .canvas-overlay-tip {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 컨트롤 패널 */
+    .controls-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .control-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-box.box-a { border-top: 3px solid var(--color-a); }
+    .control-box.box-b { border-top: 3px solid var(--color-b); }
+
+    .control-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .box-a .control-title { color: var(--color-a); }
+    .box-b .control-title { color: var(--color-b); }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-label-val {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .slider-label-val span.val {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--card-bg);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    .box-a input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-a);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--color-a-glow);
+    }
+    .box-b input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-b);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--color-b-glow);
+    }
+
+    /* 하단 전역 툴바 */
+    .toolbar {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #475569; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-lock {
+      background: #0284c7;
+      border-color: #0369a1;
+      color: white;
+    }
+    .btn-lock.locked {
+      background: #e11d48;
+      border-color: #be123c;
+    }
+
+    .btn-toggle-vector.active {
+      background: #059669;
+      border-color: #047857;
+      color: white;
+    }
+
+    .speed-select {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .divider-status { display: none; }
+      .controls-panel { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>기체 분자 운동 모형 (Gas Molecule Model)</h1>
+      <p>A구역과 B구역 기체 분자의 충돌, 온도, 부피, 압력의 상호작용 가상실험</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>기체 분자 운동과 압력·부피·온도의 관계</h3>
+    <ul>
+      <li><strong>기체 압력의 생성:</strong> 기체 분자들이 끊임없이 불규칙하게 직선 운동을 하다가 용기 벽면이나 격벽에 충돌하면서 힘을 가하여 생깁니다.</li>
+      <li><strong>온도(T)와 분자 속력:</strong> 온도가 높아지면 기체 분자의 평균 운동 에너지가 증가하여 속력이 빨라집니다 ($v \propto \sqrt{T}$).</li>
+      <li><strong>자유 격벽 상태(자물쇠 풀림):</strong> 양쪽 기체의 압력이 같아질 때까지 격벽이 자동으로 이동합니다. 평형 상태에서는 <strong>부피비 = (A 입자 수 × A 온도) : (B 입자 수 × B 온도)</strong>가 성립합니다 ($V_A : V_B = n_A T_A : n_B T_B$).</li>
+      <li><strong>고정 격벽 상태(자물쇠 잠김):</strong> 마우스나 터치로 격벽을 직접 드래그하여 양쪽 부피를 강제로 조절할 수 있습니다. 부피가 줄어들면 충돌 빈도가 높아져 압력이 급증합니다 (보일 법칙).</li>
+    </ul>
+  </div>
+
+  <!-- 실시간 대시보드 -->
+  <div class="dashboard">
+    <!-- Chamber A Stats -->
+    <div class="chamber-card card-a">
+      <div class="card-header">
+        <span>A 구역 기체 (좌측)</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">입자 수 (N)</div>
+          <div class="stat-value" id="dispNa">30</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">절대온도 (T)</div>
+          <div class="stat-value" id="dispTa">300 K</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">부피 비율 (V)</div>
+          <div class="stat-value" id="dispVa">50.0 %</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">평균 압력 (P)</div>
+          <div class="stat-value" id="dispPa">1.00 atm</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중앙 격벽 상태 -->
+    <div class="divider-status">
+      <span style="font-size: 1.4rem;" id="centerLockIcon">🔓</span>
+      <span id="centerLockText">자유 이동</span>
+    </div>
+
+    <!-- Chamber B Stats -->
+    <div class="chamber-card card-b">
+      <div class="card-header">
+        <span>B 구역 기체 (우측)</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">입자 수 (N)</div>
+          <div class="stat-value" id="dispNb">30</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">절대온도 (T)</div>
+          <div class="stat-value" id="dispTb">300 K</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">부피 비율 (V)</div>
+          <div class="stat-value" id="dispVb">50.0 %</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">평균 압력 (P)</div>
+          <div class="stat-value" id="dispPb">1.00 atm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 캔버스 영역 -->
+  <div class="canvas-container" id="canvasContainer">
+    <div class="canvas-overlay-tip" id="canvasTip">격벽 상단 자물쇠를 클릭하거나 툴바에서 고정/자유 모드를 전환하세요</div>
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 조작 슬라이더 패널 -->
+  <div class="controls-panel">
+    <!-- Chamber A Controls -->
+    <div class="control-box box-a">
+      <div class="control-title">A 구역 조작 (파란색 분자)</div>
+      <div class="slider-row">
+        <div class="slider-label-val">
+          <span>입자 수</span>
+          <span class="val" id="valNa">30 개</span>
+        </div>
+        <input type="range" id="sliderNa" min="5" max="80" step="1" value="30">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label-val">
+          <span>절대온도</span>
+          <span class="val" id="valTa">300 K</span>
+        </div>
+        <input type="range" id="sliderTa" min="100" max="600" step="10" value="300">
+      </div>
+    </div>
+
+    <!-- Chamber B Controls -->
+    <div class="control-box box-b">
+      <div class="control-title">B 구역 조작 (주황색 분자)</div>
+      <div class="slider-row">
+        <div class="slider-label-val">
+          <span>입자 수</span>
+          <span class="val" id="valNb">30 개</span>
+        </div>
+        <input type="range" id="sliderNb" min="5" max="80" step="1" value="30">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label-val">
+          <span>절대온도</span>
+          <span class="val" id="valTb">300 K</span>
+        </div>
+        <input type="range" id="sliderTb" min="100" max="600" step="10" value="300">
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 전역 툴바 -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-lock" id="btnToggleLock">
+        <span id="btnLockIcon">🔓</span> <span id="btnLockLabel">격벽 자유 이동 중</span>
+      </button>
+      <button class="btn" id="btnPlayPause">⏸ 일시정지</button>
+      <button class="btn" id="btnReset">↺ 초기화</button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-toggle-vector" id="btnToggleVector">속도 화살표: OFF</button>
+      <select class="speed-select" id="speedSelect">
+        <option value="0.5">속도 0.5x</option>
+        <option value="1.0" selected>속도 1.0x</option>
+        <option value="1.5">속도 1.5x</option>
+        <option value="2.0">속도 2.0x</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // --- Canvas 및 설정 ---
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('canvasContainer');
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+
+  // 시뮬레이션 상태 변수
+  let isRunning = true;
+  let simSpeed = 1.0;
+  let showVectors = false;
+  let isLocked = false; // false: 자유 이동, true: 고정
+  let isDraggingPartition = false;
+  let dragOffsetX = 0;
+
+  // 기체 파라미터
+  let paramsA = { count: 30, temp: 300, currentP: 1.0, impulseAccum: 0 };
+  let paramsB = { count: 30, temp: 300, currentP: 1.0, impulseAccum: 0 };
+
+  // 격벽 파라미터
+  const partitionWidth = 16;
+  const lockButtonRadius = 14;
+  let partitionX = 0; // 격벽 중심 x좌표
+  let partitionVx = 0; // 격벽 속도 (자유 이동 시)
+
+  // 입자 배열
+  let particlesA = [];
+  let particlesB = [];
+  const particleRadius = 6;
+  const baseSpeedPerSqrtT = 7.5; // T=300K -> v_rms approx 130 px/s
+
+  // --- UI 요소 ---
+  const sliderNa = document.getElementById('sliderNa');
+  const sliderTa = document.getElementById('sliderTa');
+  const sliderNb = document.getElementById('sliderNb');
+  const sliderTb = document.getElementById('sliderTb');
+
+  const valNa = document.getElementById('valNa');
+  const valTa = document.getElementById('valTa');
+  const valNb = document.getElementById('valNb');
+  const valTb = document.getElementById('valTb');
+
+  const dispNa = document.getElementById('dispNa');
+  const dispTa = document.getElementById('dispTa');
+  const dispVa = document.getElementById('dispVa');
+  const dispPa = document.getElementById('dispPa');
+
+  const dispNb = document.getElementById('dispNb');
+  const dispTb = document.getElementById('dispTb');
+  const dispVb = document.getElementById('dispVb');
+  const dispPb = document.getElementById('dispPb');
+
+  const btnToggleLock = document.getElementById('btnToggleLock');
+  const btnLockIcon = document.getElementById('btnLockIcon');
+  const btnLockLabel = document.getElementById('btnLockLabel');
+  const centerLockIcon = document.getElementById('centerLockIcon');
+  const centerLockText = document.getElementById('centerLockText');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnReset = document.getElementById('btnReset');
+  const btnToggleVector = document.getElementById('btnToggleVector');
+  const speedSelect = document.getElementById('speedSelect');
+  const btnHelpToggle = document.getElementById('btnHelpToggle');
+  const theoryBox = document.getElementById('theoryBox');
+  const canvasTip = document.getElementById('canvasTip');
+
+  // --- 캔버스 크기 리사이징 ---
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    width = rect.width;
+    height = rect.height;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (partitionX === 0) {
+      partitionX = width / 2;
+    } else {
+      // 캔버스 크기 변경 시 비율 유지
+      partitionX = Math.max(partitionWidth * 2, Math.min(width - partitionWidth * 2, partitionX));
+    }
+  }
+
+  // --- 입자 클래스 ---
+  class Particle {
+    constructor(chamber, temp) {
+      this.chamber = chamber; // 'A' or 'B'
+      this.radius = particleRadius;
+      this.resetPosition();
+      this.setSpeedFromTemp(temp);
+    }
+
+    setSpeedFromTemp(temp) {
+      const speed = baseSpeedPerSqrtT * Math.sqrt(temp);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+    }
+
+    resetPosition() {
+      const margin = this.radius + 2;
+      const partLeft = partitionX - partitionWidth / 2;
+      const partRight = partitionX + partitionWidth / 2;
+
+      if (this.chamber === 'A') {
+        const minX = margin;
+        const maxX = Math.max(margin + 5, partLeft - margin);
+        this.x = minX + Math.random() * (maxX - minX);
+      } else {
+        const minX = Math.min(width - margin - 5, partRight + margin);
+        const maxX = width - margin;
+        this.x = minX + Math.random() * (maxX - minX);
+      }
+      this.y = margin + Math.random() * (height - margin * 2);
+    }
+
+    update(dt) {
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+
+      const partLeft = partitionX - partitionWidth / 2;
+      const partRight = partitionX + partitionWidth / 2;
+
+      // 상하 벽 충돌
+      if (this.y - this.radius <= 0) {
+        this.y = this.radius;
+        this.vy = Math.abs(this.vy);
+        this.recordImpulse(Math.abs(this.vy) * 2);
+      } else if (this.y + this.radius >= height) {
+        this.y = height - this.radius;
+        this.vy = -Math.abs(this.vy);
+        this.recordImpulse(Math.abs(this.vy) * 2);
+      }
+
+      // 좌우 외벽 및 중앙 격벽 충돌
+      if (this.chamber === 'A') {
+        // A 구역 왼쪽 외벽
+        if (this.x - this.radius <= 0) {
+          this.x = this.radius;
+          this.vx = Math.abs(this.vx);
+          this.recordImpulse(Math.abs(this.vx) * 2);
+        }
+        // A 구역 오른쪽 격벽
+        if (this.x + this.radius >= partLeft) {
+          this.x = partLeft - this.radius;
+          this.vx = -Math.abs(this.vx);
+          const impulse = Math.abs(this.vx) * 2;
+          this.recordImpulse(impulse);
+          // 격벽에 가해지는 힘 (오른쪽 방향)
+          if (!isLocked) {
+            partitionVx += impulse * 0.04;
+          }
+        }
+      } else {
+        // B 구역 오른쪽 외벽
+        if (this.x + this.radius >= width) {
+          this.x = width - this.radius;
+          this.vx = -Math.abs(this.vx);
+          this.recordImpulse(Math.abs(this.vx) * 2);
+        }
+        // B 구역 왼쪽 격벽
+        if (this.x - this.radius <= partRight) {
+          this.x = partRight + this.radius;
+          this.vx = Math.abs(this.vx);
+          const impulse = Math.abs(this.vx) * 2;
+          this.recordImpulse(impulse);
+          // 격벽에 가해지는 힘 (왼쪽 방향)
+          if (!isLocked) {
+            partitionVx -= impulse * 0.04;
+          }
+        }
+      }
+    }
+
+    recordImpulse(val) {
+      if (this.chamber === 'A') paramsA.impulseAccum += val;
+      else paramsB.impulseAccum += val;
+    }
+
+    draw(ctx) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+      if (this.chamber === 'A') {
+        ctx.fillStyle = '#38bdf8';
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.6)';
+      } else {
+        ctx.fillStyle = '#fb923c';
+        ctx.shadowColor = 'rgba(251, 146, 60, 0.6)';
+      }
+      ctx.shadowBlur = 6;
+      ctx.fill();
+
+      // 입체 하이라이트
+      ctx.beginPath();
+      ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fill();
+
+      // 속도 벡터 화살표 표시
+      if (showVectors) {
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = this.chamber === 'A' ? '#bae6fd' : '#fed7aa';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + this.vx * 0.1, this.y + this.vy * 0.1);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // --- 입자 군집 동기화 ---
+  function syncParticles() {
+    // Chamber A 동기화
+    while (particlesA.length < paramsA.count) {
+      particlesA.push(new Particle('A', paramsA.temp));
+    }
+    while (particlesA.length > paramsA.count) {
+      particlesA.pop();
+    }
+
+    // Chamber B 동기화
+    while (particlesB.length < paramsB.count) {
+      particlesB.push(new Particle('B', paramsB.temp));
+    }
+    while (particlesB.length > paramsB.count) {
+      particlesB.pop();
+    }
+  }
+
+  function updateTemperatures() {
+    particlesA.forEach(p => p.setSpeedFromTemp(paramsA.temp));
+    particlesB.forEach(p => p.setSpeedFromTemp(paramsB.temp));
+  }
+
+  // --- 격벽 물리 및 이상기체 평형 역학 ---
+  function updatePartition(dt) {
+    const minX = width * 0.08 + partitionWidth / 2;
+    const maxX = width * 0.92 - partitionWidth / 2;
+
+    if (isLocked) {
+      partitionVx = 0;
+    } else {
+      // 이상기체 평형 지점 계산: V_A : V_B = n_A * T_A : n_B * T_B
+      const productA = paramsA.count * paramsA.temp;
+      const productB = paramsB.count * paramsB.temp;
+      const totalProduct = productA + productB;
+
+      const availableWidth = width - partitionWidth;
+      const equilibriumX = partitionWidth / 2 + (productA / totalProduct) * availableWidth;
+
+      // 평형 위치로의 완만한 복원력 + 입자 충격량 효과
+      const springK = 8.0;
+      const damping = 0.85;
+
+      const forceFromEquilibrium = (equilibriumX - partitionX) * springK;
+      partitionVx += forceFromEquilibrium * dt;
+      partitionVx *= damping;
+
+      partitionX += partitionVx * dt * 60;
+    }
+
+    // 경계 제한
+    if (partitionX < minX) {
+      partitionX = minX;
+      partitionVx = 0;
+    } else if (partitionX > maxX) {
+      partitionX = maxX;
+      partitionVx = 0;
+    }
+
+    // 격벽 이동 시 입자가 갇히지 않도록 보정
+    const partLeft = partitionX - partitionWidth / 2;
+    const partRight = partitionX + partitionWidth / 2;
+
+    particlesA.forEach(p => {
+      if (p.x + p.radius > partLeft) {
+        p.x = partLeft - p.radius - 1;
+        p.vx = -Math.abs(p.vx);
+      }
+    });
+
+    particlesB.forEach(p => {
+      if (p.x - p.radius < partRight) {
+        p.x = partRight + p.radius + 1;
+        p.vx = Math.abs(p.vx);
+      }
+    });
+  }
+
+  // --- 실시간 압력 및 상태 갱신 ---
+  let lastPressureCalcTime = 0;
+
+  function updatePressureCalculations(timestamp) {
+    if (timestamp - lastPressureCalcTime > 300) { // 0.3초마다 갱신
+      const dtSec = (timestamp - lastPressureCalcTime) / 1000;
+      lastPressureCalcTime = timestamp;
+
+      // A 구역 부피 및 B 구역 부피 계산
+      const volA = Math.max(1, (partitionX - partitionWidth / 2));
+      const volB = Math.max(1, (width - (partitionX + partitionWidth / 2)));
+      const totalVol = volA + volB;
+
+      const pctA = ((volA / totalVol) * 100);
+      const pctB = ((volB / totalVol) * 100);
+
+      // 이상 기체 방정식 기준 이론 압력 보정 (표시 부드러움 향상)
+      // P = (n * R * T) / V
+      const baselineConstant = (30 * 300) / (totalVol * 0.5);
+      const idealPa = ((paramsA.count * paramsA.temp) / volA) / baselineConstant;
+      const idealPb = ((paramsB.count * paramsB.temp) / volB) / baselineConstant;
+
+      // 실제 입자 충돌 누적치와 결합하여 자연스러운 요동 반영
+      const dynamicPa = (paramsA.impulseAccum / (dtSec * 3500)) || idealPa;
+      const dynamicPb = (paramsB.impulseAccum / (dtSec * 3500)) || idealPb;
+
+      paramsA.currentP = (idealPa * 0.7 + dynamicPa * 0.3);
+      paramsB.currentP = (idealPb * 0.7 + dynamicPb * 0.3);
+
+      paramsA.impulseAccum = 0;
+      paramsB.impulseAccum = 0;
+
+      // UI 렌더링
+      dispVa.textContent = pctA.toFixed(1) + ' %';
+      dispVb.textContent = pctB.toFixed(1) + ' %';
+      dispPa.textContent = paramsA.currentP.toFixed(2) + ' atm';
+      dispPb.textContent = paramsB.currentP.toFixed(2) + ' atm';
+    }
+  }
+
+  // --- 캔버스 렌더링 루프 ---
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    const partLeft = partitionX - partitionWidth / 2;
+    const partRight = partitionX + partitionWidth / 2;
+
+    // 1. A 구역 / B 구역 배경 틴트
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.03)';
+    ctx.fillRect(0, 0, partLeft, height);
+
+    ctx.fillStyle = 'rgba(251, 146, 60, 0.03)';
+    ctx.fillRect(partRight, 0, width - partRight, height);
+
+    // 2. 구역 라벨 워터마크
+    ctx.save();
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+    ctx.fillText('구역 A', partLeft / 2, height / 2);
+
+    ctx.fillStyle = 'rgba(251, 146, 60, 0.08)';
+    ctx.fillText('구역 B', partRight + (width - partRight) / 2, height / 2);
+    ctx.restore();
+
+    // 3. 입자 그리기
+    particlesA.forEach(p => p.draw(ctx));
+    particlesB.forEach(p => p.draw(ctx));
+
+    // 4. 중앙 격벽(피스톤) 그리기
+    ctx.save();
+    // 피스톤 기둥
+    const grad = ctx.createLinearGradient(partLeft, 0, partRight, 0);
+    grad.addColorStop(0, '#64748b');
+    grad.addColorStop(0.5, '#cbd5e1');
+    grad.addColorStop(1, '#475569');
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(partLeft, 0, partitionWidth, height);
+    ctx.strokeStyle = isLocked ? '#f43f5e' : '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(partLeft, 0, partitionWidth, height);
+
+    // 격벽 손잡이/그립 라인 (중앙)
+    const midY = height / 2;
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    for (let offset = -20; offset <= 20; offset += 8) {
+      ctx.beginPath();
+      ctx.moveTo(partLeft + 3, midY + offset);
+      ctx.lineTo(partRight - 3, midY + offset);
+      ctx.stroke();
+    }
+
+    // 5. 격벽 상단 자물쇠 버튼
+    const lockBtnY = 24;
+    ctx.beginPath();
+    ctx.arc(partitionX, lockBtnY, lockButtonRadius, 0, Math.PI * 2);
+    ctx.fillStyle = isLocked ? '#e11d48' : '#0284c7';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(isLocked ? '🔒' : '🔓', partitionX, lockBtnY + 1);
+
+    ctx.restore();
+  }
+
+  let lastFrameTime = performance.now();
+
+  function animate(timestamp) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
+    const deltaMs = timestamp - lastFrameTime;
+    lastFrameTime = timestamp;
+
+    const dt = Math.min(deltaMs / 1000, 0.05) * simSpeed;
+
+    if (isRunning) {
+      // 입자 이동
+      particlesA.forEach(p => p.update(dt));
+      particlesB.forEach(p => p.update(dt));
+
+      // 격벽 역학
+      if (!isDraggingPartition) {
+        updatePartition(dt);
+      }
+    }
+
+    updatePressureCalculations(timestamp);
+    draw();
+
+    requestAnimationFrame(animate);
+  }
+
+  // --- 자물쇠 토글 함수 ---
+  function toggleLock(forceState) {
+    isLocked = forceState !== undefined ? forceState : !isLocked;
+
+    if (isLocked) {
+      btnToggleLock.classList.add('locked');
+      btnLockIcon.textContent = '🔒';
+      btnLockLabel.textContent = '격벽 고정됨 (드래그 가능)';
+      centerLockIcon.textContent = '🔒';
+      centerLockText.textContent = '격벽 고정';
+      canvasTip.textContent = '격벽이 고정되었습니다. 마우스나 터치로 격벽을 드래그해 부피를 바꿔보세요.';
+    } else {
+      btnToggleLock.classList.remove('locked');
+      btnLockIcon.textContent = '🔓';
+      btnLockLabel.textContent = '격벽 자유 이동 중';
+      centerLockIcon.textContent = '🔓';
+      centerLockText.textContent = '자유 이동';
+      canvasTip.textContent = '격벽이 양쪽 압력이 같아질 때까지 자동으로 자유 이동합니다.';
+    }
+  }
+
+  // --- 마우스 & 터치 인터랙션 (격벽 드래그 & 자물쇠 클릭) ---
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function isOverLockBtn(x, y) {
+    const lockBtnY = 24;
+    const dx = x - partitionX;
+    const dy = y - lockBtnY;
+    return (dx * dx + dy * dy) <= (lockButtonRadius + 6) * (lockButtonRadius + 6);
+  }
+
+  function isOverPartition(x, y) {
+    const partLeft = partitionX - partitionWidth / 2 - 10;
+    const partRight = partitionX + partitionWidth / 2 + 10;
+    return (x >= partLeft && x <= partRight);
+  }
+
+  function handlePointerDown(e) {
+    const { x, y } = getCanvasCoords(e);
+
+    // 자물쇠 버튼 클릭
+    if (isOverLockBtn(x, y)) {
+      toggleLock();
+      return;
+    }
+
+    // 격벽 드래그 시작
+    if (isOverPartition(x, y)) {
+      isDraggingPartition = true;
+      dragOffsetX = x - partitionX;
+      // 드래그를 시작하면 자동으로 격벽 고정 상태로 전환하여 자유로운 부피 조절 허용
+      if (!isLocked) {
+        toggleLock(true);
+      }
+    }
+  }
+
+  function handlePointerMove(e) {
+    const { x, y } = getCanvasCoords(e);
+
+    // 커서 스타일링
+    if (isOverLockBtn(x, y)) {
+      canvas.style.cursor = 'pointer';
+    } else if (isOverPartition(x, y)) {
+      canvas.style.cursor = 'ew-resize';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+
+    // 드래그 중 위치 이동
+    if (isDraggingPartition) {
+      const minX = width * 0.08 + partitionWidth / 2;
+      const maxX = width * 0.92 - partitionWidth / 2;
+      partitionX = Math.max(minX, Math.min(maxX, x - dragOffsetX));
+      partitionVx = 0;
+    }
+  }
+
+  function handlePointerUp() {
+    isDraggingPartition = false;
+  }
+
+  // 포인터 이벤트 등록
+  canvas.addEventListener('mousedown', handlePointerDown);
+  window.addEventListener('mousemove', handlePointerMove);
+  window.addEventListener('mouseup', handlePointerUp);
+
+  canvas.addEventListener('touchstart', (e) => {
+    handlePointerDown(e);
+    e.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isDraggingPartition) {
+      handlePointerMove(e);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', handlePointerUp);
+
+  // --- 슬라이더 및 버튼 이벤트 연동 ---
+  sliderNa.addEventListener('input', (e) => {
+    paramsA.count = parseInt(e.target.value);
+    valNa.textContent = paramsA.count + ' 개';
+    dispNa.textContent = paramsA.count;
+    syncParticles();
+  });
+
+  sliderTa.addEventListener('input', (e) => {
+    paramsA.temp = parseInt(e.target.value);
+    valTa.textContent = paramsA.temp + ' K';
+    dispTa.textContent = paramsA.temp + ' K';
+    updateTemperatures();
+  });
+
+  sliderNb.addEventListener('input', (e) => {
+    paramsB.count = parseInt(e.target.value);
+    valNb.textContent = paramsB.count + ' 개';
+    dispNb.textContent = paramsB.count;
+    syncParticles();
+  });
+
+  sliderTb.addEventListener('input', (e) => {
+    paramsB.temp = parseInt(e.target.value);
+    valTb.textContent = paramsB.temp + ' K';
+    dispTb.textContent = paramsB.temp + ' K';
+    updateTemperatures();
+  });
+
+  btnToggleLock.addEventListener('click', () => toggleLock());
+
+  btnPlayPause.addEventListener('click', () => {
+    isRunning = !isRunning;
+    btnPlayPause.textContent = isRunning ? '⏸ 일시정지' : '▶ 재생';
+  });
+
+  btnReset.addEventListener('click', () => {
+    sliderNa.value = 30;
+    sliderTa.value = 300;
+    sliderNb.value = 30;
+    sliderTb.value = 300;
+
+    paramsA.count = 30;
+    paramsA.temp = 300;
+    paramsB.count = 30;
+    paramsB.temp = 300;
+
+    valNa.textContent = '30 개';
+    valTa.textContent = '300 K';
+    valNb.textContent = '30 개';
+    valTb.textContent = '300 K';
+
+    dispNa.textContent = '30';
+    dispTa.textContent = '300 K';
+    dispNb.textContent = '30';
+    dispTb.textContent = '300 K';
+
+    toggleLock(false);
+    partitionX = width / 2;
+    partitionVx = 0;
+
+    particlesA = [];
+    particlesB = [];
+    syncParticles();
+  });
+
+  btnToggleVector.addEventListener('click', () => {
+    showVectors = !showVectors;
+    btnToggleVector.textContent = `속도 화살표: ${showVectors ? 'ON' : 'OFF'}`;
+    btnToggleVector.classList.toggle('active', showVectors);
+  });
+
+  speedSelect.addEventListener('change', (e) => {
+    simSpeed = parseFloat(e.target.value);
+  });
+
+  btnHelpToggle.addEventListener('click', () => {
+    theoryBox.classList.toggle('active');
+    btnHelpToggle.textContent = theoryBox.classList.contains('active') ? '원리 설명 닫기 ▴' : '원리 설명 보기 ▾';
+  });
+
+  // --- 초기화 및 시작 ---
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  syncParticles();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

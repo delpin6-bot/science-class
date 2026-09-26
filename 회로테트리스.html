@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>전기 회로 테트리스 · 중2 전기와 자기</title>
+<style>
+  :root{
+    --paper:#f6f2e7; --ink:#21301f; --ink-soft:#55624f; --card:#fffdf7; --line:#ddd4bd;
+    --board:#141c17; --board2:#1b2620;
+    --wire:#6b7280; --resist:#d97706; --bulb:#a16207; --bulb-lit:#fde047;
+    --sw-open:#dc2626; --sw-closed:#16a34a; --danger:#ef4444; --good:#22c55e;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; background:var(--paper); color:var(--ink); font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif; }
+  button{ font:inherit; cursor:pointer; border:0; }
+  .wrap{ max-width:760px; margin:0 auto; padding:24px 18px 50px; }
+  header{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px;
+    border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:16px; padding-right:170px; }
+  h1{ font-family:"Batang","바탕",serif; font-size:clamp(22px,4vw,30px); margin:0 0 4px; }
+  header p{ margin:0; font-size:13px; color:var(--ink-soft); max-width:48ch; }
+  .hud{ display:flex; gap:8px; }
+  .hud div{ border:1.5px solid var(--ink); background:var(--card); padding:6px 12px; min-width:64px; text-align:center; }
+  .hud b{ display:block; font-size:18px; font-family:"Batang","바탕",serif; }
+  .hud span{ font-size:10.5px; color:var(--ink-soft); }
+  .hud .lv b{ color:#7048E8; } .hud .sc b{ color:#e8900c; } .hud .ln b{ color:#2563eb; }
+
+  .picker{ background:var(--card); border:1.5px solid var(--ink); border-radius:8px; padding:18px 20px; }
+  .picker .badge{ display:inline-block; background:#2563eb; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:3px; margin-bottom:10px; }
+  .picker h2{ margin:0 0 8px; font-size:19px; }
+  .howto{ background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin:12px 0 16px; font-size:13px; line-height:1.7; }
+  .legend{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; }
+  .legend i{ width:18px; height:18px; border-radius:4px; display:inline-block; font-style:normal; text-align:center; line-height:18px; font-size:11px; font-weight:800; color:#fff; }
+  .diff{ display:flex; gap:8px; margin:14px 0 6px; flex-wrap:wrap; }
+  .diff button{ flex:1; min-width:120px; border:1.5px solid var(--ink); background:var(--card); border-radius:8px; padding:12px 8px; text-align:center; }
+  .diff button b{ display:block; font-size:15px; }
+  .diff button span{ font-size:11.5px; color:var(--ink-soft); }
+  .diff button[aria-pressed="true"]{ background:var(--ink); color:#fff; }
+  .diff button[aria-pressed="true"] span{ color:#cfd7c9; }
+  .startbtn{ width:100%; background:#2563eb; color:#fff; border-radius:10px; padding:14px; font-size:16px; font-weight:800; margin-top:14px; }
+
+  #stage.hidden{ display:none; }
+  .playbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .backbtn{ border:1.5px solid var(--ink); background:var(--card); border-radius:999px; padding:7px 14px; font-weight:700; font-size:13px; }
+  .gamearea{ display:flex; gap:14px; align-items:flex-start; }
+  #boardWrap{ position:relative; background:var(--board); border:3px solid #0a0f0b; border-radius:6px; overflow:hidden; touch-action:none; flex:none; }
+  #boardWrap.shake{ animation:shake .28s; }
+  @keyframes shake{ 25%{transform:translateX(-6px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-3px)} }
+  .cell{ position:absolute; border-radius:2px; display:flex; align-items:center; justify-content:center; font-weight:800; }
+  .cell.empty{ background:var(--board2); box-shadow:inset 0 0 0 1px rgba(255,255,255,.03); }
+  .cell.wire{ background:var(--wire); color:#e5e7eb; }
+  .cell.resistor{ background:var(--resist); color:#fff; }
+  .cell.bulb{ background:var(--bulb); color:#fff; }
+  .cell.bulb.lit{ background:var(--bulb-lit); color:#7c5300; box-shadow:0 0 10px 3px #fde04799; }
+  .cell.switch.open{ background:var(--sw-open); color:#fff; }
+  .cell.switch.closed{ background:var(--sw-closed); color:#fff; }
+  .cell.switch{ cursor:pointer; }
+  .cell.active{ box-shadow:inset 0 0 0 2px #fff9; }
+  .cell.clearing{ animation:clearFlash .38s forwards; }
+  .cell.shorting{ animation:shortFlash .38s forwards; }
+  @keyframes clearFlash{ 0%{filter:brightness(1)} 40%{filter:brightness(2.4)} 100%{opacity:0;filter:brightness(2.4)} }
+  @keyframes shortFlash{ 0%{filter:brightness(1) saturate(1)} 40%{filter:brightness(1.8) saturate(0) hue-rotate(0deg); background:var(--danger)!important;} 100%{opacity:0;} }
+  .sidebar{ display:flex; flex-direction:column; gap:10px; width:110px; }
+  .nextbox{ background:var(--card); border:1.5px solid var(--ink); border-radius:8px; padding:8px; text-align:center; }
+  .nextbox .lab{ font-size:11px; color:var(--ink-soft); margin-bottom:4px; }
+  #nextGrid{ position:relative; width:88px; height:88px; margin:0 auto; }
+  .legendbox{ background:var(--card); border:1.5px solid var(--ink); border-radius:8px; padding:8px 10px; font-size:11px; line-height:1.9; }
+  .msg{ position:absolute; left:50%; top:14%; transform:translate(-50%,-8px); z-index:5; pointer-events:none;
+    padding:8px 16px; border-radius:999px; color:#fff; font-weight:800; font-size:14px; opacity:0; transition:opacity .2s, transform .2s; white-space:nowrap; }
+  .msg.on{ opacity:1; transform:translate(-50%,0); }
+  .msg.ok{ background:linear-gradient(135deg,#16a34a,#22c55e); }
+  .msg.bad{ background:linear-gradient(135deg,#dc2626,#ef4444); }
+  .ctrlbar{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:12px; }
+  .ctrlbar button{ border:1.5px solid var(--ink); background:var(--card); border-radius:10px; padding:13px 0; font-size:19px; }
+  .ctrlbar button:active{ background:var(--ink); color:#fff; }
+  .hint{ font-size:12px; color:var(--ink-soft); text-align:center; margin-top:6px; }
+
+  .start-screen,.over-screen,.pause-screen{ position:absolute; inset:0; background:rgba(10,15,11,.94); color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:16px; z-index:6; }
+  .start-screen h2,.over-screen h2,.pause-screen h2{ font-family:"Batang","바탕",serif; font-size:21px; margin:0 0 6px; }
+  .start-screen p{ font-size:12px; color:#cbd5c9; margin:0 0 14px; max-width:26ch; }
+  .over-screen .final{ font-family:"Batang","바탕",serif; font-size:34px; color:#fde047; margin:2px 0; }
+  .over-screen .stats{ display:flex; gap:14px; margin:10px 0 14px; }
+  .over-screen .stats div{ text-align:center; } .over-screen .stats b{ display:block; font-size:17px; }
+  .over-screen .stats span{ font-size:10.5px; color:#9fb0cf; }
+  .start-screen button,.pause-screen button{ background:#2563eb; color:#fff; border-radius:9px; padding:11px 22px; font-weight:800; }
+  .over-screen .rowbtn{ display:flex; gap:8px; }
+  .over-screen .rowbtn button{ border-radius:9px; padding:11px 18px; font-weight:800; font-size:13.5px; }
+  .over-screen .primary{ background:#2563eb; color:#fff; }
+  .over-screen .secondary{ background:transparent; border:1.5px solid #ffffff55; color:#fff; }
+  .hidden{ display:none !important; }
+  @media (max-width:560px){
+    header{ padding-right:52px; }
+    .gamearea{ gap:8px; }
+    .sidebar{ width:84px; }
+  }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>전기 회로 테트리스</h1><p>블록을 쌓아 가로줄을 도선·저항·전구로 완전히 이으면 회로가 켜지며 사라져요. 도선만으로 이으면 쇼트!</p></div>
+    <div class="hud">
+      <div class="lv"><b id="hudLevel">1</b><span>레벨</span></div>
+      <div class="ln"><b id="hudLines">0</b><span>줄</span></div>
+      <div class="sc"><b id="hudScore">0</b><span>점수</span></div>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <section class="picker" id="picker">
+    <span class="badge">중2 전기와 자기</span>
+    <h2>회로를 완성해 줄을 지워요</h2>
+    <div class="howto">
+      <b>가로줄 전체</b>가 채워지면 그 줄이 <b>왼쪽 벽(+)에서 오른쪽 벽(−)까지 끊김 없이 연결된 회로</b>인지 확인합니다.<br>
+      · 저항이나 전구가 하나라도 있으면 → 안전하게 켜지며 사라지고 점수를 얻어요.<br>
+      · 도선(━)만으로 채워졌다면 → <b>쇼트(합선)!</b> 감점과 함께 사라져요.<br>
+      · 스위치(⏻)가 <b>열림</b> 상태로 섞여 있으면 그 줄은 켜지지 않아요. 쌓인 스위치를 <b>손가락/마우스로 눌러 닫으면</b> 그 순간 여러 줄이 한꺼번에 켜질 수 있어요!
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--wire)">━</i>도선</span>
+      <span><i style="background:var(--resist)">Ω</i>저항</span>
+      <span><i style="background:var(--bulb)">💡</i>전구</span>
+      <span><i style="background:var(--sw-open)">⏻</i>스위치·열림</span>
+      <span><i style="background:var(--sw-closed)">⏻</i>스위치·닫힘</span>
+    </div>
+    <div class="diff" id="diffBox"></div>
+    <button class="startbtn" id="startBtn">회로 테트리스 시작</button>
+  </section>
+
+  <section id="stage" class="hidden">
+    <div class="playbar">
+      <button class="backbtn" id="backBtn">◀ 그만하기</button>
+      <span style="font-size:12.5px;color:var(--ink-soft)" id="diffLabel"></span>
+    </div>
+    <div class="gamearea">
+      <div id="boardWrap">
+        <div class="msg" id="msgBox"></div>
+        <div class="start-screen hidden" id="readyScreen"><h2>준비!</h2><p>곧 블록이 떨어집니다</p></div>
+        <div class="pause-screen hidden" id="pauseScreen"><h2>일시정지</h2><button id="resumeBtn">계속하기</button></div>
+        <div class="over-screen hidden" id="overScreen">
+          <h2>게임 종료</h2>
+          <div class="final" id="finalScore">0</div>
+          <div class="stats">
+            <div><b id="statLines">0</b><span>지운 줄</span></div>
+            <div><b id="statLevel">1</b><span>도달 레벨</span></div>
+            <div><b id="statShort">0</b><span>쇼트 횟수</span></div>
+          </div>
+          <div id="scoreBoxCT" style="width:260px;"></div>
+          <div class="rowbtn">
+            <button class="primary" id="retryBtn">다시 도전</button>
+            <button class="secondary" id="otherBtn">난이도 다시 고르기</button>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar">
+        <div class="nextbox"><div class="lab">다음 블록</div><div id="nextGrid"></div></div>
+        <div class="legendbox">
+          <div><i style="display:inline-block;width:10px;height:10px;background:var(--wire);border-radius:2px;margin-right:4px"></i>도선</div>
+          <div><i style="display:inline-block;width:10px;height:10px;background:var(--resist);border-radius:2px;margin-right:4px"></i>저항 Ω</div>
+          <div><i style="display:inline-block;width:10px;height:10px;background:var(--bulb);border-radius:2px;margin-right:4px"></i>전구 💡</div>
+          <div><i style="display:inline-block;width:10px;height:10px;background:var(--sw-open);border-radius:2px;margin-right:4px"></i>스위치(열림)</div>
+          <div><i style="display:inline-block;width:10px;height:10px;background:var(--sw-closed);border-radius:2px;margin-right:4px"></i>스위치(닫힘)</div>
+        </div>
+      </div>
+    </div>
+    <div class="ctrlbar">
+      <button id="btnLeft" aria-label="왼쪽">◀</button>
+      <button id="btnRotate" aria-label="회전">⟳</button>
+      <button id="btnRight" aria-label="오른쪽">▶</button>
+      <button id="btnDown" aria-label="빨리 내리기">▼</button>
+      <button id="btnDrop" aria-label="즉시 낙하">⤓</button>
+    </div>
+    <p class="hint">쌓인 회로 위의 <b>스위치를 탭</b>하면 열고 닫을 수 있어요 · PC는 방향키·스페이스바로도 조작해요 · P 일시정지</p>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const COLS = 10, ROWS = 15;
+
+/* ---------------- 테트로미노 모양 (회전 상태 4개씩, [row,col] 오프셋) ---------------- */
+const SHAPES = {
+  I: [[[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]]],
+  O: [[[0,0],[0,1],[1,0],[1,1]], [[0,0],[0,1],[1,0],[1,1]], [[0,0],[0,1],[1,0],[1,1]], [[0,0],[0,1],[1,0],[1,1]]],
+  T: [[[0,1],[1,0],[1,1],[1,2]], [[0,1],[1,1],[1,2],[2,1]], [[1,0],[1,1],[1,2],[2,1]], [[0,1],[1,0],[1,1],[2,1]]],
+  S: [[[0,1],[0,2],[1,0],[1,1]], [[0,1],[1,1],[1,2],[2,2]], [[0,1],[0,2],[1,0],[1,1]], [[0,1],[1,1],[1,2],[2,2]]],
+  Z: [[[0,0],[0,1],[1,1],[1,2]], [[0,2],[1,1],[1,2],[2,1]], [[0,0],[0,1],[1,1],[1,2]], [[0,2],[1,1],[1,2],[2,1]]],
+  J: [[[0,0],[1,0],[1,1],[1,2]], [[0,1],[0,2],[1,1],[2,1]], [[1,0],[1,1],[1,2],[2,2]], [[0,1],[1,1],[2,0],[2,1]]],
+  L: [[[0,2],[1,0],[1,1],[1,2]], [[0,1],[1,1],[2,1],[2,2]], [[1,0],[1,1],[1,2],[2,0]], [[0,0],[0,1],[1,1],[2,1]]]
+};
+const PIECE_KEYS = Object.keys(SHAPES);
+
+const DIFFS = {
+  easy:   { name:"쉬움",  desc:"저항·전구 많이 · 느림", wireP:0.45, resP:0.28, bulbP:0.22, swP:0.05, drop:820 },
+  normal: { name:"보통",  desc:"균형 있게 · 보통 속도", wireP:0.58, resP:0.20, bulbP:0.14, swP:0.08, drop:680 },
+  hard:   { name:"어려움",desc:"도선·스위치 많음 · 빠름", wireP:0.68, resP:0.14, bulbP:0.08, swP:0.10, drop:520 }
+};
+
+function bag7(){ const a = PIECE_KEYS.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pickType(diffCfg){
+  const r = Math.random();
+  if(r < diffCfg.wireP) return "wire";
+  if(r < diffCfg.wireP + diffCfg.resP) return "resistor";
+  if(r < diffCfg.wireP + diffCfg.resP + diffCfg.bulbP) return "bulb";
+  return "switch";
+}
+function glyph(type, extra){
+  if(type === "wire") return "━";
+  if(type === "resistor") return "Ω";
+  if(type === "bulb") return "💡";
+  if(type === "switch") return "⏻";
+  return "";
+}
+
+/* ---------------- 게임 상태 ---------------- */
+let CT = null;   // 전역 노출(디버그/테스트용)
+let raf = null;
+let cellPx = 28;
+
+function newPiece(diffCfg, bag){
+  if(!bag.length) bag.push(...bag7());
+  const key = bag.shift();
+  const cells = SHAPES[key][0].map(([r,c]) => ({ r, c, type: pickType(diffCfg) }));
+  return { key, rot: 0, row: 0, col: Math.floor((COLS - 4) / 2), cells: SHAPES[key], types: cells.map(c => c.type) };
+}
+function pieceCells(p){
+  return SHAPES[p.key][p.rot].map(([r,c], i) => ({ r: r + p.row, c: c + p.col, type: p.types[i] }));
+}
+function collide(board, p, row, col, rot){
+  const shape = SHAPES[p.key][rot];
+  for(const [r,c] of shape){
+    const rr = r + row, cc = c + col;
+    if(cc < 0 || cc >= COLS || rr >= ROWS) return true;
+    if(rr >= 0 && board[rr][cc]) return true;
+  }
+  return false;
+}
+
+function startMission(diffKey){
+  const diffCfg = DIFFS[diffKey];
+  const bag = bag7();
+  CT = {
+    diff: diffKey, diffCfg,
+    board: Array.from({length: ROWS}, () => Array(COLS).fill(null)),
+    bag, cur: null, next: null,
+    score: 0, level: 1, lines: 0, shorts: 0,
+    dropMs: diffCfg.drop, acc: 0, last: 0,
+    running: false, paused: false, over: false
+  };
+  CT.cur = newPiece(diffCfg, bag);
+  CT.next = newPiece(diffCfg, bag);
+  $("picker").classList.add("hidden");
+  $("stage").classList.remove("hidden");
+  $("overScreen").classList.add("hidden");
+  $("pauseScreen").classList.add("hidden");
+  $("scoreBoxCT").innerHTML = "";
+  $("diffLabel").textContent = diffCfg.name + " 난이도";
+  sizeBoard();
+  buildCells();
+  updateHud();
+  renderNext();
+  $("readyScreen").classList.remove("hidden");
+  $("readyScreen").querySelector("h2").textContent = "준비!";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  setTimeout(() => {
+    if(!CT || CT.over) return;
+    $("readyScreen").classList.add("hidden");
+    CT.running = true; CT.last = 0;
+    renderBoard();
+    document.addEventListener("keydown", onKey);
+    raf = requestAnimationFrame(tick);
+  }, 700);
+}
+
+function sizeBoard(){
+  const avail = Math.min(340, window.innerWidth - (window.innerWidth < 560 ? 130 : 190));
+  cellPx = Math.max(18, Math.min(28, Math.floor(avail / COLS)));
+  const w = $("boardWrap");
+  w.style.width = (cellPx * COLS) + "px";
+  w.style.height = (cellPx * ROWS) + "px";
+}
+window.addEventListener("resize", () => { if(CT && !CT.over){ sizeBoard(); renderBoard(); } });
+
+let cellEls = [];
+function buildCells(){
+  const w = $("boardWrap");
+  w.querySelectorAll(".cell").forEach(e => e.remove());
+  cellEls = [];
+  for(let r = 0; r < ROWS; r++){
+    const row = [];
+    for(let c = 0; c < COLS; c++){
+      const el = document.createElement("div");
+      el.className = "cell empty";
+      el.style.width = cellPx + "px"; el.style.height = cellPx + "px";
+      el.style.left = (c * cellPx) + "px"; el.style.top = (r * cellPx) + "px";
+      el.style.fontSize = Math.round(cellPx * 0.55) + "px";
+      el.dataset.r = r; el.dataset.c = c;
+      el.addEventListener("click", () => onCellClick(r, c));
+      w.appendChild(el);
+      row.push(el);
+    }
+    cellEls.push(row);
+  }
+}
+function paintCell(el, cellData, active){
+  el.className = "cell " + (cellData ? cellData.type : "empty") + (active ? " active" : "");
+  if(cellData && cellData.type === "switch") el.classList.add(cellData.state);
+  if(cellData && cellData.type === "bulb" && cellData.lit) el.classList.add("lit");
+  el.textContent = cellData ? glyph(cellData.type) : "";
+}
+function renderBoard(){
+  for(let r = 0; r < ROWS; r++) for(let c = 0; c < COLS; c++) paintCell(cellEls[r][c], CT.board[r][c], false);
+  if(CT.cur){
+    pieceCells(CT.cur).forEach(({ r, c, type }) => {
+      if(r >= 0 && r < ROWS && c >= 0 && c < COLS) paintCell(cellEls[r][c], { type, state: "open" }, true);
+    });
+  }
+}
+function renderNext(){
+  const box = $("nextGrid");
+  box.innerHTML = "";
+  const p = CT.next, cells = SHAPES[p.key][0];
+  const minR = Math.min(...cells.map(x => x[0])), minC = Math.min(...cells.map(x => x[1]));
+  const sz = 20;
+  cells.forEach(([r, c], i) => {
+    const el = document.createElement("div");
+    el.className = "cell " + p.types[i];
+    el.style.position = "absolute"; el.style.width = sz + "px"; el.style.height = sz + "px";
+    el.style.left = ((c - minC) * sz + 6) + "px"; el.style.top = ((r - minR) * sz + 6) + "px";
+    el.style.fontSize = "11px";
+    el.textContent = glyph(p.types[i]);
+    box.appendChild(el);
+  });
+}
+
+/* ---------------- 이동/회전 ---------------- */
+function tryMove(dc){
+  if(!CT || !CT.running || CT.paused) return;
+  const p = CT.cur;
+  if(!collide(CT.board, p, p.row, p.col + dc, p.rot)){ p.col += dc; renderBoard(); }
+}
+function tryRotate(){
+  if(!CT || !CT.running || CT.paused) return;
+  const p = CT.cur, nr = (p.rot + 1) % 4;
+  const kicks = [0, -1, 1, -2, 2];
+  for(const k of kicks){
+    if(!collide(CT.board, p, p.row, p.col + k, nr)){ p.rot = nr; p.col += k; renderBoard(); return; }
+  }
+}
+function softDrop(){
+  if(!CT || !CT.running || CT.paused) return;
+  const p = CT.cur;
+  if(!collide(CT.board, p, p.row + 1, p.col, p.rot)){ p.row++; CT.score += 1; updateHud(); renderBoard(); }
+  else lockPiece();
+}
+function hardDrop(){
+  if(!CT || !CT.running || CT.paused) return;
+  const p = CT.cur;
+  let n = 0;
+  while(!collide(CT.board, p, p.row + 1, p.col, p.rot)){ p.row++; n++; }
+  CT.score += n * 2; updateHud();
+  lockPiece();
+}
+function lockPiece(){
+  const p = CT.cur;
+  pieceCells(p).forEach(({ r, c, type }) => {
+    if(r < 0) return;
+    CT.board[r][c] = type === "switch" ? { type, state: "open" } : { type };
+  });
+  window.KJS && KJS.ok({ toast: false });
+  resolveRows(false);
+  if(CT.over) return;
+  CT.cur = CT.next;
+  CT.next = newPiece(CT.diffCfg, CT.bag);
+  renderNext();
+  if(collide(CT.board, CT.cur, CT.cur.row, CT.cur.col, CT.cur.rot)){ gameOver(); return; }
+  renderBoard();
+}
+
+/* ---------------- 줄 판정: 도선/저항/전구/스위치(닫힘) = 전도, 스위치(열림) = 단선 ---------------- */
+function rowConductive(row){ return row.every(cell => cell && (cell.type !== "switch" || cell.state === "closed")); }
+function rowSafe(row){ return row.some(cell => cell.type === "resistor" || cell.type === "bulb"); }
+
+function resolveRows(fromSwitch){
+  const full = [];
+  for(let r = 0; r < ROWS; r++) if(CT.board[r].every(c => c)) full.push(r);
+  const clearRows = [], shortRows = [];
+  full.forEach(r => {
+    if(!rowConductive(CT.board[r])) return; // 스위치 열림 -> 대기
+    if(rowSafe(CT.board[r])) clearRows.push(r); else shortRows.push(r);
+  });
+  if(!clearRows.length && !shortRows.length) return;
+
+  const allClear = [...clearRows, ...shortRows].sort((a,b)=>a-b);
+  allClear.forEach(r => {
+    for(let c = 0; c < COLS; c++){
+      const el = cellEls[r][c];
+      el.classList.add(shortRows.includes(r) ? "shorting" : "clearing");
+      if(clearRows.includes(r) && CT.board[r][c].type === "bulb") CT.board[r][c].lit = true;
+    }
+  });
+  if(clearRows.length){
+    const n = clearRows.length;
+    const base = [0, 10, 25, 45, 70][Math.min(n, 4)] * CT.level;
+    const bulbBonus = clearRows.reduce((s, r) => s + CT.board[r].filter(c => c.type === "bulb").length * 5, 0);
+    CT.score += base + bulbBonus;
+    CT.lines += n;
+    CT.level = Math.floor(CT.lines / 8) + 1;
+    CT.dropMs = Math.max(140, CT.diffCfg.drop - (CT.level - 1) * 45);
+    showMsg((n >= 2 ? n + "줄 동시 점등! ⚡ " : "회로 완성! 💡 ") + "+" + (base + bulbBonus), "ok");
+    window.KJS && KJS.ok({ toast: false });
+  }
+  if(shortRows.length){
+    CT.shorts += shortRows.length;
+    CT.score = Math.max(0, CT.score - 15 * shortRows.length);
+    showMsg("쇼트 발생! ⚡ 도선만으론 위험해요 (-" + (15 * shortRows.length) + ")", "bad");
+    window.KJS && KJS.no({ toast: false });
+    $("boardWrap").classList.remove("shake"); void $("boardWrap").offsetWidth; $("boardWrap").classList.add("shake");
+  }
+  updateHud();
+  setTimeout(() => {
+    const keep = CT.board.filter((_, r) => !allClear.includes(r));
+    while(keep.length < ROWS) keep.unshift(Array(COLS).fill(null));
+    CT.board = keep;
+    renderBoard();
+  }, 220);
+}
+
+function onCellClick(r, c){
+  if(!CT || CT.paused) return;
+  const cell = CT.board[r][c];
+  if(!cell || cell.type !== "switch") return;
+  cell.state = cell.state === "open" ? "closed" : "open";
+  paintCell(cellEls[r][c], cell, false);
+  resolveRows(true);
+}
+
+function showMsg(text, kind){
+  const m = $("msgBox"); m.textContent = text; m.className = "msg on " + kind;
+  clearTimeout(showMsg._t); showMsg._t = setTimeout(() => { m.className = "msg " + kind; }, 1500);
+}
+function updateHud(){
+  $("hudLevel").textContent = CT.level; $("hudScore").textContent = CT.score; $("hudLines").textContent = CT.lines;
+}
+
+/* ---------------- 루프 ---------------- */
+function tick(ts){
+  if(!CT || !CT.running) return;
+  if(CT.paused){ raf = requestAnimationFrame(tick); return; }
+  if(!CT.last) CT.last = ts;
+  const dt = Math.min(50, ts - CT.last); CT.last = ts;
+  CT.acc += dt;
+  if(CT.acc >= CT.dropMs){
+    CT.acc = 0;
+    const p = CT.cur;
+    if(!collide(CT.board, p, p.row + 1, p.col, p.rot)) p.row++;
+    else lockPiece();
+    renderBoard();
+  }
+  raf = requestAnimationFrame(tick);
+}
+function onKey(e){
+  if(!CT || !CT.running) return;
+  if(e.key === "p" || e.key === "P"){ togglePause(); e.preventDefault(); return; }
+  if(CT.paused) return;
+  if(e.key === "ArrowLeft"){ tryMove(-1); e.preventDefault(); }
+  else if(e.key === "ArrowRight"){ tryMove(1); e.preventDefault(); }
+  else if(e.key === "ArrowDown"){ softDrop(); e.preventDefault(); }
+  else if(e.key === "ArrowUp" || e.key === "x" || e.key === "X"){ tryRotate(); e.preventDefault(); }
+  else if(e.key === " "){ hardDrop(); e.preventDefault(); }
+}
+function togglePause(v){
+  if(!CT || CT.over) return;
+  CT.paused = (v === undefined) ? !CT.paused : v;
+  $("pauseScreen").classList.toggle("hidden", !CT.paused);
+  if(!CT.paused) CT.last = 0;
+}
+document.addEventListener("visibilitychange", () => { if(CT && CT.running && document.hidden) togglePause(true); });
+
+$("btnLeft").addEventListener("click", () => tryMove(-1));
+$("btnRight").addEventListener("click", () => tryMove(1));
+$("btnRotate").addEventListener("click", tryRotate);
+$("btnDown").addEventListener("click", softDrop);
+$("btnDrop").addEventListener("click", hardDrop);
+$("resumeBtn").addEventListener("click", () => togglePause(false));
+
+function gameOver(){
+  CT.running = false; CT.over = true;
+  cancelAnimationFrame(raf);
+  document.removeEventListener("keydown", onKey);
+  window.KJS && KJS.no({ msg: "회로판이 가득 찼어요! 💥" });
+  $("finalScore").textContent = CT.score;
+  $("statLines").textContent = CT.lines;
+  $("statLevel").textContent = CT.level;
+  $("statShort").textContent = CT.shorts;
+  $("overScreen").classList.remove("hidden");
+  if(CT.score > 0 || CT.lines > 0){
+    window.KJSScore && KJSScore.finishIndividual({
+      game: "circuit-tetris", unit: "전기와 자기", lesson: DIFFS[CT.diff].name + " 난이도",
+      score: CT.score, accuracy: 100, minAcc: 0, container: $("scoreBoxCT")
+    });
+  }
+}
+$("retryBtn").addEventListener("click", () => startMission(CT.diff));
+$("otherBtn").addEventListener("click", () => {
+  CT = null; document.removeEventListener("keydown", onKey);
+  $("stage").classList.add("hidden"); $("picker").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/* ---------------- 난이도 선택 ---------------- */
+let selDiff = "normal";
+function renderDiff(){
+  const box = $("diffBox"); box.innerHTML = "";
+  Object.keys(DIFFS).forEach(k => {
+    const d = DIFFS[k];
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-pressed", String(k === selDiff));
+    b.innerHTML = "<b>" + d.name + "</b><span>" + d.desc + "</span>";
+    b.onclick = () => { selDiff = k; renderDiff(); };
+    box.appendChild(b);
+  });
+}
+renderDiff();
+$("startBtn").addEventListener("click", () => startMission(selDiff));
+</script>
+
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload();
+});
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script src="./sounds/kjs-scoreboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>용해도 곡선과 석출량 계산 (Solubility Curve & Precipitation) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --kno3: #ef4444;
+      --nano3: #f59e0b;
+      --nacl: #3b82f6;
+      --h3bo3: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 상단 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 메인 캔버스 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+      cursor: crosshair;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #ef4444; }
+    .dash-card.c2 { border-top: 3px solid #3b82f6; }
+    .dash-card.c3 { border-top: 3px solid #10b981; }
+    .dash-card.c4 { border-top: 3px solid #f59e0b; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .slider-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 110px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2563eb;
+      cursor: pointer;
+    }
+
+    .substance-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .sub-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .sub-chip:hover { background: #f1f5f9; color: #0f172a; }
+    .sub-chip.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+    .btn-action.cool {
+      background: #e0f2fe;
+      border-color: #0284c7;
+      color: #0369a1;
+    }
+    .btn-action.cool:hover { background: #bae6fd; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 430px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>🧪 용해도 곡선과 석출량 계산 (Solubility & Precipitation)</h1>
+      <p>온도에 따른 고체 용해도 곡선과 포화 용액 냉각 시 석출되는 결정의 질량 자동 계산 및 재결정 시뮬레이터</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 용해도(Solubility)와 결정 석출의 과학적 원리</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🌡️ 1. 용해도의 정의와 용해도 곡선</h4>
+        <ul>
+          <li><strong>용해도:</strong> 어떤 온도에서 <strong>물(용매) 100g</strong>에 최대로 녹을 수 있는 용질의 g 수.</li>
+          <li><strong>온도와의 관계:</strong> 대부분의 고체는 온도가 높아질수록 용해도가 증가합니다.</li>
+          <li><strong>용액의 3가지 상태:</strong>
+            <br>• <strong>포화 용액:</strong> 곡선 상의 점 (최대로 녹아 있음)
+            <br>• <strong>불포화 용액:</strong> 곡선 아래쪽 영역 (더 녹을 수 있음)
+            <br>• <strong>과포화 용액:</strong> 곡선 위쪽 영역 (불안정, 초과분 석출)
+          </li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>💎 2. 석출량 계산 및 재결정(Recrystallization)</h4>
+        <ul>
+          <li><strong>석출량 계산 공식 (물 100g 기준):</strong>
+            <br>$$\text{석출량 (g)} = (\text{고온 } T_1\text{에서 녹아있던 용질량}) - (\text{냉각 온도 } T_2\text{에서의 용해도})$$
+          </li>
+          <li><strong>물 질량이 다를 때:</strong> 물이 50g이면 석출량도 절반($\times 0.5$), 물이 200g이면 석출량도 2배($\times 2$).</li>
+          <li><strong>재결정:</strong> 온도에 따른 용해도 차이가 큰 물질($\text{KNO}_3$)과 작은 물질($\text{NaCl}$)의 혼합물을 높은 온도에서 모두 녹인 후 냉각시켜 순수한 결정을 분리하는 방법.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 캔버스 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl">현재 용액 온도 & 상태</div>
+      <div class="dash-val"><span id="dispCurrentTemp">60.0</span> <span style="font-size:0.85rem; color:#64748b;">℃</span></div>
+      <div class="dash-sub" id="dispSolutionStatus" style="color:#ef4444; font-weight:700;">포화 용액 (곡선 위)</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl">현재 용해도 ($S$, 물 100g 기준)</div>
+      <div class="dash-val" id="dispSolubility">109.2 g</div>
+      <div class="dash-sub" id="dispSolWaterScale">물 100g에 최대 109.2g 용해</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl">냉각 시 석출되는 결정량</div>
+      <div class="dash-val" id="dispPrecipitation" style="color:#2563eb;">77.3 g 석출</div>
+      <div class="dash-sub" id="dispPrecipFormula">109.2g - 31.9g (20℃) = 77.3g</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl">실험 물질 특성</div>
+      <div class="dash-val" id="dispSubName" style="color:#d97706; font-size:1.05rem;">질산 포타슘 (KNO₃)</div>
+      <div class="dash-sub">온도에 따른 용해도 변화 매우 큼</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <!-- 4대 물질 선택 칩 -->
+      <div class="substance-chips" id="substanceChips">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b;">물질 선택:</span>
+        <button class="sub-chip active" data-sub="KNO3"><span class="dot" style="background:#ef4444;"></span> 질산 포타슘 (KNO₃)</button>
+        <button class="sub-chip" data-sub="NaNO3"><span class="dot" style="background:#f59e0b;"></span> 질산 나트륨 (NaNO₃)</button>
+        <button class="sub-chip" data-sub="NaCl"><span class="dot" style="background:#3b82f6;"></span> 염화 나트륨 (NaCl)</button>
+        <button class="sub-chip" data-sub="H3BO3"><span class="dot" style="background:#10b981;"></span> 붕산 (H₃BO₃)</button>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action cool" id="btnCoolDown">❄️ 20℃로 급속 냉각 (석출 관찰)</button>
+        <button class="btn-action" id="btnReset">↺ 초기화 (60℃ 포화)</button>
+      </div>
+    </div>
+
+    <!-- 변인 조절 슬라이더 행 -->
+    <div class="controls-row" style="border-top:1px solid #f1f5f9; padding-top:8px;">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <!-- 시작 고온 온도 슬라이더 -->
+        <div class="slider-box">
+          <span>용액 온도 (T):</span>
+          <input type="range" id="tempSlider" min="10" max="90" step="1" value="60">
+          <span id="tempVal" style="color:#ef4444; width:45px;">60℃</span>
+        </div>
+
+        <!-- 냉각 목표 온도 슬라이더 -->
+        <div class="slider-box">
+          <span>냉각 목표 (T_cool):</span>
+          <input type="range" id="coolSlider" min="0" max="50" step="5" value="20">
+          <span id="coolVal" style="color:#0284c7; width:45px;">20℃</span>
+        </div>
+
+        <!-- 물의 양 슬라이더 -->
+        <div class="slider-box">
+          <span>물(용매) 질량:</span>
+          <input type="range" id="waterSlider" min="50" max="200" step="50" value="100">
+          <span id="waterVal" style="color:#2563eb; width:50px;">100 g</span>
+        </div>
+      </div>
+
+      <div style="font-size:0.75rem; color:#94a3b8;">
+        * 그래프 곡선을 직접 마우스로 클릭하면 해당 온도로 즉시 이동합니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 4대 교과서 물질 용해도 데이터 (0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 ℃)
+  const SUBSTANCES = {
+    KNO3: {
+      name: "질산 포타슘 (KNO₃)",
+      color: "#ef4444",
+      desc: "온도에 따른 용해도 변화가 매우 큼 (재결정 최적)",
+      // g / 100g water
+      data: [13.3, 20.9, 31.9, 45.8, 63.9, 85.5, 109.2, 138.0, 169.0, 202.0, 246.0]
+    },
+    NaNO3: {
+      name: "질산 나트륨 (NaNO₃)",
+      color: "#f59e0b",
+      desc: "고온과 저온 모두 매우 잘 녹음",
+      data: [73.0, 80.0, 88.0, 96.0, 104.0, 114.0, 124.0, 136.0, 148.0, 162.0, 180.0]
+    },
+    NaCl: {
+      name: "염화 나트륨 (NaCl)",
+      color: "#3b82f6",
+      desc: "온도에 따른 용해도 변화가 거의 없음",
+      data: [35.7, 35.8, 36.0, 36.3, 36.6, 37.0, 37.3, 37.8, 38.4, 39.0, 39.8]
+    },
+    H3BO3: {
+      name: "붕산 (H₃BO₃)",
+      color: "#10b981",
+      desc: "전반적으로 용해도가 낮은 편",
+      data: [2.8, 3.6, 4.9, 6.8, 8.9, 11.5, 14.8, 18.7, 23.5, 29.0, 35.0]
+    }
+  };
+
+  let curSubKey = "KNO3";
+  let currentTemp = 60.0;
+  let coolTargetTemp = 20.0;
+  let waterMass = 100; // g
+  let isCoolingAnim = false;
+  let crystalCount = 0; // 비커 바닥에 쌓인 결정 파티클
+
+  // DOM 요소 참조
+  const subChips = document.querySelectorAll(".sub-chip");
+  const tempSlider = document.getElementById("tempSlider");
+  const tempVal = document.getElementById("tempVal");
+  const coolSlider = document.getElementById("coolSlider");
+  const coolVal = document.getElementById("coolVal");
+  const waterSlider = document.getElementById("waterSlider");
+  const waterVal = document.getElementById("waterVal");
+  const btnCoolDown = document.getElementById("btnCoolDown");
+  const btnReset = document.getElementById("btnReset");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const dispCurrentTemp = document.getElementById("dispCurrentTemp");
+  const dispSolutionStatus = document.getElementById("dispSolutionStatus");
+  const dispSolubility = document.getElementById("dispSolubility");
+  const dispSolWaterScale = document.getElementById("dispSolWaterScale");
+  const dispPrecipitation = document.getElementById("dispPrecipitation");
+  const dispPrecipFormula = document.getElementById("dispPrecipFormula");
+  const dispSubName = document.getElementById("dispSubName");
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // 보간 함수 (온도 T에서의 용해도 계산)
+  function getSolubility(subKey, T) {
+    const arr = SUBSTANCES[subKey].data;
+    const clampedT = Math.max(0, Math.min(100, T));
+    const idx = Math.floor(clampedT / 10);
+    const frac = (clampedT % 10) / 10;
+    if (idx >= 10) return arr[10];
+    return arr[idx] + (arr[idx + 1] - arr[idx]) * frac;
+  }
+
+  // --- 대시보드 갱신 ---
+  function updateDashboard() {
+    const sub = SUBSTANCES[curSubKey];
+    dispSubName.textContent = sub.name;
+    dispSubName.style.color = sub.color;
+
+    dispCurrentTemp.textContent = currentTemp.toFixed(1);
+
+    const sCur = getSolubility(curSubKey, currentTemp);
+    const sCool = getSolubility(curSubKey, coolTargetTemp);
+
+    const waterFactor = waterMass / 100.0;
+    const dissolvedActual = sCur * waterFactor;
+    const dissolvedCoolMax = sCool * waterFactor;
+
+    dispSolubility.textContent = `${sCur.toFixed(1)} g`;
+    dispSolWaterScale.textContent = `물 ${waterMass}g 기준 최대 ${dissolvedActual.toFixed(1)}g 용해`;
+
+    // 석출량 계산
+    if (currentTemp > coolTargetTemp) {
+      const precip = Math.max(0, dissolvedActual - dissolvedCoolMax);
+      dispPrecipitation.textContent = `${precip.toFixed(1)} g 석출`;
+      dispPrecipFormula.textContent = `${dissolvedActual.toFixed(1)}g - ${dissolvedCoolMax.toFixed(1)}g = ${precip.toFixed(1)}g (${coolTargetTemp}℃로 냉각 시)`;
+    } else {
+      dispPrecipitation.textContent = "0.0 g (석출 없음)";
+      dispPrecipFormula.textContent = "현재 온도가 냉각 온도 이하입니다.";
+    }
+
+    dispSolutionStatus.textContent = "포화 용액 (Saturated)";
+    dispSolutionStatus.style.color = "#ef4444";
+  }
+
+  // ==========================================================================
+  // [렌더링 엔진]
+  // ==========================================================================
+  function renderAll() {
+    ctx.clearRect(0, 0, width, height);
+
+    const splitX = Math.min(380, width * 0.38);
+
+    // 1. 좌측: 비커 실험실 (온도계, 용액, 석출 결정)
+    renderBeakerLab(splitX);
+
+    // 2. 우측: 정밀 용해도 곡선 그래프
+    renderSolubilityGraph(splitX + 20, width - 20);
+  }
+
+  // --- 좌측: 비커 실험실 렌더링 ---
+  function renderBeakerLab(areaW) {
+    ctx.save();
+
+    // 바탕 테두리
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(8, 8, areaW - 12, height - 16);
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(8, 8, areaW - 12, height - 16);
+
+    ctx.fillStyle = "#334155";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("🧪 비커 용해 및 결정 석출 관찰", 20, 30);
+
+    const cx = areaW / 2 + 4;
+    const bW = 190;
+    const bH = 240;
+    const bBottom = height - 60;
+    const bTop = bBottom - bH;
+    const bLeft = cx - bW / 2;
+    const bRight = cx + bW / 2;
+
+    const sCur = getSolubility(curSubKey, currentTemp);
+    const sCool = getSolubility(curSubKey, coolTargetTemp);
+    const precip = Math.max(0, (sCur - sCool) * (waterMass / 100.0));
+
+    // 액체 높이
+    const liquidH = 135;
+    const liquidTop = bBottom - liquidH;
+
+    // 용액 배경 (온도에 따른 은은한 틴트)
+    const grad = ctx.createLinearGradient(0, liquidTop, 0, bBottom);
+    grad.addColorStop(0, "rgba(56, 189, 248, 0.15)");
+    grad.addColorStop(1, "rgba(56, 189, 248, 0.3)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(bLeft + 2, liquidTop, bW - 4, liquidH);
+
+    // 수면 라인
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bLeft + 2, liquidTop);
+    ctx.lineTo(bRight - 2, liquidTop);
+    ctx.stroke();
+
+    // 용해된 이온/분자 입자들 (자유롭게 떠다님)
+    ctx.fillStyle = SUBSTANCES[curSubKey].color;
+    for (let i = 0; i < 28; i++) {
+      const px = bLeft + 25 + (i * 27) % (bW - 50);
+      const py = liquidTop + 15 + ((i * 33 + performance.now() * 0.02) % (liquidH - 45));
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 바닥에 가라앉은 석출 결정 더미 (Precipitate Crystals)
+    if (precip > 0.5) {
+      const pileH = Math.min(45, (precip / 100) * 45);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = SUBSTANCES[curSubKey].color;
+      ctx.lineWidth = 1.5;
+
+      // 하단 모래시계형 결정 삼각 더미
+      ctx.beginPath();
+      ctx.moveTo(cx - 70, bBottom);
+      ctx.lineTo(cx, bBottom - pileH);
+      ctx.lineTo(cx + 70, bBottom);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fill();
+      ctx.stroke();
+
+      // 결정 반짝임 효과
+      ctx.fillStyle = SUBSTANCES[curSubKey].color;
+      for (let k = 0; k < Math.min(30, precip); k++) {
+        const kx = cx - 55 + (k * 19) % 110;
+        const ky = bBottom - (k * 7) % pileH;
+        ctx.fillRect(kx, ky, 3, 3);
+      }
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`석출 결정: ${precip.toFixed(1)} g`, cx, bBottom - pileH - 10);
+    }
+
+    // 비커 유리벽
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(bLeft, bTop, bW, bH);
+
+    // 온도계 렌더링
+    drawThermometer(cx + 55, bTop - 15, bBottom - 20, currentTemp);
+
+    // 하단 라벨
+    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`물(용매) ${waterMass} g`, cx, bBottom + 26);
+
+    ctx.restore();
+  }
+
+  function drawThermometer(tx, topY, bottomY, temp) {
+    const thW = 12;
+    const h = bottomY - topY;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(tx - thW / 2, topY, thW, h);
+    ctx.fillRect(tx - thW / 2, topY, thW, h);
+
+    // 수은구
+    ctx.beginPath();
+    ctx.arc(tx, bottomY + 4, 10, 0, Math.PI * 2);
+    ctx.fillStyle = "#ef4444";
+    ctx.fill();
+    ctx.stroke();
+
+    // 빨간 기둥
+    const pct = Math.max(0, Math.min(100, temp)) / 100;
+    const redH = pct * (h - 20);
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(tx - 3, bottomY - redH, 6, redH + 4);
+
+    // 온도 텍스트
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`${temp.toFixed(0)}℃`, tx, topY - 6);
+  }
+
+  // --- 우측: 정밀 용해도 곡선 그래프 렌더링 ---
+  function renderSolubilityGraph(gx, rX) {
+    ctx.save();
+
+    const gy = 45;
+    const gw = rX - gx - 20;
+    const gh = height - 90;
+
+    // 그래프 배경
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(gx, gy, gw, gh);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("📈 주요 물질의 용해도 곡선 (Solubility Curves)", gx + 10, gy - 14);
+
+    // 스케일 변환 함수
+    // 온도 T (0 ~ 100 ℃) -> X
+    function toPxX(T) {
+      return gx + (Math.max(0, Math.min(100, T)) / 100) * gw;
+    }
+    // 용해도 S (0 ~ 250 g/100g water) -> Y
+    function toPxY(S) {
+      const maxS = 250;
+      return gy + gh - (Math.max(0, Math.min(maxS, S)) / maxS) * gh;
+    }
+
+    // 1. 격자선 및 눈금 렌더링
+    ctx.strokeStyle = "#f1f5f9";
+    ctx.lineWidth = 1;
+    ctx.fillStyle = "#64748b";
+    ctx.font = "11px sans-serif";
+
+    // X축 (온도: 0, 20, 40, 60, 80, 100 ℃)
+    ctx.textAlign = "center";
+    for (let t = 0; t <= 100; t += 20) {
+      const px = toPxX(t);
+      ctx.beginPath();
+      ctx.moveTo(px, gy);
+      ctx.lineTo(px, gy + gh);
+      ctx.stroke();
+      ctx.fillText(`${t}℃`, px, gy + gh + 18);
+    }
+
+    // Y축 (용해도: 0, 50, 100, 150, 200, 250 g)
+    ctx.textAlign = "right";
+    for (let s = 0; s <= 250; s += 50) {
+      const py = toPxY(s);
+      ctx.beginPath();
+      ctx.moveTo(gx, py);
+      ctx.lineTo(gx + gw, py);
+      ctx.stroke();
+      ctx.fillText(`${s}`, gx - 8, py + 4);
+    }
+
+    // 축 타이틀
+    ctx.fillStyle = "#334155";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("온도 (℃)", gx + gw / 2, gy + gh + 34);
+
+    ctx.save();
+    ctx.translate(gx - 40, gy + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("용해도 (g / 물 100g)", 0, 0);
+    ctx.restore();
+
+    // 2. 4대 물질 용해도 곡선 렌더링
+    Object.keys(SUBSTANCES).forEach(key => {
+      const sub = SUBSTANCES[key];
+      const isSelected = key === curSubKey;
+
+      ctx.strokeStyle = sub.color;
+      ctx.lineWidth = isSelected ? 3.5 : 1.8;
+      ctx.globalAlpha = isSelected ? 1.0 : 0.45;
+
+      ctx.beginPath();
+      for (let t = 0; t <= 100; t += 2) {
+        const s = getSolubility(key, t);
+        const px = toPxX(t);
+        const py = toPxY(s);
+        if (t === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      // 끝점 라벨
+      const endS = getSolubility(key, 95);
+      ctx.fillStyle = sub.color;
+      ctx.font = isSelected ? "bold 12px sans-serif" : "11px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(key, toPxX(95), toPxY(endS) - 6);
+    });
+
+    // 3. 현재 온도(T)와 냉각 온도(T_cool) 기준선 및 석출량 화살표 표시
+    const pCurX = toPxX(currentTemp);
+    const pCurY = toPxY(getSolubility(curSubKey, currentTemp));
+
+    const pCoolX = toPxX(coolTargetTemp);
+    const pCoolY = toPxY(getSolubility(curSubKey, coolTargetTemp));
+
+    // 냉각 목표 온도 수직 점선 (파랑)
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pCoolX, gy);
+    ctx.lineTo(pCoolX, gy + gh);
+    ctx.stroke();
+
+    // 현재 온도 수직 실선 (빨강)
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pCurX, gy);
+    ctx.lineTo(pCurX, gy + gh);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 현재 포화점 A (고온)
+    ctx.beginPath();
+    ctx.arc(pCurX, pCurY, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#ef4444";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`현재: ${currentTemp.toFixed(0)}℃ (${getSolubility(curSubKey, currentTemp).toFixed(1)}g)`, pCurX + 8, pCurY - 6);
+
+    // 냉각 포화점 B (저온)
+    ctx.beginPath();
+    ctx.arc(pCoolX, pCoolY, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#0284c7";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillText(`냉각점: ${coolTargetTemp.toFixed(0)}℃ (${getSolubility(curSubKey, coolTargetTemp).toFixed(1)}g)`, pCoolX + 8, pCoolY + 16);
+
+    // 석출량 수직 낙하 화살표 (A 수평 위치 -> B 포화선)
+    if (currentTemp > coolTargetTemp) {
+      const pDropY = toPxY(getSolubility(curSubKey, currentTemp)); // 고온 용질량 수평선
+      ctx.strokeStyle = "#9333ea";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pCoolX, pDropY);
+      ctx.lineTo(pCoolX, pCoolY);
+      ctx.stroke();
+
+      // 화살표 머리
+      ctx.fillStyle = "#9333ea";
+      ctx.beginPath();
+      ctx.moveTo(pCoolX, pCoolY);
+      ctx.lineTo(pCoolX - 5, pCoolY - 10);
+      ctx.lineTo(pCoolX + 5, pCoolY - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // 석출량 뱃지 라벨
+      const diffS = (getSolubility(curSubKey, currentTemp) - getSolubility(curSubKey, coolTargetTemp)) * (waterMass / 100);
+      ctx.fillStyle = "#9333ea";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`★ 석출량: ${diffS.toFixed(1)}g`, pCoolX - 10, (pDropY + pCoolY) / 2);
+    }
+
+    ctx.restore();
+  }
+
+  // --- 이벤트 리스너 ---
+  subChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      subChips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      curSubKey = chip.dataset.sub;
+      updateDashboard();
+      renderAll();
+    });
+  });
+
+  tempSlider.addEventListener("input", e => {
+    currentTemp = parseFloat(e.target.value);
+    tempVal.textContent = `${currentTemp.toFixed(0)}℃`;
+    updateDashboard();
+    renderAll();
+  });
+
+  coolSlider.addEventListener("input", e => {
+    coolTargetTemp = parseFloat(e.target.value);
+    coolVal.textContent = `${coolTargetTemp.toFixed(0)}℃`;
+    updateDashboard();
+    renderAll();
+  });
+
+  waterSlider.addEventListener("input", e => {
+    waterMass = parseInt(e.target.value);
+    waterVal.textContent = `${waterMass} g`;
+    updateDashboard();
+    renderAll();
+  });
+
+  btnCoolDown.addEventListener("click", () => {
+    coolTargetTemp = 20.0;
+    coolSlider.value = 20;
+    coolVal.textContent = "20℃";
+
+    // 부드러운 냉각 애니메이션
+    let startT = currentTemp;
+    let startTime = performance.now();
+
+    function stepCool(now) {
+      let progress = (now - startTime) / 800; // 0.8초 동안 냉각
+      if (progress < 1.0) {
+        currentTemp = startT + (20.0 - startT) * progress;
+        tempSlider.value = currentTemp.toFixed(0);
+        tempVal.textContent = `${currentTemp.toFixed(0)}℃`;
+        updateDashboard();
+        renderAll();
+        requestAnimationFrame(stepCool);
+      } else {
+        currentTemp = 20.0;
+        tempSlider.value = 20;
+        tempVal.textContent = "20℃";
+        updateDashboard();
+        renderAll();
+      }
+    }
+    requestAnimationFrame(stepCool);
+  });
+
+  btnReset.addEventListener("click", () => {
+    currentTemp = 60.0;
+    coolTargetTemp = 20.0;
+    waterMass = 100;
+    tempSlider.value = 60;
+    tempVal.textContent = "60℃";
+    coolSlider.value = 20;
+    coolVal.textContent = "20℃";
+    waterSlider.value = 100;
+    waterVal.textContent = "100 g";
+    updateDashboard();
+    renderAll();
+  });
+
+  // 그래프 클릭으로 온도 설정
+  canvas.addEventListener("click", e => {
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const splitX = Math.min(380, width * 0.38) + 20;
+    const gw = width - 20 - splitX - 20;
+
+    if (clickX >= splitX && clickX <= splitX + gw) {
+      const clickT = ((clickX - splitX) / gw) * 100;
+      currentTemp = Math.round(clickT);
+      tempSlider.value = currentTemp;
+      tempVal.textContent = `${currentTemp}℃`;
+      updateDashboard();
+      renderAll();
+    }
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  resizeCanvas();
+  updateDashboard();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>

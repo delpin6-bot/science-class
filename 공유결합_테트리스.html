@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>공유결합 테트리스 - 분자 합성 아케이드</title>
+<style>
+  :root {
+    --bg-main: #0f172a;
+    --panel-bg: #1e293b;
+    --card-bg: #334155;
+    --border-color: #475569;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #38bdf8;
+    --gold: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --board-bg: #090d16;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 12px; background: var(--bg-main); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    user-select: none; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  }
+  .app-wrap {
+    width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 12px;
+  }
+
+  /* Header */
+  header {
+    background: var(--panel-bg); border: 1.5px solid var(--border-color); border-radius: 12px;
+    padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    background: #0284c7; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px;
+  }
+  .brand h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+  .hud-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hud-item {
+    background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 5px 12px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700;
+  }
+  .hud-item.score { color: #fde047; }
+  .hud-item.level { color: #93c5fd; }
+  .hud-item.molecules { color: #86efac; }
+
+  /* Toolbar */
+  .toolbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .btn-tool {
+    background: var(--card-bg); border: 1.5px solid var(--border-color); color: var(--text-primary);
+    padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none;
+  }
+  .btn-tool:hover { background: #475569; border-color: var(--accent); }
+  .btn-tool.btn-home {
+    background: #0f172a; border-color: #38bdf8; color: #38bdf8; font-weight: 800;
+  }
+  .btn-tool.btn-home:hover {
+    background: #0284c7; color: #fff; border-color: #0284c7;
+  }
+  .btn-tool.btn-help {
+    background: #1e3a8a; border-color: #60a5fa; color: #93c5fd; font-weight: 800;
+  }
+  .btn-tool.btn-help:hover {
+    background: #2563eb; color: #fff; border-color: #2563eb;
+  }
+
+  /* Workspace Layout */
+  .workspace {
+    display: grid; grid-template-columns: 350px 1fr; gap: 14px; align-items: start;
+  }
+  @media (max-width: 820px) {
+    .workspace { grid-template-columns: 1fr; justify-items: center; }
+  }
+
+  /* Board Area */
+  .board-container {
+    background: var(--panel-bg); border: 2px solid var(--border-color); border-radius: 12px;
+    padding: 12px; display: flex; flex-direction: column; align-items: center; position: relative;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 100%; max-width: 350px;
+  }
+  #tetrisCanvas {
+    background: var(--board-bg); border-radius: 8px; border: 1px solid #1e293b;
+    display: block; cursor: pointer;
+  }
+
+  /* Canvas Popups & Toasts */
+  .toast-molecule {
+    position: absolute; top: 28%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.96); border: 2px solid #38bdf8;
+    color: #fff; padding: 12px 24px; border-radius: 16px; text-align: center;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.5); pointer-events: none; z-index: 50;
+    animation: popToast 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .toast-molecule .f-name { font-size: 22px; font-weight: 900; color: #38bdf8; margin-bottom: 2px; }
+  .toast-molecule .c-name { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+  @keyframes popToast {
+    0% { opacity: 0; transform: translate(-50%, -40%) scale(0.7); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    30% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -65%) scale(0.9); }
+  }
+
+  /* Overlay Screens */
+  .overlay-screen {
+    position: absolute; inset: 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.96);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; gap: 12px; z-index: 60;
+  }
+  .overlay-screen h2 { margin: 0; font-size: 23px; color: #fff; }
+  .overlay-screen p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 300px; text-align: left; }
+  .btn-start {
+    background: linear-gradient(135deg, #0284c7, #0369a1); border: 1.5px solid #38bdf8;
+    color: #fff; font-size: 15px; font-weight: 800; padding: 10px 22px; border-radius: 8px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4); }
+  .overlay-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+  .hidden { display: none !important; }
+
+  /* Controls Bar (Mobile / Touch Friendly) */
+  .ctrl-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; margin-top: 10px;
+  }
+  .btn-action {
+    background: var(--card-bg); border: 1.5px solid var(--border-color); color: #fff;
+    padding: 12px 0; border-radius: 8px; font-size: 18px; font-weight: 800; cursor: pointer;
+    text-align: center; transition: all 0.1s;
+  }
+  .btn-action:active { background: #475569; transform: scale(0.95); }
+
+  /* Right Panel (Info, Guide, Log) */
+  .info-panel {
+    display: flex; flex-direction: column; gap: 10px; width: 100%;
+  }
+  .panel-card {
+    background: var(--panel-bg); border: 1.5px solid var(--border-color); border-radius: 12px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .panel-card h3 { margin: 0; font-size: 14px; font-weight: 800; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
+
+  /* Next Block Canvas */
+  .next-box {
+    display: flex; align-items: center; justify-content: center; height: 80px;
+    background: var(--board-bg); border-radius: 8px; border: 1px solid var(--border-color);
+  }
+  #nextCanvas { width: 120px; height: 70px; display: block; }
+
+  /* Valence Reference Table */
+  .valence-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; text-align: center;
+  }
+  .valence-table th { background: #0f172a; padding: 6px 4px; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; }
+  .valence-table td { padding: 6px 4px; border: 1px solid var(--border-color); font-weight: 700; }
+  .tag-arm { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+  .arm-shape { font-family: monospace; font-size: 12px; font-weight: 800; background: #0f172a; padding: 2px 6px; border-radius: 4px; }
+
+  /* Synthesized Molecules Log */
+  .log-container {
+    max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+  }
+  .log-item {
+    background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px;
+    padding: 5px 10px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-item b { color: #38bdf8; font-size: 12.5px; }
+  .log-item span { color: var(--gold); font-weight: 800; }
+
+  /* ==========================================================================
+     Modal Styles (게임 설명 & 공유결합 가이드 모달)
+     ========================================================================== */
+  .modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 16px; opacity: 1; transition: opacity 0.2s;
+  }
+  .modal-box {
+    background: #1e293b; border: 2px solid var(--border-color);
+    border-radius: 16px; max-width: 760px; width: 100%; max-height: 88vh;
+    overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    color: var(--text-primary);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;
+  }
+  .modal-header h2 { margin: 0; font-size: 19px; font-weight: 900; color: #38bdf8; }
+  .btn-close {
+    background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer;
+    padding: 4px 8px; border-radius: 6px;
+  }
+  .btn-close:hover { color: #fff; background: #334155; }
+
+  .guide-section {
+    background: #0f172a; border: 1.5px solid var(--border-color); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .guide-section h3 {
+    margin: 0 0 10px; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 7px;
+  }
+  .rule-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;
+  }
+  .rule-card {
+    background: #1e293b; border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .rule-card-title {
+    font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;
+  }
+  .rule-card-shape {
+    font-family: monospace; font-size: 14px; font-weight: 900; background: #090d16;
+    border: 1px solid #334155; padding: 4px 8px; border-radius: 6px; text-align: center;
+    margin: 4px 0; color: #fde047; letter-spacing: 1px;
+  }
+  .rule-card-desc {
+    font-size: 11.5px; color: var(--text-muted); line-height: 1.45;
+  }
+
+  .ctrl-table {
+    width: 100%; border-collapse: collapse; font-size: 12.5px;
+  }
+  .ctrl-table td {
+    padding: 6px 10px; border-bottom: 1px solid var(--border-color);
+  }
+  .key-cap {
+    display: inline-block; background: #334155; border: 1px solid #64748b;
+    border-radius: 4px; padding: 2px 7px; font-weight: 800; font-size: 11.5px; color: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<header class="unified-game-header">
+  <div class="header-brand">
+    <span class="game-badge">수업 게임</span>
+    <span class="game-title">공유결합 테트리스</span>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+
+<div class="app-wrap">
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span class="badge">화학교육 GBL</span>
+      <h1>⚛️ 공유결합 테트리스</h1>
+    </div>
+    <div class="hud-stats">
+      <div class="hud-item score" title="점수"><span>🏆</span><span id="hudScore">0</span></div>
+      <div class="hud-item level" title="레벨"><span>⭐ Lv.</span><span id="hudLevel">1</span></div>
+      <div class="hud-item molecules" title="합성한 분자 수"><span>🧪</span><span id="hudMols">0</span>개</div>
+    </div>
+    <div class="toolbar">
+      <a href="./시작하기_수업게임서랍.html" class="btn-tool btn-home" title="메인 메뉴(수업 게임 서랍)로 이동">
+        <span>🏠</span><span>메인 메뉴</span>
+      </a>
+      <button class="btn-tool btn-help" id="btnHelp" onclick="openGuideModal()" title="게임 방법 및 결합 규칙 설명">
+        <span>📖</span><span>게임 설명</span>
+      </button>
+      <button class="btn-tool" id="btnPause">⏸ 일시정지</button>
+      <button class="btn-tool" id="btnSound">🔊 소리 ON</button>
+      <button class="btn-tool" id="btnReset">↺ 처음으로</button>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <!-- Left: Canvas Board -->
+    <div class="board-container">
+      <canvas id="tetrisCanvas" width="320" height="576"></canvas>
+
+      <!-- Start Overlay -->
+      <div class="overlay-screen" id="startScreen">
+        <h2>공유결합 테트리스</h2>
+        <p>
+          • <b>결합 팔 맞추기</b>: 인접한 원자끼리 결합선을 1:1로 맞물리세요.<br>
+          • <b>분자 합성 소거</b>: 남는 팔 없이 안정한 분자(H₂, H₂O, CO₂, CH₄ 등)가 완성되면 즉시 합성 소거됩니다!<br>
+          • <b>비활성 기체 💣</b>: 닿는 순간 주변 3×3 미결합 블록을 날려주는 촉매 폭탄입니다.
+        </p>
+        <div class="overlay-btns">
+          <button class="btn-start" id="btnPlay">결합 실험 시작</button>
+          <button class="btn-tool" onclick="openGuideModal()">📖 게임 방법</button>
+          <a href="./시작하기_수업게임서랍.html" class="btn-tool btn-home">🏠 메인 메뉴</a>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div class="overlay-screen hidden" id="pauseScreen">
+        <h2>실험 일시정지</h2>
+        <p>결합 원리 복습을 위해 잠시 멈췄습니다.</p>
+        <div class="overlay-btns">
+          <button class="btn-start" id="btnResume">실험 계속하기</button>
+          <button class="btn-tool" onclick="openGuideModal()">📖 게임 방법</button>
+          <a href="./시작하기_수업게임서랍.html" class="btn-tool btn-home">🏠 메인 메뉴</a>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div class="overlay-screen hidden" id="overScreen">
+        <h2 style="color:var(--danger);">반응 챔버 포화!</h2>
+        <p>블록이 천장에 도달했습니다.</p>
+        <div style="font-size:16px; font-weight:800; color:var(--gold);">최종 점수: <span id="finalScore">0</span>점</div>
+        <div class="overlay-btns">
+          <button class="btn-start" id="btnRestart">다시 도전</button>
+          <button class="btn-tool" onclick="openGuideModal()">📖 결합 규칙 보기</button>
+          <a href="./시작하기_수업게임서랍.html" class="btn-tool btn-home">🏠 메인 메뉴</a>
+        </div>
+      </div>
+
+      <!-- Mobile Touch Controls Bar -->
+      <div class="ctrl-bar">
+        <button class="btn-action" id="btnLeft" title="왼쪽 이동">◀</button>
+        <button class="btn-action" id="btnRotate" title="원자 회전">⟳</button>
+        <button class="btn-action" id="btnRight" title="오른쪽 이동">▶</button>
+        <button class="btn-action" id="btnDown" title="소프트드롭">▼</button>
+        <button class="btn-action" id="btnDrop" title="하드드롭">⤓</button>
+      </div>
+    </div>
+
+    <!-- Right: Guide & Logs -->
+    <div class="info-panel">
+      <!-- Next Piece -->
+      <div class="panel-card">
+        <h3><span>📦</span> 다음 원자 블록 (Next Atom)</h3>
+        <div class="next-box">
+          <canvas id="nextCanvas" width="120" height="70"></canvas>
+        </div>
+      </div>
+
+      <!-- Valence Bond Guide Table -->
+      <div class="panel-card">
+        <h3>
+          <span>📚 원소별 결합선(팔) 규칙</span>
+          <button class="btn-tool" style="padding:3px 8px; font-size:11px;" onclick="openGuideModal()">상세보기</button>
+        </h3>
+        <table class="valence-table">
+          <thead>
+            <tr>
+              <th>원소 (번호)</th>
+              <th>결합선 (팔 개수)</th>
+              <th>기호 모형</th>
+              <th>대표 분자</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#38bdf8;"><b>H, F, Cl</b><br><small>(1, 9, 17번)</small></td>
+              <td><span class="tag-arm" style="background:#0284c7; color:#fff;">1개</span></td>
+              <td><span class="arm-shape">[ ──O ]</span></td>
+              <td>H₂, HCl, HF</td>
+            </tr>
+            <tr>
+              <td style="color:#ef4444;"><b>O, S</b><br><small>(8, 16번)</small></td>
+              <td><span class="tag-arm" style="background:#b91c1c; color:#fff;">2개</span></td>
+              <td><span class="arm-shape">[ ──O── ]<br>[ ┌── ]</span></td>
+              <td>H₂O, H₂S, O₂</td>
+            </tr>
+            <tr>
+              <td style="color:#60a5fa;"><b>N, P</b><br><small>(7, 15번)</small></td>
+              <td><span class="tag-arm" style="background:#1d4ed8; color:#fff;">3개</span></td>
+              <td><span class="arm-shape">[ ──┬── ]</span></td>
+              <td>NH₃, N₂</td>
+            </tr>
+            <tr>
+              <td style="color:#cbd5e1;"><b>C, Si</b><br><small>(6, 14번)</small></td>
+              <td><span class="tag-arm" style="background:#334155; color:#fff;">4개</span></td>
+              <td><span class="arm-shape">[ ──┼── ]</span></td>
+              <td>CH₄, CO₂</td>
+            </tr>
+            <tr>
+              <td style="color:#e879f9;"><b>He, Ne, Ar</b><br><small>(2, 10, 18번)</small></td>
+              <td><span class="tag-arm" style="background:#7e22ce; color:#fff;">0개 (비활성)</span></td>
+              <td><span class="arm-shape">💣 촉매 폭탄</span></td>
+              <td>주변 3×3 정화</td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn-tool" style="width:100%; margin-top:6px; background:#0284c7; border-color:#38bdf8; font-weight:800; justify-content:center;" onclick="openGuideModal()">
+          📖 게임 방법 & 결합 원리 가이드 열기
+        </button>
+      </div>
+
+      <!-- Synthesized Molecules Log -->
+      <div class="panel-card">
+        <h3><span>🧪</span> 합성된 안정한 분자 기록</h3>
+        <div class="log-container" id="molLog">
+          <div style="color:var(--text-muted); font-size:12px;">아직 합성된 분자가 없습니다. 결합을 완성해 보세요!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     게임 설명 & 공유결합 규칙 모달 (Modal)
+     ========================================================================== -->
+<div class="modal-backdrop hidden" id="guideModal" onclick="closeGuideModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:24px;">⚛️</span>
+        <h2>공유결합 테트리스 · 게임 방법 & 결합 규칙</h2>
+      </div>
+      <button class="btn-close" onclick="closeGuideModal()" title="닫기">✕</button>
+    </div>
+
+    <!-- 1. 게임 목표 -->
+    <div class="guide-section" style="border-left:4px solid #38bdf8;">
+      <h3 style="color:#38bdf8;">🎯 1. 게임 목표 & 기본 진행</h3>
+      <p style="font-size:13px; color:#cbd5e1; line-height:1.6; margin:0;">
+        • 낙하하는 원자 블록을 회전시키고 적절한 위치에 착지시켜, 인접한 원자의 결합선(팔)을 맞물려 <b>안정한 분자</b>를 합성하는 화학 퍼즐 게임입니다.<br>
+        • 분자 내 모든 결합선이 남김없이 서로 1:1로 맞물려 닫히면, <b>안정한 분자 완성 판정</b>과 함께 챔버에서 분자가 기화·소거되며 높은 점수를 얻습니다.<br>
+        • 블록이 천장(18행)에 도달하면 반응 챔버가 포화되어 게임이 종료됩니다.
+      </p>
+    </div>
+
+    <!-- 2. 원소별 결합선(팔) 규칙 (핵심) -->
+    <div class="guide-section" style="border-left:4px solid #f59e0b;">
+      <h3 style="color:#f59e0b;">⚡ 2. [원소별 결합선(팔) 규칙] (1~20번 원소)</h3>
+      <div class="rule-grid">
+        <div class="rule-card">
+          <div class="rule-card-title" style="color:#38bdf8;">
+            <span>• 1번 H, 9번 F, 17번 Cl</span>
+            <span class="tag-arm" style="background:#0284c7; color:#fff;">결합선 1개</span>
+          </div>
+          <div class="rule-card-shape">[ ──O ]</div>
+          <div class="rule-card-desc">수소(H), 플루오린(F), 염소(Cl)는 1개의 단일 결합선만 가집니다. 다른 원자의 1개 팔과 맞물려야 안정해집니다. (예: H-H, H-Cl, H-F)</div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-card-title" style="color:#f87171;">
+            <span>• 8번 O, 16번 S</span>
+            <span class="tag-arm" style="background:#b91c1c; color:#fff;">결합선 2개</span>
+          </div>
+          <div class="rule-card-shape">[ ──O── ] 또는 [ ┌── ]</div>
+          <div class="rule-card-desc">산소(O), 황(S)은 2개의 결합선을 가집니다. 선형(양쪽) 또는 굽은형(직각) 구조로 수소 2개와 결합해 H₂O(물), H₂S(황화 수소)를 이룹니다.</div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-card-title" style="color:#60a5fa;">
+            <span>• 7번 N, 15번 P</span>
+            <span class="tag-arm" style="background:#1d4ed8; color:#fff;">결합선 3개</span>
+          </div>
+          <div class="rule-card-shape">[ ──┬── ]</div>
+          <div class="rule-card-desc">질소(N), 인(P)은 3개의 결합선을 가집니다. 삼각뿔/T자 구조로 3개의 수소와 결합해 NH₃(암모니아)를 형성합니다.</div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-card-title" style="color:#cbd5e1;">
+            <span>• 6번 C, 14번 Si</span>
+            <span class="tag-arm" style="background:#334155; color:#fff;">결합선 4개 (십자)</span>
+          </div>
+          <div class="rule-card-shape">[ ──┼── ]</div>
+          <div class="rule-card-desc">탄소(C), 규소(Si)는 상하좌우 4방향 십자 결합선을 가집니다. 4개의 수소와 결합해 CH₄(메테인), SiH₄(실레인)를 형성합니다.</div>
+        </div>
+
+        <div class="rule-card" style="grid-column: 1 / -1;">
+          <div class="rule-card-title" style="color:#e879f9;">
+            <span>• 2번 He, 10번 Ne, 18번 Ar (비활성 기체)</span>
+            <span class="tag-arm" style="background:#7e22ce; color:#fff;">결합선 0개 (💣 촉매 폭탄)</span>
+          </div>
+          <div class="rule-card-shape">💣 촉매 폭탄 아이템 [반경 3×3 정화]</div>
+          <div class="rule-card-desc">이미 최외각 전자 껍질이 꽉 채워져 있어 다른 원자와 화학 결합을 하지 않습니다. 바닥이나 다른 블록에 착지하는 순간 주변 3×3 미결합 원자들을 시원하게 정화 폭파시켜 위기를 극복해 줍니다!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 분자 합성 & 소거 원리 -->
+    <div class="guide-section" style="border-left:4px solid #10b981;">
+      <h3 style="color:#10b981;">🧪 3. 분자 합성 소거 & 옥텟 규칙 원리</h3>
+      <p style="font-size:13px; color:#cbd5e1; line-height:1.6; margin:0;">
+        • <b>공유 전자쌍 결합</b>: 원자 블록의 돌기(결합선)가 서로 마주보면 <span style="color:#fde047; font-weight:800;">노란색 점선 공유 전자쌍(:)</span>이 연결됩니다.<br>
+        • <b>안정한 분자 소거</b>: 연결된 원자 덩어리 내에 외부로 삐져나온 <b>남는 결합선(Dangling Arm)이 단 하나도 없을 때</b> 완벽한 분자가 합성되어 기화·소거됩니다.<br>
+        • <b>테트리스 보너스 룰</b>: 일반 테트리스처럼 가로 1줄(10칸)이 원자로 가득 채워져도 라인 소거가 일어납니다.<br>
+        • <b>대표 분자 예시</b>: H₂(수소 100점), HCl(150점), H₂O(물 250점), NH₃(암모니아 350점), CH₄(메테인 500점), CO₂(400점)
+      </p>
+    </div>
+
+    <!-- 4. 조작법 -->
+    <div class="guide-section" style="border-left:4px solid #a855f7;">
+      <h3 style="color:#a855f7;">🎮 4. 조작 방법 (키보드 & 모바일 터치)</h3>
+      <table class="ctrl-table">
+        <tr>
+          <td style="width:150px;"><span class="key-cap">◀</span> / <span class="key-cap">▶</span> 방향키</td>
+          <td>원자 블록을 좌측 / 우측으로 한 칸 이동 (터치 버튼 ◀ / ▶)</td>
+        </tr>
+        <tr>
+          <td><span class="key-cap">▲</span> 키 또는 <span class="key-cap">X</span> 키</td>
+          <td>원자 블록을 시계 방향으로 90도 <b>회전</b> (결합선 방향 변경, 터치 버튼 ⟳)</td>
+        </tr>
+        <tr>
+          <td><span class="key-cap">▼</span> 방향키</td>
+          <td>소프트 드롭: 빠르게 아래로 한 칸 내리기 (+1점)</td>
+        </tr>
+        <tr>
+          <td><span class="key-cap">Spacebar</span></td>
+          <td>하드 드롭: 즉시 바닥으로 직행 착지 (+낙하 거리×2점, 터치 버튼 ⤓)</td>
+        </tr>
+        <tr>
+          <td><span class="key-cap">P</span> 키</td>
+          <td>실험 일시정지 / 계속하기 (상단 ⏸ 버튼과 동일)</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 5. 모달 하단 버튼 & 네비게이션 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border-color); padding-top:14px;">
+      <div style="display:flex; gap:8px;">
+        <a href="./시작하기_수업게임서랍.html" class="btn-tool btn-home" style="text-decoration:none;">
+          🏠 수업 게임 서랍
+        </a>
+        <a href="./통합_과학수업_서랍.html" class="btn-tool" style="text-decoration:none;">
+          📚 과학수업 통합 서랍
+        </a>
+      </div>
+      <button class="btn-start" onclick="closeGuideModal()" style="padding:8px 22px; font-size:14px;">
+        확인 완료 (게임 계속하기)
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. ELEMENT DEFINITIONS & VALENCE BONDING ARMS (1~20번)
+   [상, 우, 하, 좌] 4방향 결합선 배열
+   ========================================================================== */
+const ATOM_DEFS = {
+  H:  { symbol: 'H',  num: 1,  arms: [0, 1, 0, 0], color: '#38bdf8', bg: '#0369a1', name: '수소', armPattern: '[ ──O ]' },
+  F:  { symbol: 'F',  num: 9,  arms: [0, 1, 0, 0], color: '#a3e635', bg: '#4d7c0f', name: '플루오린', armPattern: '[ ──O ]' },
+  Cl: { symbol: 'Cl', num: 17, arms: [0, 1, 0, 0], color: '#34d399', bg: '#047857', name: '염소', armPattern: '[ ──O ]' },
+  O:  { symbol: 'O',  num: 8,  arms: [0, 1, 0, 1], color: '#f87171', bg: '#b91c1c', name: '산소', armPattern: '[ ──O── ]' },  // 선형 2팔
+  Ob: { symbol: 'O',  num: 8,  arms: [0, 1, 1, 0], color: '#f87171', bg: '#b91c1c', name: '산소(굽은형)', armPattern: '[ ┌── ]' }, // 굽은형 2팔
+  S:  { symbol: 'S',  num: 16, arms: [0, 1, 1, 0], color: '#facc15', bg: '#854d0e', name: '황', armPattern: '[ ┌── ]' },
+  N:  { symbol: 'N',  num: 7,  arms: [0, 1, 1, 1], color: '#60a5fa', bg: '#1d4ed8', name: '질소', armPattern: '[ ──┬── ]' },   // 3팔
+  P:  { symbol: 'P',  num: 15, arms: [0, 1, 1, 1], color: '#fb923c', bg: '#c2410c', name: '인', armPattern: '[ ──┬── ]' },
+  C:  { symbol: 'C',  num: 6,  arms: [1, 1, 1, 1], color: '#f1f5f9', bg: '#334155', name: '탄소', armPattern: '[ ──┼── ]' },   // 4팔 십자
+  Si: { symbol: 'Si', num: 14, arms: [1, 1, 1, 1], color: '#cbd5e1', bg: '#1e293b', name: '규소', armPattern: '[ ──┼── ]' },
+  He: { symbol: 'He', num: 2,  arms: [0, 0, 0, 0], color: '#f472b6', bg: '#831843', name: '헬륨(폭탄)', isNoble: true, armPattern: '💣 촉매 폭탄' },
+  Ne: { symbol: 'Ne', num: 10, arms: [0, 0, 0, 0], color: '#e879f9', bg: '#701a75', name: '네온(폭탄)', isNoble: true, armPattern: '💣 촉매 폭탄' },
+  Ar: { symbol: 'Ar', num: 18, arms: [0, 0, 0, 0], color: '#c084fc', bg: '#581c87', name: '아르곤(폭탄)', isNoble: true, armPattern: '💣 촉매 폭탄' }
+};
+
+/* Famous Molecule Name Lookup Table */
+const KNOWN_MOLECULES = {
+  'H2': { name: '수소 기체', icon: '💨', pts: 100 },
+  'Cl2': { name: '염소 기체', icon: '🧪', pts: 120 },
+  'F2': { name: '플루오린 기체', icon: '🧪', pts: 120 },
+  'HCl': { name: '염화 수소 (염산)', icon: '⚗️', pts: 150 },
+  'HF': { name: '플루오린화 수소', icon: '⚗️', pts: 150 },
+  'H2O': { name: '물 (Water)', icon: '💧', pts: 250 },
+  'H2S': { name: '황화 수소', icon: '🌋', pts: 220 },
+  'NH3': { name: '암모니아', icon: '❄️', pts: 350 },
+  'CH4': { name: '메테인 (천연가스)', icon: '🔥', pts: 500 },
+  'SiH4': { name: '실레인', icon: '🔬', pts: 450 },
+  'C2H6': { name: '에테인', icon: '⛽', pts: 600 },
+  'O2': { name: '산소 분자', icon: '🫁', pts: 150 },
+  'N2': { name: '질소 기체', icon: '🌬️', pts: 200 },
+  'CO2': { name: '이산화 탄소', icon: '🫧', pts: 400 }
+};
+
+/* Pieces Presets (Falling Clusters) */
+const PIECE_PRESETS = [
+  // 1-atom drops
+  { shape: [[0, 0]], atoms: ['H'] },
+  { shape: [[0, 0]], atoms: ['Cl'] },
+  { shape: [[0, 0]], atoms: ['F'] },
+  { shape: [[0, 0]], atoms: ['O'] },
+  { shape: [[0, 0]], atoms: ['Ob'] },
+  { shape: [[0, 0]], atoms: ['S'] },
+  { shape: [[0, 0]], atoms: ['C'] },
+  { shape: [[0, 0]], atoms: ['N'] },
+  { shape: [[0, 0]], atoms: ['P'] },
+  { shape: [[0, 0]], atoms: ['Si'] },
+  // Noble Gas Bomb drops (1x1)
+  { shape: [[0, 0]], atoms: ['He'] },
+  { shape: [[0, 0]], atoms: ['Ne'] },
+  { shape: [[0, 0]], atoms: ['Ar'] },
+  // 2-atom precursors
+  { shape: [[0, 0], [0, 1]], atoms: ['H', 'H'] },
+  { shape: [[0, 0], [0, 1]], atoms: ['H', 'Cl'] },
+  { shape: [[0, 0], [0, 1]], atoms: ['H', 'O'] },
+  { shape: [[0, 0], [0, 1]], atoms: ['C', 'H'] },
+  // 3-atom clusters
+  { shape: [[0, 0], [0, 1], [0, 2]], atoms: ['H', 'O', 'H'] }, // Linear water precursor
+  { shape: [[0, 0], [1, 0], [0, 1]], atoms: ['O', 'H', 'H'] }, // Bent water precursor
+  // 4-atom Tetrominoes
+  { shape: [[0, 1], [1, 0], [1, 1], [1, 2]], atoms: ['H', 'H', 'N', 'H'] }, // Ammonia precursor T-shape
+  { shape: [[0, 1], [1, 0], [1, 1], [1, 2]], atoms: ['H', 'H', 'C', 'H'] }, // Methane precursor T-shape
+  { shape: [[0, 0], [0, 1], [1, 0], [1, 1]], atoms: ['H', 'C', 'C', 'H'] }  // 2x2 box
+];
+
+/* ==========================================================================
+   2. SYNTHESIZED WEB AUDIO SOUNDS
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, type, duration, gainVal = 0.15) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+const SFX = {
+  move: () => playTone(300, 'sine', 0.05, 0.08),
+  rotate: () => playTone(450, 'triangle', 0.07, 0.1),
+  drop: () => playTone(180, 'square', 0.09, 0.12),
+  bomb: () => {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } catch(e) {}
+  },
+  synthesize: () => {
+    playTone(523.25, 'triangle', 0.1, 0.2); // C5
+    setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.2), 70); // E5
+    setTimeout(() => playTone(783.99, 'triangle', 0.15, 0.2), 140); // G5
+    setTimeout(() => playTone(1046.5, 'triangle', 0.25, 0.25), 210); // C6
+  },
+  gameOver: () => {
+    playTone(240, 'sawtooth', 0.2, 0.2);
+    setTimeout(() => playTone(180, 'sawtooth', 0.3, 0.2), 150);
+  }
+};
+
+/* ==========================================================================
+   3. BOARD & GAME STATE
+   ========================================================================== */
+const COLS = 10;
+const ROWS = 18;
+const BLOCK_SIZE = 32;
+
+const canvas = document.getElementById('tetrisCanvas');
+const ctx = canvas.getContext('2d');
+const nextCanvas = document.getElementById('nextCanvas');
+const nextCtx = nextCanvas.getContext('2d');
+
+let board = [];
+let score = 0;
+let level = 1;
+let totalMolecules = 0;
+let isRunning = false;
+let isPaused = false;
+let pausedByModal = false;
+
+let curPiece = null;
+let nextPieceData = null;
+let dropTimer = null;
+let dropInterval = 800; // ms
+
+function createEmptyBoard() {
+  return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+}
+
+/* Arms Rotation helper: [top, right, bottom, left] -> rotate 90 deg clockwise */
+function rotateArms(arms, times = 1) {
+  let [t, r, b, l] = arms;
+  for (let i = 0; i < times; i++) {
+    const tmp = l;
+    l = b; b = r; r = t; t = tmp;
+  }
+  return [t, r, b, l];
+}
+
+/* Spawn Piece */
+function getRandomPiece() {
+  const preset = PIECE_PRESETS[Math.floor(Math.random() * PIECE_PRESETS.length)];
+  const blocks = preset.shape.map((pt, i) => {
+    const def = ATOM_DEFS[preset.atoms[i]];
+    return {
+      r: pt[0], c: pt[1],
+      symbol: def.symbol,
+      num: def.num,
+      baseArms: [...def.arms],
+      arms: [...def.arms],
+      color: def.color,
+      bg: def.bg,
+      name: def.name,
+      isNoble: !!def.isNoble
+    };
+  });
+  return {
+    blocks,
+    row: 0,
+    col: Math.floor((COLS - 3) / 2),
+    rot: 0
+  };
+}
+
+/* ==========================================================================
+   4. MOLECULE DETECTION & GRAPH CONNECTED COMPONENT ENGINE
+   ========================================================================== */
+const OPPOSITE_ARM = [2, 3, 0, 1]; // Top<->Bottom, Right<->Left
+const DIR_DR = [-1, 0, 1, 0];
+const DIR_DC = [0, 1, 0, -1];
+
+function checkStableMolecules() {
+  // 1. Build Adjacency Graph of Mutually Bonded Atoms
+  const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  const moleculesToClear = [];
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const atom = board[r][c];
+      if (!atom || atom.isNoble || visited[r][c]) continue;
+
+      // BFS to find connected component of bonded atoms
+      const comp = [];
+      const queue = [{ r, c }];
+      visited[r][c] = true;
+      let hasDanglingArm = false;
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        const curAtom = board[curr.r][curr.c];
+        comp.push(curr);
+
+        // Check all 4 arms of current atom
+        for (let armDir = 0; armDir < 4; armDir++) {
+          const armActive = curAtom.arms[armDir];
+          if (armActive > 0) {
+            const nr = curr.r + DIR_DR[armDir];
+            const nc = curr.c + DIR_DC[armDir];
+
+            // If arm points outside board -> dangling!
+            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) {
+              hasDanglingArm = true;
+              continue;
+            }
+
+            const neighbor = board[nr][nc];
+            // If points to empty space or noble gas -> dangling!
+            if (!neighbor || neighbor.isNoble) {
+              hasDanglingArm = true;
+              continue;
+            }
+
+            // Check if neighbor has matching opposing arm
+            const oppArm = OPPOSITE_ARM[armDir];
+            if (neighbor.arms[oppArm] > 0) {
+              // Valid mutual bond! Traverse neighbor if not visited
+              if (!visited[nr][nc]) {
+                visited[nr][nc] = true;
+                queue.push({ r: nr, c: nc });
+              }
+            } else {
+              // Neighbor does NOT bond back -> dangling!
+              hasDanglingArm = true;
+            }
+          }
+        }
+      }
+
+      // If component has >= 2 atoms AND has ZERO dangling arms -> STABLE MOLECULE!
+      if (comp.length >= 2 && !hasDanglingArm) {
+        moleculesToClear.push(comp);
+      }
+    }
+  }
+
+  return moleculesToClear;
+}
+
+/* Parse chemical formula from list of atom cells */
+function getMoleculeInfo(cellList) {
+  const counts = {};
+  cellList.forEach(pos => {
+    const sym = board[pos.r][pos.c].symbol;
+    counts[sym] = (counts[sym] || 0) + 1;
+  });
+
+  // Hill system convention (C first, then H, then alphabetical)
+  let formula = "";
+  const keys = Object.keys(counts);
+  if (keys.includes('C')) {
+    formula += counts['C'] > 1 ? `C${counts['C']}` : 'C';
+  }
+  if (keys.includes('H')) {
+    formula += counts['H'] > 1 ? `H${counts['H']}` : 'H';
+  }
+  keys.sort().forEach(k => {
+    if (k !== 'C' && k !== 'H') {
+      formula += counts[k] > 1 ? `${k}${counts[k]}` : k;
+    }
+  });
+
+  const known = KNOWN_MOLECULES[formula];
+  const name = known ? known.name : `${formula} 분자`;
+  const icon = known ? known.icon : '✨';
+  const pts = known ? known.pts : cellList.length * 80;
+
+  return { formula, name, icon, pts };
+}
+
+/* Show popup toast on synthesized molecule */
+function showMoleculePopup(info) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-molecule';
+  toast.innerHTML = `
+    <div class="f-name">${info.icon} ${info.formula}</div>
+    <div class="c-name">${info.name} 완성! (+${info.pts}점)</div>
+  `;
+  document.querySelector('.board-container').appendChild(toast);
+  setTimeout(() => toast.remove(), 1500);
+
+  // Add to sidebar log
+  const log = document.getElementById('molLog');
+  if (totalMolecules === 1) log.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `<span>${info.icon} <b>${info.formula}</b> (${info.name})</span> <span>+${info.pts}</span>`;
+  log.prepend(item);
+}
+
+/* Noble Gas Explosion effect */
+function triggerNobleGasBomb(r, c) {
+  SFX.bomb();
+  const cleared = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        if (board[nr][nc]) {
+          cleared.push({ r: nr, c: nc });
+          board[nr][nc] = null;
+        }
+      }
+    }
+  }
+  applyGravity();
+  showMoleculePopup({ formula: 'Noble Gas', name: '비활성 기체 촉매 정화', icon: '💣', pts: 150 });
+  score += 150;
+  updateHUD();
+}
+
+/* Apply block gravity after cleared molecules */
+function applyGravity() {
+  for (let c = 0; c < COLS; c++) {
+    let emptyRow = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c] !== null) {
+        if (emptyRow !== r) {
+          board[emptyRow][c] = board[r][c];
+          board[r][c] = null;
+        }
+        emptyRow--;
+      }
+    }
+  }
+}
+
+/* Resolve full lines or stable molecules */
+function processBoardResolutions() {
+  let anyResolved = false;
+
+  // 1. Check Stable Molecules
+  const molecules = checkStableMolecules();
+  if (molecules.length > 0) {
+    anyResolved = true;
+    SFX.synthesize();
+
+    molecules.forEach(mol => {
+      const info = getMoleculeInfo(mol);
+      totalMolecules++;
+      score += info.pts * level;
+      showMoleculePopup(info);
+
+      mol.forEach(p => {
+        board[p.r][p.c] = null;
+      });
+    });
+
+    applyGravity();
+  }
+
+  // 2. Check Full Lines (Rule B)
+  let linesCleared = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r].every(cell => cell !== null)) {
+      linesCleared++;
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(null));
+      r++; // Check same index again
+    }
+  }
+
+  if (linesCleared > 0) {
+    anyResolved = true;
+    SFX.synthesize();
+    score += linesCleared * 120 * level;
+  }
+
+  if (anyResolved) {
+    level = Math.floor(score / 1200) + 1;
+    dropInterval = Math.max(160, 800 - (level - 1) * 70);
+    resetDropTimer();
+    updateHUD();
+    render();
+  }
+}
+
+/* ==========================================================================
+   5. COLLISION & PIECE MANIPULATION
+   ========================================================================== */
+function canMove(piece, dr, dc, newRot = null) {
+  const rot = newRot !== null ? newRot : piece.rot;
+  for (let b of piece.blocks) {
+    let ro = b.r, co = b.c;
+    if (newRot !== null) {
+      const rotDiff = (newRot - piece.rot + 4) % 4;
+      for (let i = 0; i < rotDiff; i++) {
+        const tmp = ro; ro = co; co = -tmp;
+      }
+    }
+    const nr = piece.row + ro + dr;
+    const nc = piece.col + co + dc;
+
+    if (nc < 0 || nc >= COLS || nr >= ROWS) return false;
+    if (nr >= 0 && board[nr][nc] !== null) return false;
+  }
+  return true;
+}
+
+function lockPiece() {
+  let isBomb = false;
+  let bombCoord = null;
+
+  curPiece.blocks.forEach(b => {
+    let ro = b.r, co = b.c;
+    const rotDiff = curPiece.rot % 4;
+    for (let i = 0; i < rotDiff; i++) {
+      const tmp = ro; ro = co; co = -tmp;
+    }
+    const r = curPiece.row + ro;
+    const c = curPiece.col + co;
+    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+      const rotatedArms = rotateArms(b.baseArms, curPiece.rot % 4);
+      board[r][c] = {
+        symbol: b.symbol,
+        num: b.num,
+        arms: rotatedArms,
+        color: b.color,
+        bg: b.bg,
+        isNoble: b.isNoble
+      };
+      if (b.isNoble) {
+        isBomb = true;
+        bombCoord = { r, c };
+      }
+    }
+  });
+
+  SFX.drop();
+
+  if (isBomb && bombCoord) {
+    triggerNobleGasBomb(bombCoord.r, bombCoord.c);
+  } else {
+    processBoardResolutions();
+  }
+
+  // Next Piece
+  curPiece = nextPieceData;
+  nextPieceData = getRandomPiece();
+  renderNext();
+
+  // Check Game Over
+  if (!canMove(curPiece, 0, 0)) {
+    gameOver();
+  }
+}
+
+function tryMove(dc) {
+  if (!isRunning || isPaused || !curPiece) return;
+  if (canMove(curPiece, 0, dc)) {
+    curPiece.col += dc;
+    SFX.move();
+    render();
+  }
+}
+
+function tryRotate() {
+  if (!isRunning || isPaused || !curPiece) return;
+  const nextRot = (curPiece.rot + 1) % 4;
+  if (canMove(curPiece, 0, 0, nextRot)) {
+    curPiece.rot = nextRot;
+    SFX.rotate();
+    render();
+  } else if (canMove(curPiece, 0, -1, nextRot)) {
+    curPiece.col -= 1;
+    curPiece.rot = nextRot;
+    SFX.rotate();
+    render();
+  } else if (canMove(curPiece, 0, 1, nextRot)) {
+    curPiece.col += 1;
+    curPiece.rot = nextRot;
+    SFX.rotate();
+    render();
+  }
+}
+
+function softDrop() {
+  if (!isRunning || isPaused || !curPiece) return;
+  if (canMove(curPiece, 1, 0)) {
+    curPiece.row += 1;
+    score += 1;
+    updateHUD();
+    render();
+  } else {
+    lockPiece();
+    render();
+  }
+}
+
+function hardDrop() {
+  if (!isRunning || isPaused || !curPiece) return;
+  let dist = 0;
+  while (canMove(curPiece, dist + 1, 0)) {
+    dist++;
+  }
+  curPiece.row += dist;
+  score += dist * 2;
+  updateHUD();
+  lockPiece();
+  render();
+}
+
+/* ==========================================================================
+   6. RENDERING (ATOM BLOCKS + BONDING ARMS + SHARED PAIR VISUALIZER)
+   ========================================================================== */
+function drawAtom(ctx, x, y, size, atom, arms) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // 1. Draw Bonding Arms (돌기 선)
+  if (arms) {
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#38bdf8';
+
+    // Top arm (0)
+    if (arms[0] > 0) {
+      ctx.beginPath(); ctx.moveTo(size / 2, 0); ctx.lineTo(size / 2, -6); ctx.stroke();
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.arc(size / 2, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Right arm (1)
+    if (arms[1] > 0) {
+      ctx.beginPath(); ctx.moveTo(size, size / 2); ctx.lineTo(size + 6, size / 2); ctx.stroke();
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.arc(size + 6, size / 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Bottom arm (2)
+    if (arms[2] > 0) {
+      ctx.beginPath(); ctx.moveTo(size / 2, size); ctx.lineTo(size / 2, size + 6); ctx.stroke();
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.arc(size / 2, size + 6, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Left arm (3)
+    if (arms[3] > 0) {
+      ctx.beginPath(); ctx.moveTo(0, size / 2); ctx.lineTo(-6, size / 2); ctx.stroke();
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.arc(-6, size / 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // 2. Atom Cell Body
+  ctx.fillStyle = atom.bg;
+  ctx.strokeStyle = atom.color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(1, 1, size - 2, size - 2, 6);
+  ctx.fill(); ctx.stroke();
+
+  // 3. Atom Text (Symbol & Atomic Number)
+  ctx.fillStyle = atom.color;
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(atom.symbol, size / 2, size / 2 - 1);
+
+  ctx.font = '8px sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillText(atom.num, 6, 8);
+
+  // If Noble Gas Bomb item -> Draw small bomb badge
+  if (atom.isNoble) {
+    ctx.font = '12px sans-serif';
+    ctx.fillText('💣', size / 2, size / 2 + 10);
+  }
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 1. Grid Background
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+  }
+
+  // 2. Draw Established Board Atoms
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const atom = board[r][c];
+      if (atom) {
+        drawAtom(ctx, c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, atom, atom.arms);
+
+        // Highlight active shared bonds (공유 전자쌍 표시 :)
+        if (atom.arms[1] > 0 && c < COLS - 1 && board[r][c + 1] && board[r][c + 1].arms[3] > 0) {
+          // Horizontal shared bond between (r,c) and (r,c+1)
+          ctx.fillStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(c * BLOCK_SIZE + BLOCK_SIZE - 2, r * BLOCK_SIZE + BLOCK_SIZE / 2 - 2, 1.5, 0, Math.PI * 2);
+          ctx.arc(c * BLOCK_SIZE + BLOCK_SIZE + 2, r * BLOCK_SIZE + BLOCK_SIZE / 2 + 2, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (atom.arms[2] > 0 && r < ROWS - 1 && board[r + 1][c] && board[r + 1][c].arms[0] > 0) {
+          // Vertical shared bond
+          ctx.fillStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(c * BLOCK_SIZE + BLOCK_SIZE / 2 - 2, r * BLOCK_SIZE + BLOCK_SIZE - 2, 1.5, 0, Math.PI * 2);
+          ctx.arc(c * BLOCK_SIZE + BLOCK_SIZE / 2 + 2, r * BLOCK_SIZE + BLOCK_SIZE + 2, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // 3. Draw Active Falling Piece
+  if (curPiece) {
+    curPiece.blocks.forEach(b => {
+      let ro = b.r, co = b.c;
+      const rotDiff = curPiece.rot % 4;
+      for (let i = 0; i < rotDiff; i++) {
+        const tmp = ro; ro = co; co = -tmp;
+      }
+      const r = curPiece.row + ro;
+      const c = curPiece.col + co;
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+        const rotatedArms = rotateArms(b.baseArms, curPiece.rot % 4);
+        drawAtom(ctx, c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, b, rotatedArms);
+      }
+    });
+  }
+}
+
+function renderNext() {
+  nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+  if (!nextPieceData) return;
+
+  const bs = 22;
+  const p = nextPieceData;
+  const minR = Math.min(...p.blocks.map(b => b.r));
+  const maxR = Math.max(...p.blocks.map(b => b.r));
+  const minC = Math.min(...p.blocks.map(b => b.c));
+  const maxC = Math.max(...p.blocks.map(b => b.c));
+  const w = (maxC - minC + 1) * bs;
+  const h = (maxR - minR + 1) * bs;
+  const ox = (nextCanvas.width - w) / 2 - minC * bs;
+  const oy = (nextCanvas.height - h) / 2 - minR * bs;
+
+  p.blocks.forEach(b => {
+    drawAtom(nextCtx, ox + b.c * bs, oy + b.r * bs, bs, b, b.baseArms);
+  });
+}
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudLevel').textContent = level;
+  document.getElementById('hudMols').textContent = totalMolecules;
+}
+
+/* ==========================================================================
+   7. GAME CONTROLS & TIMERS
+   ========================================================================== */
+function resetDropTimer() {
+  if (dropTimer) clearInterval(dropTimer);
+  dropTimer = setInterval(() => {
+    if (isRunning && !isPaused) {
+      softDrop();
+    }
+  }, dropInterval);
+}
+
+function startGame() {
+  initAudio();
+  board = createEmptyBoard();
+  score = 0;
+  level = 1;
+  totalMolecules = 0;
+  dropInterval = 800;
+  isRunning = true;
+  isPaused = false;
+  pausedByModal = false;
+
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('overScreen').classList.add('hidden');
+  document.getElementById('guideModal').classList.add('hidden');
+  document.getElementById('molLog').innerHTML = '';
+
+  curPiece = getRandomPiece();
+  nextPieceData = getRandomPiece();
+
+  updateHUD();
+  render();
+  renderNext();
+  resetDropTimer();
+}
+
+function gameOver() {
+  isRunning = false;
+  if (dropTimer) clearInterval(dropTimer);
+  SFX.gameOver();
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('overScreen').classList.remove('hidden');
+}
+
+function togglePause() {
+  if (!isRunning) return;
+  isPaused = !isPaused;
+  document.getElementById('pauseScreen').classList.toggle('hidden', !isPaused);
+  document.getElementById('btnPause').textContent = isPaused ? '▶ 계속하기' : '⏸ 일시정지';
+}
+
+/* Guide Modal Handler */
+function openGuideModal() {
+  const modal = document.getElementById('guideModal');
+  modal.classList.remove('hidden');
+  if (isRunning && !isPaused) {
+    isPaused = true;
+    pausedByModal = true;
+    document.getElementById('pauseScreen').classList.remove('hidden');
+    document.getElementById('btnPause').textContent = '▶ 계속하기';
+  }
+}
+
+function closeGuideModal(event) {
+  if (event && event.target && event.target.id !== 'guideModal' && !event.target.classList.contains('btn-close') && event.target.tagName !== 'BUTTON') {
+    return;
+  }
+  const modal = document.getElementById('guideModal');
+  modal.classList.add('hidden');
+  if (pausedByModal) {
+    pausedByModal = false;
+    isPaused = false;
+    document.getElementById('pauseScreen').classList.add('hidden');
+    document.getElementById('btnPause').textContent = '⏸ 일시정지';
+  }
+}
+
+/* Keyboards */
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('guideModal');
+    if (!modal.classList.contains('hidden')) {
+      closeGuideModal();
+      return;
+    }
+  }
+
+  if (!isRunning) return;
+  if (e.key === 'p' || e.key === 'P') { togglePause(); return; }
+  if (isPaused) return;
+
+  if (e.key === 'ArrowLeft') { tryMove(-1); e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { tryMove(1); e.preventDefault(); }
+  else if (e.key === 'ArrowUp' || e.key === 'x' || e.key === 'X') { tryRotate(); e.preventDefault(); }
+  else if (e.key === 'ArrowDown') { softDrop(); e.preventDefault(); }
+  else if (e.key === ' ') { hardDrop(); e.preventDefault(); }
+});
+
+/* Touch / Mouse Buttons */
+document.getElementById('btnLeft').addEventListener('click', () => tryMove(-1));
+document.getElementById('btnRight').addEventListener('click', () => tryMove(1));
+document.getElementById('btnRotate').addEventListener('click', tryRotate);
+document.getElementById('btnDown').addEventListener('click', softDrop);
+document.getElementById('btnDrop').addEventListener('click', hardDrop);
+
+document.getElementById('btnPlay').addEventListener('click', startGame);
+document.getElementById('btnRestart').addEventListener('click', startGame);
+document.getElementById('btnReset').addEventListener('click', startGame);
+document.getElementById('btnResume').addEventListener('click', togglePause);
+document.getElementById('btnPause').addEventListener('click', togglePause);
+
+document.getElementById('btnSound').addEventListener('click', (e) => {
+  soundEnabled = !soundEnabled;
+  e.target.textContent = soundEnabled ? '🔊 소리 ON' : '🔇 소리 OFF';
+});
+
+// Render initial empty state
+board = createEmptyBoard();
+render();
+</script>
+
+<script>
+(function(){ var h=document.getElementById('kjsHome'); if(h && !h._kjs){ h._kjs=1; h.addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload(); }); } })();
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script id="kjs-sound-bridge">
+(function(){
+  var T={toast:false};
+  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
+  function wrap(o, m, kind){
+    if(!o || typeof o[m]!=="function") return;
+    var orig=o[m];
+    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
+  }
+  if(typeof SFX!=="undefined"){ wrap(SFX,"synthesize","ok"); }
+})();
+</script>
+</body>
+</html>

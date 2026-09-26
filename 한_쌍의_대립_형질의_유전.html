@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>한 쌍의 대립 형질의 유전 - 중3 과학 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --secondary: #16a34a;
+      --accent: #d97706;
+      --magenta: #db2777;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: var(--primary);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 시뮬레이션 메인 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 모드 전환 탭 버튼 바 */
+    .mode-tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-tab-btn {
+      font: inherit;
+      font-size: 0.86rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .mode-tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 생체 지표 대시보드 HUD */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+    }
+
+    .hud-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-card.p-gen { border-top: 3.5px solid #0284c7; }
+    .hud-card.f1-gen { border-top: 3.5px solid #d97706; }
+    .hud-card.f2-geno { border-top: 3.5px solid #8b5cf6; }
+    .hud-card.f2-pheno { border-top: 3.5px solid #16a34a; }
+
+    .hud-lbl {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+    .hud-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .hud-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* 그래픽 뷰포트 컨테이너 */
+    .graphic-viewport {
+      position: relative;
+      background: #fdfbf7;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem 0;
+    }
+
+    .graphic-svg-wrapper {
+      max-width: 780px;
+      width: 100%;
+      height: auto;
+    }
+
+    /* 제어 컨트롤 툴바 */
+    .control-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .ctrl-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .ctrl-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+    .ctrl-btn.primary:hover {
+      background: var(--primary-dark);
+    }
+    .ctrl-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    /* 단계별 탐구 슬라이더 바 */
+    .step-slider-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+    }
+    .step-slider-bar span {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #334155;
+      white-space: nowrap;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* 실시간 안내 정보 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+
+    /* 인터랙티브 퀴즈 패널 (모드 2) */
+    .quiz-panel {
+      display: none;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .quiz-panel.active {
+      display: flex;
+    }
+
+    .quiz-interactive-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .quiz-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .quiz-q-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .quiz-options {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .quiz-btn {
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 800;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .quiz-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .quiz-btn.correct {
+      background: #dcfce7 !important;
+      border-color: #16a34a !important;
+      color: #166534 !important;
+    }
+    .quiz-btn.wrong {
+      background: #fee2e2 !important;
+      border-color: #dc2626 !important;
+      color: #991b1b !important;
+    }
+    .quiz-feedback {
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-height: 20px;
+    }
+
+    /* 2대 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .badge-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .m1-badge { background: #0284c7; }
+    .m2-badge { background: #16a34a; }
+
+    .mechanism-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .mechanism-meta {
+      font-size: 0.82rem;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* 비교 정리표 패널 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tag-hl {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-blue {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-green {
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    /* 인터랙티브 하이라이트 클래스 */
+    .hl-focus {
+      outline: 3px solid #f59e0b !important;
+      outline-offset: 4px;
+      transition: all 0.3s ease;
+    }
+    .fade-dim {
+      opacity: 0.22 !important;
+      transition: opacity 0.3s ease;
+    }
+
+    @media (max-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+      .quiz-interactive-grid {
+        grid-template-columns: 1fr;
+      }
+      .control-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 고정 네비게이션 (#kjsNav) -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>🌱 한 쌍의 대립 형질의 유전 (멘델 유전)</span>
+      <span class="nav-badge">중3 과학 교과서 복각</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <button class="nav-btn" id="btnReload" title="처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 시뮬레이션 메인 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>그림 12 한 쌍의 대립 형질의 유전 (Mendel's Law of Segregation)</h2>
+          <span class="sim-date">원덕중학교 3학년 과학 • 생식과 유전</span>
+        </div>
+
+        <!-- 모드 전환 탭 -->
+        <div class="mode-tab-bar">
+          <button class="mode-tab-btn active" id="tabModeDiagram">📊 교과서 1:1 그래픽 &amp; 시뮬레이터</button>
+          <button class="mode-tab-btn" id="tabModeQuiz">❓ 빈칸 탐구 퀴즈 (물음 해결)</button>
+        </div>
+      </div>
+
+      <!-- 생체 지표 대시보드 HUD -->
+      <div class="dashboard-grid">
+        <div class="hud-card p-gen">
+          <span class="hud-lbl">어버이 (P 세대)</span>
+          <span class="hud-val" id="hudPVal">RR(둥근) × rr(주름진)</span>
+          <span class="hud-sub">모두 순종(Pure-breeding)</span>
+        </div>
+        <div class="hud-card f1-gen">
+          <span class="hud-lbl">잡종 1대 (F₁ 세대)</span>
+          <span class="hud-val" id="hudF1Val">100% Rr (둥근 완두)</span>
+          <span class="hud-sub">우열의 원리 (R &gt; r)</span>
+        </div>
+        <div class="hud-card f2-geno">
+          <span class="hud-lbl">잡종 2대 (F₂ 유전자형 비)</span>
+          <span class="hud-val" id="hudF2GenoVal">RR : Rr : rr = 1 : 2 : 1</span>
+          <span class="hud-sub">생식세포 확률적 결합</span>
+        </div>
+        <div class="hud-card f2-pheno">
+          <span class="hud-lbl">잡종 2대 (F₂ 표현형 비)</span>
+          <span class="hud-val" id="hudF2PhenoVal">둥근 : 주름진 = 3 : 1</span>
+          <span class="hud-sub">분리의 법칙 증명 (열성 출현)</span>
+        </div>
+      </div>
+
+      <!-- 인터랙티브 그래픽 뷰포트 (첨부 교과서 그림 1:1 완벽 SVG 복각) -->
+      <div class="graphic-viewport">
+        <div class="graphic-svg-wrapper">
+          <svg id="mainMendelSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1020" width="100%" height="auto">
+            <defs>
+              <filter id="sim-drop-shadow" x="-10%" y="-10%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+              </filter>
+              <filter id="sim-pea-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="1" dy="3" stdDeviation="3" flood-color="#78350f" flood-opacity="0.25"/>
+              </filter>
+
+              <!-- 둥근 완두 그라디언트 -->
+              <radialGradient id="simRoundPeaGrad" cx="38%" cy="32%" r="62%">
+                <stop offset="0%" stop-color="#fef08a"/>
+                <stop offset="35%" stop-color="#facc15"/>
+                <stop offset="75%" stop-color="#ca8a04"/>
+                <stop offset="100%" stop-color="#854d0e"/>
+              </radialGradient>
+
+              <!-- 주름진 완두 그라디언트 -->
+              <radialGradient id="simWrinkledPeaGrad" cx="42%" cy="36%" r="60%">
+                <stop offset="0%" stop-color="#fef3c7"/>
+                <stop offset="40%" stop-color="#d97706"/>
+                <stop offset="80%" stop-color="#b45309"/>
+                <stop offset="100%" stop-color="#78350f"/>
+              </radialGradient>
+
+              <!-- 생식세포 원형 그라디언트 -->
+              <radialGradient id="simGameteGrad" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="70%" stop-color="#f8fafc"/>
+                <stop offset="100%" stop-color="#e2e8f0"/>
+              </radialGradient>
+
+              <!-- 화살표 마커 -->
+              <marker id="sim-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b"/>
+              </marker>
+
+              <!-- 둥근 완두 심볼 -->
+              <g id="sym-round-pea">
+                <ellipse cx="0" cy="0" rx="38" ry="34" fill="url(#simRoundPeaGrad)" filter="url(#sim-pea-shadow)"/>
+                <ellipse cx="-12" cy="-10" rx="14" ry="8" fill="#ffffff" opacity="0.38" transform="rotate(-18, -12, -10)"/>
+              </g>
+
+              <!-- 주름진 완두 심볼 -->
+              <g id="sym-wrinkled-pea">
+                <path d="M -30,-18 C -36,-10 -38,4 -32,16 C -26,26 -12,32 4,31 C 18,30 32,24 35,12 C 38,-2 32,-16 22,-24 C 10,-32 -4,-30 -16,-26 C -24,-24 -28,-22 -30,-18 Z" 
+                      fill="url(#simWrinkledPeaGrad)" filter="url(#sim-pea-shadow)"/>
+                <path d="M -18,-8 C -10,-2 -4,8 -6,18" stroke="#78350f" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.45"/>
+                <path d="M 6,-18 C 10,-6 6,4 16,14" stroke="#78350f" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.4"/>
+                <path d="M -8,-20 C -2,-14 12,-12 18,-4" stroke="#78350f" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.35"/>
+                <path d="M -16,-14 C -12,-20 0,-22 8,-18" stroke="#fef3c7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+                <path d="M -4,2 C 2,12 8,20 18,22" stroke="#fef3c7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+              </g>
+
+              <!-- 생식세포 심볼 -->
+              <g id="sym-gamete-circle">
+                <circle cx="0" cy="0" r="23" fill="url(#simGameteGrad)" stroke="#475569" stroke-width="1.8" filter="url(#sim-drop-shadow)"/>
+              </g>
+            </defs>
+
+            <!-- 배경 외곽선 -->
+            <rect x="15" y="15" width="770" height="990" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+
+            <!-- ========================================== -->
+            <!-- 세대 구분 좌측 뱃지 및 연결 점선                 -->
+            <!-- ========================================== -->
+            <g id="sec-badge-p" transform="translate(45, 110)">
+              <rect x="0" y="-18" width="76" height="36" rx="8" fill="#94a3b8" filter="url(#sim-drop-shadow)"/>
+              <text x="38" y="5" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">어버이</text>
+              <line x1="84" y1="0" x2="310" y2="0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3,4"/>
+            </g>
+
+            <g id="sec-badge-f1" transform="translate(45, 345)">
+              <rect x="0" y="-18" width="88" height="36" rx="8" fill="#94a3b8" filter="url(#sim-drop-shadow)"/>
+              <text x="44" y="5" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">잡종 1대</text>
+              <line x1="96" y1="0" x2="390" y2="0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3,4"/>
+            </g>
+
+            <g id="sec-badge-f2" transform="translate(45, 625)">
+              <rect x="0" y="-18" width="88" height="36" rx="8" fill="#94a3b8" filter="url(#sim-drop-shadow)"/>
+              <text x="44" y="5" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">잡종 2대</text>
+              <line x1="96" y1="0" x2="300" y2="0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3,4"/>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 1] 어버이 세대 (P)                       -->
+            <!-- ========================================== -->
+            <g id="sec-p-parents">
+              <!-- 순종의 둥근 완두 (RR) -->
+              <g transform="translate(370, 110)">
+                <text x="0" y="-62" font-size="19" font-weight="800" fill="#0284c7" text-anchor="middle">순종의 둥근 완두</text>
+                <use href="#sym-round-pea" x="0" y="0"/>
+                <text x="0" y="6" font-size="21" font-weight="800" fill="#1e293b" text-anchor="middle">RR</text>
+              </g>
+
+              <!-- 순종의 주름진 완두 (rr) -->
+              <g transform="translate(590, 110)">
+                <text x="0" y="-62" font-size="19" font-weight="800" fill="#0284c7" text-anchor="middle">순종의 주름진 완두</text>
+                <use href="#sym-wrinkled-pea" x="0" y="0"/>
+                <text x="0" y="6" font-size="21" font-weight="800" fill="#1e293b" text-anchor="middle">rr</text>
+              </g>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 2] 어버이 생식세포                        -->
+            <!-- ========================================== -->
+            <g id="sec-p-gametes">
+              <!-- 수직 연결선 -->
+              <line x1="370" y1="148" x2="370" y2="215" stroke="#94a3b8" stroke-width="2"/>
+              <line x1="590" y1="148" x2="590" y2="215" stroke="#94a3b8" stroke-width="2"/>
+
+              <!-- 생식세포 R -->
+              <g transform="translate(370, 240)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">R</text>
+              </g>
+
+              <!-- 생식세포 r -->
+              <g transform="translate(590, 240)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">r</text>
+              </g>
+
+              <!-- 중앙 생식세포 라벨 -->
+              <g transform="translate(480, 240)">
+                <line x1="-80" y1="0" x2="-44" y2="0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="0" y="5" font-size="16" font-weight="700" fill="#334155" text-anchor="middle">생식세포</text>
+                <line x1="44" y1="0" x2="80" y2="0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3,3"/>
+              </g>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 3] 잡종 1대 (F₁)                         -->
+            <!-- ========================================== -->
+            <g id="sec-f1-generation">
+              <!-- 합류 화살표 -->
+              <line x1="395" y1="265" x2="436" y2="310" stroke="#64748b" stroke-width="2.2" marker-end="url(#sim-arrow)"/>
+              <line x1="565" y1="265" x2="524" y2="310" stroke="#64748b" stroke-width="2.2" marker-end="url(#sim-arrow)"/>
+
+              <!-- Rr 완두 -->
+              <g transform="translate(480, 345)">
+                <use href="#sym-round-pea" x="0" y="0"/>
+                <text x="0" y="7" font-size="22" font-weight="800" fill="#1e293b" text-anchor="middle">Rr</text>
+                <text x="56" y="7" font-size="20" font-weight="800" fill="#0284c7" text-anchor="start">둥근 완두</text>
+              </g>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 4] 자가 수분 및 F₁ 생식세포 (4개 배우자)     -->
+            <!-- ========================================== -->
+            <g id="sec-f1-selfing">
+              <text x="480" y="416" font-size="17" font-weight="800" fill="#1e293b" text-anchor="middle">자가 수분</text>
+
+              <!-- 좌측 분기선 및 텍스트 -->
+              <path d="M 440,365 L 270,490" stroke="#94a3b8" stroke-width="2" fill="none"/>
+              <text x="350" y="405" font-size="16" font-weight="800" fill="#1e293b" text-anchor="middle">잡종 1대</text>
+              <text x="350" y="425" font-size="16" font-weight="800" fill="#1e293b" text-anchor="middle">생식세포</text>
+
+              <!-- 우측 분기선 및 텍스트 -->
+              <path d="M 520,365 L 690,490" stroke="#94a3b8" stroke-width="2" fill="none"/>
+              <text x="610" y="405" font-size="16" font-weight="800" fill="#1e293b" text-anchor="middle">잡종 1대</text>
+              <text x="610" y="425" font-size="16" font-weight="800" fill="#1e293b" text-anchor="middle">생식세포</text>
+
+              <!-- 좌측 배우자 (R, r) -->
+              <g transform="translate(390, 465)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">R</text>
+              </g>
+              <g transform="translate(305, 525)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">r</text>
+              </g>
+
+              <!-- 우측 배우자 (R, r) -->
+              <g transform="translate(570, 465)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">R</text>
+              </g>
+              <g transform="translate(655, 525)">
+                <use href="#sym-gamete-circle"/>
+                <text x="0" y="7" font-size="20" font-weight="800" fill="#1e293b" text-anchor="middle">r</text>
+              </g>
+
+              <!-- 퍼넷 마름모 진입 화살표 -->
+              <line x1="412" y1="482" x2="442" y2="508" stroke="#64748b" stroke-width="2" marker-end="url(#sim-arrow)"/>
+              <line x1="548" y1="482" x2="518" y2="508" stroke="#64748b" stroke-width="2" marker-end="url(#sim-arrow)"/>
+              <line x1="326" y1="542" x2="352" y2="568" stroke="#64748b" stroke-width="2" marker-end="url(#sim-arrow)"/>
+              <line x1="634" y1="542" x2="608" y2="568" stroke="#64748b" stroke-width="2" marker-end="url(#sim-arrow)"/>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 5] 잡종 2대 (F₂) 45도 회전 마름모 퍼넷 사각형 -->
+            <!-- ========================================== -->
+            <g id="sec-f2-diamond" transform="translate(480, 625)">
+              <!-- 마름모 배경 -->
+              <path d="M 0,-150 L 150,0 L 0,150 L -150,0 Z" fill="#e0e7ff" stroke="#c7d2fe" stroke-width="2.5" filter="url(#sim-drop-shadow)"/>
+              <line x1="0" y1="-150" x2="0" y2="150" stroke="#ffffff" stroke-width="3"/>
+              <line x1="-150" y1="0" x2="150" y2="0" stroke="#ffffff" stroke-width="3"/>
+
+              <!-- 상단 칸: RR (둥근 완두) -->
+              <g id="cell-RR" transform="translate(0, -72)">
+                <use href="#sym-round-pea" x="0" y="0" transform="scale(0.88)"/>
+                <text x="0" y="6" font-size="18" font-weight="800" fill="#1e293b" text-anchor="middle">RR</text>
+                <text x="0" y="44" font-size="17" font-weight="800" fill="#0284c7" text-anchor="middle">둥근 완두</text>
+              </g>
+
+              <!-- 좌측 칸: Rr (둥근 완두) -->
+              <g id="cell-Rr-left" transform="translate(-75, 2)">
+                <use href="#sym-round-pea" x="0" y="0" transform="scale(0.88)"/>
+                <text x="0" y="6" font-size="18" font-weight="800" fill="#1e293b" text-anchor="middle">Rr</text>
+                <text x="0" y="44" font-size="17" font-weight="800" fill="#0284c7" text-anchor="middle">둥근 완두</text>
+              </g>
+
+              <!-- 우측 칸: (Rr) (둥근 완두) - 핑크색 빈칸 -->
+              <g id="cell-Rr-right" transform="translate(75, 2)">
+                <g id="vis-pea-right">
+                  <use href="#sym-round-pea" x="0" y="0" transform="scale(0.88)"/>
+                </g>
+                <text id="txt-geno-right" x="0" y="6" font-size="19" font-weight="800" fill="#db2777" text-anchor="middle">( Rr )</text>
+                <text x="0" y="44" font-size="17" font-weight="800" fill="#0284c7" text-anchor="middle">둥근 완두</text>
+              </g>
+
+              <!-- 하단 칸: (rr) (주름진 완두) - 핑크색 빈칸 -->
+              <g id="cell-rr-bottom" transform="translate(0, 76)">
+                <g id="vis-pea-bottom">
+                  <use href="#sym-wrinkled-pea" x="0" y="0" transform="scale(0.88)"/>
+                </g>
+                <text id="txt-geno-bottom" x="0" y="6" font-size="19" font-weight="800" fill="#db2777" text-anchor="middle">( rr )</text>
+                <text x="0" y="44" font-size="17" font-weight="800" fill="#0284c7" text-anchor="middle">주름진 완두</text>
+              </g>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 6] 잡종 2대 유전자형 및 표현형 분리비 요약 -->
+            <!-- ========================================== -->
+            <g id="sec-f2-ratios" transform="translate(45, 685)">
+              <circle cx="6" cy="-4" r="3" fill="#0284c7"/>
+              <text x="18" y="0" font-size="18" font-weight="800" fill="#0284c7">잡종 2대의 유전자형</text>
+              <text x="18" y="28" font-size="19" font-weight="800" fill="#0284c7">➔ RR : Rr : rr = 1 : 2 : 1</text>
+
+              <circle cx="6" cy="56" r="3" fill="#0284c7"/>
+              <text x="18" y="60" font-size="18" font-weight="800" fill="#0284c7">잡종 2대의 표현형</text>
+              <text x="18" y="88" font-size="19" font-weight="800" fill="#0284c7">➔ 둥근 완두 : 주름진 완두 = 3 : 1</text>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 7] 하단 캡션 (그림 12)                    -->
+            <!-- ========================================== -->
+            <g id="sec-caption" transform="translate(45, 875)">
+              <circle cx="16" cy="-6" r="14" fill="#65a30d"/>
+              <path d="M 16,-13 L 21,-5 L 18,-5 L 18,1 L 14,1 L 14,-5 L 11,-5 Z" fill="#ffffff"/>
+              
+              <text x="38" y="0" font-size="22" font-weight="800" fill="#713f12">그림 12</text>
+              <text x="116" y="0" font-size="22" font-weight="800" fill="#0f172a">한 쌍의 대립 형질의 유전</text>
+            </g>
+
+            <!-- ========================================== -->
+            <!-- [구역 8] 우측 하단 탐구 물음 말풍선              -->
+            <!-- ========================================== -->
+            <g id="sec-question-bubble" transform="translate(460, 835)">
+              <rect x="0" y="0" width="300" height="120" rx="28" fill="#fdfbf7" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,5" filter="url(#sim-drop-shadow)"/>
+              <path d="M 140,0 L 155,-25 L 165,0 Z" fill="#fdfbf7" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,5"/>
+              <path d="M 139,2 L 166,2" stroke="#fdfbf7" stroke-width="4"/>
+
+              <g transform="translate(36, 32)">
+                <circle cx="0" cy="0" r="14" fill="#f59e0b"/>
+                <text x="0" y="5" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">?</text>
+              </g>
+
+              <text x="58" y="38" font-size="20" font-weight="900" fill="#c2410c">물음</text>
+              <text x="108" y="38" font-size="19" font-weight="800" fill="#ea580c">잡종 2대에서</text>
+              <text x="36" y="68" font-size="18" font-weight="700" fill="#c2410c">빈칸에 들어갈 유전자형을</text>
+              <text x="36" y="96" font-size="18" font-weight="700" fill="#c2410c">각각 써 보자.</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 제어 및 단계별 시뮬레이션 툴바 -->
+      <div class="control-toolbar">
+        <div class="btn-group">
+          <button class="ctrl-btn active" id="btnStepAll">전체 보기</button>
+          <button class="ctrl-btn" id="btnStep1">1. 어버이 (P)</button>
+          <button class="ctrl-btn" id="btnStep2">2. 생식세포</button>
+          <button class="ctrl-btn" id="btnStep3">3. 잡종 1대 (F₁)</button>
+          <button class="ctrl-btn" id="btnStep4">4. 자가 수분</button>
+          <button class="ctrl-btn" id="btnStep5">5. 잡종 2대 (F₂)</button>
+        </div>
+        <div class="btn-group">
+          <button class="ctrl-btn primary" id="btnAutoPlay">▶ 순서대로 재생</button>
+          <button class="ctrl-btn" id="btnToggleLabels">라벨 토글</button>
+        </div>
+      </div>
+
+      <!-- 실시간 안내 정보 배너 -->
+      <div id="infoBanner" class="info-banner">
+        <span id="bannerText"><strong>[전체 보기]</strong> 순종의 둥근 완두(RR)와 주름진 완두(rr)를 교배하여 잡종 1대(F₁)와 잡종 2대(F₂)가 형성되는 전 과정을 관찰합니다.</span>
+      </div>
+    </div>
+
+    <!-- 인터랙티브 퀴즈 패널 (모드 2) -->
+    <section class="quiz-panel" id="quizPanel">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h3 style="font-size:1.15rem; font-weight:800; color:#0f172a;">❓ 탐구 물음: 잡종 2대 빈칸 유전자형 맞히기</h3>
+          <span style="font-size:0.82rem; color:var(--text-muted); font-weight:600;">* 교과서 마름모 퍼넷 사각형의 분홍색 괄호 (Rr)과 (rr) 빈칸을 직접 해결해 보세요.</span>
+        </div>
+        <button class="ctrl-btn" id="btnResetQuiz">↺ 퀴즈 초기화</button>
+      </div>
+
+      <div class="quiz-interactive-grid">
+        <!-- 빈칸 1: 우측 칸 -->
+        <div class="quiz-card" id="qCard1">
+          <div class="quiz-q-title">
+            <span class="badge-icon" style="background:#db2777; width:22px; height:22px;">1</span>
+            <span>마름모 <strong>우측 칸</strong>의 유전자형은? (둥근 완두)</span>
+          </div>
+          <p style="font-size:0.85rem; color:#475569;">좌측 부모 생식세포 <b>R</b>과 우측 부모 생식세포 <b>r</b>이 만나 결합합니다.</p>
+          <div class="quiz-options">
+            <button class="quiz-btn" data-q="1" data-val="RR">RR</button>
+            <button class="quiz-btn" data-q="1" data-val="Rr">Rr</button>
+            <button class="quiz-btn" data-q="1" data-val="rr">rr</button>
+          </div>
+          <div class="quiz-feedback" id="fbQ1"></div>
+        </div>
+
+        <!-- 빈칸 2: 하단 칸 -->
+        <div class="quiz-card" id="qCard2">
+          <div class="quiz-q-title">
+            <span class="badge-icon" style="background:#db2777; width:22px; height:22px;">2</span>
+            <span>마름모 <strong>하단 칸</strong>의 유전자형은? (주름진 완두)</span>
+          </div>
+          <p style="font-size:0.85rem; color:#475569;">좌측 부모 생식세포 <b>r</b>과 우측 부모 생식세포 <b>r</b>이 만나 결합합니다.</p>
+          <div class="quiz-options">
+            <button class="quiz-btn" data-q="2" data-val="RR">RR</button>
+            <button class="quiz-btn" data-q="2" data-val="Rr">Rr</button>
+            <button class="quiz-btn" data-q="2" data-val="rr">rr</button>
+          </div>
+          <div class="quiz-feedback" id="fbQ2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2대 핵심 메커니즘 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m1-badge">1</span>
+          <span>우열의 원리 (잡종 1대에서 둥근 완두만 나오는 이유)</span>
+        </div>
+        <p>순종의 대립 형질을 교배했을 때, 잡종 1대(F₁)에서 <strong>대립형질 중 한 가지만 겉으로 발현</strong>되는 현상입니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 왜 Rr은 둥근 완두가 될까?</strong><br>
+          • 둥근 모양을 만드는 대립유전자 <strong>$R$</strong>이 주름진 모양을 만드는 대립유전자 <strong>$r$</strong>에 대해 완전 우성이기 때문입니다.<br>
+          • 따라서 유전자형이 잡종($Rr$)이어도 표현형은 우성 형질인 <strong>둥근 완두</strong>가 됩니다.
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m2-badge">2</span>
+          <span>멘델의 분리의 법칙 (잡종 2대에서 3:1로 분리되는 이유)</span>
+        </div>
+        <p>쌍을 이루고 있던 대립유전자가 <strong>감수 분열 시 서로 다른 생식세포로 분리</strong>되어 들어가는 법칙입니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 잡종 2대에서 주름진 완두가 다시 출현하는 원리:</strong><br>
+          • 잡종 1대($Rr$)가 만드는 생식세포는 $R$과 $r$이 <strong>1 : 1의 비율</strong>로 형성됩니다.<br>
+          • 자가 수분 시 $r$을 가진 생식세포끼리 만날 확률이 $1/2 \times 1/2 = 1/4(25\%)$이므로, 잠복해 있던 열성 순종($rr$)이 <strong>3 : 1의 비율</strong>로 다시 겉으로 나타납니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 상황별 탐구 정리 표 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 한 쌍의 대립 형질 유전 과정 체계적 정리표</span>
+        <span class="table-sub">* 교과서 그림 12 핵심 데이터 요약</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>교배 대상 개체</th>
+              <th>형성되는 생식세포</th>
+              <th>자손의 유전자형 및 비</th>
+              <th>자손의 표현형 및 분리비</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>어버이 (P)</strong></td>
+              <td>순종 둥근(RR) × 순종 주름(rr)</td>
+              <td>R (100%), r (100%)</td>
+              <td><span class="tag-blue">100% Rr (잡종)</span></td>
+              <td><span class="tag-green">100% 둥근 완두 (우열의 원리)</span></td>
+            </tr>
+            <tr style="background-color: #f0fdf4;">
+              <td><strong>잡종 1대 (F₁)</strong></td>
+              <td>잡종 둥근(Rr) × 잡종 둥근(Rr) [자가 수분]</td>
+              <td>R : r = 1 : 1</td>
+              <td><span class="tag-blue">RR : Rr : rr = 1 : 2 : 1</span></td>
+              <td><span class="tag-hl">둥근 완두 : 주름진 완두 = 3 : 1</span></td>
+            </tr>
+            <tr>
+              <td><strong>잡종 2대 (F₂) 둥근 완두</strong></td>
+              <td>우성 개체 (전체의 3/4)</td>
+              <td>-</td>
+              <td>RR (1/4), Rr (2/4)</td>
+              <td>순종(RR) : 잡종(Rr) = 1 : 2 비율로 혼재</td>
+            </tr>
+            <tr>
+              <td><strong>잡종 2대 (F₂) 주름진 완두</strong></td>
+              <td>열성 개체 (전체의 1/4)</td>
+              <td>-</td>
+              <td>rr (1/4)</td>
+              <td><span class="tag-green">100% 순종(rr)만 존재</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // 탭 전환
+    const tabDiagram = document.getElementById('tabModeDiagram');
+    const tabQuiz = document.getElementById('tabModeQuiz');
+    const quizPanel = document.getElementById('quizPanel');
+
+    tabDiagram.addEventListener('click', () => {
+      tabDiagram.classList.add('active');
+      tabQuiz.classList.remove('active');
+      quizPanel.classList.remove('active');
+      restoreDiagramBlank(false);
+    });
+
+    tabQuiz.addEventListener('click', () => {
+      tabQuiz.classList.add('active');
+      tabDiagram.classList.remove('active');
+      quizPanel.classList.add('active');
+      setDiagramForQuiz();
+    });
+
+    // SVG 요소 참조
+    const secP = document.getElementById('sec-p-parents');
+    const secPGametes = document.getElementById('sec-p-gametes');
+    const secF1 = document.getElementById('sec-f1-generation');
+    const secF1Self = document.getElementById('sec-f1-selfing');
+    const secF2Diamond = document.getElementById('sec-f2-diamond');
+    const secF2Ratios = document.getElementById('sec-f2-ratios');
+
+    const badgeP = document.getElementById('sec-badge-p');
+    const badgeF1 = document.getElementById('sec-badge-f1');
+    const badgeF2 = document.getElementById('sec-badge-f2');
+
+    const bannerText = document.getElementById('bannerText');
+
+    // 단계 제어 버튼들
+    const btnStepAll = document.getElementById('btnStepAll');
+    const btnStep1 = document.getElementById('btnStep1');
+    const btnStep2 = document.getElementById('btnStep2');
+    const btnStep3 = document.getElementById('btnStep3');
+    const btnStep4 = document.getElementById('btnStep4');
+    const btnStep5 = document.getElementById('btnStep5');
+    const stepBtns = [btnStepAll, btnStep1, btnStep2, btnStep3, btnStep4, btnStep5];
+
+    function setActiveBtn(btn) {
+      stepBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function showAll() {
+      [secP, secPGametes, secF1, secF1Self, secF2Diamond, secF2Ratios, badgeP, badgeF1, badgeF2].forEach(el => {
+        el.classList.remove('fade-dim');
+      });
+      bannerText.innerHTML = '<strong>[전체 보기]</strong> 순종의 둥근 완두(RR)와 주름진 완두(rr)를 교배하여 잡종 1대(F₁)와 잡종 2대(F₂)가 형성되는 전 과정을 관찰합니다.';
+    }
+
+    function showStep(step) {
+      // 모든 요소 dim 처리
+      [secP, secPGametes, secF1, secF1Self, secF2Diamond, secF2Ratios, badgeP, badgeF1, badgeF2].forEach(el => {
+        el.classList.add('fade-dim');
+      });
+
+      if (step === 1) {
+        secP.classList.remove('fade-dim');
+        badgeP.classList.remove('fade-dim');
+        bannerText.innerHTML = '<strong>[1단계: 어버이(P)]</strong> 순종의 둥근 완두(RR)와 순종의 주름진 완두(rr)를 교배합니다.';
+      } else if (step === 2) {
+        secP.classList.remove('fade-dim');
+        secPGametes.classList.remove('fade-dim');
+        badgeP.classList.remove('fade-dim');
+        bannerText.innerHTML = '<strong>[2단계: 생식세포 형성]</strong> 감수 분열을 통해 RR은 R 생식세포만, rr은 r 생식세포만을 각각 1개씩 만듭니다.';
+      } else if (step === 3) {
+        secP.classList.remove('fade-dim');
+        secPGametes.classList.remove('fade-dim');
+        secF1.classList.remove('fade-dim');
+        badgeF1.classList.remove('fade-dim');
+        bannerText.innerHTML = '<strong>[3단계: 잡종 1대(F₁)]</strong> R과 r이 수정되어 모두 잡종(Rr)이 되며, 우열의 원리에 의해 100% 둥근 완두만 나타납니다.';
+      } else if (step === 4) {
+        secF1.classList.remove('fade-dim');
+        secF1Self.classList.remove('fade-dim');
+        badgeF1.classList.remove('fade-dim');
+        bannerText.innerHTML = '<strong>[4단계: 자가 수분]</strong> 잡종 1대(Rr)를 자가 수분하면 R과 r을 각각 절반(1:1)씩 갖는 생식세포를 만듭니다.';
+      } else if (step === 5) {
+        secF1Self.classList.remove('fade-dim');
+        secF2Diamond.classList.remove('fade-dim');
+        secF2Ratios.classList.remove('fade-dim');
+        badgeF2.classList.remove('fade-dim');
+        bannerText.innerHTML = '<strong>[5단계: 잡종 2대(F₂)]</strong> 4가지 수정 조합(RR, Rr, Rr, rr)에 의해 유전자형 1:2:1, 표현형 둥근:주름진 = 3:1로 분리됩니다.';
+      }
+    }
+
+    btnStepAll.addEventListener('click', () => { setActiveBtn(btnStepAll); showAll(); });
+    btnStep1.addEventListener('click', () => { setActiveBtn(btnStep1); showStep(1); });
+    btnStep2.addEventListener('click', () => { setActiveBtn(btnStep2); showStep(2); });
+    btnStep3.addEventListener('click', () => { setActiveBtn(btnStep3); showStep(3); });
+    btnStep4.addEventListener('click', () => { setActiveBtn(btnStep4); showStep(4); });
+    btnStep5.addEventListener('click', () => { setActiveBtn(btnStep5); showStep(5); });
+
+    // 순서대로 자동 재생
+    let playTimer = null;
+    let currentAutoStep = 1;
+    const btnAutoPlay = document.getElementById('btnAutoPlay');
+
+    btnAutoPlay.addEventListener('click', () => {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+        btnAutoPlay.textContent = '▶ 순서대로 재생';
+        btnAutoPlay.classList.remove('active');
+        return;
+      }
+
+      btnAutoPlay.textContent = '⏸ 일시 정지';
+      btnAutoPlay.classList.add('active');
+      currentAutoStep = 1;
+      showStep(currentAutoStep);
+      stepBtns[currentAutoStep].classList.add('active');
+
+      playTimer = setInterval(() => {
+        currentAutoStep++;
+        if (currentAutoStep > 5) {
+          clearInterval(playTimer);
+          playTimer = null;
+          btnAutoPlay.textContent = '▶ 순서대로 재생';
+          btnAutoPlay.classList.remove('active');
+          setActiveBtn(btnStepAll);
+          showAll();
+        } else {
+          setActiveBtn(stepBtns[currentAutoStep]);
+          showStep(currentAutoStep);
+        }
+      }, 2200);
+    });
+
+    // 퀴즈 모드 로직
+    const txtGenoRight = document.getElementById('txt-geno-right');
+    const txtGenoBottom = document.getElementById('txt-geno-bottom');
+    const visPeaRight = document.getElementById('vis-pea-right');
+    const visPeaBottom = document.getElementById('vis-pea-bottom');
+
+    let q1Solved = false;
+    let q2Solved = false;
+
+    function setDiagramForQuiz() {
+      if (!q1Solved) {
+        txtGenoRight.textContent = '( ? )';
+        txtGenoRight.setAttribute('fill', '#94a3b8');
+        visPeaRight.style.opacity = '0.3';
+      }
+      if (!q2Solved) {
+        txtGenoBottom.textContent = '( ? )';
+        txtGenoBottom.setAttribute('fill', '#94a3b8');
+        visPeaBottom.style.opacity = '0.3';
+      }
+      bannerText.innerHTML = '<strong>[퀴즈 모드]</strong> 잡종 2대 퍼넷 사각형의 우측 칸과 하단 칸에 들어갈 유전자형을 아래 카드에서 선택하세요!';
+    }
+
+    function restoreDiagramBlank(forceShow = false) {
+      txtGenoRight.textContent = '( Rr )';
+      txtGenoRight.setAttribute('fill', '#db2777');
+      visPeaRight.style.opacity = '1';
+
+      txtGenoBottom.textContent = '( rr )';
+      txtGenoBottom.setAttribute('fill', '#db2777');
+      visPeaBottom.style.opacity = '1';
+    }
+
+    document.querySelectorAll('.quiz-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const qNum = btn.getAttribute('data-q');
+        const val = btn.getAttribute('data-val');
+
+        if (qNum === '1') {
+          const fb = document.getElementById('fbQ1');
+          if (val === 'Rr') {
+            btn.classList.add('correct');
+            fb.innerHTML = '🎉 <strong>정답입니다!</strong> (R과 r이 만나 Rr이 되며 둥근 완두입니다)';
+            fb.style.color = '#16a34a';
+            txtGenoRight.textContent = '( Rr )';
+            txtGenoRight.setAttribute('fill', '#db2777');
+            visPeaRight.style.opacity = '1';
+            q1Solved = true;
+          } else {
+            btn.classList.add('wrong');
+            fb.innerHTML = '❌ <strong>다시 생각해 보세요.</strong> (좌측 R과 우측 r이 만납니다)';
+            fb.style.color = '#dc2626';
+          }
+        } else if (qNum === '2') {
+          const fb = document.getElementById('fbQ2');
+          if (val === 'rr') {
+            btn.classList.add('correct');
+            fb.innerHTML = '🎉 <strong>정답입니다!</strong> (r과 r이 만나 열성 순종 rr이 되며 주름진 완두입니다)';
+            fb.style.color = '#16a34a';
+            txtGenoBottom.textContent = '( rr )';
+            txtGenoBottom.setAttribute('fill', '#db2777');
+            visPeaBottom.style.opacity = '1';
+            q2Solved = true;
+          } else {
+            btn.classList.add('wrong');
+            fb.innerHTML = '❌ <strong>다시 생각해 보세요.</strong> (좌측 r과 우측 r이 만납니다)';
+            fb.style.color = '#dc2626';
+          }
+        }
+      });
+    });
+
+    document.getElementById('btnResetQuiz').addEventListener('click', () => {
+      q1Solved = false;
+      q2Solved = false;
+      document.querySelectorAll('.quiz-btn').forEach(b => {
+        b.classList.remove('correct', 'wrong');
+      });
+      document.getElementById('fbQ1').textContent = '';
+      document.getElementById('fbQ2').textContent = '';
+      setDiagramForQuiz();
+    });
+
+  })();
+  </script>
+</body>
+</html>

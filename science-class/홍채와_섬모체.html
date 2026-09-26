@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>홍채와 섬모체 (눈의 조절 작용) - 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #059669;
+      --accent: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: #2563eb;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 시뮬레이션 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .preset-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    .preset-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    /* 캔버스 영역 */
+    .canvas-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 620px;
+      min-height: 460px;
+    }
+
+    canvas#eyeCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* 자바실험실 스타일 하단 조작 바 */
+    .control-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 220px;
+      flex: 1;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .slider-header .auto-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 2px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    }
+
+    .ciliary-slider::-webkit-slider-thumb {
+      background: #3b82f6 !important;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .check-label:hover {
+      background: #e2e8f0;
+    }
+    .check-label input[type="checkbox"] {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      accent-color: #2563eb;
+    }
+
+    /* 실시간 안내 정보 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+
+    /* 2대 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .badge-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .iris-badge { background: #ea580c; }
+    .ciliary-badge { background: #2563eb; }
+
+    .mechanism-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .mechanism-meta {
+      font-size: 0.82rem;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* 비교 표 패널 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.84rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.data-table tr.active-row td {
+      background-color: #eff6ff !important;
+      font-weight: 700;
+    }
+
+    .tag-hl {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.76rem;
+    }
+
+    /* 캔버스 플로팅 툴팁 */
+    #canvasTooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(5px);
+      color: #ffffff;
+      padding: 9px 13px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      max-width: 280px;
+      z-index: 100;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transform: translate(-50%, -120%);
+      transition: opacity 0.15s ease;
+    }
+
+    #canvasTooltip strong {
+      display: block;
+      color: #60a5fa;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    @media (max-width: 860px) {
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+      .slider-group {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 서랍 버튼 및 타이틀 -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>👁️ 홍채와 섬모체 (눈의 조절 작용) 가상실험실</span>
+      <span class="nav-badge">자바실험실 1:1 복각</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <button class="nav-btn" id="btnReload" title="시뮬레이션 처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 시뮬레이션 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>홍채와 섬모체</h2>
+          <span class="sim-date">2024-06-16</span>
+        </div>
+
+        <div class="preset-pills">
+          <button class="preset-btn" data-preset="bright_near">☀️ 밝은 곳 / 📱 가까운 곳</button>
+          <button class="preset-btn" data-preset="dark_far">🌙 어두운 곳 / 🌄 먼 곳</button>
+          <button class="preset-btn" data-preset="bright_far">☀️ 밝은 곳 / 🌄 먼 곳</button>
+          <button class="preset-btn active" data-preset="normal">표준 상태 (실내)</button>
+        </div>
+      </div>
+
+      <!-- 메인 캔버스 뷰포트 -->
+      <div class="canvas-wrapper">
+        <canvas id="eyeCanvas" width="1160" height="620"></canvas>
+        <div id="canvasTooltip"></div>
+      </div>
+
+      <!-- 하단 조작 툴바 (자바실험실 원본 완벽 복각) -->
+      <div class="control-toolbar">
+        <div class="slider-group">
+          <!-- 1. 동공괄약근의 수축 슬라이더 -->
+          <div class="slider-item">
+            <div class="slider-header">
+              <span>동공괄약근의 수축 (명암 조절)</span>
+              <label class="auto-label">
+                <input type="checkbox" id="chkAutoIris"> Auto
+              </label>
+            </div>
+            <input type="range" id="sliderIris" min="0" max="100" value="50">
+          </div>
+
+          <!-- 2. 섬모체의 수축 슬라이더 -->
+          <div class="slider-item">
+            <div class="slider-header">
+              <span>섬모체의 수축 (원근 조절)</span>
+              <label class="auto-label">
+                <input type="checkbox" id="chkAutoCiliary"> Auto
+              </label>
+            </div>
+            <input type="range" id="sliderCiliary" class="ciliary-slider" min="0" max="100" value="50">
+          </div>
+        </div>
+
+        <!-- 옵션 체크박스 -->
+        <div class="checkbox-group">
+          <label class="check-label">
+            <input type="checkbox" id="chkRayTrace">
+            빛의 경로(망막에 초점을 맞춘 경우)
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="chkMuscleStress" checked>
+            근육의 강도
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 안내 정보 배너 -->
+    <div id="infoBanner" class="info-banner">
+      <span id="bannerText"><strong>[명암 및 원근 조절]</strong> 좌측 정면 동공과 우측 측면 홍채가 붉은 점선으로 연결되어 동공 크기 변화를, 푸른 점선으로 섬모체-진대-수정체 두께 변화를 관찰할 수 있습니다.</span>
+    </div>
+
+    <!-- 2대 조절 메커니즘 핵심 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon iris-badge">명암</span>
+          <span>1. 명암 조절 (홍채와 동공의 작용)</span>
+        </div>
+        <p>눈으로 들어오는 빛의 양을 조절하기 위해 홍채 근육이 수축 또는 이완하여 동공의 크기를 바꿉니다.</p>
+        <div class="mechanism-meta">
+          <strong>☀️ 밝을 때:</strong> 동공괄약근 수축 ➔ 홍채 확장 ➔ <strong>동공 축소</strong> (빛의 유입량 감소)<br>
+          <strong>🌙 어두울 때:</strong> 동공괄약근 이완 ➔ 홍채 축소 ➔ <strong>동공 확대</strong> (빛의 유입량 증가)
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon ciliary-badge">원근</span>
+          <span>2. 원근 조절 (섬모체와 수정체의 작용)</span>
+        </div>
+        <p>물체의 거리에 따라 망막에 정확한 초점을 맺기 위해 섬모체가 수정체의 두께를 조절합니다.</p>
+        <div class="mechanism-meta">
+          <strong>📱 가까운 곳:</strong> 섬모체 수축 ➔ 진대 이완(느슨) ➔ <strong>수정체 두꺼워짐</strong> (굴절력 증가)<br>
+          <strong>🌄 먼 곳:</strong> 섬모체 이완 ➔ 진대 팽팽함(당김) ➔ <strong>수정체 얇아짐</strong> (굴절력 감소)
+        </div>
+      </div>
+    </section>
+
+    <!-- 상황별 탐구 정리 표 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 중2 과학 교과서 눈의 조절 작용 핵심 정리표</span>
+        <span class="table-sub">* 현재 시뮬레이션 상태가 실시간으로 하이라이트됩니다.</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>주변 환경 / 상황</th>
+              <th>홍채 상태</th>
+              <th>동공 크기</th>
+              <th>섬모체(모양체)</th>
+              <th>진대(진씨대)</th>
+              <th>수정체 두께</th>
+              <th>시각적 결과</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-bright-near">
+              <td><strong>밝고 가까움</strong></td>
+              <td>대낮에 스마트폰 보기</td>
+              <td>확장 (괄약근 수축)</td>
+              <td><span class="tag-hl">축소 (작아짐)</span></td>
+              <td>수축 (조여짐)</td>
+              <td>이완 (느슨함)</td>
+              <td><span class="tag-hl">두꺼워짐</span></td>
+              <td>빛 차단 + 근거리 초점</td>
+            </tr>
+            <tr id="row-bright-far">
+              <td><strong>밝고 멂</strong></td>
+              <td>맑은 날 먼 산 바라보기</td>
+              <td>확장 (괄약근 수축)</td>
+              <td><span class="tag-hl">축소 (작아짐)</span></td>
+              <td>이완 (풀림)</td>
+              <td>팽팽해짐 (당김)</td>
+              <td><span class="tag-hl">얇아짐</span></td>
+              <td>빛 차단 + 원거리 초점</td>
+            </tr>
+            <tr id="row-dark-near">
+              <td><strong>어둡고 가까움</strong></td>
+              <td>암실에서 독서하기</td>
+              <td>축소 (괄약근 이완)</td>
+              <td><span class="tag-hl">확대 (커짐)</span></td>
+              <td>수축 (조여짐)</td>
+              <td>이완 (느슨함)</td>
+              <td><span class="tag-hl">두꺼워짐</span></td>
+              <td>빛 수집 + 근거리 초점</td>
+            </tr>
+            <tr id="row-dark-far">
+              <td><strong>어둡고 멂</strong></td>
+              <td>밤하늘의 별 바라보기</td>
+              <td>축소 (괄약근 이완)</td>
+              <td><span class="tag-hl">확대 (커짐)</span></td>
+              <td>이완 (풀림)</td>
+              <td>팽팽해짐 (당김)</td>
+              <td><span class="tag-hl">얇아짐</span></td>
+              <td>빛 수집 + 원거리 초점</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.getElementById('eyeCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('canvasTooltip');
+    const bannerText = document.getElementById('bannerText');
+
+    // UI 요소
+    const sliderIris = document.getElementById('sliderIris');
+    const sliderCiliary = document.getElementById('sliderCiliary');
+    const chkAutoIris = document.getElementById('chkAutoIris');
+    const chkAutoCiliary = document.getElementById('chkAutoCiliary');
+    const chkRayTrace = document.getElementById('chkRayTrace');
+    const chkMuscleStress = document.getElementById('chkMuscleStress');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const tableRows = document.querySelectorAll('.data-table tbody tr');
+
+    // 가상 좌표계 (1160 x 620)
+    const V_WIDTH = 1160;
+    const V_HEIGHT = 620;
+
+    // 조절 상태 변수 (0.0 ~ 1.0)
+    // irisVal: 0 = 이완(어두움, 동공 큼), 1 = 수축(밝음, 동공 작음)
+    // ciliaryVal: 0 = 이완(먼 곳, 수정체 얇음), 1 = 수축(가까운 곳, 수정체 두꺼움)
+    let irisVal = 0.5;
+    let ciliaryVal = 0.5;
+
+    // Auto 애니메이션 시간 누적기
+    let autoIrisPhase = 0;
+    let autoCiliaryPhase = 0;
+
+    // ==========================================
+    // 캔버스 정밀 렌더링 루틴
+    // ==========================================
+    function render() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // (A) 좌측 뷰: 눈의 정면 (Front View)
+      // 동공 지름: 최소 24px (수축) ~ 최대 74px (이완)
+      const pupilRadius = 74 - irisVal * 48; // 26 ~ 74
+      const frontCenter = { x: 260, y: 310 };
+
+      drawFrontEye(ctx, frontCenter.x, frontCenter.y, pupilRadius);
+
+      // (B) 우측 뷰: 눈의 시상 단면 (Sagittal Cross-Section)
+      const eyeSagittal = { x: 820, y: 310, r: 190 };
+      drawSagittalEye(ctx, eyeSagittal.x, eyeSagittal.y, eyeSagittal.r, pupilRadius);
+
+      // (C) 동공 연동 붉은 점선 (Red dashed lines)
+      drawConnectingGuideLines(frontCenter, eyeSagittal, pupilRadius);
+
+      // (D) 광선 추적 (Ray Tracing) 렌더링
+      if (chkRayTrace.checked) {
+        drawRayTracing(eyeSagittal, pupilRadius);
+      }
+    }
+
+    // ==========================================
+    // 1. 눈의 정면 뷰 렌더링
+    // ==========================================
+    function drawFrontEye(c, cx, cy, pR) {
+      c.save();
+
+      // 1. 공막(흰자위) 및 안구 외형 원 (반경 165)
+      c.beginPath();
+      c.arc(cx, cy, 165, 0, Math.PI * 2);
+      c.fillStyle = '#f8fafc';
+      c.fill();
+      c.lineWidth = 2.0;
+      c.strokeStyle = '#cbd5e1';
+      c.stroke();
+
+      // 은은한 공막 음영
+      const scleraGrad = c.createRadialGradient(cx, cy, 100, cx, cy, 165);
+      scleraGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      scleraGrad.addColorStop(1, 'rgba(203, 213, 225, 0.45)');
+      c.fillStyle = scleraGrad;
+      c.fill();
+
+      // 2. 홍채 (Iris, 반경 115)
+      const irisRadius = 115;
+      c.beginPath();
+      c.arc(cx, cy, irisRadius, 0, Math.PI * 2);
+      c.fillStyle = '#451a03'; // 기본 딥 브라운
+      c.fill();
+
+      // 홍채 베이스 방사형 그라데이션
+      const irisGrad = c.createRadialGradient(cx, cy, pR, cx, cy, irisRadius);
+      irisGrad.addColorStop(0, '#78350f');
+      irisGrad.addColorStop(0.35, '#92400e');
+      irisGrad.addColorStop(0.7, '#b45309');
+      irisGrad.addColorStop(0.95, '#451a03');
+      irisGrad.addColorStop(1.0, '#1c1917');
+      c.fillStyle = irisGrad;
+      c.fill();
+
+      // 홍채 방사상 근육 섬유(방사근/동공산대근) 텍스처 스트로크
+      c.lineWidth = 1.0;
+      const numFibers = 72;
+      for (let i = 0; i < numFibers; i++) {
+        const ang = (i * Math.PI * 2) / numFibers;
+        const r1 = pR + 4;
+        const r2 = irisRadius - 3;
+        c.strokeStyle = i % 2 === 0 ? 'rgba(217, 119, 6, 0.45)' : 'rgba(254, 215, 170, 0.35)';
+        c.beginPath();
+        c.moveTo(cx + r1 * Math.cos(ang), cy + r1 * Math.sin(ang));
+        c.lineTo(cx + r2 * Math.cos(ang), cy + r2 * Math.sin(ang));
+        c.stroke();
+      }
+
+      // 동공 주변 원형 동공괄약근 텍스처 (동심원 잔물결)
+      c.lineWidth = 1.2;
+      c.strokeStyle = 'rgba(69, 26, 3, 0.6)';
+      c.setLineDash([3, 3]);
+      for (let r = pR + 6; r < pR + 24 && r < irisRadius; r += 5) {
+        c.beginPath();
+        c.arc(cx, cy, r, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.setLineDash([]);
+
+      // 홍채 테두리 링
+      c.lineWidth = 2.5;
+      c.strokeStyle = '#1c1917';
+      c.stroke();
+
+      // 근육의 강도 시각화 체크 시: 동공괄약근 수축 링 표시
+      if (chkMuscleStress.checked && irisVal > 0.05) {
+        c.lineWidth = 2.5 + irisVal * 3;
+        c.strokeStyle = `rgba(239, 68, 68, ${0.4 + irisVal * 0.5})`;
+        c.beginPath();
+        c.arc(cx, cy, pR + 3, 0, Math.PI * 2);
+        c.stroke();
+      }
+
+      // 3. 동공 (Pupil, 검은색 개구부)
+      c.beginPath();
+      c.arc(cx, cy, pR, 0, Math.PI * 2);
+      c.fillStyle = '#0a0a0a';
+      c.fill();
+      c.lineWidth = 1.5;
+      c.strokeStyle = '#171717';
+      c.stroke();
+
+      // 각막/동공 표면 투명 광택(스펙큘러 하이라이트)
+      c.beginPath();
+      c.ellipse(cx - pR * 0.35, cy - pR * 0.35, pR * 0.45, pR * 0.28, -Math.PI / 4, 0, Math.PI * 2);
+      c.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      c.fill();
+
+      // 라벨
+      c.font = 'bold 13px sans-serif';
+      c.fillStyle = '#334155';
+      c.textAlign = 'center';
+      c.fillText('눈의 정면 모습', cx, cy + 185);
+
+      c.font = '12px sans-serif';
+      c.fillStyle = '#78350f';
+      c.fillText('홍채 (명암 조절)', cx, cy - 128);
+
+      c.fillStyle = '#0f172a';
+      c.fillText(`동공 (지름: ${(pR * 2 * 0.1).toFixed(1)} mm)`, cx, cy + pR + 20);
+
+      c.restore();
+    }
+
+    // ==========================================
+    // 2. 눈의 시상 단면 뷰 렌더링
+    // ==========================================
+    function drawSagittalEye(c, cx, cy, r, pR) {
+      c.save();
+
+      // (1) 외곽 공막 및 맥락막, 망막 층 (후방 안구 구형 컵)
+      // 안구 뒤쪽 층: angle -Math.PI*0.48 ~ Math.PI*0.48
+      const eyeBackStart = -Math.PI * 0.46;
+      const eyeBackEnd = Math.PI * 0.46;
+
+      // 1-1. 공막 (Sclera - 최외곽 흰색/회색 보호막)
+      c.lineWidth = 12;
+      c.strokeStyle = '#cbd5e1';
+      c.beginPath();
+      c.arc(cx, cy, r, eyeBackStart, eyeBackEnd, false);
+      c.stroke();
+
+      // 1-2. 맥락막 (Choroid - 중간 암갈색 혈관층)
+      c.lineWidth = 7;
+      c.strokeStyle = '#f87171';
+      c.beginPath();
+      c.arc(cx, cy, r - 3.5, eyeBackStart, eyeBackEnd, false);
+      c.stroke();
+
+      // 1-3. 망막 (Retina - 안쪽 황금빛 시각 신경층)
+      c.lineWidth = 7;
+      c.strokeStyle = '#f59e0b';
+      c.beginPath();
+      c.arc(cx, cy, r - 9, eyeBackStart, eyeBackEnd, false);
+      c.stroke();
+
+      // 황반 (Fovea centralis) 위치 강조
+      c.beginPath();
+      c.arc(cx + r - 9, cy, 8, 0, Math.PI * 2);
+      c.fillStyle = '#b45309';
+      c.fill();
+
+      // 1-4. 유리체 (Vitreous Body - 내부 투명 젤 챔버)
+      c.beginPath();
+      c.arc(cx, cy, r - 12, eyeBackStart, eyeBackEnd, false);
+      c.lineTo(cx - 70, cy + 90);
+      c.lineTo(cx - 70, cy - 90);
+      c.closePath();
+      const vitGrad = c.createRadialGradient(cx + 20, cy, 30, cx, cy, r - 12);
+      vitGrad.addColorStop(0, 'rgba(219, 234, 254, 0.7)');
+      vitGrad.addColorStop(1, 'rgba(191, 219, 254, 0.35)');
+      c.fillStyle = vitGrad;
+      c.fill();
+
+      // 1-5. 시신경 (Optic Nerve - 우하단 유출 다발)
+      c.beginPath();
+      c.moveTo(cx + r * Math.cos(Math.PI * 0.32), cy + r * Math.sin(Math.PI * 0.32));
+      c.quadraticCurveTo(cx + r + 20, cy + 120, cx + r + 110, cy + 155);
+      c.lineTo(cx + r + 105, cy + 175);
+      c.quadraticCurveTo(cx + r + 10, cy + 140, cx + r * Math.cos(Math.PI * 0.37), cy + r * Math.sin(Math.PI * 0.37));
+      c.fillStyle = '#f59e0b';
+      c.fill();
+      c.lineWidth = 1.5;
+      c.strokeStyle = '#d97706';
+      c.stroke();
+
+      // (2) 각막 (Cornea - 전방 투명 돌출창)
+      // 안구 전방에서 왼쪽으로 볼록하게 돌출
+      c.lineWidth = 8;
+      c.strokeStyle = 'rgba(203, 213, 225, 0.75)';
+      c.beginPath();
+      c.moveTo(cx - 130, cy - 138);
+      c.quadraticCurveTo(cx - 235, cy, cx - 130, cy + 138);
+      c.stroke();
+
+      c.lineWidth = 4;
+      c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      c.stroke();
+
+      // (3) 섬모체 (모양체, Ciliary Body)
+      // ciliaryVal: 0 = 이완(바깥쪽 위치), 1 = 수축(수정체 쪽으로 안쪽 돌출)
+      const ciliaryOffset = ciliaryVal * 12; // 수축 시 안쪽으로 12px 전진
+      const cilX = cx - 105;
+      const cilTopY = cy - 130 + ciliaryOffset;
+      const cilBottomY = cy + 130 - ciliaryOffset;
+
+      // 상단 섬모체 근육 덩어리
+      drawCiliaryMuscle(c, cilX, cilTopY, false, ciliaryVal);
+      // 하단 섬모체 근육 덩어리
+      drawCiliaryMuscle(c, cilX, cilBottomY, true, ciliaryVal);
+
+      // (4) 수정체 (Lens - 양면 볼록렌즈)
+      // ciliaryVal에 따라 두께 가변: 0 = 얇음(15px), 1 = 두꺼움(38px)
+      const lensHalfThickness = 14 + ciliaryVal * 22; // 14 ~ 36
+      const lensHeight = 110;
+      const lensCenter = { x: cx - 95, y: cy };
+
+      drawBiconvexLens(c, lensCenter.x, lensCenter.y, lensHalfThickness, lensHeight);
+
+      // (5) 진대 (진씨대, Suspensory Ligaments)
+      // 섬모체와 수정체 테두리를 연결하는 섬유선들
+      drawZonules(c, cilX, cilTopY, cilBottomY, lensCenter.x, cy, lensHeight, ciliaryVal);
+
+      // (6) 홍채 날개 단면 (Iris)
+      // 정면 뷰의 동공 크기(pR)와 수평 위치 1:1 완벽 연동!
+      // 동공 중심(cy)에서 위/아래로 pR 만큼 떨어진 지점까지 홍채 날개가 연장됨
+      const irisAperture = pR * 0.78; // 단면도 비율 보정
+      const irisRootX = cilX - 8;
+
+      drawIrisFlap(c, irisRootX, cilTopY + 12, lensCenter.x - lensHalfThickness - 4, cy - irisAperture);
+      drawIrisFlap(c, irisRootX, cilBottomY - 12, lensCenter.x - lensHalfThickness - 4, cy + irisAperture);
+
+      // (7) 섬모체 기준 푸른 점선 (Blue dashed lines)
+      c.save();
+      c.strokeStyle = '#2563eb';
+      c.lineWidth = 1.8;
+      c.setLineDash([4, 4]);
+      c.beginPath();
+      c.moveTo(cilX + 15, cilTopY);
+      c.lineTo(cilX + 65, cilTopY);
+      c.moveTo(cilX + 15, cilBottomY);
+      c.lineTo(cilX + 65, cilBottomY);
+      c.stroke();
+      c.restore();
+
+      // 해부학적 명칭 라벨 렌더링
+      drawSagittalLabels(c, cx, cy, lensCenter.x, lensHalfThickness, irisAperture);
+
+      c.restore();
+    }
+
+    // 섬모체 근육 렌더링
+    function drawCiliaryMuscle(c, x, y, isBottom, tension) {
+      c.save();
+      const sign = isBottom ? 1 : -1;
+      c.beginPath();
+      c.moveTo(x - 25, y - 10 * sign);
+      c.quadraticCurveTo(x + 10, y + 5 * sign, x + 25, y);
+      c.lineTo(x + 10, y + 25 * sign);
+      c.quadraticCurveTo(x - 15, y + 20 * sign, x - 25, y - 10 * sign);
+      c.closePath();
+
+      // 근육의 강도 시각화
+      if (chkMuscleStress.checked) {
+        c.fillStyle = tension > 0.5 ? '#b91c1c' : '#ef4444';
+      } else {
+        c.fillStyle = '#f87171';
+      }
+      c.fill();
+      c.lineWidth = 1.8;
+      c.strokeStyle = '#991b1b';
+      c.stroke();
+
+      // 근육 내부 결 조직선
+      c.lineWidth = 1;
+      c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      for (let i = -10; i <= 10; i += 6) {
+        c.beginPath();
+        c.moveTo(x + i, y + 2 * sign);
+        c.lineTo(x + i + 5, y + 18 * sign);
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    // 진대(진씨대) 섬유선 렌더링
+    function drawZonules(c, cilX, topY, botY, lx, ly, lH, tension) {
+      c.save();
+      // tension(0 = 팽팽함, 1 = 느슨함)
+      const isTight = tension < 0.45;
+      c.lineWidth = isTight ? 1.8 : 1.2;
+      c.strokeStyle = isTight ? '#334155' : '#94a3b8';
+
+      const numStrands = 5;
+      const topLensY = ly - lH / 2;
+      const botLensY = ly + lH / 2;
+
+      for (let i = 0; i < numStrands; i++) {
+        const offset = (i - 2) * 5;
+        // 상단 진대
+        c.beginPath();
+        c.moveTo(cilX + offset, topY + 12);
+        if (tension > 0.55) {
+          // 느슨해짐 (살짝 웨이브)
+          c.quadraticCurveTo(lx + offset - 4, (topY + topLensY) / 2 + 3, lx + offset * 0.6, topLensY + 4);
+        } else {
+          // 팽팽함 (직선)
+          c.lineTo(lx + offset * 0.6, topLensY + 4);
+        }
+        c.stroke();
+
+        // 하단 진대
+        c.beginPath();
+        c.moveTo(cilX + offset, botY - 12);
+        if (tension > 0.55) {
+          c.quadraticCurveTo(lx + offset - 4, (botY + botLensY) / 2 - 3, lx + offset * 0.6, botLensY - 4);
+        } else {
+          c.lineTo(lx + offset * 0.6, botLensY - 4);
+        }
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    // 수정체(볼록렌즈) 렌더링
+    function drawBiconvexLens(c, lx, ly, hT, h) {
+      c.save();
+      c.beginPath();
+      // 앞면 (왼쪽으로 볼록)
+      c.moveTo(lx, ly - h / 2);
+      c.bezierCurveTo(lx - hT * 1.35, ly - h * 0.35, lx - hT * 1.35, ly + h * 0.35, lx, ly + h / 2);
+      // 뒷면 (오른쪽으로 볼록)
+      c.bezierCurveTo(lx + hT * 1.45, ly + h * 0.35, lx + hT * 1.45, ly - h * 0.35, lx, ly - h / 2);
+      c.closePath();
+
+      // 투명한 푸른빛 유리질 그라데이션
+      const lensGrad = c.createLinearGradient(lx - hT, ly, lx + hT, ly);
+      lensGrad.addColorStop(0, 'rgba(147, 197, 253, 0.85)');
+      lensGrad.addColorStop(0.5, 'rgba(96, 165, 250, 0.95)');
+      lensGrad.addColorStop(1, 'rgba(59, 130, 246, 0.85)');
+      c.fillStyle = lensGrad;
+      c.fill();
+
+      c.lineWidth = 2.0;
+      c.strokeStyle = '#2563eb';
+      c.stroke();
+
+      // 수정체 광택 하이라이트
+      c.beginPath();
+      c.ellipse(lx - hT * 0.45, ly, hT * 0.3, h * 0.35, 0, 0, Math.PI * 2);
+      c.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      c.fill();
+
+      c.restore();
+    }
+
+    // 홍채 단면 날개 렌더링
+    function drawIrisFlap(c, x1, y1, x2, y2) {
+      c.save();
+      c.beginPath();
+      c.moveTo(x1, y1);
+      c.quadraticCurveTo((x1 + x2) / 2 + 5, (y1 + y2) / 2, x2, y2);
+      c.lineTo(x2 + 7, y2);
+      c.quadraticCurveTo((x1 + x2) / 2 + 12, (y1 + y2) / 2, x1 + 6, y1);
+      c.closePath();
+      c.fillStyle = '#ef4444'; // 자바실험실 산뜻한 코랄레드
+      c.fill();
+      c.lineWidth = 1.5;
+      c.strokeStyle = '#b91c1c';
+      c.stroke();
+      c.restore();
+    }
+
+    // ==========================================
+    // 3. 정면 ↔ 단면 연동 붉은 점선 (Red dashed lines)
+    // ==========================================
+    function drawConnectingGuideLines(fCenter, sEye, pR) {
+      const topPupilY = fCenter.y - pR;
+      const botPupilY = fCenter.y + pR;
+
+      // 단면도 홍채 끝점 X (수정체 바로 앞)
+      const targetX = sEye.x - 95 - 20;
+
+      ctx.save();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 5]);
+
+      // 상단 가이드선
+      ctx.beginPath();
+      ctx.moveTo(fCenter.x + pR * 0.7, topPupilY);
+      ctx.lineTo(targetX, topPupilY);
+      ctx.stroke();
+
+      // 하단 가이드선
+      ctx.beginPath();
+      ctx.moveTo(fCenter.x + pR * 0.7, botPupilY);
+      ctx.lineTo(targetX, botPupilY);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // ==========================================
+    // 4. 광선 추적 (Ray Tracing) 렌더링
+    // ==========================================
+    function drawRayTracing(sEye, pR) {
+      ctx.save();
+      const lx = sEye.x - 95;
+      const ly = sEye.y;
+      const foveaX = sEye.x + sEye.r - 9;
+      const foveaY = ly;
+
+      // 광원 진입 높이 (동공 개구부 크기 연동)
+      const halfAp = pR * 0.65;
+      const startX = sEye.x - 280;
+
+      ctx.strokeStyle = 'rgba(234, 179, 8, 0.85)'; // 황금빛 광선
+      ctx.lineWidth = 2.2;
+      ctx.shadowColor = 'rgba(234, 179, 8, 0.5)';
+      ctx.shadowBlur = 6;
+
+      const numRays = 5;
+      for (let i = 0; i < numRays; i++) {
+        const factor = (i / (numRays - 1)) * 2 - 1; // -1 ~ 1
+        const inY = ly + factor * halfAp;
+        const corneaX = sEye.x - 200 + (1 - Math.abs(factor)) * 12;
+
+        ctx.beginPath();
+        // 1. 외부 광원에서 각막 진입
+        ctx.moveTo(startX, inY);
+        ctx.lineTo(corneaX, inY);
+        // 2. 각막 통과 후 수정체 전면 진입
+        ctx.lineTo(lx - 12, inY);
+        // 3. 수정체 내부 굴절 후 망막(황반)으로 집광
+        ctx.lineTo(lx + 12, inY * 0.85 + ly * 0.15);
+        ctx.lineTo(foveaX, foveaY);
+        ctx.stroke();
+      }
+
+      // 황반 초점 맺힘 스팟
+      ctx.beginPath();
+      ctx.arc(foveaX, foveaY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#facc15';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // 단면도 해부학 라벨
+    function drawSagittalLabels(c, cx, cy, lx, hT, ap) {
+      c.font = 'bold 12.5px sans-serif';
+      c.fillStyle = '#0f172a';
+      c.textAlign = 'center';
+
+      // 하단 시각
+      c.fillText('눈의 측면 단면도', cx, cy + 205);
+
+      // 주요 기관 지시선 및 라벨
+      drawLeader(c, cx - 180, cy - 80, cx - 145, cy - 70, '각막');
+      drawLeader(c, lx - 40, cy - ap - 15, lx - 10, cy - ap - 4, '홍채');
+      drawLeader(c, lx - 70, cy - 130, lx - 30, cy - 110, '섬모체(모양체)');
+      drawLeader(c, lx + 20, cy - 85, lx + 8, cy - 65, '진대(진씨대)');
+      drawLeader(c, lx - 10, cy + 85, lx, cy + 50, `수정체 (${(hT * 2 * 0.1).toFixed(1)} mm)`);
+      drawLeader(c, cx + 120, cy - 140, cx + 140, cy - 100, '망막');
+      drawLeader(c, cx + 195, cy + 130, cx + 175, cy + 90, '시신경');
+    }
+
+    function drawLeader(c, tx, ty, ex, ey, text) {
+      c.save();
+      c.strokeStyle = '#94a3b8';
+      c.lineWidth = 1.2;
+      c.beginPath();
+      c.moveTo(tx, ty);
+      c.lineTo(ex, ey);
+      c.stroke();
+
+      c.font = '12px sans-serif';
+      c.fillStyle = '#334155';
+      c.textAlign = tx < ex ? 'right' : 'left';
+      c.fillText(text, tx < ex ? tx - 4 : tx + 4, ty + 4);
+      c.restore();
+    }
+
+    // ==========================================
+    // 애니메이션 루프 및 상태 업데이트
+    // ==========================================
+    let lastTs = performance.now();
+    function loop(ts) {
+      const dt = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
+
+      // 1. Auto 모드 처리 (동공괄약근)
+      if (chkAutoIris.checked) {
+        autoIrisPhase += dt * 0.9;
+        irisVal = (Math.sin(autoIrisPhase) + 1) / 2; // 0.0 ~ 1.0 부드러운 사인파
+        sliderIris.value = Math.round(irisVal * 100);
+      } else {
+        irisVal = parseFloat(sliderIris.value) / 100;
+      }
+
+      // 2. Auto 모드 처리 (섬모체)
+      if (chkAutoCiliary.checked) {
+        autoCiliaryPhase += dt * 0.75;
+        ciliaryVal = (Math.sin(autoCiliaryPhase) + 1) / 2;
+        sliderCiliary.value = Math.round(ciliaryVal * 100);
+      } else {
+        ciliaryVal = parseFloat(sliderCiliary.value) / 100;
+      }
+
+      // 3. 상태 갱신 및 테이블 하이라이트
+      updateStatusInfo();
+
+      // 4. 렌더링
+      render();
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // ==========================================
+    // 실시간 상태 설명 및 테이블 연동
+    // ==========================================
+    function updateStatusInfo() {
+      const isBright = irisVal >= 0.5;
+      const isNear = ciliaryVal >= 0.5;
+
+      let rowId = '';
+      if (isBright && isNear) rowId = 'row-bright-near';
+      else if (isBright && !isNear) rowId = 'row-bright-far';
+      else if (!isBright && isNear) rowId = 'row-dark-near';
+      else rowId = 'row-dark-far';
+
+      tableRows.forEach(row => {
+        row.classList.toggle('active-row', row.id === rowId);
+      });
+
+      // 안내 배너 문구 실시간 반응
+      const brightDesc = isBright
+        ? '<strong style="color:#ea580c;">[밝은 환경]</strong> 동공괄약근 수축 ➔ 홍채 확장 ➔ <strong>동공 축소</strong>'
+        : '<strong style="color:#1d4ed8;">[어두운 환경]</strong> 동공괄약근 이완 ➔ 홍채 축소 ➔ <strong>동공 확대</strong>';
+
+      const distDesc = isNear
+        ? '<strong style="color:#059669;">[가까운 거리]</strong> 섬모체 수축 ➔ 진대 이완 ➔ <strong>수정체 두꺼워짐</strong>'
+        : '<strong style="color:#64748b;">[먼 거리]</strong> 섬모체 이완 ➔ 진대 팽팽함 ➔ <strong>수정체 얇아짐</strong>';
+
+      bannerText.innerHTML = `${brightDesc} &nbsp;|&nbsp; ${distDesc}`;
+    }
+
+    // ==========================================
+    // 이벤트 리스너 & 컨트롤 인터랙션
+    // ==========================================
+    sliderIris.addEventListener('input', () => {
+      chkAutoIris.checked = false;
+      clearPresetButtons();
+    });
+
+    sliderCiliary.addEventListener('input', () => {
+      chkAutoCiliary.checked = false;
+      clearPresetButtons();
+    });
+
+    function clearPresetButtons() {
+      presetBtns.forEach(b => b.classList.remove('active'));
+    }
+
+    // 프리셋 버튼 설정
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        clearPresetButtons();
+        btn.classList.add('active');
+
+        chkAutoIris.checked = false;
+        chkAutoCiliary.checked = false;
+
+        const p = btn.dataset.preset;
+        if (p === 'bright_near') {
+          sliderIris.value = 85;
+          sliderCiliary.value = 85;
+        } else if (p === 'dark_far') {
+          sliderIris.value = 15;
+          sliderCiliary.value = 15;
+        } else if (p === 'bright_far') {
+          sliderIris.value = 85;
+          sliderCiliary.value = 15;
+        } else {
+          sliderIris.value = 50;
+          sliderCiliary.value = 50;
+        }
+      });
+    });
+
+    // ==========================================
+    // 툴팁 감지 (터치/마우스)
+    // ==========================================
+    const TOOLTIP_ZONES = [
+      {
+        title: '홍채 (Iris)',
+        desc: '동공 둘레의 도넛 모양 조직으로, 빛의 양에 따라 수축·이완하여 동공의 크기를 조절합니다.',
+        bounds: { x: 145, y: 195, w: 230, h: 230 }
+      },
+      {
+        title: '동공 (Pupil)',
+        desc: '빛이 눈 안으로 들어가는 개구부입니다. 밝을 때는 작아지고, 어두울 때는 커집니다.',
+        bounds: { x: 220, y: 270, w: 80, h: 80 }
+      },
+      {
+        title: '수정체 (Lens)',
+        desc: '빛을 굴절시켜 망막에 초점을 맺히게 하는 볼록렌즈 모양의 투명한 조직입니다. 거리별로 두께가 변합니다.',
+        bounds: { x: 700, y: 250, w: 50, h: 120 }
+      },
+      {
+        title: '섬모체 (Ciliary Body)',
+        desc: '수정체의 두께를 조절하는 근육입니다. 수축하면 수정체가 두꺼워지고, 이완하면 얇아집니다.',
+        bounds: { x: 690, y: 170, w: 60, h: 60 }
+      },
+      {
+        title: '진대 (Suspensory Ligament)',
+        desc: '섬모체와 수정체를 연결하는 가느다란 결합 조직 섬유입니다.',
+        bounds: { x: 710, y: 220, w: 40, h: 40 }
+      },
+      {
+        title: '망막 (Retina)',
+        desc: '빛을 감지하는 시각 세포가 분포하는 안구 내벽의 신경층으로, 상이 맺히는 스크린 역할을 합니다.',
+        bounds: { x: 940, y: 210, w: 80, h: 200 }
+      },
+      {
+        title: '각막 (Cornea)',
+        desc: '눈의 가장 앞쪽에 위치한 투명한 막으로, 눈을 보호하고 빛을 1차 굴절시킵니다.',
+        bounds: { x: 620, y: 210, w: 60, h: 200 }
+      }
+    ];
+
+    function handlePointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = V_WIDTH / rect.width;
+      const scaleY = V_HEIGHT / rect.height;
+
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      if (!clientX || !clientY) return;
+
+      const mx = (clientX - rect.left) * scaleX;
+      const my = (clientY - rect.top) * scaleY;
+
+      let found = null;
+      for (const z of TOOLTIP_ZONES) {
+        if (mx >= z.bounds.x && mx <= z.bounds.x + z.bounds.w &&
+            my >= z.bounds.y && my <= z.bounds.y + z.bounds.h) {
+          found = z;
+          break;
+        }
+      }
+
+      if (found) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${clientX - rect.left}px`;
+        tooltip.style.top = `${clientY - rect.top}px`;
+        tooltip.innerHTML = `<strong>${found.title}</strong>${found.desc}`;
+      } else {
+        tooltip.style.display = 'none';
+      }
+    }
+
+    canvas.addEventListener('mousemove', handlePointer);
+    canvas.addEventListener('touchmove', handlePointer, { passive: true });
+    canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    canvas.addEventListener('touchend', () => { tooltip.style.display = 'none'; });
+
+  })();
+  </script>
+</body>
+</html>

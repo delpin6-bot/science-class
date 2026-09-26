@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>소화 효소의 작용 (Digestive Enzymes) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --carb: #f59e0b; /* 탄수화물/녹말 */
+      --protein: #ef4444; /* 단백질 */
+      --fat: #10b981; /* 지방 */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 상단 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 영양소 선택 탭 바 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 캔버스 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #f59e0b; }
+    .dash-card.c2 { border-top: 3px solid #ef4444; }
+    .dash-card.c3 { border-top: 3px solid #10b981; }
+    .dash-card.c4 { border-top: 3px solid #2563eb; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.12rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .stage-steps {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stage-btn {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .stage-btn:hover { background: #f1f5f9; color: #0f172a; }
+    .stage-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 420px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>✂️ 소화 효소의 작용 (Digestive Enzymes)</h1>
+      <p>탄수화물·단백질·지방의 소화 기관(입, 위, 소장)별 소화 효소(아밀레이스, 펩신, 라이페이스) 분해 메커니즘</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 3대 영양소의 화학적 소화 과정과 소화 효소</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🍞 1. 영양소별 분해 효소와 최종 산물</h4>
+        <ul>
+          <li><strong>탄수화물 (녹말):</strong>
+            <br>• 입 (침의 아밀레이스, pH 7): 녹말 ➔ <strong>엿당</strong>
+            <br>• 소장 (이자액의 아밀레이스, 소장 효소): 엿당 ➔ <strong>포도당</strong> (최종 분해)
+          </li>
+          <li><strong>단백질:</strong>
+            <br>• 위 (위액의 펩신 + 염산, pH 2): 단백질 ➔ <strong>중간 크기 단백질</strong>
+            <br>• 소장 (이자액의 트립신, 소장 효소): ➔ <strong>아미노산</strong> (최종 분해)
+          </li>
+          <li><strong>지방:</strong>
+            <br>• 소장 (쓸개즙): 지방 덩어리를 작은 알갱이로 유화 (기계적 소화)
+            <br>• 소장 (이자액의 라이페이스): ➔ <strong>지방산 + 모노글리세리드</strong> (최종 분해)
+          </li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>🧫 2. 이자액의 중요성과 소장 융털 흡수</h4>
+        <ul>
+          <li><strong>만능 소화액 '이자액':</strong> 탄수화물(아밀레이스), 단백질(트립신), 지방(라이페이스)을 분해하는 3대 소화 효소가 모두 들어 있음.</li>
+          <li><strong>소장 융털의 흡수 경로:</strong>
+            <br>• <strong>모세혈관 (수용성):</strong> 포도당, 아미노산, 무기염류, 비타민 B·C
+            <br>• <strong>암죽관 (지용성):</strong> 지방산, 모노글리세리드, 비타민 A·D·E·K
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 영양소 선택 탭 바 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-nut="CARB">🍞 1. 탄수화물 (녹말 ➔ 엿당 ➔ 포도당)</button>
+    <button class="tab-btn" data-nut="PROTEIN">🥩 2. 단백질 (단백질 ➔ 펩톤 ➔ 아미노산)</button>
+    <button class="tab-btn" data-nut="FAT">🧈 3. 지방 (지방 ➔ 유화 ➔ 지방산+모노글리세리드)</button>
+  </div>
+
+  <!-- 메인 캔버스 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl">현재 소화 기관 & 환경</div>
+      <div class="dash-val" id="dispOrgan">입 (Mouth)</div>
+      <div class="dash-sub" id="dispEnv">pH 약 7 (중성 환경)</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl">분비 소화 효소</div>
+      <div class="dash-val" id="dispEnzyme" style="color:#ef4444;">침의 아밀레이스</div>
+      <div class="dash-sub" id="dispEnzymeSource">침샘에서 분비</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl">분해 상태 & 생성물</div>
+      <div class="dash-val" id="dispProduct" style="color:#10b981;">녹말 ➔ 엿당 분해</div>
+      <div class="dash-sub" id="dispProductSub">긴 다당류 사슬이 2당류로 절단</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl">최종 흡수 경로 (소장 융털)</div>
+      <div class="dash-val" id="dispAbsorb" style="color:#2563eb;">모세혈관 (수용성)</div>
+      <div class="dash-sub">간을 거쳐 온몸 세포로 이동</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <!-- 소화 단계 선택 버튼 -->
+      <div class="stage-steps" id="stageSteps">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b;">소화 단계 진행:</span>
+        <button class="stage-btn active" data-step="0">1단계: 음식물 섭취 (원물질)</button>
+        <button class="stage-btn" data-step="1">2단계: 1차 효소 분해</button>
+        <button class="stage-btn" data-step="2">3단계: 2차 최종 분해</button>
+        <button class="stage-btn" data-step="3">4단계: 소장 융털 흡수</button>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action" id="btnNextStep">▶ 다음 단계로</button>
+        <button class="btn-action" id="btnReset">↺ 처음으로</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 상태 변수
+  let currentNutrient = "CARB"; // "CARB", "PROTEIN", "FAT"
+  let currentStep = 0; // 0, 1, 2, 3
+
+  // DOM 요소 참조
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const stageBtns = document.querySelectorAll(".stage-btn");
+  const btnNextStep = document.getElementById("btnNextStep");
+  const btnReset = document.getElementById("btnReset");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const dispOrgan = document.getElementById("dispOrgan");
+  const dispEnv = document.getElementById("dispEnv");
+  const dispEnzyme = document.getElementById("dispEnzyme");
+  const dispEnzymeSource = document.getElementById("dispEnzymeSource");
+  const dispProduct = document.getElementById("dispProduct");
+  const dispProductSub = document.getElementById("dispProductSub");
+  const dispAbsorb = document.getElementById("dispAbsorb");
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // --- 대시보드 갱신 ---
+  function updateDashboard() {
+    stageBtns.forEach((b, i) => {
+      b.classList.toggle("active", i === currentStep);
+    });
+
+    if (currentNutrient === "CARB") {
+      dispAbsorb.textContent = "융털 모세혈관 (수용성)";
+      if (currentStep === 0) {
+        dispOrgan.textContent = "입 (섭취 직후)";
+        dispEnv.textContent = "거대한 녹말(다당류) 고분자 덩어리";
+        dispEnzyme.textContent = "효소 작용 전";
+        dispEnzymeSource.textContent = "음식물 씹기 단계";
+        dispProduct.textContent = "녹말 (다당류 사슬)";
+        dispProductSub.textContent = "수백 수천 개의 포도당이 결합된 사슬";
+      } else if (currentStep === 1) {
+        dispOrgan.textContent = "입 (침과 혼합)";
+        dispEnv.textContent = "pH 약 7 (중성)";
+        dispEnzyme.textContent = "침의 아밀레이스 (Amylase)";
+        dispEnzymeSource.textContent = "침샘에서 분비";
+        dispProduct.textContent = "녹말 ➔ 엿당 (2당류)";
+        dispProductSub.textContent = "가위 효소가 녹말 사슬을 2개씩 절단";
+      } else if (currentStep === 2) {
+        dispOrgan.textContent = "소장 (십이지장 및 소장)";
+        dispEnv.textContent = "pH 약 8 (약염기성, 이자액 분비)";
+        dispEnzyme.textContent = "이자액 아밀레이스 + 장 효소";
+        dispEnzymeSource.textContent = "이자 및 소장 점막";
+        dispProduct.textContent = "엿당 ➔ 포도당 (단당류)";
+        dispProductSub.textContent = "세포막을 통과할 수 있는 최소 단위로 완성";
+      } else {
+        dispOrgan.textContent = "소장 융털 흡수";
+        dispEnv.textContent = "수용성 양분 흡수";
+        dispEnzyme.textContent = "소화 완료";
+        dispEnzymeSource.textContent = "모세혈관 ➔ 간 ➔ 심장 ➔ 온몸";
+        dispProduct.textContent = "포도당 흡수 완료";
+        dispProductSub.textContent = "에너지원(ATP 생성)으로 활용";
+      }
+    } else if (currentNutrient === "PROTEIN") {
+      dispAbsorb.textContent = "융털 모세혈관 (수용성)";
+      if (currentStep === 0) {
+        dispOrgan.textContent = "입 ➔ 식도";
+        dispEnv.textContent = "복잡하게 꼬인 거대 단백질 입체 구조";
+        dispEnzyme.textContent = "작용 효소 없음 (입에선 미분해)";
+        dispEnzymeSource.textContent = "기계적 씹기만 수행";
+        dispProduct.textContent = "단백질 (폴리펩타이드 사슬)";
+        dispProductSub.textContent = "아미노산 수백 개가 펩타이드 결합";
+      } else if (currentStep === 1) {
+        dispOrgan.textContent = "위 (Stomach)";
+        dispEnv.textContent = "pH 약 1.5 ~ 2 (염산에 의한 강산성)";
+        dispEnzyme.textContent = "위액의 펩신 (Pepsin) + 염산";
+        dispEnzymeSource.textContent = "위샘에서 분비 (염산이 펩신 활성화)";
+        dispProduct.textContent = "단백질 ➔ 중간 크기 단백질";
+        dispProductSub.textContent = "단백질 결합을 거칠게 듬성듬성 절단";
+      } else if (currentStep === 2) {
+        dispOrgan.textContent = "소장 (Small Intestine)";
+        dispEnv.textContent = "pH 약 8 (이자액 탄산수소나트륨 중화)";
+        dispEnzyme.textContent = "이자액 트립신 + 소장 펩티데이스";
+        dispEnzymeSource.textContent = "이자 및 소장 점막 효소";
+        dispProduct.textContent = "➔ 아미노산 (단일 분자)";
+        dispProductSub.textContent = "완전히 낱개의 아미노산 구슬로 분해";
+      } else {
+        dispOrgan.textContent = "소장 융털 흡수";
+        dispEnv.textContent = "수용성 양분 흡수";
+        dispEnzyme.textContent = "소화 완료";
+        dispEnzymeSource.textContent = "모세혈관 ➔ 간 ➔ 온몸";
+        dispProduct.textContent = "아미노산 흡수 완료";
+        dispProductSub.textContent = "근육, 효소, 호르몬 합성 원료";
+      }
+    } else {
+      // FAT (지방)
+      dispAbsorb.textContent = "융털 암죽관 (지용성)";
+      if (currentStep === 0) {
+        dispOrgan.textContent = "입 ➔ 위";
+        dispEnv.textContent = "물에 녹지 않는 거대한 지방 덩어리";
+        dispEnzyme.textContent = "작용 효소 없음";
+        dispEnzymeSource.textContent = "소장 도달 전까지 미분해";
+        dispProduct.textContent = "지방 덩어리 (Fat Globule)";
+        dispProductSub.textContent = "글리세롤 1개 + 지방산 3개 결합체";
+      } else if (currentStep === 1) {
+        dispOrgan.textContent = "소장 십이지장 (쓸개즙 작용)";
+        dispEnv.textContent = "기계적 소화 (효소는 아님!)";
+        dispEnzyme.textContent = "쓸개즙 (Bile)";
+        dispEnzymeSource.textContent = "간에서 생성 ➔ 쓸개 저장 후 분비";
+        dispProduct.textContent = "지방의 유화 (Emulsification)";
+        dispProductSub.textContent = "지방 알갱이를 잘게 쪼개어 효소 접촉면적 극대화";
+      } else if (currentStep === 2) {
+        dispOrgan.textContent = "소장 (이자액 라이페이스 작용)";
+        dispEnv.textContent = "pH 약 8 (약염기성)";
+        dispEnzyme.textContent = "이자액 라이페이스 (Lipase)";
+        dispEnzymeSource.textContent = "이자에서 분비";
+        dispProduct.textContent = "지방산 3개 + 모노글리세리드 1개";
+        dispProductSub.textContent = "에스테르 결합을 분해하여 최종 분자화";
+      } else {
+        dispOrgan.textContent = "소장 융털 흡수";
+        dispEnv.textContent = "지용성 양분 흡수";
+        dispEnzyme.textContent = "소화 완료";
+        dispEnzymeSource.textContent = "암죽관 ➔ 가슴관(림프관) ➔ 혈액";
+        dispProduct.textContent = "암죽관 흡수 완료";
+        dispProductSub.textContent = "체온 유지, 세포막 성분, 고효율 에너지";
+      }
+    }
+  }
+
+  // ==========================================================================
+  // [렌더링 엔진]
+  // ==========================================================================
+  function renderAll() {
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    const cx = width / 2;
+    const cy = height / 2;
+
+    if (currentNutrient === "CARB") {
+      drawCarbDigestion(cx, cy);
+    } else if (currentNutrient === "PROTEIN") {
+      drawProteinDigestion(cx, cy);
+    } else {
+      drawFatDigestion(cx, cy);
+    }
+  }
+
+  // --- 탄수화물 분해 시각화 ---
+  function drawCarbDigestion(cx, cy) {
+    ctx.save();
+
+    ctx.fillStyle = "#92400e";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🍞 탄수화물(녹말)의 단계적 분해: 아밀레이스 가위 효소 작용", cx, 30);
+
+    const startX = cx - 350;
+    const numGlucose = 12;
+
+    if (currentStep === 0) {
+      // 거대한 녹말 사슬 (포도당 12개 연결)
+      drawStarchChain(startX, cy, numGlucose, false);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("녹말 (Starch): 수많은 포도당 분자가 결합된 거대 다당류", cx, cy + 90);
+    } else if (currentStep === 1) {
+      // 엿당(Maltose) 2개씩 절단 (아밀레이스 가위가 자름)
+      drawStarchChain(startX, cy, numGlucose, true);
+      drawScissors(cx - 150, cy - 65, "침의 아밀레이스");
+      drawScissors(cx + 80, cy - 65, "침의 아밀레이스");
+
+      ctx.fillStyle = "#d97706";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("엿당 (Maltose): 아밀레이스가 사슬을 잘라 2개씩 짝지어진 2당류", cx, cy + 90);
+    } else if (currentStep === 2) {
+      // 개별 포도당(Glucose) 분리
+      drawMonomers(cx, cy, numGlucose, "#f59e0b", "포도당");
+      drawScissors(cx, cy - 65, "소장 탄수화물 효소");
+
+      ctx.fillStyle = "#b45309";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("포도당 (Glucose): 세포가 직접 흡수할 수 있는 가장 작은 단당류", cx, cy + 90);
+    } else {
+      // 융털 모세혈관 흡수 뷰
+      drawVillusAbsorption(cx, cy, "포도당", "#f59e0b", true);
+    }
+
+    ctx.restore();
+  }
+
+  function drawStarchChain(startX, cy, count, isCutToPairs) {
+    const r = 18;
+    const spacing = 58;
+
+    for (let i = 0; i < count; i++) {
+      let x = startX + i * spacing;
+      if (isCutToPairs) {
+        // 2개씩 그룹 간격 벌림
+        x += Math.floor(i / 2) * 22;
+      }
+
+      // 육각형 포도당 고리
+      drawHexagon(x, cy, r, "#f59e0b", "#d97706");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("포도당", x, cy);
+
+      // 결합선
+      if (i < count - 1) {
+        if (!isCutToPairs || (i % 2 === 0)) {
+          ctx.strokeStyle = "#b45309";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(x + r, cy);
+          ctx.lineTo(x + spacing - r + (isCutToPairs && i % 2 !== 0 ? 22 : 0), cy);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // --- 단백질 분해 시각화 ---
+  function drawProteinDigestion(cx, cy) {
+    ctx.save();
+
+    ctx.fillStyle = "#991b1b";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🥩 단백질의 단계적 분해: 위(펩신)와 소장(트립신)의 연속 분해", cx, 30);
+
+    const startX = cx - 350;
+    const count = 12;
+
+    if (currentStep === 0) {
+      // 거대한 단백질 사슬
+      drawBeadChain(startX, cy, count, 0);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("단백질 (Protein): 아미노산들이 펩타이드 결합으로 길게 이어진 복잡한 구조", cx, cy + 90);
+    } else if (currentStep === 1) {
+      // 위에서 펩신에 의해 3~4개짜리 중간 단백질로 거칠게 분해
+      drawBeadChain(startX, cy, count, 1);
+      drawScissors(cx - 100, cy - 65, "위액의 펩신 (pH 2)");
+
+      ctx.fillStyle = "#b91c1c";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("중간 크기 단백질 (폴리펩타이드): 펩신이 거칠게 절단", cx, cy + 90);
+    } else if (currentStep === 2) {
+      // 소장에서 트립신과 장효소에 의해 낱개 아미노산으로 분해
+      drawMonomers(cx, cy, count, "#ef4444", "아미노산");
+      drawScissors(cx, cy - 65, "이자액의 트립신 (pH 8)");
+
+      ctx.fillStyle = "#991b1b";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("아미노산 (Amino Acid): 단백질의 최소 기본 구성 단위 완성", cx, cy + 90);
+    } else {
+      drawVillusAbsorption(cx, cy, "아미노산", "#ef4444", true);
+    }
+
+    ctx.restore();
+  }
+
+  function drawBeadChain(startX, cy, count, step) {
+    const r = 16;
+    const spacing = 58;
+
+    for (let i = 0; i < count; i++) {
+      let x = startX + i * spacing;
+      if (step === 1) {
+        x += Math.floor(i / 3) * 35; // 3개씩 묶음
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#ef4444";
+      ctx.fill();
+      ctx.strokeStyle = "#991b1b";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("아미노산", x, cy);
+
+      // 결합선
+      if (i < count - 1) {
+        if (step === 0 || (i % 3 !== 2)) {
+          ctx.strokeStyle = "#7f1d1d";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x + r, cy);
+          ctx.lineTo(x + spacing - r, cy);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // --- 지방 분해 시각화 ---
+  function drawFatDigestion(cx, cy) {
+    ctx.save();
+
+    ctx.fillStyle = "#065f46";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🧈 지방의 소화: 쓸개즙의 유화 작용(기계적)과 라이페이스의 화학적 분해", cx, 30);
+
+    if (currentStep === 0) {
+      // 거대한 지방 방울 덩어리
+      drawBigFatGlobule(cx, cy);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("지방 덩어리 (물과 섞이지 않아 소화 효소가 안쪽까지 닿지 못함)", cx, cy + 105);
+    } else if (currentStep === 1) {
+      // 쓸개즙에 의해 잘게 쪼개진 유화 지방 방울들
+      drawEmulsifiedFat(cx, cy);
+      ctx.fillStyle = "#047857";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("지방의 유화 (쓸개즙이 표면장력을 낮춰 작은 방울들로 쪼갬 -> 표면적 극대화)", cx, cy + 105);
+    } else if (currentStep === 2) {
+      // 라이페이스에 의해 분해된 모노글리세리드와 지방산 꼬리
+      drawHydrolyzedFat(cx, cy);
+      drawScissors(cx, cy - 75, "이자액의 라이페이스");
+      ctx.fillStyle = "#065f46";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("최종 분해 산물: 모노글리세리드 1개 + 지방산 3개", cx, cy + 105);
+    } else {
+      drawVillusAbsorption(cx, cy, "지방산/모노글리세리드", "#10b981", false);
+    }
+
+    ctx.restore();
+  }
+
+  function drawBigFatGlobule(cx, cy) {
+    ctx.fillStyle = "rgba(16, 185, 129, 0.25)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 70, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#059669";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = "#047857";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("거대 지방 덩어리", cx, cy - 6);
+    ctx.font = "11px sans-serif";
+    ctx.fillText("(글리세롤 + 지방산 3개 결합체들)", cx, cy + 14);
+  }
+
+  function drawEmulsifiedFat(cx, cy) {
+    // 5개의 작은 방울로 쪼개짐
+    const offsets = [
+      { x: -140, y: 0 }, { x: -60, y: -35 }, { x: 20, y: 25 }, { x: 100, y: -25 }, { x: 170, y: 10 }
+    ];
+
+    offsets.forEach(off => {
+      ctx.fillStyle = "rgba(16, 185, 129, 0.3)";
+      ctx.beginPath();
+      ctx.arc(cx + off.x, cy + off.y, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#065f46";
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("유화 방울", cx + off.x, cy + off.y + 3);
+    });
+
+    ctx.fillStyle = "#0284c7";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("✨ 쓸개즙 코팅 작용 (비효소성 기계적 유화)", cx, cy - 80);
+  }
+
+  function drawHydrolyzedFat(cx, cy) {
+    // 모노글리세리드 헤드(원형) + 지방산 꼬리 3개
+    const headX = cx - 120;
+    ctx.fillStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.arc(headX, cy, 32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#1d4ed8";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("모노글리세리드", headX, cy + 4);
+
+    // 3개의 분리된 지방산 꼬리
+    for (let k = 0; k < 3; k++) {
+      const fy = cy - 45 + k * 45;
+      const fx = cx + 80;
+
+      ctx.fillStyle = "#10b981";
+      ctx.fillRect(fx, fy - 12, 130, 24);
+      ctx.strokeStyle = "#047857";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(fx, fy - 12, 130, 24);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillText(`지방산 #${k + 1}`, fx + 65, fy + 4);
+    }
+  }
+
+  // --- 분리된 낱개 단량체들 그리기 ---
+  function drawMonomers(cx, cy, count, color, label) {
+    const spacing = 58;
+    const startX = cx - (count * spacing) / 2 + spacing / 2;
+
+    for (let i = 0; i < count; i++) {
+      const x = startX + i * spacing;
+      ctx.beginPath();
+      ctx.arc(x, cy, 16, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x, cy);
+    }
+  }
+
+  // --- 소장 융털 흡수 단면도 시각화 ---
+  function drawVillusAbsorption(cx, cy, nutrientName, color, isWaterSoluble) {
+    // 융털 기둥 외벽
+    const vW = 180;
+    const vH = 260;
+    const topY = cy - 110;
+
+    // 상피세포 융털 윤곽
+    ctx.fillStyle = "#fef2f2";
+    ctx.strokeStyle = "#f87171";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - vW / 2, topY + vH);
+    ctx.lineTo(cx - vW / 2, topY + 60);
+    ctx.quadraticCurveTo(cx - vW / 2, topY, cx, topY);
+    ctx.quadraticCurveTo(cx + vW / 2, topY, cx + vW / 2, topY + 60);
+    ctx.lineTo(cx + vW / 2, topY + vH);
+    ctx.fill();
+    ctx.stroke();
+
+    // 융털 내부 암죽관 (중앙 녹색/노란 기둥)
+    ctx.fillStyle = isWaterSoluble ? "rgba(16, 185, 129, 0.2)" : "#10b981";
+    ctx.fillRect(cx - 18, topY + 45, 36, vH - 45);
+    ctx.strokeStyle = "#059669";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 18, topY + 45, 36, vH - 45);
+
+    // 융털 모세혈관 그물망 (빨간색/파란색)
+    ctx.strokeStyle = isWaterSoluble ? "#ef4444" : "rgba(239, 68, 68, 0.3)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(cx - 45, topY + vH);
+    ctx.lineTo(cx - 45, topY + 70);
+    ctx.quadraticCurveTo(cx, topY + 25, cx + 45, topY + 70);
+    ctx.lineTo(cx + 45, topY + vH);
+    ctx.stroke();
+
+    // 라벨
+    ctx.fillStyle = isWaterSoluble ? "#b91c1c" : "#047857";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`★ ${nutrientName}이(가) ${isWaterSoluble ? "모세혈관" : "암죽관"}으로 흡수됩니다!`, cx, topY - 20);
+
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillStyle = "#ef4444";
+    ctx.fillText("모세혈관(수용성)", cx - 55, topY + 120);
+    ctx.fillStyle = "#059669";
+    ctx.fillText("암죽관(지용성)", cx + 55, topY + 120);
+  }
+
+  // --- 보조 도형: 육각형 그리기 ---
+  function drawHexagon(x, y, r, fillColor, strokeColor) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const hx = x + r * Math.cos(angle);
+      const hy = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(hx, hy);
+      else ctx.lineTo(hx, hy);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // --- 가위 효소 아이콘 ---
+  function drawScissors(x, y, label) {
+    ctx.save();
+    ctx.font = "26px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("✂️", x, y + 10);
+
+    ctx.fillStyle = "#dc2626";
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillText(label, x, y - 8);
+    ctx.restore();
+  }
+
+  // --- 이벤트 리스너 ---
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentNutrient = btn.dataset.nut;
+      currentStep = 0;
+      updateDashboard();
+      renderAll();
+    });
+  });
+
+  stageBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentStep = parseInt(btn.dataset.step);
+      updateDashboard();
+      renderAll();
+    });
+  });
+
+  btnNextStep.addEventListener("click", () => {
+    currentStep = (currentStep + 1) % 4;
+    updateDashboard();
+    renderAll();
+  });
+
+  btnReset.addEventListener("click", () => {
+    currentStep = 0;
+    updateDashboard();
+    renderAll();
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  resizeCanvas();
+  updateDashboard();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>

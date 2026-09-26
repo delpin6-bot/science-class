@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>이온결합 할리갈리 (Ionic Bonding Halli Galli) - 중2 과학 게임</title>
+<style>
+  :root {
+    --bg-felt: #064e3b;
+    --table-rim: #042f2e;
+    --gold: #f59e0b;
+    --gold-light: #fef08a;
+    --gold-dark: #b45309;
+    --cation-bg: #fff1f2;
+    --cation-border: #e11d48;
+    --cation-glow: rgba(225, 29, 72, 0.4);
+    --anion-bg: #f0f9ff;
+    --anion-border: #0284c7;
+    --anion-glow: rgba(2, 132, 199, 0.4);
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; background: #0f172a; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", "맑은 고딕", sans-serif;
+    user-select: none; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* 1. Header Navigation Bar */
+  .game-nav {
+    background: #0f172a; border-bottom: 2px solid #1e293b; padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: relative; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .brand-group { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { font-size: 26px; }
+  .brand-title { font-size: 18px; font-weight: 900; color: #38bdf8; letter-spacing: -0.5px; }
+  .brand-badge {
+    background: #1e293b; color: #cbd5e1; border: 1px solid #334155; font-size: 11px;
+    font-weight: 700; padding: 3px 8px; border-radius: 4px;
+  }
+
+  .nav-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn-nav {
+    background: #1e293b; border: 1.5px solid #334155; color: #f1f5f9; padding: 6px 12px;
+    border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .btn-nav:hover { background: #334155; border-color: #38bdf8; }
+  .btn-nav.primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
+  .btn-nav.primary:hover { background: #0369a1; }
+  .btn-nav.active { background: #d97706; border-color: #f59e0b; color: #fff; }
+
+  /* 2. Main Game Arena (Circular Table layout) */
+  .arena-wrapper {
+    flex: 1; display: flex; justify-content: center; align-items: center; padding: 16px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0b1120 100%); position: relative;
+  }
+  .poker-table {
+    width: 100%; max-width: 960px; height: 680px; background: radial-gradient(ellipse at center, #047857 0%, #064e3b 70%, #022c22 100%);
+    border: 14px solid #1c1917; border-radius: 120px; box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.7);
+    position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden;
+  }
+  @media (max-width: 800px) {
+    .poker-table { height: 600px; border-radius: 60px; border-width: 8px; }
+  }
+
+  /* Center Stage: The Golden Bell & Discard Heap */
+  .center-stage {
+    position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .bell-btn {
+    width: 130px; height: 130px; border-radius: 50%; border: none; cursor: pointer;
+    background: radial-gradient(circle at 35% 35%, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5), inset 0 4px 8px rgba(255,255,255,0.7), 0 0 0 8px #78350f;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 0.08s ease-out, box-shadow 0.15s; outline: none; position: relative;
+  }
+  .bell-btn:active {
+    transform: scale(0.92) translateY(4px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 6px #78350f;
+  }
+  .bell-btn.ring-anim {
+    animation: bellRattle 0.4s ease-in-out;
+  }
+  .bell-btn.teacher-hint-glow {
+    box-shadow: 0 0 35px #facc15, 0 0 65px #f59e0b, 0 12px 30px rgba(0,0,0,0.5), 0 0 0 8px #78350f !important;
+  }
+  @keyframes bellRattle {
+    0% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(0.94) rotate(-14deg); }
+    40% { transform: scale(1.05) rotate(14deg); }
+    60% { transform: scale(0.96) rotate(-8deg); }
+    80% { transform: scale(1.02) rotate(8deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .bell-icon-svg { width: 56px; height: 56px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35)); }
+  .bell-subtext { font-size: 11px; font-weight: 900; color: #451a03; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .center-pot-badge {
+    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); border: 1.5px solid #f59e0b;
+    padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; color: #fef08a;
+    margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  /* Player Stations around the table */
+  .player-station {
+    position: absolute; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 10;
+    transition: all 0.25s ease;
+  }
+  /* 4 Positions */
+  .pos-bottom { bottom: 20px; left: 50%; transform: translateX(-50%); }
+  .pos-top { top: 20px; left: 50%; transform: translateX(-50%); }
+  .pos-left { left: 35px; top: 50%; transform: translateY(-50%); }
+  .pos-right { right: 35px; top: 50%; transform: translateY(-50%); }
+
+  .player-info-card {
+    background: rgba(15, 23, 42, 0.88); border: 2px solid #334155; border-radius: 10px;
+    padding: 5px 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  }
+  .player-info-card.active-turn {
+    border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+  }
+  .player-info-card.ring-winner {
+    border-color: #22c55e; background: #064e3b; box-shadow: 0 0 20px #22c55e;
+  }
+  .player-info-card.ring-loser {
+    border-color: #ef4444; background: #7f1d1d; box-shadow: 0 0 20px #ef4444;
+  }
+
+  .player-avatar { font-size: 18px; }
+  .player-name { color: #f8fafc; }
+  .card-count-pill {
+    background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 900;
+  }
+  .key-hint {
+    background: #334155; color: #fef08a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900;
+  }
+
+  .cards-row { display: flex; align-items: center; gap: 14px; }
+
+  /* 3. High-Fidelity Scientific Card UI */
+  .card-slot {
+    width: 105px; height: 155px; border-radius: 12px; position: relative; perspective: 600px;
+  }
+  @media (max-width: 800px) {
+    .card-slot { width: 90px; height: 135px; }
+  }
+
+  /* Hidden Deck Pile */
+  .deck-pile {
+    width: 100%; height: 100%; border-radius: 12px; background: #0f172a;
+    border: 3px solid #e2e8f0; box-shadow: var(--card-shadow), 0 4px 0 #94a3b8, 0 8px 0 #64748b;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; transition: transform 0.1s;
+  }
+  .deck-pile:hover { transform: translateY(-3px); }
+  .deck-pile:active { transform: translateY(0); }
+  .deck-pattern {
+    width: 86%; height: 88%; border-radius: 8px; border: 1.5px solid #38bdf8;
+    background: radial-gradient(circle, #1e293b 0%, #090d16 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  }
+  .deck-logo-icon { font-size: 20px; }
+  .deck-logo-text { font-size: 10px; font-weight: 900; color: #facc15; }
+
+  /* Face-Up Active Card */
+  .chem-card {
+    width: 100%; height: 100%; border-radius: 12px; background: #ffffff;
+    border: 3.5px solid #ffffff; box-shadow: var(--card-shadow);
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
+    animation: flipIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes flipIn {
+    0% { transform: scale(0.6) rotateY(70deg); opacity: 0; }
+    100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  }
+
+  .chem-card.cation {
+    background: radial-gradient(circle at center, #fdba74 0%, #ea580c 75%, #9a3412 100%);
+    color: #ffffff;
+  }
+  .chem-card.anion {
+    background: radial-gradient(circle at center, #7dd3fc 0%, #0284c7 75%, #075985 100%);
+    color: #ffffff;
+  }
+
+  /* Lightning / Aura Energy effect */
+  .card-energy-bg {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+    background-image: radial-gradient(circle, #fff 10%, transparent 60%);
+  }
+
+  /* Card Header Corner */
+  .card-header-bar {
+    display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; z-index: 2;
+  }
+  .atom-icon-svg { width: 14px; height: 14px; opacity: 0.9; }
+  .corner-charge { font-size: 14px; font-weight: 900; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+
+  /* Central Symbol & Badge */
+  .card-center-badge {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;
+  }
+  .symbol-wrap {
+    display: flex; align-items: flex-start; justify-content: center; text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .elem-symbol { font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+  .elem-super { font-size: 18px; font-weight: 900; margin-left: 2px; line-height: 1; }
+  .korean-name {
+    font-size: 11px; font-weight: 800; margin-top: 4px; color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6); background: rgba(0,0,0,0.25);
+    padding: 1px 6px; border-radius: 10px;
+  }
+
+  /* Physical Connector Notches (돌기 & 홈) */
+  .connector-notch-box {
+    position: absolute; bottom: 5px; left: 6px; display: flex; gap: 3px; z-index: 3;
+  }
+  .notch-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .notch-dot.plus { background: #fef08a; border: 1.5px solid #d97706; }
+  .notch-dot.minus { background: #bae6fd; border: 1.5px solid #0369a1; }
+
+  /* Empty Slot Placeholder */
+  .empty-card-slot {
+    width: 100%; height: 100%; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3);
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* 4. Bottom Status & Reaction Drawer */
+  .bottom-status-bar {
+    background: #0f172a; border-top: 2px solid #1e293b; padding: 10px 20px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 40;
+  }
+  .status-left { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; }
+  .formula-display {
+    background: #1e293b; border: 1.5px solid #334155; padding: 5px 14px; border-radius: 8px;
+    color: #facc15; font-size: 14px; font-weight: 900; letter-spacing: 0.5px;
+  }
+  .precipitate-tag {
+    background: #7f1d1d; color: #fecaca; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* 5. Modals (Rules, Settings, Game Over) */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-card {
+    background: #1e293b; border: 2px solid #334155; border-radius: 16px; width: 100%; max-width: 600px;
+    max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1.5px solid #334155; padding-bottom: 10px; }
+  .modal-title { font-size: 18px; font-weight: 900; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+  .btn-close { background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; }
+  .btn-close:hover { color: #fff; }
+
+  .rule-section { margin-bottom: 16px; font-size: 13.5px; line-height: 1.6; color: #cbd5e1; }
+  .rule-section h3 { margin: 0 0 6px; font-size: 15px; color: #facc15; font-weight: 800; }
+  .table-precipitate { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  .table-precipitate th, .table-precipitate td { border: 1px solid #475569; padding: 6px 10px; text-align: left; }
+  .table-precipitate th { background: #0f172a; color: #38bdf8; }
+
+  /* Setting Items */
+  .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155; font-size: 13.5px; font-weight: 700; }
+  .setting-label { display: flex; flex-direction: column; gap: 3px; }
+  .setting-desc { font-size: 11.5px; color: #94a3b8; font-weight: normal; }
+  .toggle-switch { position: relative; width: 50px; height: 26px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer; background-color: #475569; border-radius: 26px; transition: .2s;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .2s;
+  }
+  input:checked + .slider { background-color: #0284c7; }
+  input:checked + .slider:before { transform: translateX(24px); }
+
+  /* Feedback Toast / Ring Banner */
+  .toast-banner {
+    position: absolute; top: 90px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #0f172a; border: 2px solid #22c55e; border-radius: 30px; padding: 10px 24px;
+    font-size: 15px; font-weight: 900; color: #86efac; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 80; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast-banner.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  .toast-banner.error {
+    border-color: #ef4444; color: #fca5a5;
+  }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<header class="unified-game-header">
+  <div class="header-brand">
+    <span class="game-badge">수업 게임</span>
+    <span class="game-title">이온결합 할리갈리</span>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+
+<!-- 1. Top Navbar -->
+<div class="game-nav">
+  <div class="brand-group">
+    <span class="brand-icon">⚡</span>
+    <div>
+      <div class="brand-title">이온결합 할리갈리 (Ionic Bonding Halli Galli)</div>
+    </div>
+    <span class="brand-badge">[중2 과학] 물질의 구성</span>
+  </div>
+
+  <div class="nav-controls">
+    <button class="btn-nav primary" id="btnNextTurn" onclick="playTurn()">
+      <span>🃏 카드 뒤집기 (Space)</span>
+    </button>
+    <button class="btn-nav" onclick="openModal('rulesModal')">📖 규칙 & 앙금표</button>
+    <button class="btn-nav" onclick="openModal('settingsModal')">⚙️ 게임 설정</button>
+    <button class="btn-nav" id="btnSoundToggle" onclick="toggleSound()">🔊 소리 켬</button>
+    <button class="btn-nav" onclick="initNewGame()">🔄 재시작</button>
+    <a href="./시작하기_수업게임서랍.html" class="btn-nav">🏠 수업 서랍</a>
+  </div>
+</div>
+
+<!-- Toast Popup for Results -->
+<div class="toast-banner" id="toastBanner">
+  <span id="toastIcon">🔔</span>
+  <span id="toastMsg">성공 메시지</span>
+</div>
+
+<!-- 2. Main Game Arena -->
+<div class="arena-wrapper">
+  <div class="poker-table" id="pokerTable">
+
+    <!-- Center Stage: Bell & Center Discard Pot -->
+    <div class="center-stage">
+      <button class="bell-btn" id="centralBellBtn" onclick="onBellPressed('human')">
+        <svg class="bell-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#451a03" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+        <span class="bell-subtext">BELL (종)</span>
+      </button>
+      <div class="center-pot-badge" id="potCounter">바닥 카드: 0장</div>
+    </div>
+
+    <!-- Player 1: Bottom (Human) -->
+    <div class="player-station pos-bottom" id="station-0">
+      <div class="cards-row">
+        <!-- Hidden Draw Deck -->
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(0)">
+            <div class="deck-pattern">
+              <span class="deck-logo-icon">⚛️</span>
+              <span class="deck-logo-text">DECK</span>
+            </div>
+          </div>
+        </div>
+        <!-- Face-Up Active Card -->
+        <div class="card-slot" id="slot-0">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+      <div class="player-info-card" id="info-0">
+        <span class="player-avatar">🧑‍🎓</span>
+        <span class="player-name">나 (Player 1)</span>
+        <span class="card-count-pill" id="count-0">14장</span>
+        <span class="key-hint" id="key-hint-0">BELL: Space / 클릭</span>
+      </div>
+    </div>
+
+    <!-- Player 2: Left -->
+    <div class="player-station pos-left" id="station-1">
+      <div class="player-info-card" id="info-1">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-1">AI 1 (아인슈타인)</span>
+        <span class="card-count-pill" id="count-1">14장</span>
+        <span class="key-hint" id="key-hint-1" style="display:none;">BELL: A</span>
+      </div>
+      <div class="cards-row">
+        <div class="card-slot" id="slot-1">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(1)">
+            <div class="deck-pattern"><span class="deck-logo-icon">⚛️</span><span class="deck-logo-text">DECK</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player 3: Top -->
+    <div class="player-station pos-top" id="station-2">
+      <div class="player-info-card" id="info-2">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-2">AI 2 (퀴리부인)</span>
+        <span class="card-count-pill" id="count-2">14장</span>
+        <span class="key-hint" id="key-hint-2" style="display:none;">BELL: L</span>
+      </div>
+      <div class="cards-row">
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(2)">
+            <div class="deck-pattern"><span class="deck-logo-icon">⚛️</span><span class="deck-logo-text">DECK</span></div>
+          </div>
+        </div>
+        <div class="card-slot" id="slot-2">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player 4: Right -->
+    <div class="player-station pos-right" id="station-3">
+      <div class="cards-row">
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(3)">
+            <div class="deck-pattern"><span class="deck-logo-icon">⚛️</span><span class="deck-logo-text">DECK</span></div>
+          </div>
+        </div>
+        <div class="card-slot" id="slot-3">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+      <div class="player-info-card" id="info-3">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-3">AI 3 (보어)</span>
+        <span class="card-count-pill" id="count-3">14장</span>
+        <span class="key-hint" id="key-hint-3" style="display:none;">BELL: Enter</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 3. Bottom Status Bar -->
+<div class="bottom-status-bar">
+  <div class="status-left">
+    <span>💡 현재 결합 상태:</span>
+    <div class="formula-display" id="formulaDisplay">카드를 뒤집어 이온 결합을 만들어보세요!</div>
+    <div id="precipitateTagWrap" style="display:none;">
+      <span class="precipitate-tag" id="precipitateTagText">★ 앙금 생성!</span>
+    </div>
+  </div>
+  <div style="font-size:12px; color:#94a3b8; font-weight:700;">
+    단원: 중2 과학 [물질의 구성] · 전기적 중성 법칙
+  </div>
+</div>
+
+<!-- 4. Rules & Precipitate Modal -->
+<div class="modal-overlay" id="rulesModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">📖 이온결합 할리갈리 게임 규칙 & 앙금 일람표</div>
+      <button class="btn-close" onclick="closeModal('rulesModal')">×</button>
+    </div>
+
+    <div class="rule-section">
+      <h3>🎯 1. 언제 종(Bell)을 쳐야 하나요?</h3>
+      <p>
+        각자 카드를 1장씩 바닥에 냅니다. 바닥에 나온 카드들 중에서 <b>양이온(+)과 음이온(-)의 전하량 합이 정확히 0(전기적 중성)</b>이 되는 순간 가장 먼저 종을 칩니다!
+      </p>
+      <ul>
+        <li><b>1:1 중성 결합 예시:</b>
+          <ul>
+            <li>Na⁺(+1) + Cl⁻(-1) = <b>NaCl (염화 나트륨)</b></li>
+            <li>Ca²⁺(+2) + CO₃²⁻(-2) = <b>CaCO₃ (탄산 칼슘)</b></li>
+            <li>Al³⁺(+3) + PO₄³⁻(-3) = <b>AlPO₄ (인산 알루미늄)</b></li>
+            <li>Mg²⁺(+2) + O²⁻(-2) = <b>MgO (산화 마그네슘)</b></li>
+          </ul>
+        </li>
+        <li><b>복합 결합 (심화 룰 켰을 때):</b> 바닥의 전체 양이온 총 전하량과 음이온 총 전하량이 같을 때 (예: Ca²⁺ 1장 + Cl⁻ 2장 = CaCl₂)</li>
+      </ul>
+    </div>
+
+    <div class="rule-section">
+      <h3>🧪 2. 앙금 생성 보너스 (Precipitate Combo)</h3>
+      <p>전하 합이 0이면서 물에 녹지 않는 <b>불용성 앙금</b>이 완성되면 특별 팡파르와 보너스 점수를 얻습니다!</p>
+      <table class="table-precipitate">
+        <thead>
+          <tr>
+            <th>양이온</th>
+            <th>음이온</th>
+            <th>앙금 화학식</th>
+            <th>앙금 이름 및 색깔</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ag⁺ (+1)</td>
+            <td>Cl⁻ (-1)</td>
+            <td><b>AgCl</b></td>
+            <td>염화 은 (흰색 앙금)</td>
+          </tr>
+          <tr>
+            <td>Ca²⁺ (+2)</td>
+            <td>CO₃²⁻ (-2)</td>
+            <td><b>CaCO₃</b></td>
+            <td>탄산 칼슘 (흰색 앙금)</td>
+          </tr>
+          <tr>
+            <td>Ca²⁺ (+2)</td>
+            <td>SO₄²⁻ (-2)</td>
+            <td><b>CaSO₄</b></td>
+            <td>황산 칼슘 (흰색 앙금)</td>
+          </tr>
+          <tr>
+            <td>Cu²⁺ (+2)</td>
+            <td>OH⁻ (-1) × 2</td>
+            <td><b>Cu(OH)₂</b></td>
+            <td>수산화 구리 (청록색 앙금)</td>
+          </tr>
+          <tr>
+            <td>Mg²⁺ (+2)</td>
+            <td>CO₃²⁻ (-2)</td>
+            <td><b>MgCO₃</b></td>
+            <td>탄산 마그네슘 (흰색 앙금)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rule-section">
+      <h3>⚠️ 3. 오답 페널티</h3>
+      <p>전하 합이 0이 아닌데 잘못 종을 치면, 다른 모든 플레이어에게 자신의 덱에서 <b>카드 1장씩 벌칙</b>으로 주어야 합니다!</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ 게임 모드 및 교사 설정</div>
+      <button class="btn-close" onclick="closeModal('settingsModal')">×</button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>🎮 게임 모드</span>
+        <span class="setting-desc">혼자 연습(AI 대전) vs 교실 1PC 4인 대전</span>
+      </div>
+      <select id="cfgGameMode" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="solo">🧑‍🎓 혼자 연습 (AI 3명 대전)</option>
+        <option value="multi2">👥 교실 2인 대전 (A / L 키)</option>
+        <option value="multi4">👥 교실 4인 대전 (A / L / Z / M 키)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>💡 교사용 힌트 발광 (Glow Hint)</span>
+        <span class="setting-desc">바닥에 정답 조합이 성립되면 벨 테두리에 황금빛 오라 표시</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cfgGlowHint" onchange="applySettings()" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>✨ 앙금 생성 콤보 보너스</span>
+        <span class="setting-desc">AgCl, CaCO₃ 등 앙금 조합 시 추가 알림 및 효과음</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cfgPrecipitate" onchange="applySettings()" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>⚡ 결합 판정 규칙</span>
+        <span class="setting-desc">1:1 기본 중성 결합 vs 전체 카드 전하 합 0 (심화)</span>
+      </div>
+      <select id="cfgRuleType" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="pair">1:1 단순 중성 결합 (기본 추천)</option>
+        <option value="total">전체 바닥 카드 합 0 (심화 복합 결합)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>🤖 AI 반응 속도 (난이도)</span>
+        <span class="setting-desc">AI가 올바른 조합을 보고 벨을 누르는 속도</span>
+      </div>
+      <select id="cfgAiSpeed" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="slow">느림 (2.8 ~ 4.2초 / 여유로운 연습)</option>
+        <option value="normal" selected>보통 (1.8 ~ 2.8초 / 실전)</option>
+        <option value="fast">빠름 (1.1 ~ 1.8초 / 고수)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>⏱️ 자동 턴 넘김</span>
+        <span class="setting-desc">스페이스바를 누르지 않아도 일정 시간마다 자동 카드 뒤집기</span>
+      </div>
+      <select id="cfgAutoTurn" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="manual" selected>수동 (Space 또는 덱 클릭)</option>
+        <option value="3000">3초마다 자동</option>
+        <option value="2000">2초마다 자동</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. AUDIO SYNTHESIZER (Web Audio API)
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  const now = audioCtx.currentTime;
+
+  if (type === 'flip') {
+    // Card Flip Whoosh
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+
+  } else if (type === 'bell') {
+    // Harmonic Golden Bell Chime ('댕~~')
+    const freqs = [1975.5, 2960.0, 4186.0, 5274.0];
+    freqs.forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      const vol = 0.35 / (idx + 1);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2 + idx * 0.2);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 1.5);
+    });
+
+  } else if (type === 'fanfare') {
+    // Success / Precipitate Arpeggio (C5 - E5 - G5 - C6)
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+      gain.gain.setValueAtTime(0, now + idx * 0.08);
+      gain.gain.linearRampToValueAtTime(0.28, now + idx * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.08);
+      osc.stop(now + idx * 0.08 + 0.4);
+    });
+
+  } else if (type === 'buzzer') {
+    // Error Penalty Buzzer
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btnSoundToggle').textContent = soundEnabled ? '🔊 소리 켬' : '🔇 소리 끔';
+}
+
+/* ==========================================================================
+   2. 56-CARD DECK SPECIFICATION & PRECIPITATES
+   ========================================================================== */
+const ION_TYPES = {
+  // Cations (28 cards)
+  'Na+': { elem: 'Na', super: '+', name: '나트륨 이온', charge: 1, type: 'cation', corner: '1+' },
+  'K+':  { elem: 'K',  super: '+', name: '칼륨 이온',   charge: 1, type: 'cation', corner: '1+' },
+  'Ag+': { elem: 'Ag', super: '+', name: '은 이온',     charge: 1, type: 'cation', corner: '1+' },
+  'H+':  { elem: 'H',  super: '+', name: '수소 이온',   charge: 1, type: 'cation', corner: '1+' },
+  'Ca2+':{ elem: 'Ca', super: '2+', name: '칼슘 이온',   charge: 2, type: 'cation', corner: '2+' },
+  'Mg2+':{ elem: 'Mg', super: '2+', name: '마그네슘 이온',charge: 2, type: 'cation', corner: '2+' },
+  'Cu2+':{ elem: 'Cu', super: '2+', name: '구리(II) 이온',charge: 2, type: 'cation', corner: '2+' },
+  'Al3+':{ elem: 'Al', super: '3+', name: '알루미늄 이온',charge: 3, type: 'cation', corner: '3+' },
+
+  // Anions (28 cards)
+  'Cl-':  { elem: 'Cl',  super: '-',  name: '염화 이온',     charge: -1, type: 'anion', corner: '1-' },
+  'NO3-': { elem: 'NO₃', super: '-',  name: '질산 이온',     charge: -1, type: 'anion', corner: '1-' },
+  'OH-':  { elem: 'OH',  super: '-',  name: '수산화 이온',   charge: -1, type: 'anion', corner: '1-' },
+  'F-':   { elem: 'F',   super: '-',  name: '플루오린화 이온',charge: -1, type: 'anion', corner: '1-' },
+  'SO4 2-':{ elem: 'SO₄', super: '2-', name: '황산 이온',     charge: -2, type: 'anion', corner: '2-' },
+  'CO3 2-':{ elem: 'CO₃', super: '2-', name: '탄산 이온',     charge: -2, type: 'anion', corner: '2-' },
+  'O2-':  { elem: 'O',   super: '2-', name: '산화 이온',     charge: -2, type: 'anion', corner: '2-' },
+  'PO4 3-':{ elem: 'PO₄', super: '3-', name: '인산 이온',     charge: -3, type: 'anion', corner: '3-' }
+};
+
+// Precipitate Knowledge Base
+const PRECIPITATES = {
+  'AgCl': { name: '염화 은', color: '흰색' },
+  'CaCO3': { name: '탄산 칼슘', color: '흰색' },
+  'CaSO4': { name: '황산 칼슘', color: '흰색' },
+  'MgCO3': { name: '탄산 마그네슘', color: '흰색' },
+  'Cu(OH)2': { name: '수산화 구리', color: '청록색' },
+  'Ag2CO3': { name: '탄산 은', color: '연노란색' }
+};
+
+function buildFullDeck() {
+  const counts = {
+    'Na+': 6, 'K+': 4, 'Ag+': 4, 'H+': 2,
+    'Ca2+': 4, 'Mg2+': 4, 'Cu2+': 2,
+    'Al3+': 2,
+    'Cl-': 6, 'NO3-': 4, 'OH-': 4, 'F-': 2,
+    'SO4 2-': 4, 'CO3 2-': 4, 'O2-': 2,
+    'PO4 3-': 2
+  };
+  const deck = [];
+  let uid = 1;
+  for (const [key, cnt] of Object.entries(counts)) {
+    const proto = ION_TYPES[key];
+    for (let i = 0; i < cnt; i++) {
+      deck.push({ ...proto, uid: uid++, key });
+    }
+  }
+  return shuffle(deck);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ==========================================================================
+   3. GAME STATE MANAGEMENT
+   ========================================================================== */
+let gameMode = 'solo'; // 'solo', 'multi2', 'multi4'
+let ruleType = 'pair'; // 'pair' (1:1), 'total' (sum all)
+let glowHint = true;
+let precipitateMode = true;
+let aiSpeed = 'normal'; // 'slow', 'normal', 'fast'
+let autoTurnInterval = 'manual';
+
+let players = [];
+let numPlayers = 4;
+let currentTurnIdx = 0;
+let tableCards = [null, null, null, null]; // face up card for each player
+let discardPot = []; // collected cards pile on center table
+let autoTimer = null;
+let aiTimeoutId = null;
+
+function applySettings() {
+  gameMode = document.getElementById('cfgGameMode').value;
+  ruleType = document.getElementById('cfgRuleType').value;
+  glowHint = document.getElementById('cfgGlowHint').checked;
+  precipitateMode = document.getElementById('cfgPrecipitate').checked;
+  aiSpeed = document.getElementById('cfgAiSpeed').value;
+  autoTurnInterval = document.getElementById('cfgAutoTurn').value;
+
+  initNewGame();
+  closeModal('settingsModal');
+}
+
+function initNewGame() {
+  clearTimeout(aiTimeoutId);
+  clearInterval(autoTimer);
+
+  if (gameMode === 'multi2') numPlayers = 2;
+  else numPlayers = 4;
+
+  const fullDeck = buildFullDeck();
+  players = [];
+
+  const cardsPerPlayer = Math.floor(fullDeck.length / numPlayers);
+  for (let i = 0; i < numPlayers; i++) {
+    players.push({
+      id: i,
+      name: getPlayerName(i),
+      isAi: (gameMode === 'solo' && i !== 0),
+      hand: fullDeck.slice(i * cardsPerPlayer, (i + 1) * cardsPerPlayer),
+      activeCard: null
+    });
+  }
+
+  tableCards = [null, null, null, null];
+  discardPot = [];
+  currentTurnIdx = 0;
+
+  // Setup UI visibility
+  document.getElementById('station-2').style.display = (numPlayers >= 3) ? 'flex' : 'none';
+  document.getElementById('station-3').style.display = (numPlayers >= 4) ? 'flex' : 'none';
+
+  // Key hints
+  document.getElementById('key-hint-0').textContent = (gameMode === 'solo') ? 'BELL: Space / 클릭' : 'BELL: A';
+  document.getElementById('key-hint-1').textContent = (gameMode === 'solo') ? '' : 'BELL: L';
+  document.getElementById('key-hint-1').style.display = (gameMode === 'solo') ? 'none' : 'inline-block';
+  document.getElementById('key-hint-2').textContent = 'BELL: Z';
+  document.getElementById('key-hint-2').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+  document.getElementById('key-hint-3').textContent = 'BELL: M';
+  document.getElementById('key-hint-3').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+
+  renderAllStations();
+  updatePotCounter();
+  checkCurrentCondition();
+
+  if (autoTurnInterval !== 'manual') {
+    const ms = parseInt(autoTurnInterval);
+    autoTimer = setInterval(() => {
+      playTurn();
+    }, ms);
+  }
+
+  showToast('🔔 새 게임이 시작되었습니다! 카드를 뒤집으세요.', false);
+}
+
+function getPlayerName(idx) {
+  if (gameMode === 'solo') {
+    return ['나 (Player 1)', 'AI 1 (아인슈타인)', 'AI 2 (퀴리부인)', 'AI 3 (보어)'][idx];
+  }
+  return `Player ${idx + 1}`;
+}
+
+/* ==========================================================================
+   4. TURN EXECUTION
+   ========================================================================== */
+function playTurn(forcedPlayerIdx = null) {
+  let playerIdx = (forcedPlayerIdx !== null) ? forcedPlayerIdx : currentTurnIdx;
+  const p = players[playerIdx];
+
+  // If current player has no cards, advance to next player
+  if (p.hand.length === 0) {
+    advanceTurn();
+    return;
+  }
+
+  // Draw card from top of player's hidden deck
+  const drawn = p.hand.shift();
+  p.activeCard = drawn;
+  tableCards[playerIdx] = drawn;
+  discardPot.push(drawn);
+
+  playSound('flip');
+
+  // Advance turn to next active player
+  advanceTurn();
+
+  renderAllStations();
+  updatePotCounter();
+
+  // Evaluate table conditions
+  const matchResult = checkCurrentCondition();
+
+  // If AI mode and valid condition, schedule AI reaction!
+  if (matchResult.valid) {
+    scheduleAiReaction(matchResult);
+  }
+}
+
+function advanceTurn() {
+  currentTurnIdx = (currentTurnIdx + 1) % numPlayers;
+  // If player out of cards, skip
+  let attempts = 0;
+  while (players[currentTurnIdx].hand.length === 0 && attempts < numPlayers) {
+    currentTurnIdx = (currentTurnIdx + 1) % numPlayers;
+    attempts++;
+  }
+}
+
+function renderAllStations() {
+  for (let i = 0; i < 4; i++) {
+    if (i >= numPlayers) continue;
+    const p = players[i];
+
+    // Card count
+    document.getElementById(`count-${i}`).textContent = `${p.hand.length}장`;
+
+    // Active turn highlight
+    const infoCard = document.getElementById(`info-${i}`);
+    infoCard.classList.toggle('active-turn', i === currentTurnIdx);
+
+    // Render active face-up card
+    const slot = document.getElementById(`slot-${i}`);
+    if (p.activeCard) {
+      slot.innerHTML = renderCardHtml(p.activeCard);
+    } else {
+      slot.innerHTML = '<div class="empty-card-slot">카드 없음</div>';
+    }
+  }
+}
+
+function renderCardHtml(card) {
+  const isCation = (card.type === 'cation');
+  const notchType = isCation ? 'plus' : 'minus';
+  const notchCount = Math.abs(card.charge);
+
+  let notchesHtml = '';
+  for (let k = 0; k < notchCount; k++) {
+    notchesHtml += `<span class="notch-dot ${notchType}"></span>`;
+  }
+
+  return `
+    <div class="chem-card ${card.type}">
+      <div class="card-energy-bg"></div>
+      <div class="card-header-bar">
+        <svg class="atom-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)"/>
+          <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/>
+        </svg>
+        <span class="corner-charge">${card.corner}</span>
+      </div>
+      <div class="card-center-badge">
+        <div class="symbol-wrap">
+          <span class="elem-symbol">${card.elem}</span>
+          <span class="elem-super">${card.super}</span>
+        </div>
+        <div class="korean-name">${card.name}</div>
+      </div>
+      <div class="connector-notch-box">
+        ${notchesHtml}
+      </div>
+    </div>
+  `;
+}
+
+function updatePotCounter() {
+  document.getElementById('potCounter').textContent = `바닥 카드: ${discardPot.length}장`;
+}
+
+/* ==========================================================================
+   5. CONDITION CHECKING (Neutral Compound & Precipitate)
+   ========================================================================== */
+function checkCurrentCondition() {
+  // Collect currently visible face-up cards on table
+  const activeCards = [];
+  for (let i = 0; i < numPlayers; i++) {
+    if (players[i].activeCard) {
+      activeCards.push(players[i].activeCard);
+    }
+  }
+
+  let matchFound = false;
+  let formulaDesc = "카드를 뒤집어 이온 결합을 만들어보세요!";
+  let precipitateInfo = null;
+
+  if (activeCards.length >= 2) {
+    if (ruleType === 'pair') {
+      // 1:1 Simple Neutral Pair: Search for any pair of Cation and Anion where charge sum == 0
+      for (let i = 0; i < activeCards.length; i++) {
+        for (let j = i + 1; j < activeCards.length; j++) {
+          const c1 = activeCards[i];
+          const c2 = activeCards[j];
+          if ((c1.type === 'cation' && c2.type === 'anion') || (c1.type === 'anion' && c2.type === 'cation')) {
+            if (c1.charge + c2.charge === 0) {
+              matchFound = true;
+              const cation = (c1.type === 'cation') ? c1 : c2;
+              const anion = (c1.type === 'anion') ? c1 : c2;
+              const formula = `${cation.elem}${anion.elem.replace(/[0-9]/g, '')}`; // rough formula
+              formulaDesc = `${cation.elem}${cation.super} + ${anion.elem}${anion.super} → 전기적 중성 결합 형성!`;
+
+              // Check Precipitate
+              precipitateInfo = checkPrecipitatePair(cation, anion);
+              break;
+            }
+          }
+        }
+        if (matchFound) break;
+      }
+    } else {
+      // Total Charge Sum == 0 (Compound Neutrality)
+      let sumCharge = 0;
+      let hasCation = false;
+      let hasAnion = false;
+      activeCards.forEach(c => {
+        sumCharge += c.charge;
+        if (c.type === 'cation') hasCation = true;
+        if (c.type === 'anion') hasAnion = true;
+      });
+
+      if (hasCation && hasAnion && sumCharge === 0) {
+        matchFound = true;
+        formulaDesc = `바닥 전체 이온 전하량의 합 = 0! (전기적 중성 달성)`;
+      }
+    }
+  }
+
+  // Update Bottom Status Display
+  document.getElementById('formulaDisplay').textContent = formulaDesc;
+
+  const tagWrap = document.getElementById('precipitateTagWrap');
+  if (matchFound && precipitateInfo && precipitateMode) {
+    tagWrap.style.display = 'inline-block';
+    document.getElementById('precipitateTagText').textContent = `★ ${precipitateInfo.name} (${precipitateInfo.color} 앙금 생성!)`;
+  } else {
+    tagWrap.style.display = 'none';
+  }
+
+  // Teacher Glow Hint
+  const bellBtn = document.getElementById('centralBellBtn');
+  bellBtn.classList.toggle('teacher-hint-glow', glowHint && matchFound);
+
+  return { valid: matchFound, precipitate: precipitateInfo, formula: formulaDesc };
+}
+
+function checkPrecipitatePair(c, a) {
+  if (c.key === 'Ag+' && a.key === 'Cl-') return PRECIPITATES['AgCl'];
+  if (c.key === 'Ca2+' && a.key === 'CO3 2-') return PRECIPITATES['CaCO3'];
+  if (c.key === 'Ca2+' && a.key === 'SO4 2-') return PRECIPITATES['CaSO4'];
+  if (c.key === 'Mg2+' && a.key === 'CO3 2-') return PRECIPITATES['MgCO3'];
+  if (c.key === 'Cu2+' && a.key === 'OH-') return PRECIPITATES['Cu(OH)2'];
+  return null;
+}
+
+/* ==========================================================================
+   6. BELL RINGING, AI REACTIONS & PENALTY
+   ========================================================================== */
+function scheduleAiReaction(matchResult) {
+  clearTimeout(aiTimeoutId);
+
+  // Speed ranges in ms
+  const delays = {
+    'slow': [2600, 4200],
+    'normal': [1800, 2900],
+    'fast': [1100, 1800]
+  };
+  const [minD, maxD] = delays[aiSpeed] || delays['normal'];
+  const delay = Math.floor(Math.random() * (maxD - minD)) + minD;
+
+  aiTimeoutId = setTimeout(() => {
+    // Pick an active AI player
+    const aiCandidates = players.filter(p => p.isAi && p.hand.length > 0);
+    if (aiCandidates.length > 0) {
+      const winnerAi = aiCandidates[Math.floor(Math.random() * aiCandidates.length)];
+      onBellPressed(winnerAi.id);
+    }
+  }, delay);
+}
+
+function onBellPressed(winnerId) {
+  clearTimeout(aiTimeoutId);
+  playSound('bell');
+
+  const bellBtn = document.getElementById('centralBellBtn');
+  bellBtn.classList.add('ring-anim');
+  setTimeout(() => bellBtn.classList.remove('ring-anim'), 400);
+
+  // Re-verify condition
+  const cond = checkCurrentCondition();
+  let ringingPlayerIdx = 0;
+
+  if (winnerId === 'human') ringingPlayerIdx = 0;
+  else if (typeof winnerId === 'number') ringingPlayerIdx = winnerId;
+
+  const player = players[ringingPlayerIdx];
+
+  if (cond.valid) {
+    // SUCCESS! Player takes all discard pot
+    if (cond.precipitate && precipitateMode) {
+      playSound('fanfare');
+      showToast(`🎉 [${player.name}] 앙금 생성 성공! (+${discardPot.length}장 획득)`, false);
+    } else {
+      playSound('fanfare');
+      showToast(`🔔 [${player.name}] 정답! 바닥 카드 ${discardPot.length}장 획득!`, false);
+    }
+
+    // Add pot cards to player's hand
+    player.hand.push(...discardPot);
+    discardPot = [];
+
+    // Clear active cards on table
+    for (let i = 0; i < numPlayers; i++) {
+      players[i].activeCard = null;
+    }
+
+    highlightWinner(ringingPlayerIdx, true);
+    checkGameOver();
+
+  } else {
+    // FALSE RING! Penalty: Give 1 card to each other player
+    playSound('buzzer');
+    showToast(`❌ [${player.name}] 오답 벨! 전하 합이 0이 아닙니다 (벌칙 카드 헌납)`, true);
+
+    if (player.hand.length > 0) {
+      for (let i = 0; i < numPlayers; i++) {
+        if (i !== ringingPlayerIdx && player.hand.length > 0) {
+          players[i].hand.push(player.hand.shift());
+        }
+      }
+    }
+
+    highlightWinner(ringingPlayerIdx, false);
+    checkGameOver();
+  }
+
+  renderAllStations();
+  updatePotCounter();
+  checkCurrentCondition();
+}
+
+function highlightWinner(idx, isWin) {
+  const el = document.getElementById(`info-${idx}`);
+  if (!el) return;
+  const cls = isWin ? 'ring-winner' : 'ring-loser';
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 900);
+}
+
+function checkGameOver() {
+  const activePlayers = players.filter(p => p.hand.length > 0);
+  if (activePlayers.length <= 1) {
+    clearTimeout(aiTimeoutId);
+    clearInterval(autoTimer);
+    const champion = activePlayers[0] || players[0];
+    if (window.KJS && soundEnabled) KJS.win({ toast:false });
+    showToast(`🏆 게임 종료! [${champion.name}] 최종 승리!`, false);
+    alert(`🎉 [게임 종료]\n우승자: ${champion.name}\n보유 카드: ${champion.hand.length}장`);
+  }
+}
+
+/* Keyboard Event Listener for Hotseat Multi-Player */
+window.addEventListener('keydown', (e) => {
+  // If modal open, ignore
+  if (document.querySelector('.modal-overlay.show')) return;
+
+  const key = e.key.toLowerCase();
+  const code = e.code;
+
+  if (code === 'Space') {
+    e.preventDefault();
+    if (gameMode === 'solo') {
+      // In solo mode, space can either ring bell if valid, or flip turn
+      const cond = checkCurrentCondition();
+      if (cond.valid) {
+        onBellPressed('human');
+      } else {
+        playTurn();
+      }
+    } else {
+      playTurn();
+    }
+  } else if (key === 'a') {
+    onBellPressed(0); // Player 1
+  } else if (key === 'l') {
+    if (numPlayers >= 2) onBellPressed(1); // Player 2
+  } else if (key === 'z') {
+    if (numPlayers >= 3) onBellPressed(2); // Player 3
+  } else if (key === 'm' || key === 'enter') {
+    if (numPlayers >= 4) onBellPressed(3); // Player 4
+  }
+});
+
+/* Toast Helpers */
+function showToast(msg, isError) {
+  const t = document.getElementById('toastBanner');
+  t.classList.toggle('error', isError);
+  document.getElementById('toastIcon').textContent = isError ? '❌' : '🔔';
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* Modal Helpers */
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// Initial Launch
+initNewGame();
+</script>
+
+<script>
+(function(){ var h=document.getElementById('kjsHome'); if(h && !h._kjs){ h._kjs=1; h.addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload(); }); } })();
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script id="kjs-sound-bridge">
+(function(){
+  var T={toast:false};
+  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
+  function wrap(o, m, kind){
+    if(!o || typeof o[m]!=="function") return;
+    var orig=o[m];
+    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
+  }
+  if(typeof playSound==="function"){ var ps=playSound;
+    playSound=function(t){ if(window.KJS && (t==="fanfare"||t==="buzzer")){ if(soundEnabled){ KJS[t==="fanfare"?"ok":"no"](T); } return; } return ps.apply(this, arguments); }; }
+})();
+</script>
+</body>
+</html>

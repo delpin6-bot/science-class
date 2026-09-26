@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>세포분열 모형 - 자바실험실 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #059669;
+      --accent: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: #2563eb;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 시뮬레이션 메인 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 생체 지표 대시보드 HUD */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+    }
+
+    .hud-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-card.phase { border-top: 3.5px solid var(--primary); }
+    .hud-card.ploidy { border-top: 3.5px solid var(--danger); }
+    .hud-card.chrom { border-top: 3.5px solid var(--secondary); }
+    .hud-card.state { border-top: 3.5px solid var(--accent); }
+
+    .hud-lbl {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+    .hud-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .hud-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* 캔버스 뷰포트 */
+    .canvas-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 8.6;
+      max-height: 560px;
+      min-height: 420px;
+    }
+
+    canvas#cellCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* 자바실험실 오리지널 컨트롤 바 */
+    .javalab-original-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.8rem;
+      padding: 0.65rem 1rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      flex-wrap: wrap;
+    }
+
+    .jl-checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1e293b;
+      cursor: pointer;
+    }
+
+    .jl-checkbox-label input[type="checkbox"] {
+      width: 19px;
+      height: 19px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* 컨트롤 툴바 */
+    .control-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .ctrl-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .ctrl-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+    .ctrl-btn.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* 단계별 칩 버튼 바 */
+    .step-chips {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .step-chip {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .step-chip:hover {
+      background: #e2e8f0;
+    }
+    .step-chip.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    /* 슬라이더 바 */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .slider-container span {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    /* 실시간 안내 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+
+    /* 교과서 전 과정 갤러리 섹션 (스크린샷 1:1 대응) */
+    .gallery-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .gallery-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+    }
+
+    .gallery-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .gallery-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border-color: #94a3b8;
+    }
+    .gallery-card.active {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .gallery-card-badge {
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .gallery-card.active .gallery-card-badge {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .gallery-thumb-canvas {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      display: block;
+    }
+
+    .gallery-card-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    /* 2대 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .badge-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .m1-badge { background: #dc2626; }
+    .m2-badge { background: #2563eb; }
+
+    .mechanism-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .mechanism-meta {
+      font-size: 0.82rem;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* 비교 표 패널 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.data-table tr.active-row td {
+      background-color: #eff6ff !important;
+      font-weight: 700;
+    }
+
+    .tag-hl {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-blue {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    /* 플로팅 툴팁 */
+    #canvasTooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(5px);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      max-width: 260px;
+      z-index: 100;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transform: translate(-50%, -120%);
+    }
+    #canvasTooltip strong {
+      display: block;
+      color: #60a5fa;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+    }
+
+    @media (max-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 서랍 버튼 및 타이틀 -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>🔬 세포분열 모형 가상실험실</span>
+      <span class="nav-badge">자바실험실 1:1 복각</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <a href="./바이오퀘스트_수업활동지.html" class="btn-top btn-unified-nav btn-ws" target="_blank" title="1쪽 탐구 활동지 열기"><span>📄 탐구 활동지</span></a>
+    <button class="nav-btn" id="btnReload" title="시뮬레이션 처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 시뮬레이션 메인 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>세포분열 모형 (간기 ➔ 전기 ➔ 중기 ➔ 후기 ➔ 말기)</h2>
+          <span class="sim-date">2019-12-21</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="ctrl-btn primary" id="btnPlayPause">▶ 자동 재생</button>
+          <button class="ctrl-btn" id="btnSpeed">속도: 1.0x</button>
+          <button class="ctrl-btn" id="btnReset">↺ 리셋</button>
+        </div>
+      </div>
+
+      <!-- 생체 지표 대시보드 HUD -->
+      <div class="dashboard-grid">
+        <div class="hud-card phase">
+          <span class="hud-lbl">현재 단계</span>
+          <span class="hud-val" id="hudPhaseName">체세포분열 후기 (Anaphase)</span>
+          <span class="hud-sub" id="hudPhaseDesc">방추사에 의한 염색분체 견인</span>
+        </div>
+        <div class="hud-card ploidy">
+          <span class="hud-lbl">핵상 (Ploidy)</span>
+          <span class="hud-val" id="hudPloidy">2n = 4</span>
+          <span class="hud-sub">상동 염색체 쌍 유지</span>
+        </div>
+        <div class="hud-card chrom">
+          <span class="hud-lbl">염색체 수</span>
+          <span class="hud-val" id="hudChromCount">모세포 4개 ➔ 딸세포 각 4개</span>
+          <span class="hud-sub">염색체 수 변화 없음 (2n ➔ 2n)</span>
+        </div>
+        <div class="hud-card state">
+          <span class="hud-lbl">염색 분체 분리 상태</span>
+          <span class="hud-val" id="hudChromatidState">4가닥씩 양극 분리 중</span>
+          <span class="hud-sub" id="hudSpindleDesc">방추사 수축 작용</span>
+        </div>
+      </div>
+
+      <!-- 메인 캔버스 뷰포트 -->
+      <div class="canvas-wrapper">
+        <canvas id="cellCanvas" width="1160" height="560"></canvas>
+        <div id="canvasTooltip"></div>
+      </div>
+
+      <!-- 자바실험실 1:1 오리지널 제어 체크박스 & 리셋 버튼 바 -->
+      <div class="javalab-original-bar">
+        <label class="jl-checkbox-label">
+          <input type="checkbox" id="chkNuclearMem">
+          <span>핵막 강제 표시</span>
+        </label>
+        <label class="jl-checkbox-label">
+          <input type="checkbox" id="chkAnaphase" checked>
+          <span>체세포분열 후기</span>
+        </label>
+        <button class="ctrl-btn" id="btnOriginalReset" style="padding: 4px 14px;">리셋</button>
+      </div>
+
+      <!-- 조작 컨트롤 바 (확장 교육 도구) -->
+      <div class="control-toolbar">
+        <!-- 1열: 단계별 칩 버튼 바 -->
+        <div class="toolbar-row">
+          <div class="btn-group">
+            <button class="ctrl-btn" id="btnPrev">◀ 이전</button>
+            <button class="ctrl-btn" id="btnNext">다음 ▶</button>
+          </div>
+
+          <div class="step-chips" id="stepChips">
+            <button class="step-chip active" data-step="0">0. 간기(복제)</button>
+            <button class="step-chip" data-step="1">1. 전기(응축)</button>
+            <button class="step-chip" data-step="2">2. 중기(적도면)</button>
+            <button class="step-chip" data-step="3">3. 후기(분체분리)</button>
+            <button class="step-chip" data-step="4">4. 말기(딸세포)</button>
+          </div>
+        </div>
+
+        <!-- 2열: 정밀 연속 모핑 슬라이더 바 -->
+        <div class="slider-container">
+          <span>진행 조절:</span>
+          <input type="range" id="progressSlider" min="0" max="4" step="0.01" value="0.0">
+          <span id="progressLabel" style="width: 50px; text-align: right; font-weight:800; color:var(--primary);">후기</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 안내 정보 배너 -->
+    <div id="infoBanner" class="info-banner">
+      <span id="bannerText"><strong>[체세포분열 후기]</strong> 방추사가 짧아지면서 염색 분체가 분리되어 세포의 양극으로 이동합니다. 동원체가 이끌리며 V자 모양으로 끌려갑니다.</span>
+    </div>
+
+    <!-- 교과서 전 과정 한눈에 보기 갤러리 패널 (스크린샷 1:1 완벽 구현) -->
+    <section class="gallery-panel">
+      <div class="gallery-header">
+        <span class="gallery-title">📷 교과서 체세포 분열 전 과정 모형도 (단계 클릭 시 해당 단계로 즉시 이동)</span>
+        <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">* 자바실험실 / 과학 교과서 도해 1:1 시각화</span>
+      </div>
+      <div class="gallery-grid">
+        <!-- 간기 -->
+        <div class="gallery-card active" data-step="0">
+          <span class="gallery-card-badge">간기</span>
+          <canvas class="gallery-thumb-canvas" id="thumb0" width="220" height="220"></canvas>
+          <span class="gallery-card-desc">DNA 복제<br>뚜렷한 둥근 핵</span>
+        </div>
+        <!-- 전기 -->
+        <div class="gallery-card" data-step="1">
+          <span class="gallery-card-badge">전기</span>
+          <canvas class="gallery-thumb-canvas" id="thumb1" width="220" height="220"></canvas>
+          <span class="gallery-card-desc">핵막 소실 시작<br>4개 염색체 응축</span>
+        </div>
+        <!-- 중기 -->
+        <div class="gallery-card" data-step="2">
+          <span class="gallery-card-badge">중기</span>
+          <canvas class="gallery-thumb-canvas" id="thumb2" width="220" height="220"></canvas>
+          <span class="gallery-card-desc">적도면 일렬 배열<br>핵막 완전 소실</span>
+        </div>
+        <!-- 후기 -->
+        <div class="gallery-card" data-step="3">
+          <span class="gallery-card-badge">후기</span>
+          <canvas class="gallery-thumb-canvas" id="thumb3" width="220" height="220"></canvas>
+          <span class="gallery-card-desc">방추사 수축<br>염색분체 V자 분리</span>
+        </div>
+        <!-- 말기 -->
+        <div class="gallery-card" data-step="4">
+          <span class="gallery-card-badge">말기</span>
+          <canvas class="gallery-thumb-canvas" id="thumb4" width="220" height="220"></canvas>
+          <span class="gallery-card-desc">세포질 분열<br>2개 핵막 재형성</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2대 핵심 메커니즘 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m1-badge">1</span>
+          <span>간기 & 전기: DNA 복제와 염색체 응축</span>
+        </div>
+        <p><strong>간기:</strong> 세포가 활발히 물질대사를 하며 유전 물질(DNA)을 2배로 복제합니다. 핵막으로 둘러싸인 둥근 핵이 뚜렷하게 관찰됩니다.<br>
+        <strong>전기:</strong> 유전 물질이 굵고 짧게 뭉쳐져 <strong>2가닥의 염색분체로 이루어진 X자형 염색체</strong>가 나타나며, 핵막이 사라집니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 염색체의 색상 및 구성 (2n = 4):</strong><br>
+          • 소형 염색체 2개: 자홍색(마젠타), 밝은 초록색<br>
+          • 대형 염색체 2개: 파란색, 빨간색
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m2-badge">2</span>
+          <span>중기 & 후기 & 말기: 적도면 배열과 완벽한 분리</span>
+        </div>
+        <p><strong>중기:</strong> 염색체가 세포 중앙 적도면에 나란히 배열되어 관찰하기에 가장 좋습니다.<br>
+        <strong>후기:</strong> 방추사가 동원체를 끌어당겨 <strong>자매 염색분체가 분리되어 V자 모양으로 양극으로 이동</strong>합니다.<br>
+        <strong>말기:</strong> 양극에서 핵막이 재형성되고 2개의 딸세포가 완성됩니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 결론:</strong> 모세포와 딸세포의 염색체 수와 유전 정보는 <strong>완전히 동일($2n \to 2n$)</strong>하게 보존됩니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 체세포 분열 단계별 탐구 정리 표 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 체세포 분열 단계별 핵심 특징 비교표</span>
+        <span class="table-sub">* 현재 시뮬레이션 단계가 실시간으로 하이라이트됩니다.</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>분열 단계</th>
+              <th>염색체 모양 및 행동</th>
+              <th>핵막 유무</th>
+              <th>방추사 형성 여부</th>
+              <th>염색체 수 및 핵상</th>
+              <th>주요 학습 포인트</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-0">
+              <td><strong>간기 (Interphase)</strong></td>
+              <td>가느다란 실 모양의 염색사 (DNA 복제)</td>
+              <td><span class="tag-blue">○ 존재 (뚜렷한 둥근 핵)</span></td>
+              <td>× 없음</td>
+              <td>2n = 4 (DNA량 2배 복제)</td>
+              <td>세포 성장 및 물질 복제 시기</td>
+            </tr>
+            <tr id="row-1">
+              <td><strong>전기 (Prophase)</strong></td>
+              <td>응축된 X자형 4개 염색체 등장</td>
+              <td><span class="tag-hl">× 사라지기 시작</span></td>
+              <td>○ 형성 시작</td>
+              <td>2n = 4</td>
+              <td>핵막 소실, 방추사 출현</td>
+            </tr>
+            <tr id="row-2">
+              <td><strong>중기 (Metaphase)</strong></td>
+              <td>세포 중앙(적도면)에 일렬 배열</td>
+              <td>× 없음</td>
+              <td><span class="tag-blue">○ 완전 결합</span></td>
+              <td>2n = 4</td>
+              <td>염색체 관찰에 가장 좋은 시기</td>
+            </tr>
+            <tr id="row-3" class="active-row">
+              <td><strong>후기 (Anaphase)</strong></td>
+              <td><span class="tag-hl">염색 분체 분리</span>, 양극으로 이동</td>
+              <td>× 없음</td>
+              <td>○ 수축 견인</td>
+              <td>2n = 4 (각 극으로 4개씩 분배)</td>
+              <td>동원체 견인에 의한 V자 모양</td>
+            </tr>
+            <tr id="row-4">
+              <td><strong>말기 (Telophase)</strong></td>
+              <td>염색체가 풀림, 세포질 분열</td>
+              <td><span class="tag-blue">○ 2개 재형성</span></td>
+              <td>× 사라짐</td>
+              <td>딸세포 각각 2n = 4</td>
+              <td>2개의 동일한 딸세포 완성</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.getElementById('cellCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('canvasTooltip');
+    const bannerText = document.getElementById('bannerText');
+
+    // UI 엘리먼트
+    const chkNuclearMem = document.getElementById('chkNuclearMem');
+    const chkAnaphase = document.getElementById('chkAnaphase');
+    const btnOriginalReset = document.getElementById('btnOriginalReset');
+
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnSpeed = document.getElementById('btnSpeed');
+    const btnReset = document.getElementById('btnReset');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const stepChips = document.querySelectorAll('.step-chip');
+    const progressSlider = document.getElementById('progressSlider');
+    const progressLabel = document.getElementById('progressLabel');
+
+    // HUD 엘리먼트
+    const hudPhaseName = document.getElementById('hudPhaseName');
+    const hudPhaseDesc = document.getElementById('hudPhaseDesc');
+    const hudPloidy = document.getElementById('hudPloidy');
+    const hudChromCount = document.getElementById('hudChromCount');
+    const hudChromatidState = document.getElementById('hudChromatidState');
+    const hudSpindleDesc = document.getElementById('hudSpindleDesc');
+
+    // 갤러리 카드
+    const galleryCards = document.querySelectorAll('.gallery-card');
+
+    // 표 행 엘리먼트
+    const tableRows = [
+      document.getElementById('row-0'),
+      document.getElementById('row-1'),
+      document.getElementById('row-2'),
+      document.getElementById('row-3'),
+      document.getElementById('row-4')
+    ];
+
+    // 가상 캔버스 좌표계 (1160 x 560)
+    const V_WIDTH = 1160;
+    const V_HEIGHT = 560;
+
+    // 시뮬레이션 상태 변수
+    let currentStep = 0.0; // 0.0: 간기, 1.0: 전기, 2.0: 중기, 3.0: 후기, 4.0: 말기
+    let targetStep = 0.0;
+    let isPlaying = false;
+    let speedMultiplier = 1.0;
+    let forceNuclearMem = false;
+
+    // 4종 염색체 정의 (자바실험실 및 교과서 스크린샷 1:1 대응 색상 & 크기)
+    // 상단부터 순서: 마젠타(소형) -> 빨강(대형) -> 초록(소형) -> 파랑(대형)
+    const CHROMOSOMES = [
+      {
+        id: 0,
+        name: '소형 염색체 (자홍색/마젠타)',
+        color: '#e11d48', // 마젠타
+        size: 'small',
+        armL: 36,
+        strokeW: 13,
+        // 중기 적도면 Y 좌표
+        midY: 185,
+        // 전기(프로페이즈) 핵 내부 산포 좌표 및 회전각
+        proX: 630, proY: 220, proAngle: 0.35
+      },
+      {
+        id: 1,
+        name: '대형 염색체 (빨간색)',
+        color: '#dc2626', // 빨강
+        size: 'large',
+        armL: 66,
+        strokeW: 15,
+        midY: 250,
+        proX: 625, proY: 345, proAngle: -0.25
+      },
+      {
+        id: 2,
+        name: '소형 염색체 (밝은 초록색)',
+        color: '#16a34a', // 초록
+        size: 'small',
+        armL: 36,
+        strokeW: 13,
+        midY: 315,
+        proX: 510, proY: 340, proAngle: 0.20
+      },
+      {
+        id: 3,
+        name: '대형 염색체 (파란색)',
+        color: '#0080ff', // 파랑
+        size: 'large',
+        armL: 66,
+        strokeW: 15,
+        midY: 380,
+        proX: 520, proY: 225, proAngle: -0.30
+      }
+    ];
+
+    // 단계별 정보 데이터
+    const STEP_DATA = [
+      {
+        name: "간기 (Interphase)",
+        desc: "DNA 복제 및 뚜렷한 둥근 핵",
+        ploidy: "2n = 4",
+        chromCount: "염색사 형태 (DNA 2배 복제)",
+        chromatid: "실 모양으로 풀려 있음",
+        spindle: "방추사 미형성",
+        banner: "<strong>[간기]</strong> 유전 물질이 2배로 복제되며 <strong>적갈색/분홍색의 둥근 핵</strong>이 뚜렷하게 관찰됩니다. 염색체는 가느다란 실(염색사) 상태로 핵 속에 풀어져 있습니다."
+      },
+      {
+        name: "전기 (Prophase)",
+        desc: "핵막 소실 시작 & 4개 염색체 응축",
+        ploidy: "2n = 4",
+        chromCount: "4개 (각 2가닥 염색분체)",
+        chromatid: "핵 내부 4개 염색체 산포",
+        spindle: "양극에서 방추사 형성 시작",
+        banner: "<strong>[전기]</strong> 핵막이 점차 사라지고, 염색사가 굵고 짧게 뭉쳐져 <strong>동원체(검은 점)를 가진 4개의 염색체</strong>가 뚜렷하게 나타납니다."
+      },
+      {
+        name: "중기 (Metaphase)",
+        desc: "중앙 적도면 배열 & 핵막 완전 소실",
+        ploidy: "2n = 4",
+        chromCount: "4개",
+        chromatid: "중앙 적도면에 일렬 배열",
+        spindle: "동원체에 방추사 완전 결합",
+        banner: "<strong>[중기]</strong> 핵막이 완전히 사라지고, 4개의 염색체가 <strong>세포 중앙 적도면에 나란히 배열</strong>됩니다. 방추사가 동원체에 결합합니다."
+      },
+      {
+        name: "체세포분열 후기 (Anaphase)",
+        desc: "방추사에 의한 염색분체 V자 견인",
+        ploidy: "2n = 4",
+        chromCount: "모세포 4개 ➔ 딸세포 각 4개",
+        chromatid: "4가닥씩 양극으로 분리 중",
+        spindle: "방추사 수축으로 동원체 견인",
+        banner: "<strong>[체세포분열 후기]</strong> 방추사가 수축하면서 <strong>염색 분체</strong>가 분리되어 양극으로 이동합니다. 동원체가 이끌리며 <strong>V자 모양</strong>으로 끌려갑니다."
+      },
+      {
+        name: "말기 및 세포질 분열 (Telophase)",
+        desc: "2개 핵막 재형성 & 딸세포 완성",
+        ploidy: "딸세포 각각 2n = 4",
+        chromCount: "딸세포 각각 4개",
+        chromatid: "염색체가 풀리며 핵 형성",
+        spindle: "방추사 소실",
+        banner: "<strong>[말기]</strong> 염색체가 다시 실처럼 풀리고 <strong>양극에 2개의 둥근 핵막이 재형성</strong>됩니다. 세포질이 둘로 나누어져 2개의 딸세포가 완성됩니다."
+      }
+    ];
+
+    function lerp(a, b, t) {
+      return a + (b - a) * Math.max(0, Math.min(1, t));
+    }
+
+    // ==========================================
+    // 공통 드로잉 함수 (메인 캔버스 및 썸네일 공유)
+    // ==========================================
+    function drawStageToContext(c, s, w, h, isThumb = false) {
+      const scaleFactor = w / V_WIDTH;
+
+      c.save();
+      c.scale(scaleFactor, scaleFactor);
+
+      // 배경 클리어
+      c.fillStyle = '#ffffff';
+      c.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // 1. 세포막 외벽 렌더링 (간기/전기/중기는 1개 세포, 후기/말기는 2개 세포로 분열)
+      drawCellMembrane(c, s);
+
+      // 2. 핵막 (간기: 뚜렷한 큰 원, 전기: 반투명/소실 중, 말기: 2개 재형성)
+      drawNuclei(c, s);
+
+      // 3. 염색체 및 방추사 렌더링
+      drawChromosomesAndSpindles(c, s, isThumb);
+
+      c.restore();
+    }
+
+    // 세포막 외곽 렌더링
+    function drawCellMembrane(c, s) {
+      c.save();
+      c.fillStyle = '#fcf3dc'; // 자바실험실 웜 베이지
+      c.strokeStyle = '#cbd5e1';
+      c.lineWidth = 3.5;
+
+      if (s < 2.3) {
+        // [간기/전기/중기]: 단일 둥근 세포체
+        c.beginPath();
+        c.roundRect(140, 40, 880, 480, 90);
+        c.fill();
+        c.stroke();
+      } else if (s >= 2.3 && s < 3.4) {
+        // [후기]: 세포가 양옆으로 늘어나며 중앙이 살짝 만입됨
+        const pinch = (s - 2.3) / 1.1; // 0 ~ 1
+        const pinchY = pinch * 40;
+
+        c.beginPath();
+        c.moveTo(230, 40);
+        c.lineTo(540, 40);
+        c.quadraticCurveTo(580, 40 + pinchY, 620, 40);
+        c.lineTo(930, 40);
+        c.arcTo(1020, 40, 1020, 130, 90);
+        c.lineTo(1020, 430);
+        c.arcTo(1020, 520, 930, 520, 90);
+        c.lineTo(620, 520);
+        c.quadraticCurveTo(580, 520 - pinchY, 540, 520);
+        c.lineTo(230, 520);
+        c.arcTo(140, 520, 140, 430, 90);
+        c.lineTo(140, 130);
+        c.arcTo(140, 40, 230, 40, 90);
+        c.closePath();
+        c.fill();
+        c.stroke();
+      } else {
+        // [말기]: 완전히 둘로 나누어지는 2개의 딸세포 둥근 박스
+        c.beginPath();
+        c.roundRect(40, 40, 510, 480, 90);
+        c.fill();
+        c.stroke();
+
+        c.beginPath();
+        c.roundRect(610, 40, 510, 480, 90);
+        c.fill();
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    // 핵(Nucleus) 렌더링 (스크린샷 속 적갈색/분홍색 둥근 핵)
+    function drawNuclei(c, s) {
+      c.save();
+      const PINK_NUC_COLOR = '#b47276'; // 스크린샷 1:1 추출 적갈색/분홍색
+
+      if (s < 0.6) {
+        // ----------------------------------------------------
+        // [간기]: 크고 뚜렷한 단일 둥근 핵 (스크린샷 첫 번째 칸)
+        // ----------------------------------------------------
+        c.beginPath();
+        c.arc(580, 280, 175, 0, Math.PI * 2);
+        c.fillStyle = PINK_NUC_COLOR;
+        c.fill();
+        c.strokeStyle = '#9f5d61';
+        c.lineWidth = 2.0;
+        c.stroke();
+
+        // 핵 속 인(Nucleolus) 살짝 어두운 원
+        c.beginPath();
+        c.arc(540, 240, 24, 0, Math.PI * 2);
+        c.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        c.fill();
+
+      } else if (s >= 0.6 && s < 1.7) {
+        // ----------------------------------------------------
+        // [전기]: 핵막이 반투명하게 소실되는 과정 (스크린샷 두 번째 칸)
+        // ----------------------------------------------------
+        const tFade = (s - 0.6) / 1.1; // 0 ~ 1
+        const alpha = Math.max(0, 1.0 - tFade * 0.7);
+
+        c.beginPath();
+        c.arc(580, 280, 175, 0, Math.PI * 2);
+        c.fillStyle = `rgba(180, 114, 118, ${alpha * 0.75})`;
+        c.fill();
+        c.strokeStyle = `rgba(159, 93, 97, ${alpha})`;
+        c.lineWidth = 2.0;
+        c.stroke();
+
+      } else if (s >= 3.4) {
+        // ----------------------------------------------------
+        // [말기]: 양극에 2개의 둥근 핵막 재형성 (스크린샷 말기)
+        // ----------------------------------------------------
+        const tAppear = (s - 3.4) / 0.6; // 0 ~ 1
+        const alpha = Math.min(1.0, tAppear);
+
+        // 좌측 딸세포 핵
+        c.beginPath();
+        c.arc(295, 280, 135, 0, Math.PI * 2);
+        c.fillStyle = `rgba(180, 114, 118, ${alpha * 0.85})`;
+        c.fill();
+        c.strokeStyle = `rgba(159, 93, 97, ${alpha})`;
+        c.lineWidth = 2.0;
+        c.stroke();
+
+        // 우측 딸세포 핵
+        c.beginPath();
+        c.arc(865, 280, 135, 0, Math.PI * 2);
+        c.fillStyle = `rgba(180, 114, 118, ${alpha * 0.85})`;
+        c.fill();
+        c.strokeStyle = `rgba(159, 93, 97, ${alpha})`;
+        c.lineWidth = 2.0;
+        c.stroke();
+      }
+
+      // [핵막] 강제 체크박스 켜져 있을 때 (중기/후기에도 반투명 점선 원 표시)
+      if (forceNuclearMem && s >= 1.7 && s < 3.4) {
+        c.save();
+        c.strokeStyle = 'rgba(79, 70, 229, 0.75)';
+        c.lineWidth = 2.5;
+        c.setLineDash([6, 6]);
+        c.fillStyle = 'rgba(224, 231, 255, 0.25)';
+        c.beginPath();
+        c.arc(580, 280, 175, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        c.restore();
+      }
+
+      c.restore();
+    }
+
+    // 염색체 및 방추사 렌더링
+    function drawChromosomesAndSpindles(c, s, isThumb) {
+      if (s < 0.4) {
+        // [간기]: 염색체는 응축되지 않고 실(염색사) 상태로 핵 속에 풀어져 있음
+        // 스크린샷 1번 칸처럼 완전한 적갈색 핵 상태 유지 (단, 교과서 이해를 위해 아주 은은한 염색사 가닥 미세 표현)
+        return;
+      }
+
+      // 방추사용 동원체 좌표 수집
+      const leftCentros = [];
+      const rightCentros = [];
+
+      CHROMOSOMES.forEach(chr => {
+        if (s >= 0.4 && s < 1.6) {
+          // ====================================================
+          // [전기]: 핵 내부에서 4개의 염색체가 나타나 산포됨 (스크린샷 2번 칸)
+          // ====================================================
+          const tPro = (s - 0.4) / 1.2; // 0 ~ 1
+          const curX = lerp(chr.proX, 580, Math.max(0, (s - 1.2) / 0.4));
+          const curY = lerp(chr.proY, chr.midY, Math.max(0, (s - 1.2) / 0.4));
+          const curAngle = lerp(chr.proAngle, 0, Math.max(0, (s - 1.2) / 0.4));
+
+          drawSingleXChromosome(c, curX, curY, chr, curAngle);
+
+        } else if (s >= 1.6 && s < 2.4) {
+          // ====================================================
+          // [중기]: 중앙 적도면에 4개 염색체가 일렬로 정렬됨 (스크린샷 3번 칸)
+          // ====================================================
+          const cx = 580;
+          const cy = chr.midY;
+          drawSingleXChromosome(c, cx, cy, chr, 0);
+
+          leftCentros.push({ x: cx - 12, y: cy });
+          rightCentros.push({ x: cx + 12, y: cy });
+
+        } else if (s >= 2.4 && s < 3.5) {
+          // ====================================================
+          // [체세포분열 후기]: 방추사에 의해 자매 염색분체 V자 분리 (스크린샷 4번 칸)
+          // ====================================================
+          const tAnaphase = (s - 2.4) / 1.0; // 0 ~ 1
+
+          // 좌측 V (<) 좌표: 580 -> 420
+          const leftX = lerp(575, 420, tAnaphase);
+          // 우측 V (>) 좌표: 580 -> 740
+          const rightX = lerp(585, 740, tAnaphase);
+          const cy = chr.midY;
+
+          leftCentros.push({ x: leftX, y: cy });
+          rightCentros.push({ x: rightX, y: cy });
+
+          // 좌측 V 염색분체 (<)
+          drawVChromatid(c, leftX, cy, chr, 'left', tAnaphase);
+          // 우측 V 염색분체 (>)
+          drawVChromatid(c, rightX, cy, chr, 'right', tAnaphase);
+
+        } else {
+          // ====================================================
+          // [말기]: 양극에 도달하여 염색체가 서서히 풀어짐
+          // ====================================================
+          const leftX = 295 + (chr.proX - 580) * 0.65;
+          const leftY = 280 + (chr.proY - 280) * 0.65;
+          const rightX = 865 + (chr.proX - 580) * 0.65;
+          const rightY = 280 + (chr.proY - 280) * 0.65;
+
+          drawVChromatid(c, leftX, leftY, chr, 'left', 1.0);
+          drawVChromatid(c, rightX, rightY, chr, 'right', 1.0);
+        }
+      });
+
+      // 중기~후기 방추사 렌더링
+      if (s >= 1.6 && s < 3.4) {
+        drawSpindleFibers(c, s, leftCentros, rightCentros);
+      }
+    }
+
+    // 2가닥 염색분체 X자 염색체 그리기 (검은색 동원체 점 포함)
+    function drawSingleXChromosome(c, cx, cy, cfg, angle) {
+      c.save();
+      c.translate(cx, cy);
+      c.rotate(angle);
+
+      c.lineWidth = cfg.strokeW;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.strokeStyle = cfg.color;
+
+      const L = cfg.armL;
+
+      // 1번 염색분체 가닥 (\)
+      c.beginPath();
+      c.moveTo(-L * 0.62, -L * 0.72);
+      c.lineTo(L * 0.62, L * 0.72);
+      c.stroke();
+
+      // 2번 염색분체 가닥 (/)
+      c.beginPath();
+      c.moveTo(L * 0.62, -L * 0.72);
+      c.lineTo(-L * 0.62, L * 0.72);
+      c.stroke();
+
+      // 동원체 (검은색 결절 점)
+      c.beginPath();
+      c.arc(0, 0, 4.8, 0, Math.PI * 2);
+      c.fillStyle = '#0a0a0a';
+      c.fill();
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 1.0;
+      c.stroke();
+
+      c.restore();
+    }
+
+    // V자형 분리 염색분체 그리기 (동원체가 앞서고 팔이 뒤로 휘어짐)
+    function drawVChromatid(c, cx, cy, cfg, dir, tMorph) {
+      c.save();
+      c.lineWidth = cfg.strokeW;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.strokeStyle = cfg.color;
+
+      const L = cfg.armL;
+      // 좌측 V는 < 방향(오른쪽으로 팔 벌어짐), 우측 V는 > 방향(왼쪽으로 팔 벌어짐)
+      const d = (dir === 'left') ? -1 : 1;
+
+      const armTrailX = d * L * lerp(0.85, 0.65, tMorph);
+      const topY = -L * 0.75;
+      const btmY = L * 0.75;
+
+      c.beginPath();
+      c.moveTo(cx - armTrailX, cy + topY);
+      c.quadraticCurveTo(cx - armTrailX * 0.2, cy + topY * 0.35, cx, cy);
+      c.quadraticCurveTo(cx - armTrailX * 0.2, cy + btmY * 0.35, cx - armTrailX, cy + btmY);
+      c.stroke();
+
+      // 동원체 점 (방추사 결합점)
+      c.beginPath();
+      c.arc(cx, cy, 4.2, 0, Math.PI * 2);
+      c.fillStyle = '#0a0a0a';
+      c.fill();
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 0.8;
+      c.stroke();
+
+      c.restore();
+    }
+
+    // 방추사 곡선 렌더링
+    function drawSpindleFibers(c, s, leftCentros, rightCentros) {
+      c.save();
+      c.strokeStyle = 'rgba(156, 163, 175, 0.75)'; // 부드러운 회색 방추사
+      c.lineWidth = 2.0;
+
+      const poleLeft = { x: 190, y: 280 };
+      const poleRight = { x: 970, y: 280 };
+
+      // 좌측 극 -> 좌측 동원체
+      leftCentros.forEach(cp => {
+        c.beginPath();
+        c.moveTo(poleLeft.x, poleLeft.y);
+        const midX = (poleLeft.x + cp.x) / 2;
+        const midY = (poleLeft.y + cp.y) / 2;
+        const cpY = midY + (cp.y - poleLeft.y) * 0.25;
+        c.quadraticCurveTo(midX, cpY, cp.x, cp.y);
+        c.stroke();
+      });
+
+      // 우측 극 -> 우측 동원체
+      rightCentros.forEach(cp => {
+        c.beginPath();
+        c.moveTo(poleRight.x, poleRight.y);
+        const midX = (poleRight.x + cp.x) / 2;
+        const midY = (poleRight.y + cp.y) / 2;
+        const cpY = midY + (cp.y - poleRight.y) * 0.25;
+        c.quadraticCurveTo(midX, cpY, cp.x, cp.y);
+        c.stroke();
+      });
+
+      // 양극 중심체
+      [poleLeft, poleRight].forEach(p => {
+        c.beginPath();
+        c.arc(p.x, p.y, 5.5, 0, Math.PI * 2);
+        c.fillStyle = '#f59e0b';
+        c.fill();
+        c.strokeStyle = '#b45309';
+        c.lineWidth = 1.5;
+        c.stroke();
+      });
+
+      c.restore();
+    }
+
+    // ==========================================
+    // 썸네일 갤러리 사전 렌더링 (스크린샷 1:1 대응)
+    // ==========================================
+    function renderGalleryThumbnails() {
+      const thumbSteps = [0.0, 1.0, 2.0, 3.0, 4.0];
+      thumbSteps.forEach((stepVal, idx) => {
+        const tCanvas = document.getElementById(`thumb${idx}`);
+        if (!tCanvas) return;
+        const tCtx = tCanvas.getContext('2d');
+        drawStageToContext(tCtx, stepVal, 220, 220, true);
+      });
+    }
+
+    // ==========================================
+    // 메인 시뮬레이션 렌더링
+    // ==========================================
+    function renderMain() {
+      drawStageToContext(ctx, currentStep, V_WIDTH, V_HEIGHT, false);
+    }
+
+    // ==========================================
+    // UI 및 HUD 실시간 갱신
+    // ==========================================
+    function updateHUD() {
+      const idx = Math.min(4, Math.max(0, Math.round(currentStep)));
+      const data = STEP_DATA[idx];
+
+      hudPhaseName.textContent = data.name;
+      hudPhaseDesc.textContent = data.desc;
+      hudPloidy.textContent = data.ploidy;
+      hudChromCount.textContent = data.chromCount;
+      hudChromatidState.textContent = data.chromatid;
+      hudSpindleDesc.textContent = data.spindle;
+      bannerText.innerHTML = data.banner;
+
+      // 슬라이더 및 라벨
+      progressSlider.value = currentStep;
+      const stepNames = ["간기", "전기", "중기", "후기", "말기"];
+      progressLabel.textContent = stepNames[idx];
+
+      // 단계별 칩 버튼
+      stepChips.forEach(chip => {
+        const cStep = parseInt(chip.dataset.step, 10);
+        chip.classList.toggle('active', cStep === idx);
+      });
+
+      // 갤러리 카드 액티브
+      galleryCards.forEach(card => {
+        const gStep = parseInt(card.dataset.step, 10);
+        card.classList.toggle('active', gStep === idx);
+      });
+
+      // 표 행 하이라이트
+      tableRows.forEach((row, rIdx) => {
+        row.classList.toggle('active-row', rIdx === idx);
+      });
+
+      // 자바실험실 오리지널 체크박스
+      chkAnaphase.checked = (currentStep >= 2.5 && currentStep < 3.5);
+      chkNuclearMem.checked = forceNuclearMem;
+    }
+
+    // ==========================================
+    // 애니메이션 루프
+    // ==========================================
+    let lastTime = performance.now();
+    function animate(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (isPlaying) {
+        currentStep += (dt / 2.6) * speedMultiplier;
+        if (currentStep >= 4.0) {
+          currentStep = 4.0;
+          isPlaying = false;
+          btnPlayPause.textContent = '▶ 자동 재생';
+          btnPlayPause.classList.remove('primary');
+        }
+      } else {
+        // 부드러운 스텝 전환 보간
+        currentStep += (targetStep - currentStep) * 0.22;
+      }
+
+      updateHUD();
+      renderMain();
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // ==========================================
+    // 이벤트 리스너
+    // ==========================================
+    // 자바실험실 오리지널 체크박스
+    chkAnaphase.addEventListener('change', (e) => {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 자동 재생';
+      btnPlayPause.classList.remove('primary');
+      targetStep = e.target.checked ? 3.0 : 2.0;
+    });
+
+    chkNuclearMem.addEventListener('change', (e) => {
+      forceNuclearMem = e.target.checked;
+    });
+
+    function resetToDefault() {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 자동 재생';
+      btnPlayPause.classList.remove('primary');
+      targetStep = 3.0;
+      currentStep = 3.0;
+      forceNuclearMem = false;
+      chkNuclearMem.checked = false;
+      chkAnaphase.checked = false;
+    }
+
+    btnOriginalReset.addEventListener('click', resetToDefault);
+    btnReset.addEventListener('click', resetToDefault);
+
+    // 재생 / 일시정지
+    btnPlayPause.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      if (isPlaying && currentStep >= 4.0) {
+        currentStep = 0.0;
+        targetStep = 4.0;
+      }
+      btnPlayPause.textContent = isPlaying ? '⏸ 일시정지' : '▶ 자동 재생';
+      btnPlayPause.classList.toggle('primary', isPlaying);
+    });
+
+    // 배속 설정
+    const SPEED_LIST = [0.5, 1.0, 2.0];
+    let spdIdx = 1;
+    btnSpeed.addEventListener('click', () => {
+      spdIdx = (spdIdx + 1) % SPEED_LIST.length;
+      speedMultiplier = SPEED_LIST[spdIdx];
+      btnSpeed.textContent = `속도: ${speedMultiplier.toFixed(1)}x`;
+    });
+
+    // 이전 / 다음 단계 버튼
+    btnPrev.addEventListener('click', () => {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 자동 재생';
+      btnPlayPause.classList.remove('primary');
+      targetStep = Math.max(0, Math.floor(currentStep - 0.05));
+    });
+
+    btnNext.addEventListener('click', () => {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 자동 재생';
+      btnPlayPause.classList.remove('primary');
+      targetStep = Math.min(4, Math.floor(currentStep + 1.0));
+    });
+
+    // 정밀 슬라이더
+    progressSlider.addEventListener('input', (e) => {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 자동 재생';
+      btnPlayPause.classList.remove('primary');
+      targetStep = parseFloat(e.target.value);
+      currentStep = targetStep;
+    });
+
+    // 칩 버튼 클릭
+    stepChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        isPlaying = false;
+        btnPlayPause.textContent = '▶ 자동 재생';
+        btnPlayPause.classList.remove('primary');
+        targetStep = parseFloat(chip.dataset.step);
+      });
+    });
+
+    // 갤러리 카드 클릭 시 해당 단계로 즉각 이동
+    galleryCards.forEach(card => {
+      card.addEventListener('click', () => {
+        isPlaying = false;
+        btnPlayPause.textContent = '▶ 자동 재생';
+        btnPlayPause.classList.remove('primary');
+        targetStep = parseFloat(card.dataset.step);
+      });
+    });
+
+    // 인터랙티브 툴팁
+    const INTERACTIVE_REGIONS = [
+      {
+        title: "핵 & 핵막 (Nucleus & Membrane)",
+        desc: "간기에는 뚜렷한 원형으로 유전 물질을 감싸 보호하며, 전기에 소실되었다가 말기에 2개의 딸핵으로 재형성됩니다.",
+        check: (mx, my) => Math.hypot(mx - 580, my - 280) < 170 && (currentStep < 1.7 || forceNuclearMem)
+      },
+      {
+        title: "염색체 & 동원체 (Chromosome & Centromere)",
+        desc: "전기에 응축되어 나타나며, 중앙의 검은 점(동원체)에 방추사가 결합하여 후기에 자매 염색분체로 분리됩니다.",
+        check: (mx, my) => Math.abs(mx - 580) < 160 && Math.abs(my - 280) < 160 && currentStep >= 0.8
+      },
+      {
+        title: "방추사 (Spindle Fiber)",
+        desc: "양극의 중심체에서 뻗어 나와 염색체의 동원체에 결합하는 미세소관 단백질입니다. 수축하여 염색분체를 양극으로 당깁니다.",
+        check: (mx, my) => (mx < 450 || mx > 710) && Math.abs(my - 280) < 140 && currentStep >= 1.6 && currentStep <= 3.4
+      }
+    ];
+
+    function handlePointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = V_WIDTH / rect.width;
+      const scaleY = V_HEIGHT / rect.height;
+
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      if (!clientX || !clientY) return;
+
+      const mx = (clientX - rect.left) * scaleX;
+      const my = (clientY - rect.top) * scaleY;
+
+      let found = null;
+      for (const reg of INTERACTIVE_REGIONS) {
+        if (reg.check(mx, my)) {
+          found = reg;
+          break;
+        }
+      }
+
+      if (found) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${clientX - rect.left}px`;
+        tooltip.style.top = `${clientY - rect.top}px`;
+        tooltip.innerHTML = `<strong>${found.title}</strong>${found.desc}`;
+      } else {
+        tooltip.style.display = 'none';
+      }
+    }
+
+    canvas.addEventListener('mousemove', handlePointer);
+    canvas.addEventListener('touchmove', handlePointer, { passive: true });
+    canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    canvas.addEventListener('touchend', () => { tooltip.style.display = 'none'; });
+
+    // 초기 실행 시 썸네일 렌더링 및 HUD 반영
+    setTimeout(() => {
+      renderGalleryThumbnails();
+      updateHUD();
+    }, 50);
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>쉬는시간 할리갈리 (Break Time Halli Galli) - 스피드 보드게임</title>
+<style>
+  :root {
+    --felt-color: #1e3a5f;
+    --table-rim: #0f172a;
+    --gold: #f59e0b;
+    --gold-light: #fef08a;
+    --gold-dark: #b45309;
+    --card-shadow: 0 8px 25px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; background: #0b1120; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", "맑은 고딕", sans-serif;
+    user-select: none; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* 1. Top Navbar */
+  .game-nav {
+    background: #0f172a; border-bottom: 2px solid #1e293b; padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: relative; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  .brand-group { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { font-size: 26px; }
+  .brand-title { font-size: 18px; font-weight: 900; color: #f59e0b; letter-spacing: -0.5px; }
+  .brand-badge {
+    background: #ef4444; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+  }
+
+  .nav-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn-nav {
+    background: #1e293b; border: 1.5px solid #334155; color: #f1f5f9; padding: 6px 12px;
+    border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .btn-nav:hover { background: #334155; border-color: #38bdf8; }
+  .btn-nav.primary { background: #ef4444; border-color: #f87171; color: #fff; }
+  .btn-nav.primary:hover { background: #dc2626; }
+  .btn-nav.theme-btn { background: #047857; border-color: #10b981; }
+
+  /* 2. Main Arena */
+  .arena-wrapper {
+    flex: 1; display: flex; justify-content: center; align-items: center; padding: 16px;
+    background: radial-gradient(circle at center, #1e293b 0%, #080d1a 100%); position: relative;
+  }
+  .poker-table {
+    width: 100%; max-width: 960px; height: 680px;
+    background: radial-gradient(ellipse at center, #2563eb 0%, #1d4ed8 40%, #0f172a 100%);
+    border: 14px solid #0f172a; border-radius: 120px;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.7), 0 20px 50px rgba(0,0,0,0.8);
+    position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden;
+  }
+  @media (max-width: 800px) {
+    .poker-table { height: 600px; border-radius: 60px; border-width: 8px; }
+  }
+
+  /* Center Stage: Golden Bell & Pot */
+  .center-stage {
+    position: absolute; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .bell-btn {
+    width: 140px; height: 140px; border-radius: 50%; border: none; cursor: pointer;
+    background: radial-gradient(circle at 35% 35%, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+    box-shadow: 0 14px 35px rgba(0,0,0,0.55), inset 0 4px 8px rgba(255,255,255,0.7), 0 0 0 8px #78350f;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 0.08s ease-out, box-shadow 0.15s; outline: none; position: relative;
+  }
+  .bell-btn:active {
+    transform: scale(0.92) translateY(4px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 6px #78350f;
+  }
+  .bell-btn.ring-anim {
+    animation: bellRattle 0.4s ease-in-out;
+  }
+  .bell-btn.hint-glow {
+    box-shadow: 0 0 35px #facc15, 0 0 70px #ef4444, 0 14px 35px rgba(0,0,0,0.55), 0 0 0 8px #78350f !important;
+  }
+  @keyframes bellRattle {
+    0% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(0.93) rotate(-15deg); }
+    40% { transform: scale(1.06) rotate(15deg); }
+    60% { transform: scale(0.95) rotate(-8deg); }
+    80% { transform: scale(1.02) rotate(8deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .bell-icon-svg { width: 62px; height: 62px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35)); }
+  .bell-subtext { font-size: 12px; font-weight: 900; color: #451a03; margin-top: 2px; letter-spacing: 0.5px; }
+
+  .center-pot-badge {
+    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(6px); border: 1.5px solid #f59e0b;
+    padding: 5px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; color: #fef08a;
+    margin-top: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  /* Player Stations */
+  .player-station {
+    position: absolute; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 10;
+    transition: all 0.25s ease;
+  }
+  .pos-bottom { bottom: 18px; left: 50%; transform: translateX(-50%); }
+  .pos-top { top: 18px; left: 50%; transform: translateX(-50%); }
+  .pos-left { left: 30px; top: 50%; transform: translateY(-50%); }
+  .pos-right { right: 30px; top: 50%; transform: translateY(-50%); }
+
+  .player-info-card {
+    background: rgba(15, 23, 42, 0.92); border: 2px solid #334155; border-radius: 10px;
+    padding: 5px 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .player-info-card.active-turn {
+    border-color: #facc15; box-shadow: 0 0 18px rgba(250, 204, 21, 0.7);
+  }
+  .player-info-card.ring-winner {
+    border-color: #22c55e; background: #064e3b; box-shadow: 0 0 25px #22c55e;
+  }
+  .player-info-card.ring-loser {
+    border-color: #ef4444; background: #7f1d1d; box-shadow: 0 0 25px #ef4444;
+  }
+  .card-count-pill {
+    background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 900;
+  }
+  .key-hint {
+    background: #334155; color: #fef08a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900;
+  }
+
+  .cards-row { display: flex; align-items: center; gap: 14px; }
+
+  /* 3. Playing Cards UI (Clean Crisp Boardgame Style) */
+  .card-slot {
+    width: 110px; height: 160px; border-radius: 12px; position: relative; perspective: 600px;
+  }
+  @media (max-width: 800px) {
+    .card-slot { width: 95px; height: 140px; }
+  }
+
+  /* Hidden Deck */
+  .deck-pile {
+    width: 100%; height: 100%; border-radius: 12px; background: #0f172a;
+    border: 3px solid #f8fafc; box-shadow: var(--card-shadow), 0 4px 0 #94a3b8, 0 8px 0 #64748b;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; transition: transform 0.1s;
+  }
+  .deck-pile:hover { transform: translateY(-3px); }
+  .deck-pile:active { transform: translateY(0); }
+  .deck-pattern {
+    width: 86%; height: 88%; border-radius: 8px; border: 2px solid #ef4444;
+    background: radial-gradient(circle, #7f1d1d 0%, #450a0a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  }
+  .deck-logo-icon { font-size: 26px; }
+  .deck-logo-text { font-size: 10.5px; font-weight: 900; color: #fef08a; letter-spacing: 0.5px; }
+
+  /* Face-Up Playing Card */
+  .fruit-card {
+    width: 100%; height: 100%; border-radius: 12px; background: #ffffff;
+    border: 3.5px solid #ffffff; box-shadow: var(--card-shadow);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 8px;
+    position: relative; overflow: hidden;
+    animation: flipIn 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes flipIn {
+    0% { transform: scale(0.6) rotateY(70deg); opacity: 0; }
+    100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  }
+
+  /* Card corner index */
+  .card-corner-top, .card-corner-bottom {
+    display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: #1e293b;
+  }
+  .card-corner-bottom { transform: rotate(180deg); }
+
+  /* Card Pip Layouts (1, 2, 3, 4, 5) */
+  .pips-area {
+    flex: 1; display: grid; width: 100%; height: 100%; align-items: center; justify-items: center; padding: 4px;
+  }
+  .pip-item {
+    font-size: 28px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+
+  /* Pip Grid Alignments */
+  .pips-1 { display: flex; align-items: center; justify-content: center; }
+  .pips-1 .pip-item { font-size: 44px; }
+
+  .pips-2 { display: flex; flex-direction: column; justify-content: space-around; }
+  .pips-2 .pip-item { font-size: 32px; }
+
+  .pips-3 {
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+  }
+  .pips-3 .pip-item:nth-child(1) { grid-column: 1; grid-row: 1; justify-self: start; }
+  .pips-3 .pip-item:nth-child(2) { grid-column: 1 / span 2; grid-row: 2; justify-self: center; }
+  .pips-3 .pip-item:nth-child(3) { grid-column: 2; grid-row: 3; justify-self: end; }
+
+  .pips-4 {
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px;
+  }
+
+  .pips-5 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+  }
+  .pips-5 .pip-item:nth-child(1) { grid-column: 1; grid-row: 1; justify-self: start; }
+  .pips-5 .pip-item:nth-child(2) { grid-column: 3; grid-row: 1; justify-self: end; }
+  .pips-5 .pip-item:nth-child(3) { grid-column: 2; grid-row: 2; justify-self: center; }
+  .pips-5 .pip-item:nth-child(4) { grid-column: 1; grid-row: 3; justify-self: start; }
+  .pips-5 .pip-item:nth-child(5) { grid-column: 3; grid-row: 3; justify-self: end; }
+
+  .empty-card-slot {
+    width: 100%; height: 100%; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.35);
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* 4. Bottom Status & Live Counter */
+  .bottom-status-bar {
+    background: #0f172a; border-top: 2px solid #1e293b; padding: 10px 20px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 40;
+  }
+  .live-counts-strip {
+    display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 800;
+  }
+  .count-chip {
+    background: #1e293b; border: 1.5px solid #334155; padding: 4px 10px; border-radius: 8px;
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+  }
+  .count-chip.exact-five {
+    background: #b91c1c; border-color: #f87171; color: #fff;
+    box-shadow: 0 0 12px rgba(239,68,68,0.7); animation: pulseFive 0.5s infinite alternate;
+  }
+  @keyframes pulseFive {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+
+  /* 5. Modals & Toasts */
+  .toast-banner {
+    position: absolute; top: 90px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #0f172a; border: 2px solid #22c55e; border-radius: 30px; padding: 10px 24px;
+    font-size: 15px; font-weight: 900; color: #86efac; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    z-index: 80; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast-banner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-banner.error { border-color: #ef4444; color: #fca5a5; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-card {
+    background: #1e293b; border: 2px solid #334155; border-radius: 16px; width: 100%; max-width: 580px;
+    max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    border-bottom: 1.5px solid #334155; padding-bottom: 10px;
+  }
+  .modal-title { font-size: 18px; font-weight: 900; color: #f59e0b; display: flex; align-items: center; gap: 8px; }
+  .btn-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+  .btn-close:hover { color: #fff; }
+
+  .setting-row {
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155;
+    font-size: 13.5px; font-weight: 700;
+  }
+  .setting-label { display: flex; flex-direction: column; gap: 3px; }
+  .setting-desc { font-size: 11.5px; color: #94a3b8; font-weight: normal; }
+  .toggle-switch { position: relative; width: 50px; height: 26px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer; background-color: #475569; border-radius: 26px; transition: .2s;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .2s;
+  }
+  input:checked + .slider { background-color: #ef4444; }
+  input:checked + .slider:before { transform: translateX(24px); }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<header class="unified-game-header">
+  <div class="header-brand">
+    <span class="game-badge">수업 게임</span>
+    <span class="game-title">쉬는시간 할리갈리</span>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+
+<!-- 1. Top Navbar -->
+<div class="game-nav">
+  <div class="brand-group">
+    <span class="brand-icon">🍓</span>
+    <div>
+      <div class="brand-title">쉬는시간 할리갈리 (Break Time Halli Galli)</div>
+    </div>
+    <span class="brand-badge">⚡ 스피드 5 모으기</span>
+  </div>
+
+  <div class="nav-controls">
+    <button class="btn-nav primary" id="btnNextTurn" onclick="playTurn()">
+      <span>🃏 카드 뒤집기 (Space)</span>
+    </button>
+    <button class="btn-nav theme-btn" id="btnThemeToggle" onclick="cycleTheme()">
+      <span id="themeBtnLabel">🍓 과일 테마</span>
+    </button>
+    <button class="btn-nav" onclick="openModal('rulesModal')">📖 게임 규칙</button>
+    <button class="btn-nav" onclick="openModal('settingsModal')">⚙️ 설정</button>
+    <button class="btn-nav" id="btnSoundToggle" onclick="toggleSound()">🔊 소리 켬</button>
+    <button class="btn-nav" onclick="initNewGame()">🔄 재시작</button>
+    <a href="./시작하기_수업게임서랍.html" class="btn-nav">🏠 수업 서랍</a>
+  </div>
+</div>
+
+<!-- Toast Popup for Results -->
+<div class="toast-banner" id="toastBanner">
+  <span id="toastIcon">🔔</span>
+  <span id="toastMsg">성공 메시지</span>
+</div>
+
+<!-- 2. Main Game Arena -->
+<div class="arena-wrapper">
+  <div class="poker-table" id="pokerTable">
+
+    <!-- Center Stage: The Golden Bell & Pot -->
+    <div class="center-stage">
+      <button class="bell-btn" id="centralBellBtn" onclick="onBellPressed('human')">
+        <svg class="bell-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#451a03" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+        <span class="bell-subtext">BELL (종)</span>
+      </button>
+      <div class="center-pot-badge" id="potCounter">바닥 카드: 0장</div>
+    </div>
+
+    <!-- Player 1: Bottom (Human) -->
+    <div class="player-station pos-bottom" id="station-0">
+      <div class="cards-row">
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(0)">
+            <div class="deck-pattern">
+              <span class="deck-logo-icon" id="deckIcon-0">🍓</span>
+              <span class="deck-logo-text">DECK</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-slot" id="slot-0">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+      <div class="player-info-card" id="info-0">
+        <span class="player-avatar">🧑‍🎓</span>
+        <span class="player-name">나 (Player 1)</span>
+        <span class="card-count-pill" id="count-0">14장</span>
+        <span class="key-hint" id="key-hint-0">BELL: Space / 클릭</span>
+      </div>
+    </div>
+
+    <!-- Player 2: Left -->
+    <div class="player-station pos-left" id="station-1">
+      <div class="player-info-card" id="info-1">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-1">AI 1 (치타)</span>
+        <span class="card-count-pill" id="count-1">14장</span>
+        <span class="key-hint" id="key-hint-1" style="display:none;">BELL: A</span>
+      </div>
+      <div class="cards-row">
+        <div class="card-slot" id="slot-1">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(1)">
+            <div class="deck-pattern">
+              <span class="deck-logo-icon" id="deckIcon-1">🍓</span>
+              <span class="deck-logo-text">DECK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player 3: Top -->
+    <div class="player-station pos-top" id="station-2">
+      <div class="player-info-card" id="info-2">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-2">AI 2 (매사냥꾼)</span>
+        <span class="card-count-pill" id="count-2">14장</span>
+        <span class="key-hint" id="key-hint-2" style="display:none;">BELL: L</span>
+      </div>
+      <div class="cards-row">
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(2)">
+            <div class="deck-pattern">
+              <span class="deck-logo-icon" id="deckIcon-2">🍓</span>
+              <span class="deck-logo-text">DECK</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-slot" id="slot-2">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player 4: Right -->
+    <div class="player-station pos-right" id="station-3">
+      <div class="cards-row">
+        <div class="card-slot">
+          <div class="deck-pile" onclick="playTurn(3)">
+            <div class="deck-pattern">
+              <span class="deck-logo-icon" id="deckIcon-3">🍓</span>
+              <span class="deck-logo-text">DECK</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-slot" id="slot-3">
+          <div class="empty-card-slot">카드 없음</div>
+        </div>
+      </div>
+      <div class="player-info-card" id="info-3">
+        <span class="player-avatar">🤖</span>
+        <span class="player-name" id="name-3">AI 3 (빛의번개)</span>
+        <span class="card-count-pill" id="count-3">14장</span>
+        <span class="key-hint" id="key-hint-3" style="display:none;">BELL: Enter</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 3. Bottom Status Bar with Live Item Counters -->
+<div class="bottom-status-bar">
+  <div class="live-counts-strip" id="liveCountsStrip">
+    <!-- Live Item counts displayed here -->
+  </div>
+  <div style="font-size:12px; color:#94a3b8; font-weight:700;">
+    🎯 어떤 과일이든 바닥에 <b>정확히 5개</b>가 보이면 즉시 벨을 치세요!
+  </div>
+</div>
+
+<!-- 4. Rules Modal -->
+<div class="modal-overlay" id="rulesModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">📖 쉬는시간 할리갈리 게임 규칙</div>
+      <button class="btn-close" onclick="closeModal('rulesModal')">×</button>
+    </div>
+
+    <div style="font-size:13.5px; line-height:1.6; color:#cbd5e1;">
+      <h3 style="color:#f59e0b; margin:0 0 6px;">🎯 언제 종을 쳐야 하나요?</h3>
+      <p>
+        각자 자신의 카드 더미에서 1장씩 바닥에 카드를 냅니다.<br>
+        바닥에 펼쳐진 모든 카드를 보았을 때, <b>어떤 과일이든 합계가 "정확히 5개"</b>가 되는 순간 가장 먼저 벨을 누릅니다!
+      </p>
+      <ul>
+        <li>바닥에 🍌 바나나 3개 카드와 🍌 바나나 2개 카드가 보일 때 -> <b>합 5개! 벨!</b></li>
+        <li>바닥에 🍓 딸기 5개짜리 카드가 1장 나왔을 때 -> <b>5개! 벨!</b></li>
+        <li>바닥에 🍓 딸기 2개, 2개, 1개 카드가 동시에 보일 때 -> <b>합 5개! 벨!</b></li>
+        <li>바닥에 바나나가 6개 이상이거나, 4개일 때는 치면 안 됩니다!</li>
+      </ul>
+
+      <h3 style="color:#f59e0b; margin:14px 0 6px;">⚠️ 오답 페널티</h3>
+      <p>
+        합이 5개가 아닌데 성급하게 벨을 치면, <b>다른 모든 플레이어에게 카드 1장씩</b>을 벌칙으로 나눠주어야 합니다!
+      </p>
+
+      <h3 style="color:#f59e0b; margin:14px 0 6px;">🏆 승리 조건</h3>
+      <p>
+        올바른 타이밍에 벨을 치면 바닥에 쌓인 모든 카드를 가져갑니다. 카드를 모두 잃은 플레이어는 탈락하며, 카드를 가장 많이 모은 플레이어가 승리합니다!
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ 게임 설정</div>
+      <button class="btn-close" onclick="closeModal('settingsModal')">×</button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>🎮 게임 모드</span>
+        <span class="setting-desc">혼자 연습(AI 대전) vs 친구와 1PC 대전</span>
+      </div>
+      <select id="cfgGameMode" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="solo">🧑‍🎓 혼자 연습 (AI 3명 대결)</option>
+        <option value="multi2">👥 친구와 2인 대전 (A / L 키)</option>
+        <option value="multi4">👥 친구와 4인 대전 (A / L / Z / M 키)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>🎨 카드 테마</span>
+        <span class="setting-desc">원조 과일 vs 과학 도구 vs 간식 파티</span>
+      </div>
+      <select id="cfgTheme" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="fruit">🍓 원조 과일 (딸기, 바나나, 라임, 자두)</option>
+        <option value="science">🧪 과학 도구 (비커, 자석, 망원경, 로켓)</option>
+        <option value="snack">🍔 간식 파티 (피자, 햄버거, 도넛, 아이스크림)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>💡 5개 달성 힌트 발광 (Hint Glow)</span>
+        <span class="setting-desc">바닥에 5개가 모이면 벨 테두리에 은은한 빛 표시</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cfgGlowHint" onchange="applySettings()" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>🤖 AI 반응 속도</span>
+        <span class="setting-desc">AI 플레이어의 반사 신경 난이도</span>
+      </div>
+      <select id="cfgAiSpeed" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="slow">🐢 거북이 (2.5 ~ 3.8초 / 쉬움)</option>
+        <option value="normal" selected>⚡ 일반 (1.5 ~ 2.4초 / 실전)</option>
+        <option value="fast">🔥 빛의 번개 (0.9 ~ 1.5초 / 최고수)</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>⏱️ 쉬는시간 타이머</span>
+        <span class="setting-desc">10분 쉬는 시간에 맞춘 제한 시간</span>
+      </div>
+      <select id="cfgTimerLimit" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="0" selected>무제한 (카드를 다 모을 때까지)</option>
+        <option value="180">3분 타임어택</option>
+        <option value="300">5분 타임어택</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>⚡ 자동 턴 넘김</span>
+        <span class="setting-desc">일정 시간마다 자동으로 카드 뒤집기 (스피드전)</span>
+      </div>
+      <select id="cfgAutoTurn" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
+        <option value="manual" selected>수동 (Space 또는 덱 클릭)</option>
+        <option value="1800">1.8초마다 자동</option>
+        <option value="1200">1.2초마다 초고속 자동</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. AUDIO SYNTHESIZER
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  const now = audioCtx.currentTime;
+
+  if (type === 'flip') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(360, now);
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.07);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+
+  } else if (type === 'bell') {
+    // Rich Bell Harmonic Chime
+    const freqs = [1975.5, 2960.0, 4186.0, 5274.0];
+    freqs.forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      const vol = 0.35 / (idx + 1);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2 + idx * 0.2);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 1.5);
+    });
+
+  } else if (type === 'fanfare') {
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+      gain.gain.setValueAtTime(0, now + idx * 0.07);
+      gain.gain.linearRampToValueAtTime(0.28, now + idx * 0.07 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.07);
+      osc.stop(now + idx * 0.07 + 0.35);
+    });
+
+  } else if (type === 'buzzer') {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btnSoundToggle').textContent = soundEnabled ? '🔊 소리 켬' : '🔇 소리 끔';
+}
+
+/* ==========================================================================
+   2. THEMES & 56-CARD DECK SPECIFICATION
+   ========================================================================== */
+const THEMES = {
+  fruit: {
+    label: '🍓 과일 테마',
+    icon: '🍓',
+    items: [
+      { key: 'strawberry', name: '딸기', icon: '🍓', color: '#ef4444' },
+      { key: 'banana',     name: '바나나', icon: '🍌', color: '#eab308' },
+      { key: 'lime',       name: '라임',   icon: '🍋', color: '#84cc16' },
+      { key: 'plum',       name: '자두',   icon: '🍇', color: '#a855f7' }
+    ]
+  },
+  science: {
+    label: '🧪 과학 도구',
+    icon: '🧪',
+    items: [
+      { key: 'beaker',    name: '비커',   icon: '🧪', color: '#06b6d4' },
+      { key: 'magnet',    name: '자석',   icon: '🧲', color: '#ef4444' },
+      { key: 'telescope', name: '망원경', icon: '🔭', color: '#8b5cf6' },
+      { key: 'rocket',    name: '로켓',   icon: '🚀', color: '#f59e0b' }
+    ]
+  },
+  snack: {
+    label: '🍔 간식 파티',
+    icon: '🍔',
+    items: [
+      { key: 'pizza',  name: '피자',       icon: '🍕', color: '#f97316' },
+      { key: 'burger', name: '햄버거',     icon: '🍔', color: '#d97706' },
+      { key: 'donut',  name: '도넛',       icon: '🍩', color: '#ec4899' },
+      { key: 'icecream', name: '아이스크림', icon: '🍦', color: '#06b6d4' }
+    ]
+  }
+};
+
+let currentThemeKey = 'fruit';
+
+function cycleTheme() {
+  const keys = Object.keys(THEMES);
+  const nextIdx = (keys.indexOf(currentThemeKey) + 1) % keys.length;
+  currentThemeKey = keys[nextIdx];
+  document.getElementById('cfgTheme').value = currentThemeKey;
+  updateThemeVisuals();
+  initNewGame();
+}
+
+function updateThemeVisuals() {
+  const th = THEMES[currentThemeKey];
+  document.getElementById('themeBtnLabel').textContent = th.label;
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`deckIcon-${i}`);
+    if (el) el.textContent = th.icon;
+  }
+}
+
+function buildDeck() {
+  const theme = THEMES[currentThemeKey];
+  const deck = [];
+  let uid = 1;
+
+  // Standard Halli Galli counts for each item:
+  // 1 item: 5 cards
+  // 2 items: 3 cards
+  // 3 items: 3 cards
+  // 4 items: 2 cards
+  // 5 items: 1 card
+  // Total per item = 14 cards * 4 = 56 cards!
+  const distribution = [
+    { count: 1, repeat: 5 },
+    { count: 2, repeat: 3 },
+    { count: 3, repeat: 3 },
+    { count: 4, repeat: 2 },
+    { count: 5, repeat: 1 }
+  ];
+
+  theme.items.forEach(item => {
+    distribution.forEach(dist => {
+      for (let r = 0; r < dist.repeat; r++) {
+        deck.push({
+          uid: uid++,
+          itemKey: item.key,
+          itemName: item.name,
+          icon: item.icon,
+          color: item.color,
+          count: dist.count
+        });
+      }
+    });
+  });
+
+  return shuffle(deck);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ==========================================================================
+   3. GAME STATE
+   ========================================================================== */
+let gameMode = 'solo';
+let glowHint = true;
+let aiSpeed = 'normal';
+let autoTurnInterval = 'manual';
+let timerLimitSec = 0;
+
+let players = [];
+let numPlayers = 4;
+let currentTurnIdx = 0;
+let tableCards = [null, null, null, null];
+let discardPot = [];
+let autoTimer = null;
+let aiTimeoutId = null;
+
+function applySettings() {
+  gameMode = document.getElementById('cfgGameMode').value;
+  currentThemeKey = document.getElementById('cfgTheme').value;
+  glowHint = document.getElementById('cfgGlowHint').checked;
+  aiSpeed = document.getElementById('cfgAiSpeed').value;
+  autoTurnInterval = document.getElementById('cfgAutoTurn').value;
+  timerLimitSec = parseInt(document.getElementById('cfgTimerLimit').value);
+
+  updateThemeVisuals();
+  initNewGame();
+  closeModal('settingsModal');
+}
+
+function initNewGame() {
+  clearTimeout(aiTimeoutId);
+  clearInterval(autoTimer);
+
+  if (gameMode === 'multi2') numPlayers = 2;
+  else numPlayers = 4;
+
+  const fullDeck = buildDeck();
+  players = [];
+  const cardsPerPlayer = Math.floor(fullDeck.length / numPlayers);
+
+  for (let i = 0; i < numPlayers; i++) {
+    players.push({
+      id: i,
+      name: getPlayerName(i),
+      isAi: (gameMode === 'solo' && i !== 0),
+      hand: fullDeck.slice(i * cardsPerPlayer, (i + 1) * cardsPerPlayer),
+      activeCard: null
+    });
+  }
+
+  tableCards = [null, null, null, null];
+  discardPot = [];
+  currentTurnIdx = 0;
+
+  // Visibility setup
+  document.getElementById('station-2').style.display = (numPlayers >= 3) ? 'flex' : 'none';
+  document.getElementById('station-3').style.display = (numPlayers >= 4) ? 'flex' : 'none';
+
+  document.getElementById('key-hint-0').textContent = (gameMode === 'solo') ? 'BELL: Space / 클릭' : 'BELL: A';
+  document.getElementById('key-hint-1').textContent = (gameMode === 'solo') ? '' : 'BELL: L';
+  document.getElementById('key-hint-1').style.display = (gameMode === 'solo') ? 'none' : 'inline-block';
+  document.getElementById('key-hint-2').textContent = 'BELL: Z';
+  document.getElementById('key-hint-2').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+  document.getElementById('key-hint-3').textContent = 'BELL: M';
+  document.getElementById('key-hint-3').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+
+  renderAllStations();
+  updatePotCounter();
+  checkCurrentCondition();
+
+  if (autoTurnInterval !== 'manual') {
+    const ms = parseInt(autoTurnInterval);
+    autoTimer = setInterval(() => {
+      playTurn();
+    }, ms);
+  }
+
+  showToast('🔔 쉬는시간 할리갈리 시작! 5개가 모이면 벨을 치세요!', false);
+}
+
+function getPlayerName(idx) {
+  if (gameMode === 'solo') {
+    return ['나 (Player 1)', 'AI 1 (치타)', 'AI 2 (매사냥꾼)', 'AI 3 (빛의번개)'][idx];
+  }
+  return `Player ${idx + 1}`;
+}
+
+/* ==========================================================================
+   4. TURN EXECUTION & CARD RENDERING
+   ========================================================================== */
+function playTurn(forcedPlayerIdx = null) {
+  let playerIdx = (forcedPlayerIdx !== null) ? forcedPlayerIdx : currentTurnIdx;
+  const p = players[playerIdx];
+
+  if (p.hand.length === 0) {
+    advanceTurn();
+    return;
+  }
+
+  const drawn = p.hand.shift();
+  p.activeCard = drawn;
+  tableCards[playerIdx] = drawn;
+  discardPot.push(drawn);
+
+  playSound('flip');
+  advanceTurn();
+
+  renderAllStations();
+  updatePotCounter();
+
+  const cond = checkCurrentCondition();
+  if (cond.valid) {
+    scheduleAiReaction(cond);
+  }
+}
+
+function advanceTurn() {
+  currentTurnIdx = (currentTurnIdx + 1) % numPlayers;
+  let attempts = 0;
+  while (players[currentTurnIdx].hand.length === 0 && attempts < numPlayers) {
+    currentTurnIdx = (currentTurnIdx + 1) % numPlayers;
+    attempts++;
+  }
+}
+
+function renderAllStations() {
+  for (let i = 0; i < 4; i++) {
+    if (i >= numPlayers) continue;
+    const p = players[i];
+    document.getElementById(`count-${i}`).textContent = `${p.hand.length}장`;
+
+    const infoCard = document.getElementById(`info-${i}`);
+    infoCard.classList.toggle('active-turn', i === currentTurnIdx);
+
+    const slot = document.getElementById(`slot-${i}`);
+    if (p.activeCard) {
+      slot.innerHTML = renderCardHtml(p.activeCard);
+    } else {
+      slot.innerHTML = '<div class="empty-card-slot">카드 없음</div>';
+    }
+  }
+}
+
+function renderCardHtml(card) {
+  let pipsHtml = '';
+  for (let i = 0; i < card.count; i++) {
+    pipsHtml += `<span class="pip-item">${card.icon}</span>`;
+  }
+
+  return `
+    <div class="fruit-card">
+      <div class="card-corner-top">
+        <span>${card.count}</span>
+        <span>${card.icon}</span>
+      </div>
+      <div class="pips-area pips-${card.count}">
+        ${pipsHtml}
+      </div>
+      <div class="card-corner-bottom">
+        <span>${card.count}</span>
+        <span>${card.icon}</span>
+      </div>
+    </div>
+  `;
+}
+
+function updatePotCounter() {
+  document.getElementById('potCounter').textContent = `바닥 카드: ${discardPot.length}장`;
+}
+
+/* ==========================================================================
+   5. CONDITION CHECKING (EXACTLY 5 OF ANY ITEM)
+   ========================================================================== */
+function checkCurrentCondition() {
+  const theme = THEMES[currentThemeKey];
+  const counts = {};
+  theme.items.forEach(it => counts[it.key] = 0);
+
+  // Count across all open active cards
+  for (let i = 0; i < numPlayers; i++) {
+    const c = players[i].activeCard;
+    if (c) {
+      counts[c.itemKey] = (counts[c.itemKey] || 0) + c.count;
+    }
+  }
+
+  let fiveItemKey = null;
+  let fiveItemName = null;
+
+  theme.items.forEach(it => {
+    if (counts[it.key] === 5) {
+      fiveItemKey = it.key;
+      fiveItemName = `${it.icon} ${it.name}`;
+    }
+  });
+
+  // Render bottom live counts strip
+  const strip = document.getElementById('liveCountsStrip');
+  strip.innerHTML = '';
+  theme.items.forEach(it => {
+    const cnt = counts[it.key] || 0;
+    const isFive = (cnt === 5);
+    strip.innerHTML += `
+      <div class="count-chip ${isFive ? 'exact-five' : ''}">
+        <span>${it.icon} ${it.name}:</span>
+        <b style="font-size:15px;">${cnt}개</b>
+        ${isFive ? '<span>(BELL!)</span>' : ''}
+      </div>
+    `;
+  });
+
+  const isValid = (fiveItemKey !== null);
+  const bellBtn = document.getElementById('centralBellBtn');
+  bellBtn.classList.toggle('hint-glow', glowHint && isValid);
+
+  return { valid: isValid, itemKey: fiveItemKey, itemName: fiveItemName };
+}
+
+/* ==========================================================================
+   6. BELL RINGING, AI REACTIONS & PENALTY
+   ========================================================================== */
+function scheduleAiReaction(cond) {
+  clearTimeout(aiTimeoutId);
+
+  const delays = {
+    'slow': [2500, 3800],
+    'normal': [1500, 2400],
+    'fast': [900, 1500]
+  };
+  const [minD, maxD] = delays[aiSpeed] || delays['normal'];
+  const delay = Math.floor(Math.random() * (maxD - minD)) + minD;
+
+  aiTimeoutId = setTimeout(() => {
+    const aiCandidates = players.filter(p => p.isAi && p.hand.length > 0);
+    if (aiCandidates.length > 0) {
+      const winnerAi = aiCandidates[Math.floor(Math.random() * aiCandidates.length)];
+      onBellPressed(winnerAi.id);
+    }
+  }, delay);
+}
+
+function onBellPressed(winnerId) {
+  clearTimeout(aiTimeoutId);
+  playSound('bell');
+
+  const bellBtn = document.getElementById('centralBellBtn');
+  bellBtn.classList.add('ring-anim');
+  setTimeout(() => bellBtn.classList.remove('ring-anim'), 400);
+
+  const cond = checkCurrentCondition();
+  let ringingPlayerIdx = 0;
+
+  if (winnerId === 'human') ringingPlayerIdx = 0;
+  else if (typeof winnerId === 'number') ringingPlayerIdx = winnerId;
+
+  const player = players[ringingPlayerIdx];
+
+  if (cond.valid) {
+    // Correct!
+    playSound('fanfare');
+    showToast(`🎉 [${player.name}] ${cond.itemName} 5개 포착! 바닥 ${discardPot.length}장 획득!`, false);
+
+    player.hand.push(...discardPot);
+    discardPot = [];
+
+    for (let i = 0; i < numPlayers; i++) {
+      players[i].activeCard = null;
+    }
+
+    highlightWinner(ringingPlayerIdx, true);
+    checkGameOver();
+
+  } else {
+    // False ring! Penalty
+    playSound('buzzer');
+    showToast(`❌ [${player.name}] 5개가 아닙니다! (벌칙 카드 헌납)`, true);
+
+    if (player.hand.length > 0) {
+      for (let i = 0; i < numPlayers; i++) {
+        if (i !== ringingPlayerIdx && player.hand.length > 0) {
+          players[i].hand.push(player.hand.shift());
+        }
+      }
+    }
+
+    highlightWinner(ringingPlayerIdx, false);
+    checkGameOver();
+  }
+
+  renderAllStations();
+  updatePotCounter();
+  checkCurrentCondition();
+}
+
+function highlightWinner(idx, isWin) {
+  const el = document.getElementById(`info-${idx}`);
+  if (!el) return;
+  const cls = isWin ? 'ring-winner' : 'ring-loser';
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 900);
+}
+
+function checkGameOver() {
+  const activePlayers = players.filter(p => p.hand.length > 0);
+  if (activePlayers.length <= 1) {
+    clearTimeout(aiTimeoutId);
+    clearInterval(autoTimer);
+    const champion = activePlayers[0] || players[0];
+    if (window.KJS && soundEnabled) KJS.win({ toast:false });
+    showToast(`🏆 게임 종료! [${champion.name}] 최종 승리!`, false);
+    alert(`🎉 [게임 종료]\n우승자: ${champion.name}\n획득 카드: ${champion.hand.length}장`);
+  }
+}
+
+/* Keyboard Input */
+window.addEventListener('keydown', (e) => {
+  if (document.querySelector('.modal-overlay.show')) return;
+  const key = e.key.toLowerCase();
+  const code = e.code;
+
+  if (code === 'Space') {
+    e.preventDefault();
+    if (gameMode === 'solo') {
+      const cond = checkCurrentCondition();
+      if (cond.valid) {
+        onBellPressed('human');
+      } else {
+        playTurn();
+      }
+    } else {
+      playTurn();
+    }
+  } else if (key === 'a') {
+    onBellPressed(0);
+  } else if (key === 'l') {
+    if (numPlayers >= 2) onBellPressed(1);
+  } else if (key === 'z') {
+    if (numPlayers >= 3) onBellPressed(2);
+  } else if (key === 'm' || key === 'enter') {
+    if (numPlayers >= 4) onBellPressed(3);
+  }
+});
+
+/* Modals & Toasts */
+function showToast(msg, isError) {
+  const t = document.getElementById('toastBanner');
+  t.classList.toggle('error', isError);
+  document.getElementById('toastIcon').textContent = isError ? '❌' : '🔔';
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// Init
+updateThemeVisuals();
+initNewGame();
+</script>
+
+<script>
+(function(){ var h=document.getElementById('kjsHome'); if(h && !h._kjs){ h._kjs=1; h.addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload(); }); } })();
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script id="kjs-sound-bridge">
+(function(){
+  var T={toast:false};
+  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
+  function wrap(o, m, kind){
+    if(!o || typeof o[m]!=="function") return;
+    var orig=o[m];
+    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
+  }
+  if(typeof playSound==="function"){ var ps=playSound;
+    playSound=function(t){ if(window.KJS && (t==="fanfare"||t==="buzzer")){ if(soundEnabled){ KJS[t==="fanfare"?"ok":"no"](T); } return; } return ps.apply(this, arguments); }; }
+})();
+</script>
+</body>
+</html>

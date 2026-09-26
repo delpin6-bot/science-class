@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>심장 박동과 혈액 순환 (Heart & Circulation) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --artery: #ef4444; /* 동맥혈 (산소 풍부, 선홍색) */
+      --vein: #2563eb;   /* 정맥혈 (산소 희박, 암적색/파란색) */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 탭 메뉴 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 캔버스 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+    }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c1 { border-top: 3px solid #ef4444; }
+    .dash-card.c2 { border-top: 3px solid #3b82f6; }
+    .dash-card.c3 { border-top: 3px solid #10b981; }
+    .dash-card.c4 { border-top: 3px solid #f59e0b; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 조작 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .slider-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ef4444;
+      cursor: pointer;
+    }
+
+    .path-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .path-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .path-chip:hover { background: #f1f5f9; color: #0f172a; }
+    .path-chip.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      #simCanvas { height: 420px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>❤️ 심장 박동과 혈액 순환 (Heart & Circulation)</h1>
+      <p>2심방 2심실과 판막의 개폐 메커니즘, 온몸 순환(체순환)과 폐순환 경로 실시간 혈류 시뮬레이터</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 심장의 구조와 온몸 순환·폐순환 핵심 탐구</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🫀 1. 심장의 구조와 박동 원리 (판막의 역할)</h4>
+        <ul>
+          <li><strong>2심방 2심실:</strong> 심방(혈액을 받아들이는 곳)과 심실(혈액을 뿜어내는 곳)로 구성.
+            <br>• <strong>좌심실:</strong> 온몸으로 혈액을 강하게 뿜어내야 하므로 근육벽이 가장 두껍고 탄력성이 큼.
+          </li>
+          <li><strong>판막(Valve):</strong> 심방과 심실 사이, 심실과 동맥 사이에 위치하여 <strong>혈액이 거꾸로 흐르는 것(역류)을 방지</strong>.
+            <br>• 심실 수축 시: 방실판막 닫힘, 반월판(동맥판) 열림
+          </li>
+          <li><strong>동맥혈 vs 정맥혈:</strong> 산소를 많이 포함한 선홍색 혈액(동맥혈) vs 산소가 적고 이산화탄소가 많은 암적색 혈액(정맥혈).</li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>🔄 2. 체순환(온몸 순환)과 폐순환 경로</h4>
+        <ul>
+          <li><strong>체순환 (온몸 순환):</strong> 산소와 영양소를 온몸 세포에 공급하고 노폐물 수거.
+            <br>$$\text{좌심실} \to \text{대동맥} \to \text{온몸의 모세혈관} \to \text{대정맥} \to \text{우심방}$$
+            <br><em>(동맥혈 → 정맥혈로 변화)</em>
+          </li>
+          <li><strong>폐순환:</strong> 폐에서 이산화탄소를 내보내고 산소를 보충.
+            <br>$$\text{우심실} \to \text{폐동맥} \to \text{폐의 모세혈관} \to \text{폐정맥} \to \text{좌심방}$$
+            <br><em>(정맥혈 → 동맥혈로 변화)</em>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모드 탭 바 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="CIRCUIT">🔄 1. 전체 혈액 순환도 (온몸 순환 & 폐순환)</button>
+    <button class="tab-btn" data-tab="HEART">🫀 2. 심장 단면 구조 & 판막 박동 (2심방 2심실)</button>
+  </div>
+
+  <!-- 메인 캔버스 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="dash-card c1">
+      <div class="dash-lbl">심장 박동 주기</div>
+      <div class="dash-val" id="dispHeartPhase" style="color:#ef4444;">심실 수축기 (Systole)</div>
+      <div class="dash-sub" id="dispValveStatus">방실판막 닫힘, 대동맥판 열림</div>
+    </div>
+    <div class="dash-card c2">
+      <div class="dash-lbl">혈액 성질 (현재 분출 혈액)</div>
+      <div class="dash-val" id="dispBloodType" style="color:#ef4444;">동맥혈 (산소 풍부)</div>
+      <div class="dash-sub" id="dispBloodSub">선홍색, 좌심실에서 대동맥으로</div>
+    </div>
+    <div class="dash-card c3">
+      <div class="dash-lbl">순환 경로 추적</div>
+      <div class="dash-val" id="dispCircPath">체순환 (온몸 순환)</div>
+      <div class="dash-sub" id="dispCircSub">좌심실 → 온몸 → 우심방</div>
+    </div>
+    <div class="dash-card c4">
+      <div class="dash-lbl">심박수 (BPM)</div>
+      <div class="dash-val" id="dispBpm">72 BPM</div>
+      <div class="dash-sub">정상 성인/청소년 안정 시 박동</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <!-- 순환 경로 하이라이트 칩 -->
+      <div class="path-chips" id="pathChips">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b;">순환 보기:</span>
+        <button class="path-chip active" data-path="ALL">전체 순환</button>
+        <button class="path-chip" data-path="SYSTEMIC">🔴 온몸 순환 (체순환만)</button>
+        <button class="path-chip" data-path="PULMONARY">🔵 폐순환만</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div class="slider-box">
+          <span>심박수 조절:</span>
+          <input type="range" id="bpmSlider" min="40" max="140" step="5" value="72">
+          <span id="bpmVal" style="color:#ef4444; width:55px;">72 BPM</span>
+        </div>
+
+        <button class="btn-action" id="btnPlayPause">⏸ 일시정지</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 탭: "CIRCUIT" 또는 "HEART"
+  let currentTab = "CIRCUIT";
+  let activePath = "ALL"; // "ALL", "SYSTEMIC", "PULMONARY"
+  let bpm = 72;
+  let isRunning = true;
+
+  // 심장 박동 타이머 & 위상 (0 ~ 1)
+  let beatPhase = 0; // 0~0.4: 수축기, 0.4~1.0: 이완기
+
+  // 혈액 입자 (적혈구 군집)
+  let bloodParticles = [];
+  const NUM_BLOOD_PARTICLES = 60;
+
+  // DOM 요소 참조
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const pathChips = document.querySelectorAll(".path-chip");
+  const bpmSlider = document.getElementById("bpmSlider");
+  const bpmVal = document.getElementById("bpmVal");
+  const btnPlayPause = document.getElementById("btnPlayPause");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  const dispHeartPhase = document.getElementById("dispHeartPhase");
+  const dispValveStatus = document.getElementById("dispValveStatus");
+  const dispBloodType = document.getElementById("dispBloodType");
+  const dispBloodSub = document.getElementById("dispBloodSub");
+  const dispCircPath = document.getElementById("dispCircPath");
+  const dispCircSub = document.getElementById("dispCircSub");
+  const dispBpm = document.getElementById("dispBpm");
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    initBloodParticles();
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // --- 혈액 순환 궤도 입자 초기화 ---
+  function initBloodParticles() {
+    bloodParticles = [];
+    for (let i = 0; i < NUM_BLOOD_PARTICLES; i++) {
+      bloodParticles.push({
+        t: (i / NUM_BLOOD_PARTICLES), // 0 ~ 1 폐순환 or 체순환
+        loop: i % 2 === 0 ? "PULM" : "SYS",
+        r: 4.8
+      });
+    }
+  }
+
+  // --- 대시보드 갱신 ---
+  function updateDashboard() {
+    dispBpm.textContent = `${bpm} BPM`;
+
+    const isSystole = beatPhase < 0.38; // 심실 수축기
+    if (isSystole) {
+      dispHeartPhase.textContent = "심실 수축기 (Systole)";
+      dispHeartPhase.style.color = "#ef4444";
+      dispValveStatus.textContent = "방실판막 닫힘(역류방지), 대동맥판/폐동맥판 열림";
+    } else {
+      dispHeartPhase.textContent = "심실 이완기 (Diastole)";
+      dispHeartPhase.style.color = "#2563eb";
+      dispValveStatus.textContent = "방실판막 열림(혈액 유입), 동맥판 닫힘";
+    }
+
+    if (activePath === "PULMONARY") {
+      dispCircPath.textContent = "폐순환 (Pulmonary)";
+      dispCircSub.textContent = "우심실 → 폐동맥 → 폐 → 폐정맥 → 좌심방";
+    } else if (activePath === "SYSTEMIC") {
+      dispCircPath.textContent = "체순환 (온몸 순환)";
+      dispCircSub.textContent = "좌심실 → 대동맥 → 온몸 → 대정맥 → 우심방";
+    } else {
+      dispCircPath.textContent = "전체 순환 (체순환 + 폐순환)";
+      dispCircSub.textContent = "심장의 펌프 작용으로 동시 가동";
+    }
+  }
+
+  // ==========================================================================
+  // [모드 1] 전체 혈액 순환도 (CIRCUIT)
+  // ==========================================================================
+  function drawCircuit(dt) {
+    ctx.save();
+
+    // 배경
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    const cx = width / 2;
+    const cy = height / 2;
+
+    // 상단 폐 모세혈관 박스 (Lungs)
+    const lungY = 60;
+    const lungW = 200;
+    const lungH = 65;
+
+    // 하단 온몸 조직세포 모세혈관 박스 (Body Organs)
+    const bodyY = height - 90;
+    const bodyW = 240;
+    const bodyH = 70;
+
+    // 중앙 심장 블록 (2심방 2심실)
+    const heartW = 190;
+    const heartH = 170;
+    const heartY = cy - heartH / 2;
+
+    // 1. 혈관 루프 라인 그리기 (동맥혈: 빨강, 정맥혈: 파랑)
+    drawVessels(cx, cy, lungY, lungH, bodyY, heartY, heartW, heartH);
+
+    // 2. 상단 폐 구역 렌더링
+    drawOrganBox(cx, lungY + lungH / 2, lungW, lungH, "🫁 폐 (Lungs)", "이산화탄소 배출 ➔ 산소 흡수 (동맥혈화)", "#dcfce7", "#15803d");
+
+    // 3. 하단 온몸 조직세포 구역 렌더링
+    drawOrganBox(cx, bodyY + bodyH / 2, bodyW, bodyH, "🧍 온몸의 모세혈관 (Body Organs)", "산소·영양소 공급 ➔ 이산화탄소 수거 (정맥혈화)", "#fee2e2", "#b91c1c");
+
+    // 4. 중앙 심장 4개 방실 렌더링
+    drawHeartChambers(cx, heartY, heartW, heartH);
+
+    // 5. 혈액 입자 이동 애니메이션
+    updateAndDrawBlood(dt, cx, cy, lungY, lungH, bodyY, heartY, heartW, heartH);
+
+    ctx.restore();
+  }
+
+  function drawOrganBox(cx, cy, w, h, title, sub, bg, border) {
+    ctx.save();
+    ctx.fillStyle = bg;
+    ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(title, cx, cy - 6);
+
+    ctx.fillStyle = "#475569";
+    ctx.font = "11px sans-serif";
+    ctx.fillText(sub, cx, cy + 12);
+    ctx.restore();
+  }
+
+  function drawHeartChambers(cx, topY, w, h) {
+    ctx.save();
+
+    const scaleHeart = beatPhase < 0.38 ? 0.96 : 1.0; // 심박 박동 수축 애니메이션
+    ctx.translate(cx, topY + h / 2);
+    ctx.scale(scaleHeart, scaleHeart);
+    ctx.translate(-cx, -(topY + h / 2));
+
+    // 심장 외벽
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(cx - w / 2, topY, w, h);
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(cx - w / 2, topY, w, h);
+
+    const midX = cx;
+    const midY = topY + h / 2;
+
+    // 4개 방실 테두리
+    // [우측이 해부학적 좌측!] 의학/과학교과서 원칙: 보는 사람 기준 좌측 = 우심방/우심실, 우측 = 좌심방/좌심실
+    // 1. 우심방 (좌상단)
+    ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
+    ctx.fillRect(cx - w / 2, topY, w / 2, h / 2);
+    drawChamberLabel(cx - w / 4, topY + h / 4, "우심방", "대정맥 연결");
+
+    // 2. 우심실 (좌하단)
+    ctx.fillStyle = "rgba(37, 99, 235, 0.25)";
+    ctx.fillRect(cx - w / 2, midY, w / 2, h / 2);
+    drawChamberLabel(cx - w / 4, midY + h / 4, "우심실", "폐동맥 연결");
+
+    // 3. 좌심방 (우상단)
+    ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+    ctx.fillRect(midX, topY, w / 2, h / 2);
+    drawChamberLabel(cx + w / 4, topY + h / 4, "좌심방", "폐정맥 연결");
+
+    // 4. 좌심실 (우하단) - 가장 두꺼운 근육벽 표시
+    ctx.fillStyle = "rgba(239, 68, 68, 0.28)";
+    ctx.fillRect(midX, midY, w / 2, h / 2);
+    drawChamberLabel(cx + w / 4, midY + h / 4, "좌심실", "★대동맥 (가장 두꺼움)");
+
+    // 내부 격벽
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(midX, topY); ctx.lineTo(midX, topY + h);
+    ctx.moveTo(cx - w / 2, midY); ctx.lineTo(cx + w / 2, midY);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawChamberLabel(x, y, name, sub) {
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(name, x, y - 4);
+    ctx.fillStyle = "#64748b";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(sub, x, y + 10);
+  }
+
+  function drawVessels(cx, cy, lungY, lungH, bodyY, heartY, heartW, heartH) {
+    ctx.save();
+    ctx.lineWidth = 14;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // 1. 폐순환: 우심실(좌하) -> 폐동맥 -> 폐 -> 폐정맥 -> 좌심방(우상)
+    // 폐동맥 (파란색 정맥혈)
+    ctx.strokeStyle = activePath === "SYSTEMIC" ? "rgba(37, 99, 235, 0.15)" : "#2563eb";
+    ctx.beginPath();
+    ctx.moveTo(cx - heartW / 4, heartY + heartH * 0.75);
+    ctx.lineTo(cx - heartW * 0.8, heartY + heartH * 0.75);
+    ctx.lineTo(cx - heartW * 0.8, lungY + lungH / 2);
+    ctx.lineTo(cx - 100, lungY + lungH / 2);
+    ctx.stroke();
+
+    // 폐정맥 (빨간색 동맥혈)
+    ctx.strokeStyle = activePath === "SYSTEMIC" ? "rgba(239, 68, 68, 0.15)" : "#ef4444";
+    ctx.beginPath();
+    ctx.moveTo(cx + 100, lungY + lungH / 2);
+    ctx.lineTo(cx + heartW * 0.8, lungY + lungH / 2);
+    ctx.lineTo(cx + heartW * 0.8, heartY + heartH * 0.25);
+    ctx.lineTo(cx + heartW / 4, heartY + heartH * 0.25);
+    ctx.stroke();
+
+    // 2. 체순환: 좌심실(우하) -> 대동맥 -> 온몸 -> 대정맥 -> 우심방(좌상)
+    // 대동맥 (빨간색 동맥혈)
+    ctx.strokeStyle = activePath === "PULMONARY" ? "rgba(239, 68, 68, 0.15)" : "#ef4444";
+    ctx.beginPath();
+    ctx.moveTo(cx + heartW / 4, heartY + heartH * 0.75);
+    ctx.lineTo(cx + heartW * 0.85, heartY + heartH * 0.75);
+    ctx.lineTo(cx + heartW * 0.85, bodyY + 35);
+    ctx.lineTo(cx + 120, bodyY + 35);
+    ctx.stroke();
+
+    // 대정맥 (파란색 정맥혈)
+    ctx.strokeStyle = activePath === "PULMONARY" ? "rgba(37, 99, 235, 0.15)" : "#2563eb";
+    ctx.beginPath();
+    ctx.moveTo(cx - 120, bodyY + 35);
+    ctx.lineTo(cx - heartW * 0.85, bodyY + 35);
+    ctx.lineTo(cx - heartW * 0.85, heartY + heartH * 0.25);
+    ctx.lineTo(cx - heartW / 4, heartY + heartH * 0.25);
+    ctx.stroke();
+
+    // 혈관 라벨
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("폐동맥 (정맥혈)", cx - heartW * 0.8 - 45, heartY + 10);
+    ctx.fillText("폐정맥 (동맥혈)", cx + heartW * 0.8 + 45, heartY + 10);
+    ctx.fillText("대정맥 (정맥혈)", cx - heartW * 0.85 - 45, heartY + heartH + 20);
+    ctx.fillText("대동맥 (동맥혈)", cx + heartW * 0.85 + 45, heartY + heartH + 20);
+
+    ctx.restore();
+  }
+
+  function updateAndDrawBlood(dt, cx, cy, lungY, lungH, bodyY, heartY, heartW, heartH) {
+    const speed = (bpm / 60) * 0.22;
+
+    bloodParticles.forEach(p => {
+      p.t += dt * speed;
+      if (p.t > 1) p.t -= 1;
+
+      let pos = { x: 0, y: 0 };
+      let color = "#ef4444";
+
+      if (p.loop === "PULM") {
+        // 폐순환 경로
+        pos = getParametricPos(p.t, [
+          { x: cx - heartW / 4, y: heartY + heartH * 0.75 }, // 우심실
+          { x: cx - heartW * 0.8, y: heartY + heartH * 0.75 },
+          { x: cx - heartW * 0.8, y: lungY + lungH / 2 },
+          { x: cx, y: lungY + lungH / 2 }, // 폐 (기체교환)
+          { x: cx + heartW * 0.8, y: lungY + lungH / 2 },
+          { x: cx + heartW * 0.8, y: heartY + heartH * 0.25 },
+          { x: cx + heartW / 4, y: heartY + heartH * 0.25 }  // 좌심방
+        ]);
+        color = p.t < 0.5 ? "#2563eb" : "#ef4444"; // 폐 통과 후 동맥혈화
+      } else {
+        // 체순환 경로
+        pos = getParametricPos(p.t, [
+          { x: cx + heartW / 4, y: heartY + heartH * 0.75 }, // 좌심실
+          { x: cx + heartW * 0.85, y: heartY + heartH * 0.75 },
+          { x: cx + heartW * 0.85, y: bodyY + 35 },
+          { x: cx, y: bodyY + 35 }, // 온몸 (산소소비)
+          { x: cx - heartW * 0.85, y: bodyY + 35 },
+          { x: cx - heartW * 0.85, y: heartY + heartH * 0.25 },
+          { x: cx - heartW / 4, y: heartY + heartH * 0.25 }  // 우심방
+        ]);
+        color = p.t < 0.5 ? "#ef4444" : "#2563eb"; // 온몸 통과 후 정맥혈화
+      }
+
+      // 그리기
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+  }
+
+  function getParametricPos(t, waypoints) {
+    if (!waypoints || waypoints.length < 2) return waypoints && waypoints[0] ? { x: waypoints[0].x, y: waypoints[0].y } : { x: 0, y: 0 };
+    t = ((t % 1) + 1) % 1;                       /* 0~1 범위로 묶기(음수 방지) */
+    const numSegs = waypoints.length - 1;
+    const segIdx = Math.max(0, Math.min(numSegs - 1, Math.floor(t * numSegs)));
+    const segT = (t * numSegs) - segIdx;
+    const p1 = waypoints[segIdx];
+    const p2 = waypoints[segIdx + 1];
+    return {
+      x: p1.x + (p2.x - p1.x) * segT,
+      y: p1.y + (p2.y - p1.y) * segT
+    };
+  }
+
+  // ==========================================================================
+  // [모드 2] 심장 단면 구조 & 판막 박동 (HEART)
+  // ==========================================================================
+  function drawHeartSection() {
+    ctx.save();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    const cx = width / 2;
+    const cy = height / 2;
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🫀 심장 내부 구조와 판막(Valve)의 개폐 동작 (해부학적 단면)", cx, 30);
+
+    const isSystole = beatPhase < 0.38; // 수축기 여부
+
+    // 대형 심장 윤곽선
+    const hW = 280;
+    const hH = 280;
+    const topY = cy - hH / 2 + 10;
+
+    // 심장 근육벽 (좌심실 근육이 훨씬 두꺼움)
+    ctx.fillStyle = "#fecdd3";
+    ctx.beginPath();
+    ctx.arc(cx - hW / 4, topY + hH * 0.4, 75, 0, Math.PI * 2);
+    ctx.arc(cx + hW / 4, topY + hH * 0.4, 85, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4개 방실 내부 공간 (좌측: 우심방/우심실, 우측: 좌심방/좌심실)
+    const midX = cx;
+
+    // 우심방
+    ctx.fillStyle = "#dbeafe";
+    ctx.fillRect(cx - 110, topY + 40, 95, 80);
+    drawChamberInfo(cx - 62, topY + 80, "우심방", "(대정맥 혈액 유입)");
+
+    // 우심실
+    ctx.fillStyle = "#bfdbfe";
+    ctx.fillRect(cx - 110, topY + 140, 95, 110);
+    drawChamberInfo(cx - 62, topY + 195, "우심실", "(폐동맥으로 분출)");
+
+    // 좌심방
+    ctx.fillStyle = "#fee2e2";
+    ctx.fillRect(cx + 15, topY + 40, 95, 80);
+    drawChamberInfo(cx + 62, topY + 80, "좌심방", "(폐정맥 혈액 유입)");
+
+    // 좌심실 (가장 두꺼운 붉은색)
+    ctx.fillStyle = "#fecaca";
+    ctx.fillRect(cx + 15, topY + 140, 95, 110);
+    drawChamberInfo(cx + 62, topY + 195, "좌심실", "★ 온몸으로 분출");
+
+    // 중앙 심실중격 (중앙 두꺼운 벽)
+    ctx.fillStyle = "#fda4af";
+    ctx.fillRect(cx - 12, topY + 30, 24, 230);
+    ctx.strokeStyle = "#e11d48";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 12, topY + 30, 24, 230);
+
+    // 판막 (Valves) 렌더링
+    // 1. 삼첨판 (우심방-우심실 사이)
+    drawValve(cx - 62, topY + 130, isSystole, "삼첨판");
+
+    // 2. 이첨판/승모판 (좌심방-좌심실 사이)
+    drawValve(cx + 62, topY + 130, isSystole, "이첨판(승모판)");
+
+    // 박동 상태 안내 배너
+    ctx.fillStyle = isSystole ? "#ef4444" : "#2563eb";
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(isSystole ? "▶ 심실 수축! (방실판막 닫혀 역류 방지, 혈액 동맥 분출)" : "▶ 심실 이완! (방실판막 열려 심방에서 심실로 혈액 충전)", cx, height - 25);
+
+    ctx.restore();
+  }
+
+  function drawChamberInfo(x, y, title, sub) {
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(title, x, y);
+    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "#64748b";
+    ctx.fillText(sub, x, y + 16);
+  }
+
+  function drawValve(x, y, isClosed, label) {
+    ctx.save();
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 3;
+
+    if (isClosed) {
+      // 닫힌 판막 (수평으로 딱 닫힘)
+      ctx.beginPath();
+      ctx.moveTo(x - 22, y); ctx.lineTo(x + 22, y);
+      ctx.stroke();
+      ctx.fillStyle = "#ef4444";
+      ctx.fillText(`🔒 ${label} (닫힘)`, x, y - 8);
+    } else {
+      // 열린 판막 (아래로 젖혀짐)
+      ctx.beginPath();
+      ctx.moveTo(x - 22, y - 6); ctx.lineTo(x - 6, y + 12);
+      ctx.moveTo(x + 22, y - 6); ctx.lineTo(x + 6, y + 12);
+      ctx.stroke();
+      ctx.fillStyle = "#059669";
+      ctx.fillText(`🔓 ${label} (열림)`, x, y - 8);
+    }
+    ctx.restore();
+  }
+
+  // --- 메인 루프 ---
+  let lastTimestamp = performance.now();
+
+  function animate(timestamp) {
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.08);
+    lastTimestamp = timestamp;
+
+    if (isRunning) {
+      // 심박수(BPM)에 따른 위상 증가
+      beatPhase += dt * (bpm / 60);
+      if (beatPhase > 1) beatPhase -= 1;
+      updateDashboard();
+    }
+
+    ctx.clearRect(0, 0, width, height);
+
+    if (currentTab === "CIRCUIT") {
+      drawCircuit(dt);
+    } else {
+      drawHeartSection();
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // --- 이벤트 리스너 ---
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTab = btn.dataset.tab;
+    });
+  });
+
+  pathChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      pathChips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      activePath = chip.dataset.path;
+      updateDashboard();
+    });
+  });
+
+  bpmSlider.addEventListener("input", e => {
+    bpm = parseInt(e.target.value);
+    bpmVal.textContent = `${bpm} BPM`;
+    updateDashboard();
+  });
+
+  btnPlayPause.addEventListener("click", () => {
+    isRunning = !isRunning;
+    btnPlayPause.textContent = isRunning ? "⏸ 일시정지" : "▶ 재생";
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  resizeCanvas();
+  updateDashboard();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

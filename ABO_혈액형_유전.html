@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ABO 혈액형의 유전 - 자바실험실 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #059669;
+      --accent: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: #2563eb;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 레이아웃 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 시뮬레이션 메인 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 생체 지표 대시보드 HUD */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+    }
+
+    .hud-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-card.mom { border-top: 3.5px solid #ec4899; }
+    .hud-card.dad { border-top: 3.5px solid var(--primary); }
+    .hud-card.ratio { border-top: 3.5px solid var(--secondary); }
+    .hud-card.prob { border-top: 3.5px solid var(--accent); }
+
+    .hud-lbl {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+    .hud-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .hud-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* 캔버스 뷰포트 */
+    .canvas-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 8.6;
+      max-height: 560px;
+      min-height: 420px;
+    }
+
+    canvas#aboCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: default;
+      touch-action: none;
+    }
+
+    /* 자바실험실 오리지널 부모 유전자형 선택 바 */
+    .parent-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .parent-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .parent-label {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .radio-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"] {
+      width: 17px;
+      height: 17px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    /* 하단 조작 컨트롤 툴바 */
+    .control-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .ctrl-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .ctrl-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+    .ctrl-btn.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* 슬라이더 바 */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .slider-container span {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ef4444; /* 자바실험실 시그니처 붉은색 슬라이더 버튼 */
+      border: 2px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* 실시간 안내 정보 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+
+    /* 2대 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .badge-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .m1-badge { background: #dc2626; }
+    .m2-badge { background: #2563eb; }
+
+    .mechanism-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .mechanism-meta {
+      font-size: 0.82rem;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* 비교 표 패널 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tag-hl {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-blue {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+      .parent-controls-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 서랍 버튼 및 타이틀 -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>🩸 ABO 혈액형의 유전 가상실험실</span>
+      <span class="nav-badge">자바실험실 1:1 복각</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <button class="nav-btn" id="btnReload" title="시뮬레이션 처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 시뮬레이션 메인 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>ABO 혈액형의 유전</h2>
+          <span class="sim-date">2019-10-14</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="ctrl-btn primary" id="btnPlayPause">▶ 수정 시뮬레이션</button>
+          <button class="ctrl-btn" id="btnSpeed">속도: 1.0x</button>
+          <button class="ctrl-btn" id="btnReset">↺ 처음으로</button>
+        </div>
+      </div>
+
+      <!-- 생체 지표 대시보드 HUD -->
+      <div class="dashboard-grid">
+        <div class="hud-card mom">
+          <span class="hud-lbl">어머니 (Mother)</span>
+          <span class="hud-val" id="hudMomVal">A형 (AO)</span>
+          <span class="hud-sub">난자 대립유전자: A 또는 O</span>
+        </div>
+        <div class="hud-card dad">
+          <span class="hud-lbl">아버지 (Father)</span>
+          <span class="hud-val" id="hudDadVal">B형 (BO)</span>
+          <span class="hud-sub">정자 대립유전자: B 또는 O</span>
+        </div>
+        <div class="hud-card ratio">
+          <span class="hud-lbl">자손 유전자형 분리비</span>
+          <span class="hud-val" id="hudRatioVal">AB:AO:BO:OO = 1:1:1:1</span>
+          <span class="hud-sub">4가지 유전자형 발생</span>
+        </div>
+        <div class="hud-card prob">
+          <span class="hud-lbl">자손 혈액형(표현형) 확률</span>
+          <span class="hud-val" id="hudProbVal">A:25% B:25% AB:25% O:25%</span>
+          <span class="hud-sub">모든 혈액형 출현 가능</span>
+        </div>
+      </div>
+
+      <!-- 메인 캔버스 뷰포트 -->
+      <div class="canvas-wrapper">
+        <canvas id="aboCanvas" width="1160" height="560"></canvas>
+      </div>
+
+      <!-- 자바실험실 1:1 부모 유전자형 라디오 버튼 바 -->
+      <div class="parent-controls-bar">
+        <!-- 어머니 유전자형 선택 (좌측) -->
+        <div class="parent-group" id="momGenotypeGroup">
+          <span class="parent-label">👩 어머니 유전자형:</span>
+          <label class="radio-option"><input type="radio" name="momGeno" value="AA">AA</label>
+          <label class="radio-option"><input type="radio" name="momGeno" value="AO" checked>AO</label>
+          <label class="radio-option"><input type="radio" name="momGeno" value="BB">BB</label>
+          <label class="radio-option"><input type="radio" name="momGeno" value="BO">BO</label>
+          <label class="radio-option"><input type="radio" name="momGeno" value="OO">OO</label>
+          <label class="radio-option"><input type="radio" name="momGeno" value="AB">AB</label>
+        </div>
+
+        <!-- 아버지 유전자형 선택 (우측) -->
+        <div class="parent-group" id="dadGenotypeGroup">
+          <span class="parent-label">👨 아버지 유전자형:</span>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="AA">AA</label>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="AO">AO</label>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="BB">BB</label>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="BO" checked>BO</label>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="OO">OO</label>
+          <label class="radio-option"><input type="radio" name="dadGeno" value="AB">AB</label>
+        </div>
+      </div>
+
+      <!-- 조작 컨트롤 바 -->
+      <div class="control-toolbar">
+        <div class="toolbar-row">
+          <div class="btn-group">
+            <span style="font-size:0.84rem; font-weight:800; color:var(--text-muted);">대표 교배 추천:</span>
+            <button class="ctrl-btn" id="btnPreset1">AO × BO (4종류 모두 출현)</button>
+            <button class="ctrl-btn" id="btnPreset2">AB × OO (A형 & B형만 출현)</button>
+            <button class="ctrl-btn" id="btnPreset3">AA × BB (100% AB형)</button>
+          </div>
+          <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">
+            🖱 슬라이더를 당겨 생식세포가 결합하는 과정을 단계별로 관찰하세요.
+          </span>
+        </div>
+
+        <!-- 수정 진행 조절 슬라이더 바 -->
+        <div class="slider-container">
+          <span>수정 결합 진행:</span>
+          <input type="range" id="progressSlider" min="0" max="1" step="0.005" value="0.0">
+          <span id="progressLabel" style="width: 48px; text-align: right; font-weight:800; color:var(--danger);">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 안내 정보 배너 -->
+    <div id="infoBanner" class="info-banner">
+      <span id="bannerText"><strong>[수정 진행]</strong> 부모로부터 각각 1개씩의 대립유전자를 물려받아 자손의 퍼넷 사각형(다이아몬드)을 완성합니다.</span>
+    </div>
+
+    <!-- 2대 핵심 메커니즘 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m1-badge">1</span>
+          <span>복대립 유전과 우열 관계 (A = B > O)</span>
+        </div>
+        <p>ABO식 혈액형은 하나의 형질을 결정하는 데 <strong>3가지 대립유전자(A, B, O)</strong>가 관여하는 복대립 유전입니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 우열 관계 법칙:</strong><br>
+          • <strong>A와 O:</strong> A는 O에 대해 완전 우성 (AA, AO ➔ <strong>A형</strong>)<br>
+          • <strong>B와 O:</strong> B는 O에 대해 완전 우성 (BB, BO ➔ <strong>B형</strong>)<br>
+          • <strong>A와 B:</strong> 우열 관계가 없음 / 공동 우성 (AB ➔ <strong>AB형</strong>)<br>
+          • <strong>O:</strong> 순종일 때만 발현되는 열성 (OO ➔ <strong>O형</strong>)
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m2-badge">2</span>
+          <span>퍼넷 사각형과 가계도 확률 분석</span>
+        </div>
+        <p>부모는 각각 상동 염색체에 존재하는 2개의 대립유전자 중 감수 분열을 거쳐 <strong>오직 1개의 대립유전자만을 생식세포(정자/난자)에 담아 전달</strong>합니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 교배 예시 (AO × BO):</strong><br>
+          • 어머니 생식세포: A (50%), O (50%)<br>
+          • 아버지 생식세포: B (50%), O (50%)<br>
+          • 자손 조합: <strong>AB형(25%), A형(AO 25%), B형(BO 25%), O형(OO 25%)</strong>이 모두 동일한 확률(각 1/4)로 태어날 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 체계적 정리 표 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 ABO식 혈액형의 유전자형과 표현형 정리표</span>
+        <span class="table-sub">* 적혈구 응집원(항원)과 혈청 응집소(항체) 관계</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>혈액형 (표현형)</th>
+              <th>가능한 유전자형</th>
+              <th>적혈구 표면 응집원 (항원)</th>
+              <th>혈청 내 응집소 (항체)</th>
+              <th>우열 관계 특성</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>A형</strong></td>
+              <td>AA, AO</td>
+              <td>A 응집원</td>
+              <td>응집소 β (항B)</td>
+              <td>A 유전자는 O 유전자에 대해 우성</td>
+            </tr>
+            <tr>
+              <td><strong>B형</strong></td>
+              <td>BB, BO</td>
+              <td>B 응집원</td>
+              <td>응집소 α (항A)</td>
+              <td>B 유전자는 O 유전자에 대해 우성</td>
+            </tr>
+            <tr style="background-color: #eff6ff; font-weight: 700;">
+              <td><strong>AB형</strong></td>
+              <td>AB</td>
+              <td>A 응집원, B 응집원 모두 있음</td>
+              <td><span class="tag-blue">없음</span></td>
+              <td>A와 B 사이에 우열이 없음 (공동 우성)</td>
+            </tr>
+            <tr>
+              <td><strong>O형</strong></td>
+              <td>OO</td>
+              <td><span class="tag-hl">없음</span></td>
+              <td>응집소 α, 응집소 β 모두 있음</td>
+              <td>A와 B에 대해 완전 열성</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.getElementById('aboCanvas');
+    const ctx = canvas.getContext('2d');
+    const bannerText = document.getElementById('bannerText');
+
+    // UI 엘리먼트
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnSpeed = document.getElementById('btnSpeed');
+    const btnReset = document.getElementById('btnReset');
+    const progressSlider = document.getElementById('progressSlider');
+    const progressLabel = document.getElementById('progressLabel');
+
+    const btnPreset1 = document.getElementById('btnPreset1');
+    const btnPreset2 = document.getElementById('btnPreset2');
+    const btnPreset3 = document.getElementById('btnPreset3');
+
+    // HUD 엘리먼트
+    const hudMomVal = document.getElementById('hudMomVal');
+    const hudDadVal = document.getElementById('hudDadVal');
+    const hudRatioVal = document.getElementById('hudRatioVal');
+    const hudProbVal = document.getElementById('hudProbVal');
+
+    // 가상 좌표계 크기 (1160 x 560)
+    const V_WIDTH = 1160;
+    const V_HEIGHT = 560;
+
+    // 시뮬레이션 상태
+    let momGeno = 'AO';
+    let dadGeno = 'BO';
+    let progress = 0.0; // 0.0 ~ 1.0 (수정 진행률)
+    let isPlaying = false;
+    let speedMultiplier = 1.0;
+
+    // 유전자형 ➔ 표현형(혈액형 라벨) 매핑
+    function getPhenotype(geno) {
+      if (geno === 'AA' || geno === 'AO' || geno === 'OA') return 'A +';
+      if (geno === 'BB' || geno === 'BO' || geno === 'OB') return 'B +';
+      if (geno === 'AB' || geno === 'BA') return 'AB +';
+      if (geno === 'OO') return 'O +';
+      return geno;
+    }
+
+    function getPhenotypeName(geno) {
+      if (geno === 'AA' || geno === 'AO' || geno === 'OA') return 'A형';
+      if (geno === 'BB' || geno === 'BO' || geno === 'OB') return 'B형';
+      if (geno === 'AB' || geno === 'BA') return 'AB형';
+      if (geno === 'OO') return 'O형';
+      return geno;
+    }
+
+    // 표준 정렬된 유전자형 이름 (예: OA ➔ AO, BA ➔ AB)
+    function canonicalGeno(g1, g2) {
+      const pair = [g1, g2].sort().join('');
+      if (pair === 'AO' || pair === 'OA') return 'AO';
+      if (pair === 'BO' || pair === 'OB') return 'BO';
+      if (pair === 'AB' || pair === 'BA') return 'AB';
+      return pair;
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * Math.max(0, Math.min(1, t));
+    }
+
+    // ==========================================
+    // 그래픽 일러스트 렌더링 헬퍼
+    // ==========================================
+    // 1. 빨간색 수혈 팩(Blood Bag) 일러스트 (자바실험실 1:1 스타일)
+    function drawBloodBag(c, cx, cy, w, h, bloodTypeLabel) {
+      c.save();
+      c.translate(cx, cy);
+
+      const r = 16;
+      const x = -w / 2;
+      const y = -h / 2;
+
+      // 상단 수혈관 튜브 / 걸이 구멍
+      c.fillStyle = '#bae6fd';
+      c.fillRect(-10, y - 18, 20, 18);
+      c.strokeStyle = '#7dd3fc';
+      c.lineWidth = 1.5;
+      c.strokeRect(-10, y - 18, 20, 18);
+
+      c.beginPath();
+      c.arc(0, y - 10, 4, 0, Math.PI * 2);
+      c.fillStyle = '#ffffff';
+      c.fill();
+
+      // 수혈 팩 반투명 외곽 비닐 포장
+      c.beginPath();
+      c.roundRect(x - 6, y - 6, w + 12, h + 12, r + 4);
+      c.fillStyle = 'rgba(224, 242, 254, 0.45)';
+      c.fill();
+      c.strokeStyle = '#bae6fd';
+      c.lineWidth = 2.0;
+      c.stroke();
+
+      // 붉은 혈액 파우치 본체 (선명한 빨간색)
+      c.beginPath();
+      c.roundRect(x, y, w, h, r);
+      c.fillStyle = '#ff0000';
+      c.fill();
+      c.strokeStyle = '#dc2626';
+      c.lineWidth = 2.0;
+      c.stroke();
+
+      // 좌측 볼륨 하이라이트 곡선
+      c.beginPath();
+      c.moveTo(x + 10, y + 16);
+      c.quadraticCurveTo(x + 5, cy, x + 10, y + h - 16);
+      c.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      c.lineWidth = 3.5;
+      c.lineCap = 'round';
+      c.stroke();
+
+      // 중앙 화이트 라벨 스티커
+      const lblW = w * 0.72;
+      const lblH = h * 0.42;
+      const lblX = -lblW / 2;
+      const lblY = -lblH / 2 - 8;
+
+      c.beginPath();
+      c.roundRect(lblX, lblY, lblW, lblH, 6);
+      c.fillStyle = '#ffffff';
+      c.fill();
+      c.strokeStyle = '#cbd5e1';
+      c.lineWidth = 1.5;
+      c.stroke();
+
+      // 혈액형 대형 폰트 표시 (예: A +, B +, AB +, O +)
+      c.font = 'bold 21px sans-serif';
+      c.fillStyle = '#0f172a';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(bloodTypeLabel, 0, lblY + lblH * 0.42);
+
+      // 바코드 / 정보 라인
+      c.strokeStyle = '#64748b';
+      c.lineWidth = 2.0;
+      c.beginPath();
+      c.moveTo(lblX + 10, lblY + lblH * 0.76);
+      c.lineTo(lblX + lblW - 10, lblY + lblH * 0.76);
+      c.stroke();
+
+      c.restore();
+    }
+
+    // 2. 여성 실루엣 아이콘 (Mother: 치마 형태)
+    function drawWomanSilhouette(c, cx, cy) {
+      c.save();
+      c.translate(cx, cy);
+      c.fillStyle = '#000000';
+
+      // 머리
+      c.beginPath();
+      c.arc(0, -95, 21, 0, Math.PI * 2);
+      c.fill();
+
+      // 몸통 & 치마
+      c.beginPath();
+      c.moveTo(-20, -65);
+      c.lineTo(20, -65);
+      c.lineTo(34, 15);
+      c.lineTo(-34, 15);
+      c.closePath();
+      c.fill();
+
+      // 팔
+      c.lineWidth = 10;
+      c.lineCap = 'round';
+      c.strokeStyle = '#000000';
+      c.beginPath();
+      c.moveTo(-20, -60);
+      c.lineTo(-32, -10);
+      c.moveTo(20, -60);
+      c.lineTo(32, -10);
+      c.stroke();
+
+      // 두 다리
+      c.lineWidth = 11;
+      c.beginPath();
+      c.moveTo(-12, 15);
+      c.lineTo(-12, 55);
+      c.moveTo(12, 15);
+      c.lineTo(12, 55);
+      c.stroke();
+
+      c.restore();
+    }
+
+    // 3. 남성 실루엣 아이콘 (Father: 바지 형태)
+    function drawManSilhouette(c, cx, cy) {
+      c.save();
+      c.translate(cx, cy);
+      c.fillStyle = '#000000';
+
+      // 머리
+      c.beginPath();
+      c.arc(0, -95, 21, 0, Math.PI * 2);
+      c.fill();
+
+      // 상체 (어깨 및 몸통)
+      c.beginPath();
+      c.roundRect(-24, -68, 48, 62, 8);
+      c.fill();
+
+      // 팔
+      c.lineWidth = 10;
+      c.lineCap = 'round';
+      c.strokeStyle = '#000000';
+      c.beginPath();
+      c.moveTo(-22, -60);
+      c.lineTo(-34, -5);
+      c.moveTo(22, -60);
+      c.lineTo(34, -5);
+      c.stroke();
+
+      // 두 다리 / 바지
+      c.lineWidth = 12;
+      c.beginPath();
+      c.moveTo(-13, -8);
+      c.lineTo(-13, 55);
+      c.moveTo(13, -8);
+      c.lineTo(13, 55);
+      c.stroke();
+
+      c.restore();
+    }
+
+    // ==========================================
+    // 메인 캔버스 렌더링 루프
+    // ==========================================
+    function render() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      const mAllele1 = momGeno[0];
+      const mAllele2 = momGeno[1];
+      const dAllele1 = dadGeno[0];
+      const dAllele2 = dadGeno[1];
+
+      // ----------------------------------------------------
+      // 1. 좌측 어머니 구역 (Mother: X = 170)
+      // ----------------------------------------------------
+      drawBloodBag(ctx, 115, 175, 100, 140, getPhenotype(momGeno));
+      drawWomanSilhouette(ctx, 235, 215);
+
+      // 어머니 유전자형 대형 폰트 (예: A O)
+      ctx.save();
+      ctx.font = 'bold 44px sans-serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`${mAllele1}  ${mAllele2}`, 175, 290);
+      ctx.restore();
+
+      // ----------------------------------------------------
+      // 2. 우측 아버지 구역 (Father: X = 985)
+      // ----------------------------------------------------
+      drawManSilhouette(ctx, 925, 215);
+      drawBloodBag(ctx, 1045, 175, 100, 140, getPhenotype(dadGeno));
+
+      // 아버지 유전자형 대형 폰트 (예: B O)
+      ctx.save();
+      ctx.font = 'bold 44px sans-serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`${dAllele1}  ${dAllele2}`, 985, 290);
+      ctx.restore();
+
+      // ----------------------------------------------------
+      // 3. 부모 연결 결합선 및 중앙 화살표
+      // ----------------------------------------------------
+      ctx.save();
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.0;
+
+      // 수평 연결선: 어머니와 아버지를 잇는 가계도 선
+      const lineY = 175;
+      ctx.beginPath();
+      ctx.moveTo(310, lineY);
+      ctx.lineTo(850, lineY);
+      ctx.stroke();
+
+      // 양 끝단 검은 점
+      [310, 850].forEach(px => {
+        ctx.beginPath();
+        ctx.arc(px, lineY, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+      });
+
+      // 중앙 수직 화살표 (다이아몬드 상단 꼭짓점으로 하강)
+      const diamondTopY = 240;
+      ctx.beginPath();
+      ctx.moveTo(580, lineY);
+      ctx.lineTo(580, diamondTopY);
+      ctx.stroke();
+
+      // 화살표 머리
+      ctx.beginPath();
+      ctx.moveTo(580, diamondTopY);
+      ctx.lineTo(574, diamondTopY - 10);
+      ctx.lineTo(586, diamondTopY - 10);
+      ctx.closePath();
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      ctx.restore();
+
+      // ----------------------------------------------------
+      // 4. 중앙 2×2 다이아몬드 퍼넷 사각형 (Diamond Punnett Square)
+      // ----------------------------------------------------
+      const DCX = 580;
+      const DCY = 370;
+      const D_SIZE = 130; // 외곽 다이아몬드 반지름 크기
+
+      // 외곽 꼭짓점 4개
+      const ptTop = { x: DCX, y: DCY - D_SIZE };
+      const ptBottom = { x: DCX, y: DCY + D_SIZE };
+      const ptLeft = { x: DCX - D_SIZE, y: DCY };
+      const ptRight = { x: DCX + D_SIZE, y: DCY };
+
+      // 각 변의 중점 (내부 4분할 격자선용)
+      const ptMidTL = { x: (ptTop.x + ptLeft.x) / 2, y: (ptTop.y + ptLeft.y) / 2 };
+      const ptMidTR = { x: (ptTop.x + ptRight.x) / 2, y: (ptTop.y + ptRight.y) / 2 };
+      const ptMidBL = { x: (ptBottom.x + ptLeft.x) / 2, y: (ptBottom.y + ptLeft.y) / 2 };
+      const ptMidBR = { x: (ptBottom.x + ptRight.x) / 2, y: (ptBottom.y + ptRight.y) / 2 };
+
+      // 외곽 및 내부 다이아몬드 선 그리기
+      ctx.save();
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.0;
+
+      // 외곽 다이아몬드 테두리
+      ctx.beginPath();
+      ctx.moveTo(ptTop.x, ptTop.y);
+      ctx.lineTo(ptRight.x, ptRight.y);
+      ctx.lineTo(ptBottom.x, ptBottom.y);
+      ctx.lineTo(ptLeft.x, ptLeft.y);
+      ctx.closePath();
+      ctx.stroke();
+
+      // 내부 십자 격자선
+      ctx.beginPath();
+      ctx.moveTo(ptMidTL.x, ptMidTL.y);
+      ctx.lineTo(ptMidBR.x, ptMidBR.y);
+      ctx.moveTo(ptMidTR.x, ptMidTR.y);
+      ctx.lineTo(ptMidBL.x, ptMidBL.y);
+      ctx.stroke();
+      ctx.restore();
+
+      // 4개 셀의 중심 좌표
+      // Cell 0: 상단 셀 (어머니1 × 아버지1)
+      // Cell 1: 우측 셀 (어머니1 × 아버지2)
+      // Cell 2: 좌측 셀 (어머니2 × 아버지1)
+      // Cell 3: 하단 셀 (어머니2 × 아버지2)
+      const cellCenters = [
+        { x: DCX, y: DCY - D_SIZE / 2, gM: mAllele1, gD: dAllele1 },
+        { x: DCX + D_SIZE / 2, y: DCY, gM: mAllele1, gD: dAllele2 },
+        { x: DCX - D_SIZE / 2, y: DCY, gM: mAllele2, gD: dAllele1 },
+        { x: DCX, y: DCY + D_SIZE / 2, gM: mAllele2, gD: dAllele2 }
+      ];
+
+      // ----------------------------------------------------
+      // 5. 슬라이더(progress)에 따른 대립유전자 이동 & 결합 애니메이션
+      // ----------------------------------------------------
+      const t = progress; // 0.0 ~ 1.0
+
+      // 출발지 (어머니/아버지 유전자형 텍스트 위치)
+      const startMom1 = { x: 155, y: 310 };
+      const startMom2 = { x: 195, y: 310 };
+      const startDad1 = { x: 965, y: 310 };
+      const startDad2 = { x: 1005, y: 310 };
+
+      if (t < 0.98) {
+        // 이동 중인 대립유전자 표시
+        const moves = [
+          // Cell 0: mAllele1 + dAllele1
+          { allele: mAllele1, from: startMom1, to: { x: cellCenters[0].x - 14, y: cellCenters[0].y }, col: '#ec4899' },
+          { allele: dAllele1, from: startDad1, to: { x: cellCenters[0].x + 14, y: cellCenters[0].y }, col: '#2563eb' },
+
+          // Cell 1: mAllele1 + dAllele2
+          { allele: mAllele1, from: startMom1, to: { x: cellCenters[1].x - 14, y: cellCenters[1].y }, col: '#ec4899' },
+          { allele: dAllele2, from: startDad2, to: { x: cellCenters[1].x + 14, y: cellCenters[1].y }, col: '#2563eb' },
+
+          // Cell 2: mAllele2 + dAllele1
+          { allele: mAllele2, from: startMom2, to: { x: cellCenters[2].x - 14, y: cellCenters[2].y }, col: '#ec4899' },
+          { allele: dAllele1, from: startDad1, to: { x: cellCenters[2].x + 14, y: cellCenters[2].y }, col: '#2563eb' },
+
+          // Cell 3: mAllele2 + dAllele2
+          { allele: mAllele2, from: startMom2, to: { x: cellCenters[3].x - 14, y: cellCenters[3].y }, col: '#ec4899' },
+          { allele: dAllele2, from: startDad2, to: { x: cellCenters[3].x + 14, y: cellCenters[3].y }, col: '#2563eb' }
+        ];
+
+        ctx.save();
+        ctx.font = 'bold 26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        moves.forEach(m => {
+          const curX = lerp(m.from.x, m.to.x, t);
+          const curY = lerp(m.from.y, m.to.y, t);
+
+          // 살짝 뜨는 원형 배지
+          ctx.beginPath();
+          ctx.arc(curX, curY, 18, 0, Math.PI * 2);
+          ctx.fillStyle = m.col;
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(m.allele, curX, curY + 1);
+        });
+        ctx.restore();
+
+      } else {
+        // ----------------------------------------------------
+        // 결합 완료 (t = 1.0): 퍼넷 사각형 각 칸에 혈액 팩과 유전자형 출현!
+        // ----------------------------------------------------
+        cellCenters.forEach(cell => {
+          const finalGeno = canonicalGeno(cell.gM, cell.gD);
+          const phenoLabel = getPhenotype(finalGeno);
+
+          // 작은 미니 혈액 팩 렌더링
+          drawBloodBag(ctx, cell.x, cell.y - 10, 48, 64, phenoLabel);
+
+          // 하단 유전자형 텍스트 (예: AB, AO)
+          ctx.save();
+          ctx.font = 'bold 19px sans-serif';
+          ctx.fillStyle = '#0f172a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(finalGeno, cell.x, cell.y + 30);
+          ctx.restore();
+        });
+      }
+    }
+
+    // ==========================================
+    // 유전 확률 및 HUD 데이터 계산
+    // ==========================================
+    function calculateGenetics() {
+      const mAlleles = [momGeno[0], momGeno[1]];
+      const dAlleles = [dadGeno[0], dadGeno[1]];
+
+      const genos = [];
+      const phenos = [];
+
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 2; j++) {
+          const g = canonicalGeno(mAlleles[i], dAlleles[j]);
+          genos.push(g);
+          phenos.push(getPhenotypeName(g));
+        }
+      }
+
+      // 유전자형 카운트
+      const genoCount = {};
+      genos.forEach(g => { genoCount[g] = (genoCount[g] || 0) + 1; });
+      const ratioStr = Object.entries(genoCount)
+        .map(([g, cnt]) => `${g}:${cnt}`)
+        .join(' ');
+
+      // 표현형 확률
+      const phenoCount = {};
+      phenos.forEach(p => { phenoCount[p] = (phenoCount[p] || 0) + 1; });
+      const probStr = Object.entries(phenoCount)
+        .map(([p, cnt]) => `${p}:${cnt * 25}%`)
+        .join(' ');
+
+      // HUD 갱신
+      hudMomVal.textContent = `${getPhenotypeName(momGeno)} (${momGeno})`;
+      hudDadVal.textContent = `${getPhenotypeName(dadGeno)} (${dadGeno})`;
+      hudRatioVal.textContent = ratioStr;
+      hudProbVal.textContent = probStr;
+
+      bannerText.innerHTML = `<strong>[교배 결과: ${momGeno} × ${dadGeno}]</strong> 자손에게서 <strong>${probStr}</strong>의 확률로 혈액형이 나타납니다.`;
+    }
+
+    // ==========================================
+    // 애니메이션 갱신 루프
+    // ==========================================
+    let lastTime = performance.now();
+    function animate(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (isPlaying) {
+        progress += dt * 0.45 * speedMultiplier;
+        if (progress >= 1.0) {
+          progress = 1.0;
+          isPlaying = false;
+          btnPlayPause.textContent = '▶ 수정 시뮬레이션';
+          btnPlayPause.classList.remove('primary');
+        }
+        progressSlider.value = progress;
+        progressLabel.textContent = `${Math.round(progress * 100)}%`;
+      }
+
+      render();
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // ==========================================
+    // UI 이벤트 리스너
+    // ==========================================
+    // 어머니 유전자형 라디오 변경
+    document.querySelectorAll('input[name="momGeno"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        momGeno = e.target.value;
+        calculateGenetics();
+      });
+    });
+
+    // 아버지 유전자형 라디오 변경
+    document.querySelectorAll('input[name="dadGeno"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        dadGeno = e.target.value;
+        calculateGenetics();
+      });
+    });
+
+    // 재생 / 일시정지
+    btnPlayPause.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      if (isPlaying && progress >= 1.0) {
+        progress = 0.0;
+      }
+      btnPlayPause.textContent = isPlaying ? '⏸ 일시정지' : '▶ 수정 시뮬레이션';
+      btnPlayPause.classList.toggle('primary', isPlaying);
+    });
+
+    // 배속
+    const SPEED_LIST = [0.5, 1.0, 2.0];
+    let spdIdx = 1;
+    btnSpeed.addEventListener('click', () => {
+      spdIdx = (spdIdx + 1) % SPEED_LIST.length;
+      speedMultiplier = SPEED_LIST[spdIdx];
+      btnSpeed.textContent = `속도: ${speedMultiplier.toFixed(1)}x`;
+    });
+
+    // 리셋
+    function resetSimulation() {
+      isPlaying = false;
+      progress = 0.0;
+      progressSlider.value = 0.0;
+      progressLabel.textContent = '0%';
+      btnPlayPause.textContent = '▶ 수정 시뮬레이션';
+      btnPlayPause.classList.remove('primary');
+    }
+    btnReset.addEventListener('click', resetSimulation);
+
+    // 슬라이더 직접 조작
+    progressSlider.addEventListener('input', (e) => {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ 수정 시뮬레이션';
+      btnPlayPause.classList.remove('primary');
+      progress = parseFloat(e.target.value);
+      progressLabel.textContent = `${Math.round(progress * 100)}%`;
+    });
+
+    // 프리셋 단추들
+    function setParents(m, d) {
+      momGeno = m;
+      dadGeno = d;
+      document.querySelector(`input[name="momGeno"][value="${m}"]`).checked = true;
+      document.querySelector(`input[name="dadGeno"][value="${d}"]`).checked = true;
+      calculateGenetics();
+      resetSimulation();
+      isPlaying = true;
+      btnPlayPause.textContent = '⏸ 일시정지';
+      btnPlayPause.classList.add('primary');
+    }
+
+    btnPreset1.addEventListener('click', () => setParents('AO', 'BO'));
+    btnPreset2.addEventListener('click', () => setParents('AB', 'OO'));
+    btnPreset3.addEventListener('click', () => setParents('AA', 'BB'));
+
+    // 초기 상태 계산
+    calculateGenetics();
+
+  })();
+  </script>
+</body>
+</html>

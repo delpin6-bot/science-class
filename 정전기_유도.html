@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>정전기 유도 - 자바실험실 가상실험실</title>
+  <style>
+    /* CSS Reset & Design System */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #16a34a;
+      --accent: #ea580c;
+      --danger: #dc2626;
+      --plus-red: #ef4444;
+      --minus-blue: #2563eb;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 상단 고정 네비게이션 (#kjsNav) */
+    #kjsNav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-badge {
+      background: var(--primary);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* 메인 레이아웃 컨테이너 */
+    .app-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    /* 시뮬레이션 메인 카드 */
+    .sim-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sim-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .sim-title-group .sim-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 생체 지표 대시보드 HUD */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+    }
+
+    .hud-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-card.rod { border-top: 3.5px solid var(--primary); }
+    .hud-card.cond-a { border-top: 3.5px solid #ef4444; }
+    .hud-card.cond-b { border-top: 3.5px solid #3b82f6; }
+    .hud-card.state { border-top: 3.5px solid #10b981; }
+
+    .hud-lbl {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+    .hud-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .hud-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* 캔버스 뷰포트 */
+    .canvas-wrapper {
+      position: relative;
+      background: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 8.5;
+      max-height: 560px;
+      min-height: 420px;
+      cursor: grab;
+    }
+    .canvas-wrapper:active {
+      cursor: grabbing;
+    }
+
+    canvas#simCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* 자바실험실 1:1 오리지널 제어 바 */
+    .javalab-original-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    .control-radios {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .radio-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1e293b;
+      cursor: pointer;
+    }
+
+    .radio-label input[type="radio"] {
+      width: 19px;
+      height: 19px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* 슬라이더 바 */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .slider-container span {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f87171; /* 자바실험실 시그니처 붉은색 노브 */
+      border: 2.5px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* 보조 제어 툴바 */
+    .sub-control-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .ctrl-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .ctrl-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+    .ctrl-btn.primary:hover {
+      background: var(--primary-dark);
+    }
+    .ctrl-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    /* 실시간 안내 정보 배너 */
+    .info-banner {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      line-height: 1.45;
+    }
+
+    /* 2대 메커니즘 요약 카드 */
+    .mechanism-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .mechanism-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mechanism-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .badge-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .m1-badge { background: #ef4444; }
+    .m2-badge { background: #2563eb; }
+
+    .mechanism-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .mechanism-meta {
+      font-size: 0.82rem;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* 비교 정리표 패널 */
+    .table-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .table-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .table-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    table.data-table th, table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tag-red {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-blue {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .tag-gray {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .mechanism-grid {
+        grid-template-columns: 1fr;
+      }
+      .javalab-original-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 서랍 버튼 및 타이틀 -->
+  <header id="kjsNav">
+    <div class="nav-title">
+      <span>⚡ 정전기 유도 가상실험실</span>
+      <span class="nav-badge">자바실험실 1:1 복각</span>
+    </div>
+    <div class="unified-nav-actions nav-actions">
+    <a href="./정전기_유도_오프라인_수업활동지.html" class="btn-top btn-unified-nav btn-ws" target="_blank" title="1쪽 탐구 활동지 열기"><span>📄 탐구 활동지</span></a>
+    <button class="nav-btn" id="btnReload" title="처음 상태로 되돌리기" onclick="location.reload();">
+        <span>↺</span> 처음으로
+      </button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- 시뮬레이션 메인 카드 -->
+    <div class="sim-card">
+      <div class="sim-header">
+        <div class="sim-title-group">
+          <h2>정전기 유도 (Electrostatic Induction)</h2>
+          <span class="sim-date">2019-09-24 • 중2 과학 전기와 자기</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="ctrl-btn primary" id="btnToggleSeparate">↔️ 도체 분리하기</button>
+          <button class="ctrl-btn" id="btnReset">↺ 처음으로 리셋</button>
+        </div>
+      </div>
+
+      <!-- 생체 지표 대시보드 HUD -->
+      <div class="dashboard-grid">
+        <div class="hud-card rod">
+          <span class="hud-lbl">대전체 상태 (거리)</span>
+          <span class="hud-val" id="hudRodVal">(-)로 대전 막대</span>
+          <span class="hud-sub" id="hudDistSub">거리: 22.0 cm (접근 중)</span>
+        </div>
+        <div class="hud-card cond-a">
+          <span class="hud-lbl">좌측 도체 A 전하 (가까운 쪽)</span>
+          <span class="hud-val" id="hudCondAVal">(+) 전하 유도</span>
+          <span class="hud-sub" id="hudCondASub">전자 부족: +4 전하</span>
+        </div>
+        <div class="hud-card cond-b">
+          <span class="hud-lbl">우측 도체 B 전하 (먼 쪽)</span>
+          <span class="hud-val" id="hudCondBVal">(-) 전하 유도</span>
+          <span class="hud-sub" id="hudCondBSub">전자 과잉: -4 전하</span>
+        </div>
+        <div class="hud-card state">
+          <span class="hud-lbl">도체 결합 및 영구 대전</span>
+          <span class="hud-val" id="hudStateVal">접촉 상태 (전하 이동)</span>
+          <span class="hud-sub" id="hudStateSub">두 도체 접촉 중</span>
+        </div>
+      </div>
+
+      <!-- 메인 캔버스 뷰포트 -->
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="simCanvas" width="1160" height="560"></canvas>
+      </div>
+
+      <!-- 자바실험실 1:1 오리지널 제어 바 -->
+      <div class="javalab-original-bar">
+        <!-- 대전체 종류 라디오 -->
+        <div class="control-radios">
+          <label class="radio-label">
+            <input type="radio" name="rodType" value="positive">
+            <span>(+)로 대전</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="rodType" value="negative" checked>
+            <span>(-)로 대전</span>
+          </label>
+        </div>
+
+        <!-- 대전체 거리 슬라이더 -->
+        <div class="slider-container">
+          <span>대전체 거리:</span>
+          <input type="range" id="distSlider" min="0" max="1" step="0.005" value="0.55">
+          <span id="distLabel" style="width: 60px; text-align: right; font-weight:800; color:var(--primary);">22.0cm</span>
+        </div>
+      </div>
+
+      <!-- 보조 조작 툴바: 4단계 실험 가이드 프리셋 -->
+      <div class="sub-control-toolbar">
+        <div class="btn-group">
+          <span style="font-size:0.84rem; font-weight:800; color:var(--text-muted);">4단계 실험 가이드:</span>
+          <button class="ctrl-btn" id="btnStep1">1단계: (-) 대전체 접근</button>
+          <button class="ctrl-btn" id="btnStep2">2단계: 도체 떼어놓기</button>
+          <button class="ctrl-btn" id="btnStep3">3단계: 대전체 치우기 (영구 대전)</button>
+          <button class="ctrl-btn" id="btnStep4">4단계: 다시 접촉 (중화)</button>
+        </div>
+        <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">
+          🖱️ 캔버스 위의 대전체를 마우스나 터치로 직접 끌어서 도체에 가까이 가져가 보세요.
+        </span>
+      </div>
+    </div>
+
+    <!-- 실시간 안내 정보 배너 -->
+    <div id="infoBanner" class="info-banner">
+      <span id="bannerText"><strong>[정전기 유도 관찰]</strong> (-) 대전체가 다가오면 도체 내부의 자유 전자들이 척력(밀어내는 힘)을 받아 오른쪽으로 밀려납니다. 가까운 쪽은 (+)로, 먼 쪽은 (-)로 대전됩니다.</span>
+    </div>
+
+    <!-- 2대 핵심 메커니즘 요약 카드 -->
+    <section class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m1-badge">+</span>
+          <span>원자핵((+) 전하)은 왜 이동하지 않을까?</span>
+        </div>
+        <p>많은 학생들이 대전체 쪽으로 (+) 전하가 걸어왔다고 착각하지만, <strong>원자핵은 전자에 비해 약 2,000배 무겁고 금속 결정 격자에 고정</strong>되어 있습니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 오직 자유 전자((-) 전하)만 이동합니다:</strong><br>
+          • 가까운 쪽이 (+) 전하를 띠는 진짜 이유는 전자가 그쪽으로 온 것이 아니라, 원래 있던 <strong>자유 전자가 먼 쪽으로 도망쳐서 원자핵만 남았기 때문</strong>입니다.<br>
+          • 즉, (+) 유도는 '전자의 부족', (-) 유도는 '전자의 과잉'을 뜻합니다.
+        </div>
+      </div>
+
+      <div class="mechanism-card">
+        <div class="mechanism-header">
+          <span class="badge-icon m2-badge">⚡</span>
+          <span>접촉 도체 분리를 통한 영구 대전의 원리</span>
+        </div>
+        <p>접촉해 있는 두 금속 도체 A와 B에 대전체를 댄 상태에서 도체를 떼어놓으면 <strong>전하가 분리된 채로 고립</strong>됩니다.</p>
+        <div class="mechanism-meta">
+          <strong>★ 비접촉 영구 대전 과정:</strong><br>
+          • 1) (-) 대전체를 가까이 대어 전자를 도체 B로 몰아넣음.<br>
+          • 2) <strong>대전체를 치우기 전에 도체 B를 떼어냄</strong> (전자가 A로 되돌아갈 길 차단).<br>
+          • 3) 대전체를 멀리 치우면 <strong>도체 A는 (+) 영구 대전</strong>, <strong>도체 B는 (-) 영구 대전</strong> 상태를 유지함.
+        </div>
+      </div>
+    </section>
+
+    <!-- 비교 정리표 패널 -->
+    <section class="table-panel">
+      <div class="table-title-row">
+        <span class="table-title">📊 대전체 종류 및 도체 조작에 따른 전하 분포 정리표</span>
+        <span class="table-sub">* 중학교 2학년 과학 '전기와 자기' 정전기 유도 총정리</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>접근하는 대전체</th>
+              <th>가까운 쪽 도체 A</th>
+              <th>먼 쪽 도체 B</th>
+              <th>실제 이동한 입자</th>
+              <th>대전체를 댄 채 분리 후 치웠을 때</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>(-) 대전체 접근</strong></td>
+              <td><span class="tag-red">(+) 전하 유도</span></td>
+              <td><span class="tag-blue">(-) 전하 유도</span></td>
+              <td>자유 전자가 A ➔ B로 이동 (척력)</td>
+              <td>A: (+) 영구 대전 / B: (-) 영구 대전</td>
+            </tr>
+            <tr style="background-color: #f0fdf4;">
+              <td><strong>(+) 대전체 접근</strong></td>
+              <td><span class="tag-blue">(-) 전하 유도</span></td>
+              <td><span class="tag-red">(+) 전하 유도</span></td>
+              <td>자유 전자가 B ➔ A로 이동 (인력)</td>
+              <td>A: (-) 영구 대전 / B: (+) 영구 대전</td>
+            </tr>
+            <tr>
+              <td><strong>대전체 멀어짐 (비분리)</strong></td>
+              <td><span class="tag-gray">중성 (0)</span></td>
+              <td><span class="tag-gray">중성 (0)</span></td>
+              <td>자유 전자가 원래 자리로 골고루 복귀</td>
+              <td>전체적으로 전기적 중성 유지</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const bannerText = document.getElementById('bannerText');
+
+    // UI 요소
+    const distSlider = document.getElementById('distSlider');
+    const distLabel = document.getElementById('distLabel');
+    const radioRods = document.querySelectorAll('input[name="rodType"]');
+    const btnToggleSeparate = document.getElementById('btnToggleSeparate');
+    const btnReset = document.getElementById('btnReset');
+
+    const btnStep1 = document.getElementById('btnStep1');
+    const btnStep2 = document.getElementById('btnStep2');
+    const btnStep3 = document.getElementById('btnStep3');
+    const btnStep4 = document.getElementById('btnStep4');
+
+    // HUD 요소
+    const hudRodVal = document.getElementById('hudRodVal');
+    const hudDistSub = document.getElementById('hudDistSub');
+    const hudCondAVal = document.getElementById('hudCondAVal');
+    const hudCondASub = document.getElementById('hudCondASub');
+    const hudCondBVal = document.getElementById('hudCondBVal');
+    const hudCondBSub = document.getElementById('hudCondBSub');
+    const hudStateVal = document.getElementById('hudStateVal');
+    const hudStateSub = document.getElementById('hudStateSub');
+
+    // 가상 좌표계 크기 (1160 x 560)
+    const V_WIDTH = 1160;
+    const V_HEIGHT = 560;
+
+    // 시뮬레이션 상태 변수
+    let rodType = 'negative'; // 'positive' or 'negative'
+    let rodDist = 0.55;       // 0.0 (매우 멈: 60cm) ~ 1.0 (가장 가까움: 4cm)
+    let isSeparated = false;  // 도체 A와 B가 떼어졌는가
+    let separationGap = 0;    // 0 ~ 120px 애니메이션 변수
+
+    // 드래그 상태
+    let isDraggingRod = false;
+    let dragStartX = 0;
+
+    // 도체 형상 및 좌표 정의
+    // 도체 A (좌측): 너비 280, 높이 56
+    // 도체 B (우측): 너비 280, 높이 56
+    const COND_Y = 190;
+    const COND_H = 56;
+    const COND_A_X = 520; // 도체 A의 우측 끝 (접촉 경계)
+    const COND_W = 280;
+
+    // 전하 모델 (도체 A에 원자핵 8개, 도체 B에 원자핵 8개 고정)
+    // 자유전자 16개 (도체 내부에서 연속적으로 위치가 이동)
+    const N_CHARGES = 16;
+    const N_HALF = 8;
+
+    // 원자핵 16개 고정 좌표
+    const nuclei = [];
+    for (let i = 0; i < N_HALF; i++) {
+      // 도체 A 내부 원자핵 8개
+      const xA = (COND_A_X - COND_W) + 20 + (i * 34);
+      nuclei.push({ x: xA, y: COND_Y + COND_H * 0.65, isA: true, origIdx: i });
+    }
+    for (let i = 0; i < N_HALF; i++) {
+      // 도체 B 내부 원자핵 8개
+      const xB = COND_A_X + 24 + (i * 34);
+      nuclei.push({ x: xB, y: COND_Y + COND_H * 0.65, isA: false, origIdx: i });
+    }
+
+    // 자유전자 16개 (초기에는 각 원자핵 근처에 1:1로 배치)
+    const electrons = [];
+    for (let i = 0; i < N_CHARGES; i++) {
+      electrons.push({
+        x: nuclei[i].x,
+        y: COND_Y + COND_H * 0.35,
+        targetX: nuclei[i].x,
+        inA: (i < N_HALF)
+      });
+    }
+
+    // 대전체 막대 위치 계산기
+    function getRodTipPos() {
+      // rodDist: 0.0 (멀리, x=60) ~ 1.0 (가까이, x=225)
+      const minX = 70;
+      const maxX = 225;
+      const curX = minX + (maxX - minX) * rodDist;
+      return { x: curX, y: COND_Y + COND_H / 2 };
+    }
+
+    // ==========================================
+    // 물리 엔진: 전하 재분포 및 유도 전하 계산
+    // ==========================================
+    let netChargeA = 0; // A의 순전하 (원자핵수 8 - 전자수)
+    let netChargeB = 0; // B의 순전하 (원자핵수 8 - 전자수)
+
+    function updatePhysics() {
+      const tip = getRodTipPos();
+      const actualDistanceCm = Math.round(60 - rodDist * 54);
+      const isRodNear = (rodDist > 0.15);
+
+      // 도체 분리 애니메이션 스무딩
+      const targetGap = isSeparated ? 110 : 0;
+      separationGap += (targetGap - separationGap) * 0.15;
+
+      if (!isSeparated) {
+        // [접촉 상태]: A와 B 사이에 전자가 자유롭게 오갈 수 있음
+        // 대전체 극성과 거리에 따라 오른쪽으로 밀리거나(척력) 왼쪽으로 끌려옴(인력)
+        let shiftUnits = 0;
+        if (isRodNear) {
+          const strength = (rodDist - 0.15) / 0.85; // 0 ~ 1
+          shiftUnits = Math.round(strength * 5); // 0 ~ 5개 전자가 반대편 도체로 이동
+        }
+
+        // 전자의 목표 x좌표 산출
+        // 만약 (-) 대전체: shiftUnits 만큼의 전자가 A에서 B로 이동
+        // 만약 (+) 대전체: shiftUnits 만큼의 전자가 B에서 A로 이동
+        let movedCount = 0;
+        if (rodType === 'negative') {
+          movedCount = shiftUnits; // A -> B
+        } else {
+          movedCount = -shiftUnits; // B -> A
+        }
+
+        // 각 도체의 목표 전자 개수
+        const targetCountA = N_HALF - movedCount;
+        const targetCountB = N_HALF + movedCount;
+
+        // 도체 A와 B의 경계 영역
+        const leftA = (COND_A_X - COND_W) + 16;
+        const rightA = COND_A_X - 10;
+        const leftB = COND_A_X + separationGap + 10;
+        const rightB = (COND_A_X + COND_W) + separationGap - 16;
+
+        // 전자 16개의 타겟 X 배치
+        for (let i = 0; i < N_CHARGES; i++) {
+          if (i < targetCountA) {
+            // A 내부에 배치
+            const spanA = (rightA - leftA);
+            const slotX = leftA + (spanA / Math.max(1, targetCountA - 1)) * i;
+            electrons[i].targetX = slotX;
+            electrons[i].inA = true;
+          } else {
+            // B 내부에 배치
+            const idxB = i - targetCountA;
+            const spanB = (rightB - leftB);
+            const slotX = leftB + (spanB / Math.max(1, targetCountB - 1)) * idxB;
+            electrons[i].targetX = slotX;
+            electrons[i].inA = false;
+          }
+        }
+
+      } else {
+        // [분리 상태]: A와 B 사이에 틈이 생겨 전자가 경계를 넘을 수 없음!
+        // 현재 A에 갇힌 전자들과 B에 갇힌 전자들이 각 도체 내부에서만 재배치됨
+        const leftA = (COND_A_X - COND_W) + 16;
+        const rightA = COND_A_X - 10;
+        const leftB = COND_A_X + separationGap + 10;
+        const rightB = (COND_A_X + COND_W) + separationGap - 16;
+
+        // A 내부 전자들
+        const eInA = electrons.filter(e => e.inA);
+        const eInB = electrons.filter(e => !e.inA);
+
+        // 대전체가 있으면 도체 내부 안에서도 가까운쪽/먼쪽 편향 발생
+        const bias = isRodNear ? (rodType === 'negative' ? 0.35 : -0.35) : 0;
+
+        eInA.forEach((e, idx) => {
+          const tNorm = (idx / Math.max(1, eInA.length - 1)) + bias * rodDist;
+          const clamped = Math.max(0, Math.min(1, tNorm));
+          e.targetX = leftA + (rightA - leftA) * clamped;
+        });
+
+        eInB.forEach((e, idx) => {
+          const tNorm = (idx / Math.max(1, eInB.length - 1)) + bias * rodDist;
+          const clamped = Math.max(0, Math.min(1, tNorm));
+          e.targetX = leftB + (rightB - leftB) * clamped;
+        });
+      }
+
+      // 부드러운 전자 이동 (LERP)
+      let countA = 0;
+      let countB = 0;
+      electrons.forEach(e => {
+        e.x += (e.targetX - e.x) * 0.14;
+        if (e.x < COND_A_X + separationGap / 2) {
+          countA++;
+        } else {
+          countB++;
+        }
+      });
+
+      netChargeA = N_HALF - countA; // 양수면 (+), 음수면 (-)
+      netChargeB = N_HALF - countB;
+
+      updateHUD(actualDistanceCm);
+    }
+
+    // ==========================================
+    // 캔버스 드로잉 헬퍼
+    // ==========================================
+
+    // 1. 유리 비커 절연 스탠드 렌더링 (자바실험실 1:1 디테일)
+    function drawBeaker(c, cx, cy, w, h) {
+      c.save();
+      c.translate(cx, cy);
+
+      // 비커 본체 (반투명 파스텔 블루)
+      c.beginPath();
+      c.roundRect(-w / 2, 0, w, h, [0, 0, 14, 14]);
+      c.fillStyle = 'rgba(219, 234, 254, 0.45)';
+      c.fill();
+      c.strokeStyle = '#93c5fd';
+      c.lineWidth = 2.0;
+      c.stroke();
+
+      // 상단 림(주둥이)
+      c.beginPath();
+      c.moveTo(-w / 2 - 4, 0);
+      c.lineTo(w / 2 + 4, 0);
+      c.strokeStyle = '#60a5fa';
+      c.lineWidth = 2.5;
+      c.stroke();
+
+      // 비커 눈금선들
+      c.strokeStyle = 'rgba(147, 197, 253, 0.8)';
+      c.lineWidth = 1.5;
+      const nMarks = 14;
+      for (let i = 1; i <= nMarks; i++) {
+        const markY = (h / (nMarks + 1)) * i;
+        const markLen = (i % 5 === 0) ? 18 : 10;
+        c.beginPath();
+        c.moveTo(-w * 0.15, markY);
+        c.lineTo(-w * 0.15 + markLen, markY);
+        c.stroke();
+      }
+
+      c.restore();
+    }
+
+    // 2. 금속 원통 도체 렌더링
+    function drawConductorRod(c, x, y, w, h, label) {
+      c.save();
+
+      // 원통형 금속 도체 외곽 캡슐
+      c.beginPath();
+      c.roundRect(x, y, w, h, h / 2);
+      c.fillStyle = '#ffffff';
+      c.fill();
+      c.strokeStyle = '#64748b';
+      c.lineWidth = 2.4;
+      c.stroke();
+
+      // 상단 하이라이트 광택선
+      c.beginPath();
+      c.moveTo(x + 16, y + 6);
+      c.lineTo(x + w - 16, y + 6);
+      c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      c.lineWidth = 2.0;
+      c.stroke();
+
+      // 도체 하단 라벨
+      c.font = 'bold 20px sans-serif';
+      c.fillStyle = '#0f172a';
+      c.textAlign = 'center';
+      c.textBaseline = 'top';
+      c.fillText(label, x + w / 2, y + h + 14);
+
+      c.restore();
+    }
+
+    // 3. 전하 원형 기호 그리기 (+ 원자핵, - 자유전자)
+    function drawCharge(c, x, y, r, isPlus) {
+      c.save();
+      c.beginPath();
+      c.arc(x, y, r, 0, Math.PI * 2);
+
+      if (isPlus) {
+        // (+) 원자핵: 붉은색
+        c.fillStyle = '#ef4444';
+        c.fill();
+        c.strokeStyle = '#b91c1c';
+        c.lineWidth = 1.5;
+        c.stroke();
+
+        // 흰색 + 기호
+        c.strokeStyle = '#ffffff';
+        c.lineWidth = 2.2;
+        c.beginPath();
+        c.moveTo(x - r * 0.55, y);
+        c.lineTo(x + r * 0.55, y);
+        c.moveTo(x, y - r * 0.55);
+        c.lineTo(x, y + r * 0.55);
+        c.stroke();
+
+      } else {
+        // (-) 자유전자: 파란색
+        c.fillStyle = '#2563eb';
+        c.fill();
+        c.strokeStyle = '#1d4ed8';
+        c.lineWidth = 1.5;
+        c.stroke();
+
+        // 흰색 - 기호
+        c.strokeStyle = '#ffffff';
+        c.lineWidth = 2.4;
+        c.beginPath();
+        c.moveTo(x - r * 0.55, y);
+        c.lineTo(x + r * 0.55, y);
+        c.stroke();
+      }
+
+      c.restore();
+    }
+
+    // 4. 비스듬한 손잡이 대전체 막대 렌더링 (자바실험실 스크린샷 1:1)
+    function drawChargedRod(c) {
+      c.save();
+      const tip = getRodTipPos();
+
+      // 대전체 각도: 약 45도 기울어짐
+      const rodAngle = -Math.PI / 4;
+      const rodLen = 320;
+      const rodThick = 44;
+
+      c.translate(tip.x, tip.y);
+      c.rotate(rodAngle);
+
+      // 손잡이(사람 손) 일러스트
+      c.save();
+      c.translate(-rodLen + 20, 0);
+      c.beginPath();
+      c.arc(0, 0, 36, 0, Math.PI * 2);
+      c.fillStyle = '#fed7aa';
+      c.fill();
+      c.strokeStyle = '#d97706';
+      c.lineWidth = 2;
+      c.stroke();
+
+      // 손가락 마디들
+      c.beginPath();
+      c.arc(10, -18, 14, 0, Math.PI * 2);
+      c.arc(22, -2, 14, 0, Math.PI * 2);
+      c.arc(16, 16, 14, 0, Math.PI * 2);
+      c.fillStyle = '#fde68a';
+      c.fill();
+      c.stroke();
+
+      c.font = 'bold 20px sans-serif';
+      c.fillStyle = '#0f172a';
+      c.textAlign = 'right';
+      c.textBaseline = 'middle';
+      c.rotate(-rodAngle); // 글자는 정방향
+      c.fillText('대전체', -45, 10);
+      c.restore();
+
+      // 투명 플라스틱 대전체 막대 본체
+      c.beginPath();
+      c.roundRect(-rodLen + 30, -rodThick / 2, rodLen - 30, rodThick, rodThick / 2);
+      c.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      c.fill();
+      c.strokeStyle = '#94a3b8';
+      c.lineWidth = 2.4;
+      c.stroke();
+
+      // 대전체 내부 전하 기호들 (7개 배치)
+      const isPlus = (rodType === 'positive');
+      const nRodCharges = 7;
+      for (let i = 0; i < nRodCharges; i++) {
+        const cx = -30 - i * 36;
+        drawCharge(c, cx, 0, 11, isPlus);
+      }
+
+      c.restore();
+    }
+
+    // ==========================================
+    // 메인 렌더링 루프
+    // ==========================================
+    function render() {
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // 1. 하단 절연 비커 스탠드 2개
+      const beakerA_CX = (COND_A_X - COND_W / 2);
+      const beakerB_CX = (COND_A_X + COND_W / 2) + separationGap;
+      drawBeaker(ctx, beakerA_CX, COND_Y + COND_H, 170, 220);
+      drawBeaker(ctx, beakerB_CX, COND_Y + COND_H, 170, 220);
+
+      // 2. 금속 원통 도체 A (좌측)
+      drawConductorRod(ctx, COND_A_X - COND_W, COND_Y, COND_W, COND_H, '도체 A');
+
+      // 3. 금속 원통 도체 B (우측)
+      drawConductorRod(ctx, COND_A_X + separationGap, COND_Y, COND_W, COND_H, '도체 B');
+
+      // 4. 고정된 원자핵 16개 ((+) 전하) 렌더링
+      nuclei.forEach(n => {
+        const curX = n.isA ? n.x : (n.x + separationGap);
+        drawCharge(ctx, curX, n.y, 11.5, true);
+      });
+
+      // 5. 자유 전자 16개 ((-) 전하) 렌더링
+      electrons.forEach(e => {
+        drawCharge(ctx, e.x, e.y, 11.5, false);
+      });
+
+      // 6. 손잡이 대전체 막대 렌더링
+      drawChargedRod(ctx);
+
+      // 7. 도체 중앙 텍스트 '도체' (스크린샷 1:1)
+      ctx.save();
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('도체', COND_A_X + separationGap / 2, COND_Y + COND_H + 8);
+      ctx.restore();
+    }
+
+    // ==========================================
+    // HUD 및 텍스트 안내 동기화
+    // ==========================================
+    function updateHUD(distCm) {
+      // 대전체 정보
+      const rodSign = (rodType === 'positive') ? '(+)로 대전' : '(-)로 대전';
+      hudRodVal.textContent = `${rodSign} 막대`;
+      hudDistSub.textContent = `거리: ${distCm} cm (${distCm < 15 ? '초근접' : '접근 중'})`;
+
+      // 도체 A 전하
+      if (netChargeA > 1) {
+        hudCondAVal.textContent = '(+) 전하 유도';
+        hudCondAVal.style.color = '#dc2626';
+        hudCondASub.textContent = `전자 부족 (+${netChargeA} 전하)`;
+      } else if (netChargeA < -1) {
+        hudCondAVal.textContent = '(-) 전하 유도';
+        hudCondAVal.style.color = '#2563eb';
+        hudCondASub.textContent = `전자 과잉 (${netChargeA} 전하)`;
+      } else {
+        hudCondAVal.textContent = '전기적 중성';
+        hudCondAVal.style.color = '#64748b';
+        hudCondASub.textContent = '순전하 0 (+8, -8 균형)';
+      }
+
+      // 도체 B 전하
+      if (netChargeB > 1) {
+        hudCondBVal.textContent = '(+) 전하 유도';
+        hudCondBVal.style.color = '#dc2626';
+        hudCondBSub.textContent = `전자 부족 (+${netChargeB} 전하)`;
+      } else if (netChargeB < -1) {
+        hudCondBVal.textContent = '(-) 전하 유도';
+        hudCondBVal.style.color = '#2563eb';
+        hudCondBSub.textContent = `전자 과잉 (${netChargeB} 전하)`;
+      } else {
+        hudCondBVal.textContent = '전기적 중성';
+        hudCondBVal.style.color = '#64748b';
+        hudCondBSub.textContent = '순전하 0 (+8, -8 균형)';
+      }
+
+      // 결합 상태
+      if (isSeparated) {
+        hudStateVal.textContent = '분리됨 (전하 고정)';
+        hudStateVal.style.color = '#ea580c';
+        hudStateSub.textContent = '전하 이동 통로 차단';
+        btnToggleSeparate.textContent = '🧲 도체 접촉하기';
+      } else {
+        hudStateVal.textContent = '접촉 중 (전하 이동)';
+        hudStateVal.style.color = '#16a34a';
+        hudStateSub.textContent = '두 도체 사이 전자 이동';
+        btnToggleSeparate.textContent = '↔️ 도체 분리하기';
+      }
+
+      // 배너 안내 텍스트
+      if (isSeparated && distCm > 45) {
+        bannerText.innerHTML = `<strong>[비접촉 영구 대전 완성]</strong> 대전체가 있는 상태에서 도체를 떼어놓았기 때문에 대전체를 멀리 치워도 <strong>도체 A는 ${(netChargeA > 0) ? '(+)' : '(-)'}</strong>로, <strong>도체 B는 ${(netChargeB > 0) ? '(+)' : '(-)'}</strong>로 대전된 상태를 영구히 유지합니다!`;
+      } else if (isSeparated) {
+        bannerText.innerHTML = '<strong>[도체 분리 완료]</strong> 두 도체 사이에 틈이 생겨 전자가 원래 자리로 되돌아가지 못하고 각 도체에 갇혔습니다. 이제 대전체를 멀리 치워보세요.';
+      } else if (rodType === 'negative') {
+        bannerText.innerHTML = '<strong>[(-) 대전체 접근]</strong> 척력에 의해 자유 전자들이 도체 B(오른쪽)로 밀려납니다. 가까운 쪽 A는 전자가 부족해져 <strong>(+)로 대전</strong>되고, 먼 쪽 B는 전자가 많아져 <strong>(-)로 대전</strong>됩니다.';
+      } else {
+        bannerText.innerHTML = '<strong>[(+) 대전체 접근]</strong> 인력에 의해 자유 전자들이 도체 A(왼쪽)로 끌려옵니다. 가까운 쪽 A는 전자가 모여 <strong>(-)로 대전</strong>되고, 먼 쪽 B는 전자가 부족해져 <strong>(+)로 대전</strong>됩니다.';
+      }
+    }
+
+    // ==========================================
+    // 애니메이션 틱 루프
+    // ==========================================
+    function animate() {
+      updatePhysics();
+      render();
+      requestAnimationFrame(animate);
+    }
+
+    // ==========================================
+    // 이벤트 바인딩 및 인터랙션
+    // ==========================================
+
+    // 슬라이더 조작
+    distSlider.addEventListener('input', (e) => {
+      rodDist = parseFloat(e.target.value);
+      const actualDistanceCm = Math.round(60 - rodDist * 54);
+      distLabel.textContent = `${actualDistanceCm}.0cm`;
+    });
+
+    // 라디오 버튼 조작
+    radioRods.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        rodType = e.target.value;
+      });
+    });
+
+    // 도체 분리 / 접촉 토글 버튼
+    btnToggleSeparate.addEventListener('click', () => {
+      isSeparated = !isSeparated;
+    });
+
+    // 리셋 버튼
+    btnReset.addEventListener('click', () => {
+      isSeparated = false;
+      rodDist = 0.55;
+      distSlider.value = 0.55;
+      rodType = 'negative';
+      document.querySelector('input[name="rodType"][value="negative"]').checked = true;
+      const actualDistanceCm = Math.round(60 - rodDist * 54);
+      distLabel.textContent = `${actualDistanceCm}.0cm`;
+    });
+
+    // 4단계 실험 가이드 프리셋
+    btnStep1.addEventListener('click', () => {
+      isSeparated = false;
+      rodType = 'negative';
+      document.querySelector('input[name="rodType"][value="negative"]').checked = true;
+      rodDist = 0.85; // 매우 가까이
+      distSlider.value = 0.85;
+      distLabel.textContent = '14.0cm';
+    });
+
+    btnStep2.addEventListener('click', () => {
+      isSeparated = true; // 떼어놓기
+    });
+
+    btnStep3.addEventListener('click', () => {
+      rodDist = 0.02; // 대전체 멀리 치우기
+      distSlider.value = 0.02;
+      distLabel.textContent = '59.0cm';
+    });
+
+    btnStep4.addEventListener('click', () => {
+      isSeparated = false; // 다시 붙여서 중화
+    });
+
+    // 캔버스 드래그로 대전체 조작
+    const wrapper = document.getElementById('canvasWrapper');
+
+    function handleDragMove(clientX) {
+      if (!isDraggingRod) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = V_WIDTH / rect.width;
+      const mouseX = (clientX - rect.left) * scaleX;
+
+      // mouseX를 rodDist (0.0 ~ 1.0)로 매핑
+      const minX = 70;
+      const maxX = 225;
+      const clamped = Math.max(minX, Math.min(maxX, mouseX));
+      rodDist = (clamped - minX) / (maxX - minX);
+
+      distSlider.value = rodDist;
+      const actualDistanceCm = Math.round(60 - rodDist * 54);
+      distLabel.textContent = `${actualDistanceCm}.0cm`;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = V_WIDTH / rect.width;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+      if (mouseX < 380) {
+        isDraggingRod = true;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      handleDragMove(e.clientX);
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingRod = false;
+    });
+
+    // 터치 지원
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = V_WIDTH / rect.width;
+        const touchX = (e.touches[0].clientX - rect.left) * scaleX;
+        if (touchX < 380) {
+          isDraggingRod = true;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        handleDragMove(e.touches[0].clientX);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      isDraggingRod = false;
+    });
+
+    // 애니메이션 시작
+    requestAnimationFrame(animate);
+
+  })();
+  </script>
+</body>
+</html>

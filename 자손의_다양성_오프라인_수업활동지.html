@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>자손의 다양성 - 오프라인 수업 활동지 & 게임 룰북</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #dbeafe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --purple: #8b5cf6;
+    --purple-light: #f3e8ff;
+    --pink: #ec4899;
+    --pink-light: #fce7f3;
+    --ink: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --bg: #f8fafc;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.5;
+  }
+
+  /* 상단 화면 전용 네비게이션 */
+  .no-print-nav {
+    background: #0f172a; color: #fff; padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .nav-brand { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .nav-tabs { display: flex; gap: 6px; }
+  .nav-btn {
+    background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 14px;
+    border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  }
+  .nav-btn:hover { background: #334155; color: #fff; }
+  .nav-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-print {
+    background: var(--green); color: #fff; border: none; padding: 7px 16px;
+    border-radius: 6px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-print:hover { background: #15803d; }
+
+  /* 페이지 레이아웃 */
+  .page-wrap { max-width: 920px; margin: 24px auto 60px; padding: 0 16px; }
+
+  .worksheet {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 24px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 24px;
+  }
+
+  /* 헤더 섹션 */
+  .ws-header { border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 14px; }
+  .ws-title-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+  .ws-title-row h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a; }
+  .ws-badge {
+    background: var(--primary-light); color: var(--primary-dark); font-size: 11.5px; font-weight: 800;
+    padding: 3px 9px; border-radius: 4px; display: inline-block; margin-bottom: 4px;
+  }
+  .student-info { display: flex; gap: 12px; font-size: 13px; font-weight: 700; }
+  .info-field { border-bottom: 1.5px solid var(--ink); padding: 2px 8px; min-width: 70px; text-align: center; }
+
+  /* 미션 블록 */
+  .zone-block {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px;
+    margin-bottom: 10px; background: #fff;
+  }
+  .zone-title { font-size: 14.5px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .badge-tag {
+    font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 800;
+  }
+  .tag-blue { background: var(--primary-light); color: var(--primary); }
+  .tag-pink { background: var(--pink-light); color: var(--pink); }
+  .tag-green { background: var(--green-light); color: var(--green); }
+  .tag-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* 탐구 질문 박스 */
+  .q-box {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 8px 12px; margin-top: 6px; font-size: 12.5px;
+  }
+  .q-prompt { font-weight: 700; margin-bottom: 4px; color: #1e293b; }
+  .fill-input {
+    border: none; border-bottom: 1.5px solid var(--primary); background: transparent;
+    padding: 2px 4px; font-size: 12.5px; font-weight: 700; color: var(--primary-dark);
+    outline: none; text-align: center; width: 85px;
+  }
+
+  /* 테이블 */
+  table.ws-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; margin-top: 6px;
+  }
+  table.ws-table th, table.ws-table td {
+    border: 1px solid var(--border); padding: 5px 8px;
+  }
+  table.ws-table th { background: #f1f5f9; font-weight: 800; color: #334155; }
+
+  .hidden { display: none !important; }
+
+  /* 인쇄 최적화 */
+  @media print {
+    body { background: #fff !important; padding: 0 !important; }
+    .no-print-nav, #tabRule1, #tabRule2 { display: none !important; }
+    #tabWorksheet { display: block !important; }
+    .page-wrap { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .worksheet { border: none !important; box-shadow: none !important; padding: 2mm 4mm !important; }
+    .zone-block { border: 1px solid #000 !important; page-break-inside: avoid; margin-bottom: 5px !important; }
+    .q-box { background: #fff !important; border: 1px dashed #666 !important; }
+    @page { size: A4; margin: 6mm 8mm; }
+  }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-sim {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-sim:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+@media print {
+  .unified-nav-actions, .no-print-nav, .toolbar.no-print, header.unified-game-header, #kjsNav {
+    display: none !important;
+  }
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="no-print-nav">
+  <div class="nav-brand">
+    <span>🧬</span> 자손의 다양성 오프라인 수업 패키지 (중3 과학)
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('ws')">📄 1페이지 학생 탐구 활동지</button>
+    <button class="nav-btn" onclick="switchTab('rule1')">🪙 활동 1: 동전 몽타주 룰북</button>
+    <button class="nav-btn" onclick="switchTab('rule2')">🦠 활동 2: 다양성 서바이벌 룰북</button>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" class="btn-top btn-unified-nav btn-theory" onclick="location.reload();" title="활동지 처음 화면으로 새로고침"><span>↺ 처음화면</span></button>
+    <a href="./자손의_다양성.html" class="btn-top btn-unified-nav btn-sim" title="자손의_다양성 가상실험실 바로가기"><span>🧬 가상실험</span></a>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <button class="btn-print" onclick="window.print()">🖨️ 활동지 1장 인쇄 (A4/PDF)</button>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- TAB 1: 1페이지 학생 탐구 활동지 (A4 1장 출력용) -->
+  <div id="tabWorksheet" class="worksheet">
+    <div class="ws-header">
+      <div class="ws-title-row">
+        <div>
+          <span class="ws-badge">중3 과학 · Ⅴ. 생식과 유전</span>
+          <h1>[탐구 활동지] 70조 분의 1의 기적: 자손의 유전적 다양성</h1>
+        </div>
+        <div class="student-info">
+          <span>3학년 <span class="info-field"></span>반</span>
+          <span><span class="info-field"></span>번</span>
+          <span>이름: <span class="info-field" style="min-width:90px;"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 미션 1: 6대 유전 형질 동전 판정표 -->
+    <div class="zone-block">
+      <div class="zone-title">
+        <span>🪙 탐구 1: 동전 던지기로 결정하는 우리 아이 6대 유전 몽타주</span>
+        <span class="badge-tag tag-pink">모의 유전 실험</span>
+      </div>
+      <p style="font-size:11.5px; color:#475569; margin:2px 0 4px;">
+        * 부모(아빠 학생, 엄마 학생)가 각 형질마다 동전을 동시에 던져 자녀의 유전자를 결정합니다. (앞면=우성 / 뒷면=열성)
+      </p>
+      <table class="ws-table">
+        <thead>
+          <tr>
+            <th>조사 형질</th>
+            <th>우성 형질 vs 열성</th>
+            <th>아빠 동전</th>
+            <th>엄마 동전</th>
+            <th>자녀 유전자형</th>
+            <th>자녀의 겉모습 (표현형)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. 보조개</strong></td>
+            <td>있음 (D) vs 없음 (d)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(D)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="뒤(d)"></td>
+            <td><strong>Dd</strong></td>
+            <td><span class="badge-tag tag-green">보조개 있음</span></td>
+          </tr>
+          <tr>
+            <td><strong>2. 눈꺼풀</strong></td>
+            <td>쌍꺼풀 (E) vs 외꺼풀 (e)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="뒤(e)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="뒤(e)"></td>
+            <td><strong>ee</strong></td>
+            <td><span class="badge-tag tag-blue">외꺼풀</span></td>
+          </tr>
+          <tr>
+            <td><strong>3. 귓  불</strong></td>
+            <td>분리형 (F) vs 부착형 (f)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(F)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(F)"></td>
+            <td><strong>FF</strong></td>
+            <td><span class="badge-tag tag-green">분리형 귓불</span></td>
+          </tr>
+          <tr>
+            <td><strong>4. 혀말기</strong></td>
+            <td>가능 (T) vs 불가능 (t)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(T)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="뒤(t)"></td>
+            <td><strong>Tt</strong></td>
+            <td><span class="badge-tag tag-green">혀말기 가능</span></td>
+          </tr>
+          <tr>
+            <td><strong>5. 주근깨</strong></td>
+            <td>있음 (A) vs 없음 (a)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="뒤(a)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(A)"></td>
+            <td><strong>Aa</strong></td>
+            <td><span class="badge-tag tag-green">주근깨 있음</span></td>
+          </tr>
+          <tr>
+            <td><strong>6. 턱 모양</strong></td>
+            <td>둥근턱 (R) vs 각진턱 (r)</td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(R)"></td>
+            <td><input type="text" class="fill-input" style="width:45px;" value="앞(R)"></td>
+            <td><strong>RR</strong></td>
+            <td><span class="badge-tag tag-green">둥근턱</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 미션 2: 70조 조합 수학적 확률 계산 -->
+    <div class="zone-block">
+      <div class="zone-title">
+        <span>📐 탐구 2: 수학적 확률로 계산하는 자손의 경우의 수</span>
+        <span class="badge-tag tag-purple">확률 계산</span>
+      </div>
+      <div class="q-box">
+        <div class="q-prompt">Q1. 사람은 23쌍의 상동염색체를 갖는다. 감수 분열 시 한 사람이 만들 수 있는 생식세포의 가짓수는?</div>
+        <div style="font-size:12px; color:#334155; line-height:1.5;">
+          • 정자 종류: 2의 23제곱 = ( <input type="text" class="fill-input" style="width:50px;" value="2²³"> ) 가지 = 약 ( <input type="text" class="fill-input" style="width:65px;" value="840만"> ) 가지<br>
+          • 난자 종류: 2의 23제곱 = ( <input type="text" class="fill-input" style="width:50px;" value="2²³"> ) 가지 = 약 ( <input type="text" class="fill-input" style="width:65px;" value="840만"> ) 가지
+        </div>
+      </div>
+      <div class="q-box">
+        <div class="q-prompt">Q2. 아빠의 정자와 엄마의 난자가 무작위로 수정될 때, 태어날 자녀가 가질 수 있는 염색체 조합 총 가짓수는?</div>
+        <div style="font-size:12px; color:#334155; line-height:1.5;">
+          • 계산식: 2²³ × 2²³ = 2의 ( <input type="text" class="fill-input" style="width:45px;" value="46"> )제곱<br>
+          • 총 가짓수: 무려 ( <input type="text" class="fill-input" style="width:130px;" value="70조 3,687억"> ) 가지 이상!
+        </div>
+      </div>
+    </div>
+
+    <!-- 미션 3: 유전적 다양성의 생물학적 가치 -->
+    <div class="zone-block">
+      <div class="zone-title">
+        <span>🛡️ 탐구 3: 유전적 다양성과 환경 적응 (멸종 방지)</span>
+        <span class="badge-tag tag-blue">생존과 진화</span>
+      </div>
+      <div class="q-box">
+        <div class="q-prompt">Q3. 모든 개체가 똑같은 유전자를 가진 무성 생식 집단에 비해, 유성 생식 집단이 전염병 등 급격한 환경 재앙에서 살아남는 데 유리한 까닭은?</div>
+        <div style="font-size:12px; color:#475569; line-height:1.5;">
+          모든 개체의 유전자가 같으면 치명적인 전염병 발생 시 ( <input type="text" class="fill-input" style="width:90px;" value="집단 멸종"> )할 수 있지만, 유성 생식을 통해 유전적으로 다양한 자손을 만들면 그중 특정 질병에 ( <input type="text" class="fill-input" style="width:90px;" value="저항력/내성"> )을 가진 개체가 일부 살아남아 종을 유지할 수 있기 때문이다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 활동 1 교사용 룰북 (동전 몽타주) -->
+  <div id="tabRule1" class="worksheet hidden">
+    <div class="ws-header">
+      <span class="ws-badge">교사용 가이드</span>
+      <h1>🪙 활동 1: [동전 던져 자녀 몽타주 만들기] 수업 룰북</h1>
+    </div>
+    <div style="font-size:13.5px; line-height:1.7; color:#334155;">
+      <h3>1. 모의실험 세팅</h3>
+      <ul>
+        <li>학생 2명이 짝을 지어 부모(아빠, 엄마)가 됩니다. (각각 1인당 동전 1개 소지)</li>
+        <li>모든 부모는 6가지 형질에 대해 잡종(이형 접합)이라고 가정합니다.</li>
+      </ul>
+      <h3 style="margin-top:12px;">2. 진행 절차</h3>
+      <ol>
+        <li>형질 순서대로 "하나, 둘, 셋!" 구호와 함께 동전을 던집니다.</li>
+        <li>앞면은 우성, 뒷면은 열성 유전자로 기록하고 자녀의 표현형을 도출합니다.</li>
+        <li>도출된 6가지 표현형에 맞추어 얼굴 템플릿에 자녀의 몽타주를 그립니다.</li>
+        <li>완성된 몽타주를 칠판에 일렬로 부착하여 <b>"학급 15쌍 중 단 한 명도 똑같은 얼굴이 없다"</b>는 사실을 시각적으로 확인합니다.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- TAB 3: 활동 2 교사용 룰북 (다양성 서바이벌) -->
+  <div id="tabRule2" class="worksheet hidden">
+    <div class="ws-header">
+      <span class="ws-badge">교사용 가이드</span>
+      <h1>🦠 활동 2: [다양성 서바이벌: 클론 군단 vs 유성생식 가족]</h1>
+    </div>
+    <div style="font-size:13.5px; line-height:1.7; color:#334155;">
+      <h3>1. 게임 규칙</h3>
+      <ul>
+        <li><b>팀 A (클론 군단):</b> 무성 생식으로 번식하여 모든 개체가 동일한 유전자 카드 보유.</li>
+        <li><b>팀 B (유성 생식 가족):</b> 매 턴 다양한 조합의 자손 유전자 카드 보유.</li>
+      </ul>
+      <h3 style="margin-top:12px;">2. 이벤트 카드 오픈</h3>
+      <p>교사가 [조류독감 바이러스], [극심한 한파], [가뭄] 등의 재앙 카드를 오픈합니다. 클론 군단은 해당 병원체에 대한 방어 유전자가 없어 <b>전원 전멸</b>하는 반면, 유성 생식 팀은 특정 내성 유전자를 가진 개체가 살아남아 다음 세대로 번식하는 과정을 체험합니다.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tabWorksheet').classList.add('hidden');
+  document.getElementById('tabRule1').classList.add('hidden');
+  document.getElementById('tabRule2').classList.add('hidden');
+
+  if(tab === 'ws') {
+    document.getElementById('tabWorksheet').classList.remove('hidden');
+    document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  } else if(tab === 'rule1') {
+    document.getElementById('tabRule1').classList.remove('hidden');
+    document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  } else if(tab === 'rule2') {
+    document.getElementById('tabRule2').classList.remove('hidden');
+    document.querySelectorAll('.nav-btn')[2].classList.add('active');
+  }
+}
+</script>
+</body>
+</html>

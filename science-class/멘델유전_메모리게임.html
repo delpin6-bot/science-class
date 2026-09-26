@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>멘델 유전 페어 맞추기 (Mendel Genetics Memory Game) - 중3 과학</title>
+<style>
+  :root {
+    --bg-dark: #09131f;
+    --card-w: 125px;
+    --card-h: 175px;
+    --primary: #10b981;
+    --primary-glow: rgba(16, 185, 129, 0.4);
+    --gold: #f59e0b;
+    --gold-glow: rgba(245, 158, 11, 0.5);
+    --card-back-bg: #0f233a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; background: var(--bg-dark); color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", "맑은 고딕", sans-serif;
+    user-select: none; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
+  }
+
+  /* 1. Header Navigation Bar */
+  .game-header {
+    background: #0d1b2a; border-bottom: 2px solid #1e3a5f; padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .brand-group { display: flex; align-items: center; gap: 10px; }
+  .brand-logo { font-size: 26px; }
+  .brand-title { font-size: 18px; font-weight: 900; color: #34d399; letter-spacing: -0.5px; }
+  .brand-badge {
+    background: #1e3a5f; color: #a7f3d0; border: 1px solid #059669; font-size: 11px;
+    font-weight: 800; padding: 3px 8px; border-radius: 4px;
+  }
+
+  .nav-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn-nav {
+    background: #1b2a47; border: 1.5px solid #2d4674; color: #f1f5f9; padding: 6px 12px;
+    border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .btn-nav:hover { background: #2d4674; border-color: #34d399; }
+  .btn-nav.active { background: #059669; border-color: #34d399; color: #fff; }
+  .btn-nav.hint-btn { background: #d97706; border-color: #f59e0b; color: #fff; }
+  .btn-nav.hint-btn:hover { background: #b45309; }
+
+  /* 2. Sub-Bar: Stage Selector & Dashboard Stats */
+  .sub-dashboard {
+    background: #132238; border-bottom: 1.5px solid #1e3a5f; padding: 8px 18px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .stage-tab-group { display: flex; gap: 6px; }
+  .btn-stage {
+    background: #1e3250; border: 1.5px solid #2b4772; color: #94a3b8; padding: 5px 12px;
+    border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-stage.active { background: #10b981; border-color: #34d399; color: #fff; }
+
+  .stats-strip { display: flex; align-items: center; gap: 14px; font-size: 13px; font-weight: 800; }
+  .stat-pill {
+    background: #0b1726; border: 1px solid #1e3a5f; padding: 4px 10px; border-radius: 8px;
+    display: flex; align-items: center; gap: 5px; color: #cbd5e1;
+  }
+  .stat-val { color: #facc15; font-size: 14px; }
+  .combo-badge {
+    background: #7c2d12; color: #fdba74; border: 1px solid #ea580c; padding: 2px 7px;
+    border-radius: 12px; font-size: 11px; font-weight: 900; display: none;
+  }
+  .combo-badge.show { display: inline-block; animation: comboPulse 0.4s infinite alternate; }
+  @keyframes comboPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+  /* 3. Main Board Arena */
+  .arena-container {
+    flex: 1; display: flex; justify-content: center; align-items: center; padding: 18px;
+    background: radial-gradient(circle at center, #0f2237 0%, #060c14 100%); position: relative;
+  }
+  .board-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    width: 100%; max-width: 620px; perspective: 1000px;
+  }
+  @media (max-width: 660px) {
+    .board-grid { gap: 8px; max-width: 380px; }
+  }
+
+  /* 4. 3D Flip Card Architecture */
+  .memory-card {
+    height: var(--card-h); border-radius: 12px; position: relative;
+    transform-style: preserve-3d; transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+  }
+  @media (max-width: 660px) {
+    .memory-card { height: 135px; }
+  }
+  .memory-card.flipped {
+    transform: rotateY(180deg);
+  }
+  .memory-card.matched {
+    transform: rotateY(180deg); pointer-events: none;
+  }
+  .memory-card.matched .card-face-front {
+    box-shadow: 0 0 20px #10b981; border-color: #34d399; opacity: 0.88;
+  }
+  .memory-card.shake {
+    animation: cardShake 0.45s ease-in-out;
+  }
+  @keyframes cardShake {
+    0%, 100% { transform: rotateY(180deg) translateX(0); }
+    25% { transform: rotateY(180deg) translateX(-10px); }
+    75% { transform: rotateY(180deg) translateX(10px); }
+  }
+  .memory-card.hint-active .card-face-back {
+    animation: hintBorder 0.6s infinite alternate;
+  }
+  @keyframes hintBorder {
+    from { box-shadow: 0 0 10px #f59e0b; border-color: #fde047; }
+    to { box-shadow: 0 0 26px #f59e0b, 0 0 45px #d97706; border-color: #ffffff; }
+  }
+
+  .card-face {
+    position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+    display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+  }
+
+  /* Back Face (Classic Mendel Crest) */
+  .card-face-back {
+    background: radial-gradient(circle at center, #1b3554 0%, #0d1e33 75%, #07111e 100%);
+    border: 3px solid #38bdf8; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .card-face-back:hover {
+    border-color: #7dd3fc; box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+  }
+  .back-crest {
+    width: 62px; height: 62px; border-radius: 50%; border: 2px solid #38bdf8;
+    background: radial-gradient(circle, #0e2a47 0%, #061524 100%);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+  }
+  .back-label { font-size: 11px; font-weight: 900; color: #bae6fd; letter-spacing: 0.5px; }
+
+  /* Front Face (Card Type: Genotype vs Phenotype vs Ratio) */
+  .card-face-front {
+    transform: rotateY(180deg); border: 3px solid #cbd5e1; background: #ffffff; color: #0f172a;
+  }
+
+  /* 1) Genotype Style */
+  .card-face-front.type-genotype {
+    background: radial-gradient(circle at center, #eff6ff 0%, #dbeafe 75%, #bfdbfe 100%);
+    border-color: #2563eb;
+  }
+  .type-genotype .type-badge {
+    background: #1d4ed8; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; align-self: flex-start;
+  }
+  .type-genotype .center-content {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .genotype-formula {
+    font-size: 38px; font-weight: 900; color: #1e3a8a; letter-spacing: 1px; font-family: "Georgia", serif;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .genotype-desc {
+    font-size: 11px; font-weight: 800; color: #3b82f6; margin-top: 4px; text-align: center;
+  }
+
+  /* 2) Phenotype Style */
+  .card-face-front.type-phenotype {
+    background: radial-gradient(circle at center, #f0fdf4 0%, #dcfce7 75%, #bbf7d0 100%);
+    border-color: #16a34a;
+  }
+  .type-phenotype .type-badge {
+    background: #15803d; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; align-self: flex-start;
+  }
+  .type-phenotype .center-content {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .phenotype-icon { font-size: 44px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2)); }
+  .phenotype-title { font-size: 14px; font-weight: 900; color: #14532d; margin-top: 6px; text-align: center; }
+
+  /* 3) Ratio & Cross Style */
+  .card-face-front.type-ratio {
+    background: radial-gradient(circle at center, #fefce8 0%, #fef08a 75%, #fde047 100%);
+    border-color: #ca8a04;
+  }
+  .type-ratio .type-badge {
+    background: #a16207; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; align-self: flex-start;
+  }
+  .type-ratio .center-content {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ratio-formula { font-size: 20px; font-weight: 900; color: #713f12; text-align: center; line-height: 1.3; }
+  .ratio-badge {
+    background: #854d0e; color: #fef08a; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 900; margin-top: 6px;
+  }
+
+  .card-footer-note {
+    font-size: 10px; color: #64748b; font-weight: 700; text-align: center; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 3px;
+  }
+
+  /* 5. Modals (Guide, Game Clear, Settings) */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-card {
+    background: #0f1f33; border: 2px solid #1e3a5f; border-radius: 16px; width: 100%; max-width: 640px;
+    max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    border-bottom: 1.5px solid #1e3a5f; padding-bottom: 10px;
+  }
+  .modal-title { font-size: 18px; font-weight: 900; color: #34d399; display: flex; align-items: center; gap: 8px; }
+  .btn-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+  .btn-close:hover { color: #fff; }
+
+  /* Clear Celebration */
+  .clear-wrap { text-align: center; padding: 10px 0; }
+  .clear-title { font-size: 26px; font-weight: 900; color: #facc15; margin: 0 0 6px; }
+  .stars-row { font-size: 38px; color: #f59e0b; margin: 10px 0; letter-spacing: 4px; }
+  .rank-badge {
+    display: inline-block; background: #065f46; color: #6ee7b7; border: 1.5px solid #10b981;
+    padding: 6px 18px; border-radius: 20px; font-size: 15px; font-weight: 900; margin-bottom: 16px;
+  }
+  .clear-stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0;
+  }
+  .stat-card {
+    background: #162a42; border: 1px solid #233f63; border-radius: 10px; padding: 10px;
+  }
+  .stat-card-label { font-size: 11px; color: #94a3b8; font-weight: 700; }
+  .stat-card-val { font-size: 18px; font-weight: 900; color: #38bdf8; margin-top: 4px; }
+
+  /* Guide Content */
+  .guide-sec { margin-bottom: 18px; font-size: 13.5px; line-height: 1.6; color: #cbd5e1; }
+  .guide-sec h3 { margin: 0 0 6px; font-size: 15px; color: #facc15; font-weight: 800; }
+  .punnett-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .punnett-table th, .punnett-table td { border: 1px solid #334155; padding: 6px 8px; text-align: center; }
+  .punnett-table th { background: #13243a; color: #38bdf8; }
+  .punnett-table td { background: #0e1c2e; }
+  .punnett-table td.dom { color: #fef08a; font-weight: 800; }
+  .punnett-table td.rec { color: #86efac; font-weight: 800; }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<header class="unified-game-header">
+  <div class="header-brand">
+    <span class="game-badge">수업 게임</span>
+    <span class="game-title">멘델 유전 페어 맞추기</span>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+
+<!-- 1. Header Navigation Bar -->
+<div class="game-header">
+  <div class="brand-group">
+    <span class="brand-logo">🧬</span>
+    <div>
+      <div class="brand-title">멘델 유전 페어 맞추기 (Mendel Memory Game)</div>
+    </div>
+    <span class="brand-badge">[중3 과학] 생식과 유전</span>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn-nav hint-btn" onclick="useHint()">
+      <span>💡 힌트 (짝 보기)</span>
+    </button>
+    <button class="btn-nav" onclick="openModal('guideModal')">📖 멘델 유전 도감</button>
+    <button class="btn-nav" id="btnSound" onclick="toggleSound()">🔊 소리 켬</button>
+    <button class="btn-nav" onclick="restartCurrentStage()">🔄 다시 시작</button>
+    <a href="./시작하기_수업게임서랍.html" class="btn-nav">🏠 수업 서랍</a>
+  </div>
+</div>
+
+<!-- 2. Sub-Bar: Stage Selector & Live Stats -->
+<div class="sub-dashboard">
+  <div class="stage-tab-group">
+    <button class="btn-stage active" id="btnStage1" onclick="switchStage(1)">
+      1단계: 유전자형 ↔ 표현형
+    </button>
+    <button class="btn-stage" id="btnStage2" onclick="switchStage(2)">
+      2단계: 교배식 ↔ 분리비
+    </button>
+    <button class="btn-stage" id="btnStage3" onclick="switchStage(3)">
+      3단계: 독립의 법칙 심화
+    </button>
+  </div>
+
+  <div class="stats-strip">
+    <span class="combo-badge" id="comboBadge">🔥 2 COMBO!</span>
+    <div class="stat-pill">
+      <span>⏱️ 시간:</span>
+      <span class="stat-val" id="timerVal">0초</span>
+    </div>
+    <div class="stat-pill">
+      <span>🎯 시도:</span>
+      <span class="stat-val" id="movesVal">0회</span>
+    </div>
+    <div class="stat-pill">
+      <span>✨ 점수:</span>
+      <span class="stat-val" id="scoreVal">0점</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Main Memory Card Arena -->
+<div class="arena-container">
+  <div class="board-grid" id="boardGrid">
+    <!-- 16 Cards Rendered Dynamically -->
+  </div>
+</div>
+
+<!-- 4. Game Guide & Punnett Square Modal -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">📖 멘델의 유전 원리 핵심 도감</div>
+      <button class="btn-close" onclick="closeModal('guideModal')">×</button>
+    </div>
+
+    <div class="guide-sec">
+      <h3>🟢 1. 우열의 원리 (Law of Dominance)</h3>
+      <p>
+        대립형질이 다른 순종 부모(RR × rr)를 교배했을 때, 잡종 1대(Rr)에서 겉으로 드러나는 형질을 <b>우성(Dominant)</b>, 드러나지 않는 형질을 <b>열성(Recessive)</b>이라고 합니다.
+      </p>
+      <ul>
+        <li><b>RR</b> (우성 순종) : 둥근 완두</li>
+        <li><b>Rr</b> (잡종) : <b>둥근 완두</b> (우성인 R만 발현!)</li>
+        <li><b>rr</b> (열성 순종) : 주름진 완두</li>
+      </ul>
+    </div>
+
+    <div class="guide-sec">
+      <h3>🧬 2. 분리의 법칙 (Law of Segregation)</h3>
+      <p>
+        생식세포가 만들어질 때 한 쌍의 대립유전자가 분리되어 서로 다른 생식세포로 들어갑니다.<br>
+        잡종 1대를 자가 수분(<b>Rr × Rr</b>)하면 잡종 2대에서 <b>둥근 완두 : 주름진 완두 = 3 : 1</b>로 분리됩니다.
+      </p>
+      <table class="punnett-table">
+        <thead>
+          <tr>
+            <th>생식세포</th>
+            <th>R (1/2)</th>
+            <th>r (1/2)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>R (1/2)</th>
+            <td class="dom">RR (둥근 완두)</td>
+            <td class="dom">Rr (둥근 완두)</td>
+          </tr>
+          <tr>
+            <th>r (1/2)</th>
+            <td class="dom">Rr (둥근 완두)</td>
+            <td class="rec">rr (주름진 완두)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:11.5px; color:#94a3b8; margin-top:4px;">
+        ※ 표현형 분리비: 둥근 완두(3) : 주름진 완두(1) / 유전자형 분리비: RR(1) : Rr(2) : rr(1)
+      </div>
+    </div>
+
+    <div class="guide-sec">
+      <h3>🌱 3. 독립의 법칙 (Law of Independent Assortment)</h3>
+      <p>
+        두 쌍 이상의 대립형질(모양과 색깔)은 서로 영향을 미치지 않고 각각 분리의 법칙에 따라 독립적으로 유전됩니다.<br>
+        <b>YyRr × YyRr 자가 수분 시:</b><br>
+        👉 <b>[둥·노] : [둥·초] : [주·노] : [주·초] = 9 : 3 : 3 : 1</b>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Stage Clear Modal -->
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-card">
+    <div class="clear-wrap">
+      <div style="font-size:46px;">🎉</div>
+      <div class="clear-title" id="clearStageTitle">1단계 클리어!</div>
+      <div class="stars-row" id="clearStars">★★★</div>
+      <div>
+        <span class="rank-badge" id="clearRank">🏆 멘델의 수제자</span>
+      </div>
+
+      <div class="clear-stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">소요 시간</div>
+          <div class="stat-card-val" id="clearTime">32초</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">시도 횟수</div>
+          <div class="stat-card-val" id="clearMoves">12회</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">최종 점수</div>
+          <div class="stat-card-val" id="clearScore">1,250점</div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+        <button class="btn-nav" style="padding:10px 18px;" onclick="restartCurrentStage()">🔄 다시 도전</button>
+        <button class="btn-nav active" style="padding:10px 22px; font-size:14px;" id="btnNextStage" onclick="goNextStage()">
+          <span>다음 단계 도전 ➔</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. AUDIO SYNTHESIZER (Web Audio API)
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+
+  if (type === 'flip') {
+    // Whoosh
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+
+  } else if (type === 'match') {
+    // Ding-Dong Harmonic Chime (C5, G5)
+    [523.25, 783.99].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+      gain.gain.setValueAtTime(0, now + idx * 0.1);
+      gain.gain.linearRampToValueAtTime(0.3, now + idx * 0.1 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.1);
+      osc.stop(now + idx * 0.1 + 0.55);
+    });
+
+  } else if (type === 'combo') {
+    // Arpeggio
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+      gain.gain.setValueAtTime(0.25, now + idx * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.07);
+      osc.stop(now + idx * 0.07 + 0.35);
+    });
+
+  } else if (type === 'mismatch') {
+    // Thud
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.linearRampToValueAtTime(90, now + 0.18);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+
+  } else if (type === 'victory') {
+    // Fanfare
+    [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+      gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.6);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.1);
+      osc.stop(now + idx * 0.1 + 0.65);
+    });
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btnSound').textContent = soundEnabled ? '🔊 소리 켬' : '🔇 소리 끔';
+}
+
+/* ==========================================================================
+   2. STAGE DATA DEFINITIONS (8 Pairs = 16 Cards per Stage)
+   ========================================================================== */
+const STAGE_DECKS = {
+  1: [
+    // 완두 모양 (우열의 원리)
+    { pairId: 1, type: 'genotype', tag: '유전자형', main: 'RR', sub: '우성 순종', note: '완두 모양 대립유전자' },
+    { pairId: 1, type: 'phenotype', tag: '표현형', icon: '🟢', main: '둥근 완두', sub: '매끈한 둥근 모양', note: '우성 형질 발현' },
+
+    { pairId: 2, type: 'genotype', tag: '유전자형', main: 'Rr', sub: '잡종 1대 (우성+열성)', note: '대립유전자 구성' },
+    { pairId: 2, type: 'phenotype', tag: '표현형', icon: '🟢', main: '둥근 완두', sub: '우열의 원리 (R>r)', note: '잡종에서도 우성 발현' },
+
+    { pairId: 3, type: 'genotype', tag: '유전자형', main: 'rr', sub: '열성 순종', note: '대립유전자 구성' },
+    { pairId: 3, type: 'phenotype', tag: '표현형', icon: '🟤', main: '주름진 완두', sub: '울퉁불퉁한 모양', note: '열성 순종일 때만 발현' },
+
+    // 완두 색깔
+    { pairId: 4, type: 'genotype', tag: '유전자형', main: 'YY', sub: '우성 순종', note: '완두 색깔 대립유전자' },
+    { pairId: 4, type: 'phenotype', tag: '표현형', icon: '🟡', main: '노란색 완두', sub: '밝은 노란색 씨앗', note: '우성 형질 발현' },
+
+    { pairId: 5, type: 'genotype', tag: '유전자형', main: 'Yy', sub: '잡종 1대 (노란색 우성)', note: '대립유전자 구성' },
+    { pairId: 5, type: 'phenotype', tag: '표현형', icon: '🟡', main: '노란색 완두', sub: '우열의 원리 (Y>y)', note: '우성인 노란색 발현' },
+
+    { pairId: 6, type: 'genotype', tag: '유전자형', main: 'yy', sub: '열성 순종', note: '대립유전자 구성' },
+    { pairId: 6, type: 'phenotype', tag: '표현형', icon: '🟢', main: '초록색 완두', sub: '초록색 씨앗', note: '열성 순종일 때만 발현' },
+
+    // 사람 형질
+    { pairId: 7, type: 'genotype', tag: '유전자형', main: 'EE / Ee', sub: '우성 유전자 보유', note: '귓불 유전' },
+    { pairId: 7, type: 'phenotype', tag: '표현형', icon: '👂', main: '분리형 귓불', sub: '뺨에서 떨어진 귓불', note: '우성 형질 발현' },
+
+    { pairId: 8, type: 'genotype', tag: '유전자형', main: 'ee', sub: '열성 순종', note: '귓불 유전' },
+    { pairId: 8, type: 'phenotype', tag: '표현형', icon: '👂', main: '부착형 귓불', sub: '뺨에 붙은 귓불', note: '열성 형질 발현' }
+  ],
+
+  2: [
+    // 분리의 법칙 교배식 ↔ 자손 표현형 분리비
+    { pairId: 101, type: 'genotype', tag: '부모 교배', main: 'Rr × Rr', sub: '잡종 1대 자가 수분', note: '분리의 법칙' },
+    { pairId: 101, type: 'ratio', tag: '자손 표현형 비', main: '둥근 것 : 주름진 것', sub: '3 : 1', note: '유전자형비 1:2:1' },
+
+    { pairId: 102, type: 'genotype', tag: '부모 교배', main: 'Rr × rr', sub: '검정교배 (잡종 × 열성순종)', note: '유전자형 검정' },
+    { pairId: 102, type: 'ratio', tag: '자손 표현형 비', main: '둥근 것 : 주름진 것', sub: '1 : 1', note: '둥근 것 50%, 주름진 것 50%' },
+
+    { pairId: 103, type: 'genotype', tag: '부모 교배', main: 'RR × rr', sub: '순종 어버이 교배', note: '잡종 1대 형성' },
+    { pairId: 103, type: 'ratio', tag: '자손 표현형 비', main: '자손 100% 둥근 완두', sub: '유전자형 모두 Rr', note: '우열의 원리' },
+
+    { pairId: 104, type: 'genotype', tag: '부모 교배', main: 'Yy × Yy', sub: '색깔 잡종 1대 자가 수분', note: '분리의 법칙' },
+    { pairId: 104, type: 'ratio', tag: '자손 표현형 비', main: '노란색 : 초록색', sub: '3 : 1', note: '유전자형비 1:2:1' },
+
+    { pairId: 105, type: 'genotype', tag: '부모 교배', main: 'Yy × yy', sub: '색깔 검정교배', note: '유전자형 검정' },
+    { pairId: 105, type: 'ratio', tag: '자손 표현형 비', main: '노란색 : 초록색', sub: '1 : 1', note: '노란 것 50%, 초록 것 50%' },
+
+    { pairId: 106, type: 'genotype', tag: '부모 교배', main: 'YY × yy', sub: '노란순종 × 초록순종', note: '어버이 교배' },
+    { pairId: 106, type: 'ratio', tag: '자손 표현형 비', main: '자손 100% 노란색', sub: '유전자형 모두 Yy', note: '우열의 원리' },
+
+    { pairId: 107, type: 'genotype', tag: '부모 교배', main: 'RR × Rr', sub: '우성 순종 × 잡종', note: '역교배' },
+    { pairId: 107, type: 'ratio', tag: '자손 표현형 비', main: '자손 100% 둥근 완두', sub: 'RR : Rr = 1 : 1', note: '주름진 완두 0%' },
+
+    { pairId: 108, type: 'genotype', tag: '부모 교배', main: 'YY × Yy', sub: '노란 순종 × 잡종', note: '역교배' },
+    { pairId: 108, type: 'ratio', tag: '자손 표현형 비', main: '자손 100% 노란 완두', sub: 'YY : Yy = 1 : 1', note: '초록색 완두 0%' }
+  ],
+
+  3: [
+    // 독립의 법칙 (두 쌍 대립형질)
+    { pairId: 201, type: 'genotype', tag: '부모 교배', main: 'YyRr × YyRr', sub: '두 쌍 잡종 1대 자가 수분', note: '독립의 법칙' },
+    { pairId: 201, type: 'ratio', tag: '자손 분리비', main: '[둥·노] : [둥·초] : [주·노] : [주·초]', sub: '9 : 3 : 3 : 1', note: '(3:1) × (3:1)' },
+
+    { pairId: 202, type: 'genotype', tag: '부모 교배', main: 'YyRr × yyrr', sub: '두 쌍 검정교배', note: '독립 검정' },
+    { pairId: 202, type: 'ratio', tag: '자손 분리비', main: '[둥·노] : [둥·초] : [주·노] : [주·초]', sub: '1 : 1 : 1 : 1', note: '(1:1) × (1:1)' },
+
+    { pairId: 203, type: 'genotype', tag: '부모 교배', main: 'YYRR × yyrr', sub: '두 쌍 순종 어버이 교배', note: '잡종 1대 형성' },
+    { pairId: 203, type: 'ratio', tag: '자손 분리비', main: '자손 100% 둥글고 노란 완두', sub: '유전자형 모두 YyRr', note: '우열의 원리' },
+
+    { pairId: 204, type: 'genotype', tag: '유전자형 조합', main: 'Y_R_', sub: 'YYRR, YYRr, YyRR, YyRr', note: '우성 형질 2개 발현' },
+    { pairId: 204, type: 'phenotype', tag: '표현형', icon: '🟡', main: '둥글고 노란 완두', sub: '두 형질 모두 우성', note: '전체 자손 중 9/16' },
+
+    { pairId: 205, type: 'genotype', tag: '유전자형 조합', main: 'Y_rr', sub: 'YYrr, Yyrr', note: '색깔 우성 + 모양 열성' },
+    { pairId: 205, type: 'phenotype', tag: '표현형', icon: '🟡', main: '주름지고 노란 완두', sub: '노란색 우성, 주름진 열성', note: '전체 자손 중 3/16' },
+
+    { pairId: 206, type: 'genotype', tag: '유전자형 조합', main: 'yyR_', sub: 'yyRR, yyRr', note: '색깔 열성 + 모양 우성' },
+    { pairId: 206, type: 'phenotype', tag: '표현형', icon: '🟢', main: '둥글고 초록 완두', sub: '초록색 열성, 둥근 우성', note: '전체 자손 중 3/16' },
+
+    { pairId: 207, type: 'genotype', tag: '유전자형 조합', main: 'yyrr', sub: '열성 순종', note: '두 형질 모두 열성' },
+    { pairId: 207, type: 'phenotype', tag: '표현형', icon: '🟤', main: '주름지고 초록 완두', sub: '두 형질 모두 열성', note: '전체 자손 중 1/16' },
+
+    { pairId: 208, type: 'genotype', tag: '부모 교배', main: 'YyRR × YyRR', sub: '모양 순종, 색깔 잡종', note: '독립 적용' },
+    { pairId: 208, type: 'ratio', tag: '자손 분리비', main: '[둥·노] : [둥·초]', sub: '3 : 1', note: '주름진 완두 0%' }
+  ]
+};
+
+/* ==========================================================================
+   3. GAME ENGINE
+   ========================================================================== */
+let currentStage = 1;
+let cards = [];
+let flippedCards = [];
+let matchedPairCount = 0;
+let moves = 0;
+let score = 0;
+let combo = 0;
+let timerSeconds = 0;
+let timerInterval = null;
+let isBoardLocked = false;
+
+function switchStage(stageNum) {
+  currentStage = stageNum;
+  document.querySelectorAll('.stage-tab-group .btn-stage').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx + 1 === stageNum);
+  });
+  restartCurrentStage();
+}
+
+function restartCurrentStage() {
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  moves = 0;
+  score = 0;
+  combo = 0;
+  matchedPairCount = 0;
+  flippedCards = [];
+  isBoardLocked = false;
+
+  updateStats();
+
+  // Load and shuffle cards
+  const deckSource = STAGE_DECKS[currentStage] || STAGE_DECKS[1];
+  cards = deckSource.map((card, idx) => ({
+    ...card,
+    cardId: idx
+  }));
+
+  // Shuffle Fisher-Yates
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+
+  renderBoard();
+
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    document.getElementById('timerVal').textContent = `${timerSeconds}초`;
+  }, 1000);
+}
+
+function renderBoard() {
+  const grid = document.getElementById('boardGrid');
+  grid.innerHTML = '';
+
+  cards.forEach((c, index) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'memory-card';
+    cardEl.id = `card-${index}`;
+    cardEl.dataset.index = index;
+    cardEl.dataset.pairId = c.pairId;
+
+    let frontContent = '';
+    if (c.type === 'genotype') {
+      frontContent = `
+        <div class="card-face card-face-front type-genotype">
+          <span class="type-badge">${c.tag}</span>
+          <div class="center-content">
+            <div class="genotype-formula">${c.main}</div>
+            <div class="genotype-desc">${c.sub}</div>
+          </div>
+          <div class="card-footer-note">${c.note}</div>
+        </div>
+      `;
+    } else if (c.type === 'phenotype') {
+      frontContent = `
+        <div class="card-face card-face-front type-phenotype">
+          <span class="type-badge">${c.tag}</span>
+          <div class="center-content">
+            <div class="phenotype-icon">${c.icon}</div>
+            <div class="phenotype-title">${c.main}</div>
+            <div style="font-size:11px; color:#15803d; font-weight:700; margin-top:2px;">${c.sub}</div>
+          </div>
+          <div class="card-footer-note">${c.note}</div>
+        </div>
+      `;
+    } else {
+      // ratio
+      frontContent = `
+        <div class="card-face card-face-front type-ratio">
+          <span class="type-badge">${c.tag}</span>
+          <div class="center-content">
+            <div class="ratio-formula">${c.main}</div>
+            <span class="ratio-badge">${c.sub}</span>
+          </div>
+          <div class="card-footer-note">${c.note}</div>
+        </div>
+      `;
+    }
+
+    cardEl.innerHTML = `
+      <div class="card-face card-face-back">
+        <div class="back-crest">🧬</div>
+        <div class="back-label">MENDEL</div>
+      </div>
+      ${frontContent}
+    `;
+
+    cardEl.addEventListener('click', () => onCardClicked(index));
+    grid.appendChild(cardEl);
+  });
+}
+
+function onCardClicked(index) {
+  if (isBoardLocked) return;
+  const cardEl = document.getElementById(`card-${index}`);
+  if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+
+  // Flip card
+  cardEl.classList.add('flipped');
+  playSound('flip');
+  flippedCards.push({ index, data: cards[index], el: cardEl });
+
+  if (flippedCards.length === 2) {
+    moves++;
+    updateStats();
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  isBoardLocked = true;
+  const [c1, c2] = flippedCards;
+
+  if (c1.data.pairId === c2.data.pairId) {
+    // MATCH SUCCESS!
+    combo++;
+    const comboBonus = combo * 30;
+    score += (100 + comboBonus);
+    matchedPairCount++;
+
+    if (combo >= 2) {
+      playSound('combo');
+      showComboBadge(combo);
+    } else {
+      playSound('match');
+    }
+
+    setTimeout(() => {
+      c1.el.classList.add('matched');
+      c2.el.classList.add('matched');
+      flippedCards = [];
+      isBoardLocked = false;
+      updateStats();
+
+      // Check stage clear (8 pairs = 16 cards)
+      if (matchedPairCount === 8) {
+        handleStageClear();
+      }
+    }, 450);
+
+  } else {
+    // MISMATCH
+    combo = 0;
+    hideComboBadge();
+    score = Math.max(0, score - 15);
+    playSound('mismatch');
+
+    setTimeout(() => {
+      c1.el.classList.add('shake');
+      c2.el.classList.add('shake');
+    }, 300);
+
+    setTimeout(() => {
+      c1.el.classList.remove('flipped', 'shake');
+      c2.el.classList.remove('flipped', 'shake');
+      flippedCards = [];
+      isBoardLocked = false;
+      updateStats();
+    }, 850);
+  }
+}
+
+function useHint() {
+  if (isBoardLocked) return;
+  score = Math.max(0, score - 40);
+  updateStats();
+
+  // Find unmatched pair
+  const unmatchedIndices = [];
+  cards.forEach((c, idx) => {
+    const el = document.getElementById(`card-${idx}`);
+    if (!el.classList.contains('matched') && !el.classList.contains('flipped')) {
+      unmatchedIndices.push(idx);
+    }
+  });
+
+  // Group by pairId
+  const pairMap = {};
+  unmatchedIndices.forEach(idx => {
+    const pid = cards[idx].pairId;
+    if (!pairMap[pid]) pairMap[pid] = [];
+    pairMap[pid].push(idx);
+  });
+
+  const availablePairIds = Object.keys(pairMap).filter(pid => pairMap[pid].length === 2);
+  if (availablePairIds.length > 0) {
+    const targetPid = availablePairIds[0];
+    const [idx1, idx2] = pairMap[targetPid];
+    const el1 = document.getElementById(`card-${idx1}`);
+    const el2 = document.getElementById(`card-${idx2}`);
+
+    el1.classList.add('hint-active');
+    el2.classList.add('hint-active');
+    playSound('combo');
+
+    setTimeout(() => {
+      el1.classList.remove('hint-active');
+      el2.classList.remove('hint-active');
+    }, 2400);
+  }
+}
+
+function updateStats() {
+  document.getElementById('movesVal').textContent = `${moves}회`;
+  document.getElementById('scoreVal').textContent = `${score}점`;
+}
+
+function showComboBadge(c) {
+  const b = document.getElementById('comboBadge');
+  b.textContent = `🔥 ${c} COMBO!`;
+  b.classList.add('show');
+}
+function hideComboBadge() {
+  document.getElementById('comboBadge').classList.remove('show');
+}
+
+/* ==========================================================================
+   4. STAGE CLEAR & RANKING
+   ========================================================================== */
+function handleStageClear() {
+  clearInterval(timerInterval);
+  playSound('victory');
+
+  // Calculate stars and title
+  let stars = '★★★';
+  let rank = '🏆 멘델의 수제자 (유전학 마스터)';
+  if (moves > 18 || timerSeconds > 60) {
+    stars = '★★☆';
+    rank = '🧬 유전학 탐구자';
+  }
+  if (moves > 24 || timerSeconds > 90) {
+    stars = '★☆☆';
+    rank = '🌱 멘델의 조수';
+  }
+
+  document.getElementById('clearStageTitle').textContent = `${currentStage}단계 완벽 클리어!`;
+  document.getElementById('clearStars').textContent = stars;
+  document.getElementById('clearRank').textContent = rank;
+  document.getElementById('clearTime').textContent = `${timerSeconds}초`;
+  document.getElementById('clearMoves').textContent = `${moves}회`;
+  document.getElementById('clearScore').textContent = `${score}점`;
+
+  const btnNext = document.getElementById('btnNextStage');
+  if (currentStage >= 3) {
+    btnNext.textContent = '🏆 1단계부터 다시 도전';
+    btnNext.onclick = () => { closeModal('clearModal'); switchStage(1); };
+  } else {
+    btnNext.textContent = `${currentStage + 1}단계 도전 ➔`;
+    btnNext.onclick = () => { closeModal('clearModal'); switchStage(currentStage + 1); };
+  }
+
+  openModal('clearModal');
+}
+
+function goNextStage() {
+  closeModal('clearModal');
+  if (currentStage < 3) {
+    switchStage(currentStage + 1);
+  } else {
+    switchStage(1);
+  }
+}
+
+/* Modal Helpers */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// Launch Stage 1
+switchStage(1);
+</script>
+
+<script>
+(function(){ var h=document.getElementById('kjsHome'); if(h && !h._kjs){ h._kjs=1; h.addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload(); }); } })();
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script id="kjs-sound-bridge">
+(function(){
+  var T={toast:false};
+  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
+  function wrap(o, m, kind){
+    if(!o || typeof o[m]!=="function") return;
+    var orig=o[m];
+    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
+  }
+  if(typeof playSound==="function"){ var ps=playSound;
+    playSound=function(t){ if(window.KJS && (t==="match"||t==="mismatch"||t==="victory")){ if(soundEnabled){ KJS[t==="match"?"ok":t==="mismatch"?"no":"win"](T); } return; } return ps.apply(this, arguments); }; }
+})();
+</script>
+</body>
+</html>

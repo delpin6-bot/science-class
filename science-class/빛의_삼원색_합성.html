@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>빛의 삼원색 합성 (Color Addition) - 자바실험실</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --red: #ef4444;
+      --green: #22c55e;
+      --blue: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 헤더 */
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-help:hover { background: #dbeafe; }
+
+    /* 원리 설명 접이식 창 */
+    .theory-box {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+    }
+    .theory-box.active { display: block; }
+    .theory-box h3 { color: #1d4ed8; margin-bottom: 8px; font-size: 1.05rem; }
+    .theory-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theory-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .theory-card h4 {
+      font-size: 0.92rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .theory-box ul { margin-left: 18px; }
+    .theory-box li { margin-bottom: 3px; }
+
+    /* 탭 메뉴 */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* 메인 캔버스 카드 */
+    .sim-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    #simCanvas {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      display: block;
+      width: 100%;
+      height: 480px;
+      cursor: grab;
+    }
+    #simCanvas:active { cursor: grabbing; }
+
+    /* 실시간 대시보드 */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .color-preview-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .color-swatch {
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      border: 2px solid #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .color-hex {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #334155;
+      font-family: monospace;
+    }
+
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .dash-card.c-r { border-top: 3px solid #ef4444; }
+    .dash-card.c-g { border-top: 3px solid #22c55e; }
+    .dash-card.c-b { border-top: 3px solid #3b82f6; }
+
+    .dash-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .dash-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+    .dash-sub { font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; }
+
+    /* 컨트롤 패널 */
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .sliders-group {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .color-slider-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .slider-tag {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+    .tag-r { background: #ef4444; }
+    .tag-g { background: #16a34a; }
+    .tag-b { background: #2563eb; }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 110px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    .range-r::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #ef4444; cursor: pointer;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+    .range-g::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #22c55e; cursor: pointer;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+    }
+    .range-b::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #3b82f6; cursor: pointer;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+    }
+
+    .preset-chips {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .preset-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .preset-chip:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .btn-action {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: #334155;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-action:hover { background: #f1f5f9; }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: 1fr 1fr; }
+      #simCanvas { height: 420px; }
+      .theory-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 헤더 -->
+  <header>
+    <div class="title-group">
+      <h1>💡 빛의 삼원색 합성 (Color Addition)</h1>
+      <p>빨강(R), 초록(G), 파랑(B) 빛의 가산 혼합과 컬러 그림자, 디스플레이 화소(RGB 픽셀) 가상실험실</p>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- 원리 설명 (접이식) -->
+  <div class="theory-box" id="theoryBox">
+    <h3>📖 빛의 합성 원리와 가산 혼합</h3>
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h4>🌈 1. 빛의 삼원색과 가산 혼합</h4>
+        <ul>
+          <li><strong>빛의 삼원색:</strong> 빨간색(R), 초록색(G), 파란색(B)</li>
+          <li><strong>가산 혼합의 특징:</strong> 빛은 합칠수록 점점 더 밝아지며, 세 빛이 모두 합쳐지면 <strong>백색광(흰색)</strong>이 됩니다.</li>
+          <li><strong>주요 2색 합성 (이차색):</strong>
+            <br>• 빨강(R) + 초록(G) = <strong>노랑(Yellow)</strong>
+            <br>• 초록(G) + 파랑(B) = <strong>청록(Cyan)</strong>
+            <br>• 빨강(R) + 파랑(B) = <strong>자홍(Magenta)</strong>
+          </li>
+          <li><strong>보색 관계:</strong> 합쳤을 때 흰색이 되는 두 색 (빨강↔청록, 초록↔자홍, 파랑↔노랑)</li>
+        </ul>
+      </div>
+      <div class="theory-card">
+        <h4>👥 2. 컬러 그림자와 디스플레이 픽셀</h4>
+        <ul>
+          <li><strong>삼색 조명 아래의 그림자:</strong>
+            <br>• 빨간빛만 가려진 곳 → 초록 + 파랑 = <strong>청록색 그림자</strong>
+            <br>• 초록빛만 가려진 곳 → 빨강 + 파랑 = <strong>자홍색 그림자</strong>
+            <br>• 파란빛만 가려진 곳 → 빨강 + 초록 = <strong>노란색 그림자</strong>
+            <br>• 세 빛이 모두 가려진 곳 → <strong>검은색 본그림자</strong>
+          </li>
+          <li><strong>디스플레이(스마트폰·모니터):</strong> 화면 속의 수백만 개 미세한 RGB 화소(Subpixel)의 밝기를 각각 조절하여 자연계의 모든 색을 표현합니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실험 모드 탭 바 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="VENN">💡 1. 3색 원형 조명 합성 (드래그 조작)</button>
+    <button class="tab-btn" data-tab="SHADOW">👥 2. 컬러 그림자 (무대 조명과 그림자)</button>
+    <button class="tab-btn" data-tab="PIXEL">🔍 3. 디스플레이 RGB 픽셀 돋보기</button>
+  </div>
+
+  <!-- 메인 캔버스 카드 -->
+  <div class="sim-card">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- 실시간 대시보드 카드 -->
+  <div class="dashboard">
+    <div class="color-preview-card">
+      <div class="dash-lbl">합성된 빛 색상</div>
+      <div class="color-swatch" id="colorSwatch" style="background:#ffffff;"></div>
+      <div class="color-hex" id="colorHex">#FFFFFF</div>
+    </div>
+    <div class="dash-card c-r">
+      <div class="dash-lbl">빨간빛 (Red)</div>
+      <div class="dash-val" id="dispValR">255 <span style="font-size:0.75rem; color:#64748b;">(100%)</span></div>
+      <div class="dash-sub">가산 혼합의 제1원색</div>
+    </div>
+    <div class="dash-card c-g">
+      <div class="dash-lbl">초록빛 (Green)</div>
+      <div class="dash-val" id="dispValG">255 <span style="font-size:0.75rem; color:#64748b;">(100%)</span></div>
+      <div class="dash-sub">가산 혼합의 제2원색</div>
+    </div>
+    <div class="dash-card c-b">
+      <div class="dash-lbl">파란빛 (Blue)</div>
+      <div class="dash-val" id="dispValB">255 <span style="font-size:0.75rem; color:#64748b;">(100%)</span></div>
+      <div class="dash-sub">가산 혼합의 제3원색</div>
+    </div>
+  </div>
+
+  <!-- 조작 컨트롤 패널 -->
+  <div class="control-card">
+    <div class="controls-row">
+      <div class="sliders-group">
+        <!-- R 슬라이더 -->
+        <div class="color-slider-item">
+          <span class="slider-tag tag-r">R</span>
+          <input type="range" class="range-r" id="sliderR" min="0" max="255" value="255">
+          <span id="txtR" style="color:#ef4444; width:30px;">255</span>
+        </div>
+        <!-- G 슬라이더 -->
+        <div class="color-slider-item">
+          <span class="slider-tag tag-g">G</span>
+          <input type="range" class="range-g" id="sliderG" min="0" max="255" value="255">
+          <span id="txtG" style="color:#16a34a; width:30px;">255</span>
+        </div>
+        <!-- B 슬라이더 -->
+        <div class="color-slider-item">
+          <span class="slider-tag tag-b">B</span>
+          <input type="range" class="range-b" id="sliderB" min="0" max="255" value="255">
+          <span id="txtB" style="color:#2563eb; width:30px;">255</span>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action" id="btnAllOn">💡 모두 켜기</button>
+        <button class="btn-action" id="btnAllOff">🌑 모두 끄기</button>
+        <button class="btn-action" id="btnReset">↺ 위치 초기화</button>
+      </div>
+    </div>
+
+    <!-- 대표 색상 원클릭 프리셋 -->
+    <div class="controls-row" style="border-top:1px solid #f1f5f9; padding-top:8px;">
+      <div class="preset-chips">
+        <span style="font-size:0.75rem; font-weight:700; color:#64748b;">대표 색상 프리셋:</span>
+        <button class="preset-chip" data-r="255" data-g="255" data-b="255"><span class="dot" style="background:#ffffff;"></span> 백색광(White)</button>
+        <button class="preset-chip" data-r="255" data-g="255" data-b="0"><span class="dot" style="background:#facc15;"></span> 노랑(R+G)</button>
+        <button class="preset-chip" data-r="255" data-g="0" data-b="255"><span class="dot" style="background:#f43f5e;"></span> 자홍(R+B)</button>
+        <button class="preset-chip" data-r="0" data-g="255" data-b="255"><span class="dot" style="background:#06b6d4;"></span> 청록(G+B)</button>
+        <button class="preset-chip" data-r="255" data-g="0" data-b="0"><span class="dot" style="background:#ef4444;"></span> 빨강(R)</button>
+        <button class="preset-chip" data-r="0" data-g="255" data-b="0"><span class="dot" style="background:#22c55e;"></span> 초록(G)</button>
+        <button class="preset-chip" data-r="0" data-g="0" data-b="255"><span class="dot" style="background:#3b82f6;"></span> 파랑(B)</button>
+        <button class="preset-chip" data-r="255" data-g="128" data-b="0"><span class="dot" style="background:#f97316;"></span> 주황</button>
+        <button class="preset-chip" data-r="140" data-g="0" data-b="255"><span class="dot" style="background:#a855f7;"></span> 보라</button>
+      </div>
+      <div style="font-size:0.75rem; color:#94a3b8;">
+        * 원형 조명과 장애물을 마우스나 터치로 직접 드래그하여 움직일 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+  let dpr = window.devicePixelRatio || 1;
+  let width = 1000;
+  let height = 480;
+
+  // 광원 밝기 상태 (0~255)
+  let valR = 255;
+  let valG = 255;
+  let valB = 255;
+
+  // 탭 상태: "VENN", "SHADOW", "PIXEL"
+  let currentTab = "VENN";
+
+  // 조명 원 중심 좌표 (VENN 모드)
+  let spotRadius = 135;
+  let spotR = { x: 0, y: 0, r: spotRadius };
+  let spotG = { x: 0, y: 0, r: spotRadius };
+  let spotB = { x: 0, y: 0, r: spotRadius };
+
+  // 장애물 위치 (SHADOW 모드)
+  let shadowObstacle = { x: 0, y: 0, radius: 26 };
+
+  // 드래그 상태
+  let draggedObj = null;
+  let dragOffset = { x: 0, y: 0 };
+
+  // DOM 요소 참조
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const sliderR = document.getElementById("sliderR");
+  const sliderG = document.getElementById("sliderG");
+  const sliderB = document.getElementById("sliderB");
+  const txtR = document.getElementById("txtR");
+  const txtG = document.getElementById("txtG");
+  const txtB = document.getElementById("txtB");
+  const dispValR = document.getElementById("dispValR");
+  const dispValG = document.getElementById("dispValG");
+  const dispValB = document.getElementById("dispValB");
+  const colorSwatch = document.getElementById("colorSwatch");
+  const colorHex = document.getElementById("colorHex");
+  const btnAllOn = document.getElementById("btnAllOn");
+  const btnAllOff = document.getElementById("btnAllOff");
+  const btnReset = document.getElementById("btnReset");
+  const presetChips = document.querySelectorAll(".preset-chip");
+  const btnHelpToggle = document.getElementById("btnHelpToggle");
+  const theoryBox = document.getElementById("theoryBox");
+
+  function resetPositions() {
+    const cx = width / 2;
+    const cy = height / 2 + 10;
+    const dist = 75;
+
+    // 상단 Red, 좌하단 Green, 우하단 Blue
+    spotR.x = cx;
+    spotR.y = cy - dist;
+    spotR.r = spotRadius;
+
+    spotG.x = cx - dist * 0.95;
+    spotG.y = cy + dist * 0.65;
+    spotG.r = spotRadius;
+
+    spotB.x = cx + dist * 0.95;
+    spotB.y = cy + dist * 0.65;
+    spotB.r = spotRadius;
+
+    // 섀도우 장애물 위치 (무대 중앙)
+    shadowObstacle.x = width * 0.5;
+    shadowObstacle.y = height * 0.58;
+  }
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width;
+    height = 480;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (spotR.x === 0) resetPositions();
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  // --- 색상 헬퍼 ---
+  function toHex(n) {
+    const h = Math.round(n).toString(16);
+    return h.length === 1 ? "0" + h : h;
+  }
+
+  function updateDashboard() {
+    txtR.textContent = valR;
+    txtG.textContent = valG;
+    txtB.textContent = valB;
+
+    dispValR.innerHTML = `${valR} <span style="font-size:0.75rem; color:#64748b;">(${Math.round(valR/255*100)}%)</span>`;
+    dispValG.innerHTML = `${valG} <span style="font-size:0.75rem; color:#64748b;">(${Math.round(valG/255*100)}%)</span>`;
+    dispValB.innerHTML = `${valB} <span style="font-size:0.75rem; color:#64748b;">(${Math.round(valB/255*100)}%)</span>`;
+
+    const hex = `#${toHex(valR)}${toHex(valG)}${toHex(valB)}`.toUpperCase();
+    colorHex.textContent = hex;
+    colorSwatch.style.backgroundColor = `rgb(${valR}, ${valG}, ${valB})`;
+  }
+
+  // ==========================================================================
+  // [렌더링 1] 벤다이어그램 조명 합성 모드 (VENN)
+  // ==========================================================================
+  function drawVenn() {
+    ctx.save();
+
+    // 어두운 실험실 암막 배경
+    ctx.fillStyle = "#020617";
+    ctx.fillRect(0, 0, width, height);
+
+    // 안내 문구
+    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("원형 조명을 마우스나 터치로 드래그하여 겹쳐지는 영역의 합성색을 관찰하세요.", width / 2, 28);
+
+    // 가산 혼합 (Additive Blending) 구현: globalCompositeOperation = 'screen'
+    ctx.globalCompositeOperation = "screen";
+
+    // 1. 빨간색 조명 (Red Spotlight)
+    if (valR > 0) {
+      drawSpotlight(spotR.x, spotR.y, spotR.r, valR, 0, 0, "빨강 (R)");
+    }
+
+    // 2. 초록색 조명 (Green Spotlight)
+    if (valG > 0) {
+      drawSpotlight(spotG.x, spotG.y, spotG.r, 0, valG, 0, "초록 (G)");
+    }
+
+    // 3. 파란색 조명 (Blue Spotlight)
+    if (valB > 0) {
+      drawSpotlight(spotB.x, spotB.y, spotB.r, 0, 0, valB, "파랑 (B)");
+    }
+
+    ctx.globalCompositeOperation = "source-over";
+
+    // 조명 손잡이 링 표시
+    drawHandle(spotR.x, spotR.y, "#ef4444", "R");
+    drawHandle(spotG.x, spotG.y, "#22c55e", "G");
+    drawHandle(spotB.x, spotB.y, "#3b82f6", "B");
+
+    // 겹친 주요 영역 라벨 렌더링
+    drawOverlapLabels();
+
+    ctx.restore();
+  }
+
+  function drawSpotlight(x, y, r, rVal, gVal, bVal, label) {
+    const grad = ctx.createRadialGradient(x, y, r * 0.15, x, y, r);
+    grad.addColorStop(0, `rgba(${rVal}, ${gVal}, ${bVal}, 1.0)`);
+    grad.addColorStop(0.7, `rgba(${rVal}, ${gVal}, ${bVal}, 0.85)`);
+    grad.addColorStop(1, `rgba(${rVal}, ${gVal}, ${bVal}, 0.0)`);
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHandle(x, y, color, tag) {
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(tag, x, y);
+  }
+
+  function drawOverlapLabels() {
+    // 세 원의 중심 중간점들에 겹침 명칭 가이드
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // R + G 겹침 (Yellow)
+    if (valR > 100 && valG > 100) {
+      const midRGx = (spotR.x + spotG.x) / 2;
+      const midRGy = (spotR.y + spotG.y) / 2;
+      drawBadge(midRGx, midRGy - 6, "노랑 (Yellow)");
+    }
+    // G + B 겹침 (Cyan)
+    if (valG > 100 && valB > 100) {
+      const midGBx = (spotG.x + spotB.x) / 2;
+      const midGBy = (spotG.y + spotB.y) / 2;
+      drawBadge(midGBx, midGBy + 6, "청록 (Cyan)");
+    }
+    // R + B 겹침 (Magenta)
+    if (valR > 100 && valB > 100) {
+      const midRBx = (spotR.x + spotB.x) / 2;
+      const midRBy = (spotR.y + spotB.y) / 2;
+      drawBadge(midRBx, midRBy - 6, "자홍 (Magenta)");
+    }
+    // R + G + B 중앙 (White)
+    if (valR > 150 && valG > 150 && valB > 150) {
+      const midAllX = (spotR.x + spotG.x + spotB.x) / 3;
+      const midAllY = (spotR.y + spotG.y + spotB.y) / 3;
+      drawBadge(midAllX, midAllY, "★ 흰색 (White)");
+    }
+  }
+
+  function drawBadge(x, y, text) {
+    ctx.save();
+    const textW = ctx.measureText(text).width + 12;
+    ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+    ctx.fillRect(x - textW / 2, y - 9, textW, 18);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - textW / 2, y - 9, textW, 18);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  // ==========================================================================
+  // [렌더링 2] 컬러 그림자 모드 (SHADOW)
+  // ==========================================================================
+  function drawShadow() {
+    ctx.save();
+
+    // 배경: 어두운 무대
+    ctx.fillStyle = "#020617";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("RGB 세 조명 앞에 놓인 장애물을 드래그하여 흰색 스크린에 생기는 컬러 그림자를 관찰하세요.", width / 2, 28);
+
+    // 상단 3개 조명 램프 렌더링
+    const lampY = 65;
+    const lampSpacing = Math.min(180, width * 0.22);
+    const lampR_x = width / 2 - lampSpacing;
+    const lampG_x = width / 2;
+    const lampB_x = width / 2 + lampSpacing;
+
+    // 하단 흰색 투영 스크린
+    const screenY = height - 45;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(width * 0.08, screenY, width * 0.84, 16);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(width * 0.08, screenY, width * 0.84, 16);
+
+    ctx.fillStyle = "#334155";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("흰색 스크린 (Screen)", width * 0.09, screenY - 8);
+
+    // 스크린 위의 각 픽셀별 RGB 조도 계산 및 렌더링 (Color Shadow 계산)
+    const screenLeft = width * 0.08;
+    const screenRight = width * 0.92;
+    const step = 4;
+
+    for (let sx = screenLeft; sx <= screenRight; sx += step) {
+      // 각 램프로부터 sx까지 직선 경로가 장애물과 교차하는지 검사
+      const blockedR = isLineIntersectCircle(lampR_x, lampY, sx, screenY, shadowObstacle.x, shadowObstacle.y, shadowObstacle.radius);
+      const blockedG = isLineIntersectCircle(lampG_x, lampY, sx, screenY, shadowObstacle.x, shadowObstacle.y, shadowObstacle.radius);
+      const blockedB = isLineIntersectCircle(lampB_x, lampY, sx, screenY, shadowObstacle.x, shadowObstacle.y, shadowObstacle.radius);
+
+      const r = (!blockedR && valR > 0) ? valR : 0;
+      const g = (!blockedG && valG > 0) ? valG : 0;
+      const b = (!blockedB && valB > 0) ? valB : 0;
+
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.fillRect(sx, screenY + 2, step, 12);
+    }
+
+    // 램프 빛 원뿔 투영선 (반투명)
+    ctx.globalCompositeOperation = "screen";
+    if (valR > 0) drawLightCone(lampR_x, lampY, screenLeft, screenRight, screenY, `rgba(${valR}, 0, 0, 0.22)`);
+    if (valG > 0) drawLightCone(lampG_x, lampY, screenLeft, screenRight, screenY, `rgba(0, ${valG}, 0, 0.22)`);
+    if (valB > 0) drawLightCone(lampB_x, lampY, screenLeft, screenRight, screenY, `rgba(0, 0, ${valB}, 0.22)`);
+    ctx.globalCompositeOperation = "source-over";
+
+    // 조명 램프 본체 그리기
+    drawLampHead(lampR_x, lampY, "#ef4444", valR, "빨강 조명");
+    drawLampHead(lampG_x, lampY, "#22c55e", valG, "초록 조명");
+    drawLampHead(lampB_x, lampY, "#3b82f6", valB, "파랑 조명");
+
+    // 무대 위 장애물 기둥 (원기둥 드래그 가능)
+    ctx.beginPath();
+    ctx.arc(shadowObstacle.x, shadowObstacle.y, shadowObstacle.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#334155";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("장애물", shadowObstacle.x, shadowObstacle.y);
+
+    // 그림자 영역 설명 라벨 가이드
+    drawShadowGuides(lampR_x, lampG_x, lampB_x, lampY, screenY);
+
+    ctx.restore();
+  }
+
+  function drawLampHead(x, y, color, val, label) {
+    ctx.fillStyle = val > 0 ? color : "#475569";
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI, true);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, x, y - 24);
+  }
+
+  function drawLightCone(lx, ly, sx1, sx2, sy, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(sx1, sy);
+    ctx.lineTo(sx2, sy);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function isLineIntersectCircle(x1, y1, x2, y2, cx, cy, r) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return false;
+
+    const t = Math.max(0, Math.min(1, ((cx - x1) * dx + (cy - y1) * dy) / lenSq));
+    const nearX = x1 + t * dx;
+    const nearY = y1 + t * dy;
+    const distSq = (cx - nearX) * (cx - nearX) + (cy - nearY) * (cy - nearY);
+    return distSq <= r * r;
+  }
+
+  function drawShadowGuides(lxR, lxG, lxB, ly, sy) {
+    // 장애물 그림자 투영 지점 계산
+    function getProjX(lx) {
+      const t = (sy - ly) / (shadowObstacle.y - ly);
+      return lx + (shadowObstacle.x - lx) * t;
+    }
+
+    const prR = getProjX(lxR);
+    const prG = getProjX(lxG);
+    const prB = getProjX(lxB);
+
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+
+    // 빨간빛 가려진 곳 -> 청록 그림자
+    if (valR > 0 && prR >= width * 0.08 && prR <= width * 0.92) {
+      ctx.fillStyle = "#06b6d4";
+      ctx.fillText("▲ 청록 그림자(R차단)", prR, sy + 30);
+    }
+    // 초록빛 가려진 곳 -> 자홍 그림자
+    if (valG > 0 && prG >= width * 0.08 && prG <= width * 0.92) {
+      ctx.fillStyle = "#f43f5e";
+      ctx.fillText("▲ 자홍 그림자(G차단)", prG, sy + 44);
+    }
+    // 파란빛 가려진 곳 -> 노랑 그림자
+    if (valB > 0 && prB >= width * 0.08 && prB <= width * 0.92) {
+      ctx.fillStyle = "#facc15";
+      ctx.fillText("▲ 노랑 그림자(B차단)", prB, sy + 30);
+    }
+  }
+
+  // ==========================================================================
+  // [렌더링 3] 디스플레이 RGB 서브픽셀 돋보기 모드 (PIXEL)
+  // ==========================================================================
+  function drawPixel() {
+    ctx.save();
+
+    ctx.fillStyle = "#020617";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("모니터나 스마트폰 화면을 현미경으로 들여다본 모습: 미세한 RGB 서브픽셀의 발광 강도로 색을 표현합니다.", width / 2, 28);
+
+    // 좌측: 멀리서 보는 단일 합성 색상 면
+    const patchW = 160;
+    const patchH = 160;
+    const patchX = width * 0.22 - patchW / 2;
+    const patchY = height / 2 - patchH / 2;
+
+    ctx.fillStyle = `rgb(${valR}, ${valG}, ${valB})`;
+    ctx.fillRect(patchX, patchY, patchW, patchH);
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(patchX, patchY, patchW, patchH);
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("우리가 눈으로 보는 색", patchX + patchW / 2, patchY + patchH + 24);
+
+    // 연결 화살표
+    ctx.strokeStyle = "#64748b";
+    ctx.fillStyle = "#64748b";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(patchX + patchW + 15, height / 2);
+    ctx.lineTo(width * 0.42, height / 2);
+    ctx.stroke();
+
+    ctx.fillText("🔬 돋보기 확대", width * 0.38, height / 2 - 12);
+
+    // 우측: 돋보기 원형 내부 RGB 서브픽셀 매트릭스
+    const loupeCx = width * 0.68;
+    const loupeCy = height / 2;
+    const loupeR = 145;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(loupeCx, loupeCy, loupeR, 0, Math.PI * 2);
+    ctx.clip(); // 돋보기 렌즈 클리핑
+
+    // 돋보기 내부 검은 패널
+    ctx.fillStyle = "#090d16";
+    ctx.fillRect(loupeCx - loupeR, loupeCy - loupeR, loupeR * 2, loupeR * 2);
+
+    // 3 x 4 화소 픽셀 그리드 렌더링
+    const subW = 22;
+    const subH = 65;
+    const pixelGap = 10;
+    const totalPixelW = subW * 3 + 6;
+
+    for (let row = -1; row <= 1; row++) {
+      for (let col = -1; col <= 1; col++) {
+        const px = loupeCx + col * (totalPixelW + pixelGap) - totalPixelW / 2;
+        const py = loupeCy + row * (subH + pixelGap) - subH / 2;
+
+        // R 서브픽셀
+        ctx.fillStyle = `rgb(${valR}, 0, 0)`;
+        ctx.fillRect(px, py, subW, subH);
+        ctx.strokeStyle = valR > 50 ? "#fca5a5" : "#450a0a";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px, py, subW, subH);
+
+        // G 서브픽셀
+        ctx.fillStyle = `rgb(0, ${valG}, 0)`;
+        ctx.fillRect(px + subW + 3, py, subW, subH);
+        ctx.strokeStyle = valG > 50 ? "#86efac" : "#052e16";
+        ctx.strokeRect(px + subW + 3, py, subW, subH);
+
+        // B 서브픽셀
+        ctx.fillStyle = `rgb(0, 0, ${valB})`;
+        ctx.fillRect(px + (subW + 3) * 2, py, subW, subH);
+        ctx.strokeStyle = valB > 50 ? "#93c5fd" : "#082f49";
+        ctx.strokeRect(px + (subW + 3) * 2, py, subW, subH);
+      }
+    }
+    ctx.restore();
+
+    // 돋보기 렌즈 금속 테두리
+    ctx.beginPath();
+    ctx.arc(loupeCx, loupeCy, loupeR, 0, Math.PI * 2);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 7;
+    ctx.stroke();
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("RGB 서브픽셀(Subpixel) 미세 발광", loupeCx, loupeCy + loupeR + 24);
+
+    ctx.restore();
+  }
+
+  // --- 메인 루프 ---
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    if (currentTab === "VENN") drawVenn();
+    else if (currentTab === "SHADOW") drawShadow();
+    else if (currentTab === "PIXEL") drawPixel();
+
+    requestAnimationFrame(animate);
+  }
+
+  // --- 포인터 드래그 인터랙션 ---
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+
+  function handlePointerDown(e) {
+    const { x, y } = getCanvasCoords(e);
+
+    if (currentTab === "VENN") {
+      // 3개 조명 원형 핸들 드래그 체크
+      const dR = Math.hypot(x - spotR.x, y - spotR.y);
+      const dG = Math.hypot(x - spotG.x, y - spotG.y);
+      const dB = Math.hypot(x - spotB.x, y - spotB.y);
+
+      if (dR < 45) { draggedObj = spotR; dragOffset = { x: x - spotR.x, y: y - spotR.y }; return; }
+      if (dG < 45) { draggedObj = spotG; dragOffset = { x: x - spotG.x, y: y - spotG.y }; return; }
+      if (dB < 45) { draggedObj = spotB; dragOffset = { x: x - spotB.x, y: y - spotB.y }; return; }
+    } else if (currentTab === "SHADOW") {
+      const dist = Math.hypot(x - shadowObstacle.x, y - shadowObstacle.y);
+      if (dist < shadowObstacle.radius + 15) {
+        draggedObj = shadowObstacle;
+        dragOffset = { x: x - shadowObstacle.x, y: y - shadowObstacle.y };
+      }
+    }
+  }
+
+  function handlePointerMove(e) {
+    if (!draggedObj) return;
+    const { x, y } = getCanvasCoords(e);
+
+    if (currentTab === "VENN") {
+      draggedObj.x = Math.max(spotRadius * 0.7, Math.min(width - spotRadius * 0.7, x - dragOffset.x));
+      draggedObj.y = Math.max(spotRadius * 0.7, Math.min(height - spotRadius * 0.7, y - dragOffset.y));
+    } else if (currentTab === "SHADOW") {
+      draggedObj.x = Math.max(width * 0.15, Math.min(width * 0.85, x - dragOffset.x));
+      draggedObj.y = Math.max(120, Math.min(height - 90, y - dragOffset.y));
+    }
+  }
+
+  function handlePointerUp() {
+    draggedObj = null;
+  }
+
+  canvas.addEventListener("mousedown", handlePointerDown);
+  window.addEventListener("mousemove", handlePointerMove);
+  window.addEventListener("mouseup", handlePointerUp);
+
+  canvas.addEventListener("touchstart", e => { handlePointerDown(e); e.preventDefault(); }, { passive: false });
+  window.addEventListener("touchmove", e => { if (draggedObj) { handlePointerMove(e); e.preventDefault(); } }, { passive: false });
+  window.addEventListener("touchend", handlePointerUp);
+
+  // --- 슬라이더 & 컨트롤 이벤트 ---
+  function setRGB(r, g, b) {
+    valR = r; valG = g; valB = b;
+    sliderR.value = r; sliderG.value = g; sliderB.value = b;
+    updateDashboard();
+  }
+
+  sliderR.addEventListener("input", e => { valR = parseInt(e.target.value); updateDashboard(); });
+  sliderG.addEventListener("input", e => { valG = parseInt(e.target.value); updateDashboard(); });
+  sliderB.addEventListener("input", e => { valB = parseInt(e.target.value); updateDashboard(); });
+
+  btnAllOn.addEventListener("click", () => setRGB(255, 255, 255));
+  btnAllOff.addEventListener("click", () => setRGB(0, 0, 0));
+  btnReset.addEventListener("click", () => resetPositions());
+
+  presetChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      setRGB(parseInt(chip.dataset.r), parseInt(chip.dataset.g), parseInt(chip.dataset.b));
+    });
+  });
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTab = btn.dataset.tab;
+      resetPositions();
+    });
+  });
+
+  btnHelpToggle.addEventListener("click", () => {
+    theoryBox.classList.toggle("active");
+    btnHelpToggle.textContent = theoryBox.classList.contains("active") ? "원리 설명 닫기 ▴" : "원리 설명 보기 ▾";
+  });
+
+  // 초기 시작
+  resizeCanvas();
+  resetPositions();
+  updateDashboard();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>

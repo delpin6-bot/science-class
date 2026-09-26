@@ -1,0 +1,8559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>과학 타워 디펜스 - 단계별 스테이지 에디션</title>
+<style>
+  :root {
+    --bg-dark: #0c1017;
+    --panel-bg: #151d2a;
+    --card-bg: #1e293b;
+    --border: #334155;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #38bdf8;
+    --energy: #f59e0b;
+    --hp: #ef4444;
+    --green: #10b981;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 12px; background: var(--bg-dark); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    user-select: none; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  }
+  .app-container {
+    width: 100%; max-width: 1080px; display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* Header & HUD */
+  header {
+    background: var(--panel-bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 10px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .title-group { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    background: var(--purple); color: #fff; font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .badge.stage-tag { background: #0284c7; }
+  .title-group h1 {
+    margin: 0; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px;
+  }
+  .hud-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hud-item {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700;
+  }
+  .hud-item.hp { color: #fca5a5; }
+  .hud-item.energy { color: #fde047; }
+  .hud-item.wave { color: #93c5fd; }
+  .hud-item.score { color: #86efac; }
+
+  .toolbar { display: flex; gap: 6px; align-items: center; }
+  .btn-ctrl {
+    background: var(--card-bg); border: 1.5px solid var(--border); color: var(--text-main);
+    padding: 6px 11px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ctrl:hover { border-color: var(--accent); background: #2a3752; }
+  .btn-ctrl.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Stage Select Bar (Grade + Unit Navigation) */
+  .stage-bar-card {
+    background: var(--panel-bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .grade-tab-row {
+    display: flex; gap: 6px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 7px; overflow-x: auto;
+  }
+  .grade-btn {
+    background: transparent; border: none; color: var(--text-muted); padding: 6px 14px;
+    font-size: 13.5px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .grade-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .grade-btn.active { background: #0284c7; color: #fff; }
+  .stage-chips-scroll {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 3px; scrollbar-width: thin;
+  }
+  .stage-chip {
+    background: var(--card-bg); border: 1.5px solid var(--border); color: #cbd5e1;
+    padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; white-space: nowrap;
+  }
+  .stage-chip:hover { border-color: var(--accent); color: #fff; }
+  .stage-chip.active { background: #0369a1; border-color: #38bdf8; color: #fff; box-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
+  .stage-chip .clear-badge { color: #4ade80; font-size: 11px; margin-left: 2px; }
+
+  /* Workspace Layout */
+  .workspace {
+    display: grid; grid-template-columns: 1fr 340px; gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  /* Canvas Panel */
+  .canvas-panel {
+    background: var(--panel-bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 8px; position: relative; display: flex; flex-direction: column; align-items: center;
+  }
+  #gameCanvas {
+    width: 100%; height: auto; max-height: 480px; background: #111722; border-radius: 8px;
+    display: block; cursor: crosshair;
+  }
+
+  /* Canvas Overlays */
+  .canvas-overlay {
+    position: absolute; inset: 8px; border-radius: 8px; background: rgba(15, 20, 28, 0.94);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; text-align: center; gap: 12px; z-index: 20;
+  }
+  .canvas-overlay h2 { margin: 0; font-size: 25px; color: #fff; }
+  .canvas-overlay p { margin: 0; color: var(--text-muted); font-size: 13.5px; line-height: 1.5; max-width: 440px; }
+  .btn-primary {
+    background: linear-gradient(135deg, #0284c7, #0369a1); border: 1.5px solid #38bdf8;
+    color: #fff; font-size: 15px; font-weight: 800; padding: 10px 24px; border-radius: 8px;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35); transition: transform 0.1s;
+  }
+  .btn-primary:active { transform: translateY(1px); }
+  .hidden { display: none !important; }
+
+  /* Review Box on Game Over */
+  .review-box {
+    width: 100%; max-width: 480px; max-height: 170px; overflow-y: auto;
+    background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; text-align: left; font-size: 12.5px;
+  }
+  .review-title { color: #f87171; font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+  .review-item { border-bottom: 1px dashed #334155; padding: 5px 0; }
+  .review-item b { color: #38bdf8; }
+
+  /* Right Sidebar (Quiz + Tower Shop) */
+  .sidebar { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Quiz Card */
+  .quiz-panel {
+    background: var(--panel-bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 14px; display: flex; flex-direction: column; gap: 10px; position: relative;
+  }
+  .quiz-header {
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700;
+  }
+  .quiz-title { display: flex; align-items: center; gap: 6px; color: var(--energy); }
+  .quiz-energy-reward {
+    background: rgba(245, 158, 11, 0.15); border: 1px solid var(--energy);
+    color: var(--energy); font-size: 11px; padding: 2px 7px; border-radius: 4px;
+  }
+  .question-text {
+    font-size: 14px; font-weight: 700; color: #fff; line-height: 1.45; min-height: 40px;
+  }
+  .hint-badge {
+    background: rgba(168, 85, 247, 0.2); border: 1px dashed var(--purple);
+    color: #d8b4fe; font-size: 12px; padding: 3px 8px; border-radius: 6px;
+    font-weight: 700; display: inline-block;
+  }
+  .options-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .btn-option {
+    background: var(--card-bg); border: 1.5px solid var(--border); color: var(--text-main);
+    font-size: 13px; font-weight: 700; padding: 9px 8px; border-radius: 6px; cursor: pointer;
+    text-align: center; transition: all 0.12s;
+  }
+  .btn-option:hover:not(:disabled) { border-color: var(--accent); background: #2b3952; }
+  .btn-option:disabled { opacity: 0.55; cursor: not-allowed; }
+  .cooldown-bar-wrap {
+    height: 4px; background: #334155; border-radius: 2px; overflow: hidden; display: none;
+  }
+  .cooldown-bar { height: 100%; background: var(--hp); width: 100%; transition: width 0.1s linear; }
+
+  /* Tower Selection Shop */
+  .shop-panel {
+    background: var(--panel-bg); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .shop-header { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+  .tower-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tower-btn {
+    background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 8px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; transition: all 0.15s;
+  }
+  .tower-btn:hover { border-color: var(--accent); }
+  .tower-btn.selected { border-color: #38bdf8; background: #1e3a5f; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+  .tower-btn.disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(1); }
+  .t-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+  .t-name { font-size: 11.5px; font-weight: 700; color: #fff; white-space: nowrap; }
+  .t-cost { font-size: 11px; font-weight: 800; color: var(--energy); }
+
+  /* Selected Tower Detail Bar */
+  .tower-detail {
+    background: #0f172a; border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .td-info b { color: var(--accent); }
+  .td-actions { display: flex; gap: 4px; }
+  .btn-sm {
+    font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);
+    background: var(--card-bg); color: #fff; cursor: pointer;
+  }
+  .btn-sm.upgrade { border-color: var(--energy); color: var(--energy); }
+  .btn-sm.sell { border-color: var(--hp); color: var(--hp); }
+
+  /* Wave Notification Toast */
+  .wave-toast {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(30, 41, 59, 0.95); border: 1.5px solid var(--accent);
+    color: #fff; font-size: 14px; font-weight: 800; padding: 6px 20px; border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); pointer-events: none; z-index: 30;
+    animation: toastPop 2s ease forwards;
+  }
+  @keyframes toastPop {
+    0% { opacity: 0; transform: translate(-50%, -10px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -15px); }
+  }
+
+  /* Teacher Mode Elements */
+  .btn-mode-toggle {
+    background: #0f766e !important; border-color: #14b8a6 !important; color: #fff !important;
+    font-weight: 800 !important;
+  }
+  .btn-mode-toggle.teacher {
+    background: #b45309 !important; border-color: #f59e0b !important; color: #fff !important;
+  }
+  .teacher-tools-panel {
+    background: #1e1b4b; border: 1.5px solid #6366f1; border-radius: 10px;
+    padding: 8px 12px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; font-size: 13px; font-weight: 700;
+  }
+  .teacher-tools-panel.hidden { display: none !important; }
+  .teacher-tools-title { color: #a5b4fc; display: flex; align-items: center; gap: 6px; }
+  .teacher-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-ttool {
+    background: #312e81; border: 1px solid #818cf8; color: #e0e7ff;
+    padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ttool:hover { background: #4338ca; color: #fff; }
+
+  /* Teacher Answer Box on Quiz Card */
+  .teacher-answer-badge {
+    background: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981;
+    color: #6ee7b7; padding: 8px 12px; border-radius: 8px; font-size: 12.5px;
+    font-weight: 700; line-height: 1.45; margin-top: 4px;
+  }
+  .teacher-answer-badge.hidden { display: none !important; }
+  .btn-option.teacher-correct {
+    border-color: #10b981 !important; background: rgba(16, 185, 129, 0.2) !important;
+    color: #a7f3d0 !important; font-weight: 900 !important;
+  }
+
+  /* Answer Key Modal */
+  .answer-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+    display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+  }
+  .answer-modal-backdrop.hidden { display: none !important; }
+  .answer-modal-box {
+    background: #1e293b; border: 2px solid #38bdf8; border-radius: 14px;
+    width: 100%; max-width: 850px; max-height: 85vh; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  }
+  .answer-modal-header {
+    background: #0f172a; padding: 12px 18px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1.5px solid #334155;
+  }
+  .answer-modal-header h3 { margin: 0; font-size: 17px; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .answer-modal-body {
+    padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+  }
+  .ans-unit-card {
+    background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px;
+  }
+  .ans-unit-title {
+    font-size: 14px; font-weight: 800; color: #38bdf8; margin-bottom: 8px;
+    border-bottom: 1px dashed #334155; padding-bottom: 4px;
+  }
+  .ans-q-row {
+    font-size: 12.5px; line-height: 1.5; margin-bottom: 6px; padding: 4px 0;
+  }
+  .ans-q-row b { color: #fde047; }
+  .ans-q-row .ans-tag { color: #4ade80; font-weight: 800; }
+
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Header -->
+  <header>
+    <div class="title-group">
+      <span class="badge">단계별 과학 디펜스</span>
+      <span class="badge stage-tag" id="stageTag">1단계: 신경계 연구소</span>
+      <h1>🔬 과학 타워 디펜스</h1>
+    </div>
+    
+    <div class="hud-stats">
+      <div class="hud-item hp" title="기지 생명력"><span>❤️</span><span id="hpVal">5</span></div>
+      <div class="hud-item energy" title="보유 과학 에너지"><span>⚡</span><span id="energyVal">150</span></div>
+      <div class="hud-item wave" title="현재 웨이브"><span>🌊</span><span id="waveVal">1/5</span></div>
+      <div class="hud-item score" title="점수"><span>🏆</span><span id="scoreVal">0</span></div>
+    </div>
+
+    <div class="toolbar">
+      
+      
+      
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button class="btn-ctrl btn-mode-toggle" id="btnModeToggle" onclick="toggleTeacherMode()">🧑‍🎓 학생용</button>
+    <a href="./과학_타워디펜스_수업활동지.html" target="_blank" class="btn-ctrl" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; color:#38bdf8; border-color:#0284c7;"><span>📝 활동지(학생/교사)</span></a>
+    <button class="btn-ctrl" id="btnSpeed">⏩ 1x</button>
+    <button class="btn-ctrl" id="btnPause">⏸ 일시정지</button>
+    <button class="btn-ctrl" id="btnSound">🔊 소리 ON</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <!-- Stage Selector Bar (Grade + Unit Navigation) -->
+  <div class="stage-bar-card">
+    <div class="grade-tab-row" id="gradeTabs">
+      <button class="grade-btn" data-grade="중1" onclick="selectGrade('중1')">중1 과학 (8단원)</button>
+      <button class="grade-btn" data-grade="중2" onclick="selectGrade('중2')">중2 과학 (8단원)</button>
+      <button class="grade-btn active" data-grade="중3" onclick="selectGrade('중3')">중3 과학 (8단원)</button>
+    </div>
+    <div class="stage-chips-scroll" id="stageChipsBar">
+      <!-- 동적 생성 -->
+    </div>
+  </div>
+
+  <!-- Teacher Master Toolbar (교사용 제어 패널) -->
+  <div class="teacher-tools-panel hidden" id="teacherToolsPanel">
+    <div class="teacher-tools-title">
+      <span>👨‍🏫 교사용 수업 제어 패널</span>
+      <span style="font-size:11px; background:#4338ca; padding:2px 6px; border-radius:4px; color:#c7d2fe;">정답/해설 공개중</span>
+    </div>
+    <div class="teacher-btns">
+      <button class="btn-ttool" onclick="teacherAddEnergy(500)">⚡ +500 에너지</button>
+      <button class="btn-ttool" onclick="teacherAddHp(10)">❤️ +10 기지 체력</button>
+      <button class="btn-ttool" onclick="teacherSkipWave()">⏭️ 웨이브 즉시 완료</button>
+      <button class="btn-ttool" onclick="openAnswerModal()">📋 120문항 전체 정답표</button>
+      <a href="./과학_타워디펜스_수업활동지.html" target="_blank" class="btn-ttool" style="text-decoration:none;">📝 수업 활동지 열기</a>
+    </div>
+  </div>
+
+  <!-- Main Area -->
+  <div class="workspace">
+    <!-- Left: Canvas -->
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="700" height="450"></canvas>
+
+      <!-- Start Overlay -->
+      <div class="canvas-overlay" id="startOverlay">
+        <h2 id="startTitle">1단계: 신경계 연구소</h2>
+        <p id="startDesc">
+          오개념 바이러스가 뇌 신경망을 침투하고 있습니다!<br>
+          오른쪽 <b>신경계 퀴즈</b>를 풀어 <b>과학 에너지(⚡)</b>를 얻고,<br>
+          뉴런 전기 타워와 냉각 타워를 배치하여 연구소를 방어하세요.
+        </p>
+        <button class="btn-primary" id="btnStartGame">작전 개시 (Start)</button>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div class="canvas-overlay hidden" id="pauseOverlay">
+        <h2>일시 정지</h2>
+        <p>선생님 설명 또는 작전 회의를 위해 잠시 멈췄습니다.</p>
+        <button class="btn-primary" id="btnResume">작전 재개</button>
+      </div>
+
+      <!-- End / Victory Overlay -->
+      <div class="canvas-overlay hidden" id="endOverlay">
+        <h2 id="endTitle">스테이지 클리어!</h2>
+        <p id="endSubtitle">축하합니다!</p>
+        <div class="review-box" id="reviewBox">
+          <div class="review-title">📝 오답 복습 노트</div>
+          <div id="reviewList"></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn-primary" id="btnNextStage">다음 단계로 진격 ⏩</button>
+          <button class="btn-ctrl" id="btnRetryStage">다시 도전</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Sidebar -->
+    <div class="sidebar">
+      <!-- Quiz Deck -->
+      <div class="quiz-panel">
+        <div class="quiz-header">
+          <span class="quiz-title">⚡ 에너지 충전 퀴즈</span>
+          <span class="quiz-energy-reward" id="quizRewardBadge">+60⚡</span>
+        </div>
+        <div class="question-text" id="qText">문제를 불러오는 중...</div>
+        <div id="hintBox" class="hint-badge hidden">힌트: <span id="hintText"></span></div>
+        <div id="teacherAnswerBox" class="teacher-answer-badge hidden"></div>
+        
+        <div class="cooldown-bar-wrap" id="coolWrap">
+          <div class="cooldown-bar" id="coolBar"></div>
+        </div>
+
+        <div class="options-grid" id="optGrid">
+          <button class="btn-option" data-idx="0"></button>
+          <button class="btn-option" data-idx="1"></button>
+          <button class="btn-option" data-idx="2"></button>
+          <button class="btn-option" data-idx="3"></button>
+        </div>
+      </div>
+
+      <!-- Tower Shop -->
+      <div class="shop-panel">
+        <div class="shop-header">방어 타워 설치 (터치 후 잔디 타일 클릭)</div>
+        <div class="tower-cards">
+          <!-- Tower 1: Neuron -->
+          <div class="tower-btn" data-type="neuron" id="tBtnNeuron">
+            <div class="t-icon">
+              <svg width="28" height="28" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="#0369a1" stroke="#38bdf8" stroke-width="6"/>
+                <line x1="50" y1="50" x2="22" y2="22" stroke="#7dd3fc" stroke-width="8" stroke-linecap="round"/>
+                <line x1="50" y1="50" x2="78" y2="22" stroke="#7dd3fc" stroke-width="8" stroke-linecap="round"/>
+                <line x1="50" y1="50" x2="50" y2="82" stroke="#7dd3fc" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="50" cy="50" r="14" fill="#ffffff"/>
+              </svg>
+            </div>
+            <span class="t-name">뉴런 전기</span>
+            <span class="t-cost">100⚡</span>
+          </div>
+
+          <!-- Tower 2: Cryo -->
+          <div class="tower-btn" data-type="cryo" id="tBtnCryo">
+            <div class="t-icon">
+              <svg width="28" height="28" viewBox="0 0 100 100">
+                <polygon points="50,12 88,34 88,78 50,98 12,78 12,34" fill="#0891b2" stroke="#67e8f9" stroke-width="6"/>
+                <line x1="50" y1="26" x2="50" y2="74" stroke="#cffafe" stroke-width="6"/>
+                <line x1="26" y1="50" x2="74" y2="50" stroke="#cffafe" stroke-width="6"/>
+                <circle cx="50" cy="50" r="10" fill="#ffffff"/>
+              </svg>
+            </div>
+            <span class="t-name">냉각 열평형</span>
+            <span class="t-cost">130⚡</span>
+          </div>
+
+          <!-- Tower 3: Chem -->
+          <div class="tower-btn" data-type="chem" id="tBtnChem">
+            <div class="t-icon">
+              <svg width="28" height="28" viewBox="0 0 100 100">
+                <path d="M42,20 L58,20 L58,35 L78,75 C82,82 76,86 70,86 L30,86 C24,86 18,82 22,75 L42,35 Z" fill="#7e22ce" stroke="#c084fc" stroke-width="6"/>
+                <ellipse cx="50" cy="48" rx="26" ry="10" fill="none" stroke="#e879f9" stroke-width="4" stroke-dasharray="8,6"/>
+                <circle cx="50" cy="66" r="8" fill="#f3e8ff"/>
+              </svg>
+            </div>
+            <span class="t-name">화학 플라스크</span>
+            <span class="t-cost">160⚡</span>
+          </div>
+        </div>
+
+        <!-- Detail / Upgrade / Sell Panel -->
+        <div class="tower-detail hidden" id="towerDetail">
+          <div class="td-info" id="tdText"><b>뉴런 타워 Lv.1</b></div>
+          <div class="td-actions">
+            <button class="btn-sm upgrade" id="btnUpgrade">강화 (80⚡)</button>
+            <button class="btn-sm sell" id="btnSell">회수</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. STAGE MAPS & QUESTION PACKS (4대 테마별 차별화 구성)
+   ========================================================================== */
+const STAGES = {
+  "J1_U1": {
+    "id": "J1_U1",
+    "grade": "중1",
+    "diff": 1,
+    "unit": "지권의 변화",
+    "lesson": "지구 내부와 암석",
+    "name": "1단계: 지권 탐사 기지",
+    "theme": "지권의 층상 구조와 판 구조론",
+    "icon": "🌋",
+    "desc": "지구 내부 맨틀 대류와 지각 변동을 교란하는 지질학 오개념 몬스터를 막아내세요!",
+    "maxWaves": 5,
+    "roadColor": "#78350f",
+    "grassColor": "#451a03",
+    "coreName": "외핵",
+    "coreColor": "#f97316",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "지구 내부 층상 구조 중 부피를 가장 많이(약 80%) 차지하는 층은?",
+        "options": [
+          "지각",
+          "맨틀",
+          "외핵",
+          "내핵"
+        ],
+        "ans": 1,
+        "hint": "ㅁㅌ"
+      },
+      {
+        "q": "지구 내부 층 중 유일하게 액체 상태로 추정되는 층은?",
+        "options": [
+          "지각",
+          "맨틀",
+          "외핵",
+          "내핵"
+        ],
+        "ans": 2,
+        "hint": "ㅇㅎ"
+      },
+      {
+        "q": "과거 약 3억 년 전 모든 대륙이 하나로 뭉쳐 있던 거대한 초대륙의 이름은?",
+        "options": [
+          "판게아",
+          "곤드와나",
+          "로라시아",
+          "아틀란티스"
+        ],
+        "ans": 0,
+        "hint": "ㅍㄱㅇ"
+      },
+      {
+        "q": "마그마가 지표면 부근에서 빠르게 식어 굳어져 알갱이 크기가 매우 작은 화성암은?",
+        "options": [
+          "화강암",
+          "반려암",
+          "현무암",
+          "섬록암"
+        ],
+        "ans": 2,
+        "hint": "ㅎㅁㅇ"
+      },
+      {
+        "q": "암석이 물, 공기, 생물 등의 작용으로 부서져 흙(토양)으로 변하는 과정은?",
+        "options": [
+          "풍화 작용",
+          "변성 작용",
+          "퇴적 작용",
+          "융기 현상"
+        ],
+        "ans": 0,
+        "hint": "ㅍㅎ ㅈㅇ"
+      }
+    ]
+  },
+  "J1_U2": {
+    "id": "J1_U2",
+    "grade": "중1",
+    "diff": 2,
+    "unit": "여러 가지 힘",
+    "lesson": "중력, 탄성력, 마찰력, 부력",
+    "name": "2단계: 역학 동력 요새",
+    "theme": "힘의 종류와 물체의 운동",
+    "icon": "🏹",
+    "desc": "중력, 탄성력, 마찰력, 부력의 방향과 크기를 혼동하게 만드는 역학 바이러스를 저지하세요!",
+    "maxWaves": 5,
+    "roadColor": "#1e3a8a",
+    "grassColor": "#0f172a",
+    "coreName": "중력원",
+    "coreColor": "#3b82f6",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "지구가 물체를 지구 중심 방향으로 끌어당기는 힘의 명칭은?",
+        "options": [
+          "중력",
+          "탄성력",
+          "마찰력",
+          "부력"
+        ],
+        "ans": 0,
+        "hint": "ㅈㄹ"
+      },
+      {
+        "q": "용수철이나 고무줄처럼 변형된 물체가 원래 모양으로 되돌아가려는 힘은?",
+        "options": [
+          "중력",
+          "탄성력",
+          "자기력",
+          "전기력"
+        ],
+        "ans": 1,
+        "hint": "ㅌㅅㄹ"
+      },
+      {
+        "q": "액체나 기체 속에 있는 물체가 중력 반대 방향(위쪽)으로 받는 힘은?",
+        "options": [
+          "마찰력",
+          "수직항력",
+          "부력",
+          "인력"
+        ],
+        "ans": 2,
+        "hint": "ㅂㄹ"
+      },
+      {
+        "q": "물체의 운동을 방해하는 마찰력의 크기를 줄이는 방법으로 알맞은 것은?",
+        "options": [
+          "바닥을 거칠게 만듦",
+          "기계에 윤활유를 바름",
+          "물체 무게를 늘림",
+          "신발 바닥 홈을 깊게 팜"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅎㅇ"
+      },
+      {
+        "q": "질량 1kg인 물체가 지구 표면에서 받는 중력(무게)의 크기는 약 몇 N인가?",
+        "options": [
+          "1 N",
+          "4.9 N",
+          "9.8 N",
+          "98 N"
+        ],
+        "ans": 2,
+        "hint": "9.8 N"
+      }
+    ]
+  },
+  "J1_U3": {
+    "id": "J1_U3",
+    "grade": "중1",
+    "diff": 3,
+    "unit": "생물의 다양성",
+    "lesson": "생물 다양성과 5계 분류",
+    "name": "3단계: 생태계 바이오 돔",
+    "theme": "생물 분류 체계와 5계",
+    "icon": "🌿",
+    "desc": "생물 분류 체계를 뒤섞으려는 생태계 변종 바이러스를 방어하세요!",
+    "maxWaves": 5,
+    "roadColor": "#065f46",
+    "grassColor": "#022c22",
+    "coreName": "생명핵",
+    "coreColor": "#10b981",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "생물을 분류하는 단계 중 자연 상태에서 교배하여 번식 가능한 자손을 낳는 기본 단위는?",
+        "options": [
+          "종",
+          "속",
+          "과",
+          "목"
+        ],
+        "ans": 0,
+        "hint": "ㅈ"
+      },
+      {
+        "q": "버섯과 곰팡이가 속하며, 광합성을 하지 못하고 균사를 가진 생물 분류 계는?",
+        "options": [
+          "식물계",
+          "동물계",
+          "균계",
+          "원생생물계"
+        ],
+        "ans": 2,
+        "hint": "ㄱㄱ"
+      },
+      {
+        "q": "핵막이 없어 유전 물질이 세포질에 노출되어 있는 원핵생물계에 속하는 생물은?",
+        "options": [
+          "짚신벌레",
+          "대장균",
+          "아메바",
+          "미역"
+        ],
+        "ans": 1,
+        "hint": "ㄷㅈㄱ"
+      },
+      {
+        "q": "같은 종의 생물 사이에서 나타나는 형태, 습성 등의 유전적 차이를 뜻하는 말은?",
+        "options": [
+          "변이",
+          "도태",
+          "진화",
+          "격리"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇ"
+      },
+      {
+        "q": "서식지 파괴로 단편화된 숲을 연결하여 생물 다양성을 보존하는 시설물은?",
+        "options": [
+          "생태 통로",
+          "송전탑",
+          "방풍림",
+          "제방"
+        ],
+        "ans": 0,
+        "hint": "ㅅㅌ ㅌㄹ"
+      }
+    ]
+  },
+  "J1_U4": {
+    "id": "J1_U4",
+    "grade": "중1",
+    "diff": 4,
+    "unit": "기체의 성질",
+    "lesson": "입자 운동과 보일·샤를 법칙",
+    "name": "4단계: 기체 분자 실험실",
+    "theme": "기체의 압력, 부피, 온도",
+    "icon": "🎈",
+    "desc": "기체 분자들의 맹렬한 충돌 속에서 보일·샤를 법칙 오개념을 격퇴하세요!",
+    "maxWaves": 5,
+    "roadColor": "#155e75",
+    "grassColor": "#083344",
+    "coreName": "진공실",
+    "coreColor": "#06b6d4",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "온도가 일정할 때 기체의 압력이 커지면 기체의 부피가 반비례하여 줄어든다는 법칙은?",
+        "options": [
+          "보일 법칙",
+          "샤를 법칙",
+          "아보가드로 법칙",
+          "옴의 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇ ㅂㅊ"
+      },
+      {
+        "q": "압력이 일정할 때 온도가 높아지면 기체 분자 운동이 활발해져 부피가 팽창한다는 법칙은?",
+        "options": [
+          "보일 법칙",
+          "샤를 법칙",
+          "일정 성분비 법칙",
+          "질량 보존 법칙"
+        ],
+        "ans": 1,
+        "hint": "ㅅㄹ ㅂㅊ"
+      },
+      {
+        "q": "찌그러진 탁구공을 따뜻한 물에 넣으면 다시 팽팽하게 펴지는 현상과 관련된 법칙은?",
+        "options": [
+          "보일 법칙",
+          "샤를 법칙",
+          "관성 법칙",
+          "작용 반작용 법칙"
+        ],
+        "ans": 1,
+        "hint": "ㅅㄹ ㅂㅊ"
+      },
+      {
+        "q": "물질을 이루는 입자가 스스로 끊임없이 모든 방향으로 퍼져 나가는 현상은?",
+        "options": [
+          "증발",
+          "확산",
+          "융해",
+          "승화"
+        ],
+        "ans": 1,
+        "hint": "ㅎㅅ"
+      },
+      {
+        "q": "가열하지 않아도 액체 표면의 입자가 스스로 기체로 변해 날아가는 현상은?",
+        "options": [
+          "끓음",
+          "증발",
+          "응결",
+          "액화"
+        ],
+        "ans": 1,
+        "hint": "ㅈㅂ"
+      }
+    ]
+  },
+  "J1_U5": {
+    "id": "J1_U5",
+    "grade": "중1",
+    "diff": 5,
+    "unit": "물질의 상태 변화",
+    "lesson": "상태 변화와 열에너지",
+    "name": "5단계: 상태 변화 빙하 기지",
+    "theme": "상태 변화 6가지와 열에너지 출입",
+    "icon": "🧊",
+    "desc": "얼음이 녹고 수증기가 얼어붙는 상태 변화 미로를 사수하세요!",
+    "maxWaves": 5,
+    "roadColor": "#1e3a8a",
+    "grassColor": "#0c1e3d",
+    "coreName": "빙하핵",
+    "coreColor": "#38bdf8",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "고체 얼음이 열을 흡수하여 액체 물로 변하는 상태 변화의 명칭은?",
+        "options": [
+          "융해",
+          "응고",
+          "기화",
+          "액화"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅎ"
+      },
+      {
+        "q": "겨울철 유리창 안쪽에 김이 서리거나 새벽 풀잎에 이슬이 맺히는 상태 변화는?",
+        "options": [
+          "기화",
+          "액화",
+          "승화",
+          "응고"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅎ"
+      },
+      {
+        "q": "나프탈렌이나 드라이아이스처럼 고체가 액체를 거치지 않고 곧바로 기체로 변하는 현상은?",
+        "options": [
+          "융해",
+          "기화",
+          "승화",
+          "응고"
+        ],
+        "ans": 2,
+        "hint": "ㅅㅎ"
+      },
+      {
+        "q": "상태 변화 중 주변으로 열에너지를 방출하여 주위 온도를 높여주는 현상으로 짝지어진 것은?",
+        "options": [
+          "융해·기화",
+          "응고·액화",
+          "기화·승화(고→기)",
+          "융해·승화(고→기)"
+        ],
+        "ans": 1,
+        "hint": "ㅇㄱ ㅇㅎ"
+      },
+      {
+        "q": "눈이 내릴 때 주변 기온이 오히려 포근하게 느껴지는 과학적 이유는?",
+        "options": [
+          "수증기가 얼음으로 응고/승화할 때 열을 방출하기 때문",
+          "대류가 멈추기 때문",
+          "햇빛이 강해지기 때문",
+          "바람이 불지 않기 때문"
+        ],
+        "ans": 0,
+        "hint": "ㅇ ㅂㅊ"
+      }
+    ]
+  },
+  "J1_U6": {
+    "id": "J1_U6",
+    "grade": "중1",
+    "diff": 6,
+    "unit": "빛과 파동",
+    "lesson": "빛의 합성, 거울과 렌즈, 파동",
+    "name": "6단계: 광학 프리즘 돔",
+    "theme": "빛의 성질과 파동의 특성",
+    "icon": "🌈",
+    "desc": "빛과 소리의 파동 경로를 침범하는 광학 오개념을 격퇴하세요!",
+    "maxWaves": 5,
+    "roadColor": "#854d0e",
+    "grassColor": "#422006",
+    "coreName": "광원탑",
+    "coreColor": "#facc15",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "빛의 3원색인 빨강, 초록, 파랑 빛을 모두 같은 세기로 합성했을 때 나타나는 색은?",
+        "options": [
+          "검은색",
+          "백색(흰색)",
+          "노란색",
+          "청록색"
+        ],
+        "ans": 1,
+        "hint": "ㅂㅅ"
+      },
+      {
+        "q": "빛을 모아주는 성질이 있어 돋보기나 원시 교정용 안경에 쓰이는 렌즈는?",
+        "options": [
+          "볼록 렌즈",
+          "오목 렌즈",
+          "평면 유리",
+          "원통 렌즈"
+        ],
+        "ans": 0,
+        "hint": "ㅂㄹ ㄹㅈ"
+      },
+      {
+        "q": "도로의 굽은 길이나 편의점에 설치하여 넓은 범위를 한눈에 볼 수 있게 해주는 거울은?",
+        "options": [
+          "평면 거울",
+          "볼록 거울",
+          "오목 거울",
+          "이중 거울"
+        ],
+        "ans": 1,
+        "hint": "ㅂㄹ ㄱㅇ"
+      },
+      {
+        "q": "파동에서 이웃한 마루와 마루, 또는 골과 골 사이의 거리를 무엇이라 하는가?",
+        "options": [
+          "진폭",
+          "파장",
+          "주기",
+          "진동수"
+        ],
+        "ans": 1,
+        "hint": "ㅍㅈ"
+      },
+      {
+        "q": "소리의 3요소 중 소리의 크기(음량)를 결정하는 파동의 특성은?",
+        "options": [
+          "진동수",
+          "파형",
+          "진폭",
+          "속력"
+        ],
+        "ans": 2,
+        "hint": "ㅈㅍ"
+      }
+    ]
+  },
+  "J1_U7": {
+    "id": "J1_U7",
+    "grade": "중1",
+    "diff": 7,
+    "unit": "태양계",
+    "lesson": "지구와 달의 운동, 행성",
+    "name": "7단계: 행성 궤도 기지",
+    "theme": "지구와 달의 공전·자전, 일식",
+    "icon": "🪐",
+    "desc": "태양계 행성 궤도를 따라 침입하는 우주 오개념 군단을 격퇴하세요!",
+    "maxWaves": 6,
+    "roadColor": "#450a0a",
+    "grassColor": "#1c0404",
+    "coreName": "태양핵",
+    "coreColor": "#ef4444",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "하루에 한 바퀴씩 지구의 자전축을 중심으로 지구가 서에서 동으로 회전하는 운동은?",
+        "options": [
+          "자전",
+          "공전",
+          "세차 운동",
+          "일주 운동"
+        ],
+        "ans": 0,
+        "hint": "ㅈㅈ"
+      },
+      {
+        "q": "지구 자전으로 인해 나타나는 겉보기 현상으로 알맞은 것은?",
+        "options": [
+          "사계절의 변화",
+          "태양과 별의 일주 운동",
+          "낮의 길이 변화",
+          "태양의 남중 고도 변화"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅈ ㅇㄷ"
+      },
+      {
+        "q": "달이 태양과 지구 사이에 일직선으로 놓여 태양을 가리는 천체 현상은?",
+        "options": [
+          "월식",
+          "일식",
+          "조석 현상",
+          "상현달"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅅ"
+      },
+      {
+        "q": "표면에 단단한 암석 지각이 있고 질량은 작지만 평균 밀도가 큰 행성군은?",
+        "options": [
+          "목성형 행성",
+          "지구형 행성",
+          "왜소행성",
+          "혜성"
+        ],
+        "ans": 1,
+        "hint": "ㅈㄱㅎ ㅎㅅ"
+      },
+      {
+        "q": "태양계 행성 중 두꺼운 이산화탄소 대기로 덮여 극심한 온실효과로 표면 온도가 약 460℃에 달하는 행성은?",
+        "options": [
+          "수성",
+          "금성",
+          "화성",
+          "목성"
+        ],
+        "ans": 1,
+        "hint": "ㄱㅅ"
+      }
+    ]
+  },
+  "J1_U8": {
+    "id": "J1_U8",
+    "grade": "중1",
+    "diff": 8,
+    "unit": "열과 우리 생활",
+    "lesson": "열평형, 비열, 열팽창과 단열",
+    "name": "8단계: 열역학 제어 센터",
+    "theme": "열의 이동 3요소와 단열 설계",
+    "icon": "🔥",
+    "desc": "체온과 주위 온도의 균형을 깨뜨리려는 열역학 침입자를 저지하세요!",
+    "maxWaves": 6,
+    "roadColor": "#78350f",
+    "grassColor": "#291500",
+    "coreName": "열교환기",
+    "coreColor": "#f59e0b",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "온도가 다른 두 물체가 접촉하여 열을 주고받다가 결국 두 물체의 온도가 같아진 상태는?",
+        "options": [
+          "단열 상태",
+          "열평형 상태",
+          "과열 상태",
+          "포화 상태"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅍㅎ ㅅㅌ"
+      },
+      {
+        "q": "물질 1kg의 온도를 1℃ 올리는 데 필요한 열량을 뜻하는 고유한 물리량은?",
+        "options": [
+          "열용량",
+          "비열",
+          "열팽창률",
+          "칼로리"
+        ],
+        "ans": 1,
+        "hint": "ㅂㅇ"
+      },
+      {
+        "q": "한낮 해변에서 바닷물보다 모래사장이 훨씬 뜨겁게 달궈지는 과학적 까닭은?",
+        "options": [
+          "물의 비열이 모래보다 크기 때문",
+          "모래의 열전도율이 0이기 때문",
+          "물이 증발하지 않기 때문",
+          "햇빛이 모래에만 비추기 때문"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇ ㅋ"
+      },
+      {
+        "q": "열의 이동 방법 중 물질 자체가 직접 위아래로 순환하며 열을 전달하는 방식은?",
+        "options": [
+          "전도",
+          "대류",
+          "복사",
+          "단열"
+        ],
+        "ans": 1,
+        "hint": "ㄷㄹ"
+      },
+      {
+        "q": "열을 가했을 때 늘어나는 정도가 다른 두 금속을 맞붙여 화재경보기나 다리미 온도 조절에 쓰는 장치는?",
+        "options": [
+          "바이메탈",
+          "온도계",
+          "저항기",
+          "축전기"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇㅁㅌ"
+      }
+    ]
+  },
+  "J2_U1": {
+    "id": "J2_U1",
+    "grade": "중2",
+    "diff": 1,
+    "unit": "물질의 구성",
+    "lesson": "원소, 원자, 이온과 화학 결합",
+    "name": "1단계: 원자 결합 연구소",
+    "theme": "원소 기호와 이온 결합",
+    "icon": "⚛️",
+    "desc": "원소와 이온의 화학 결합을 교란하는 이온 결합 오개념 군단을 격퇴하세요!",
+    "maxWaves": 5,
+    "roadColor": "#581c87",
+    "grassColor": "#2e1065",
+    "coreName": "원자핵",
+    "coreColor": "#a855f7",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "더 이상 다른 물질로 분해되지 않는 물질을 이루는 기본 성분을 무엇이라 하는가?",
+        "options": [
+          "원소",
+          "원자",
+          "분자",
+          "화합물"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅅ"
+      },
+      {
+        "q": "중성 원자가 전자를 잃어서 양(+)전하를 띠게 된 입자는?",
+        "options": [
+          "양이온",
+          "음이온",
+          "원자핵",
+          "중성자"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅇㅇ"
+      },
+      {
+        "q": "질산 은(AgNO₃) 수용액과 염화 나트륨(NaCl) 수용액을 섞었을 때 생기는 흰색 앙금은?",
+        "options": [
+          "염화 은(AgCl)",
+          "질산 나트륨",
+          "산화 은",
+          "탄산 칼슘"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅎ ㅇ"
+      },
+      {
+        "q": "불꽃 반응 실험에서 노란색 불꽃 반응 색을 나타내는 금속 원소는?",
+        "options": [
+          "리튬",
+          "나트륨",
+          "칼륨",
+          "구리"
+        ],
+        "ans": 1,
+        "hint": "ㄴㅌㄹ"
+      },
+      {
+        "q": "독립된 입자로 존재하며 물질의 고유한 성질을 띠는 가장 작은 입자는?",
+        "options": [
+          "원자",
+          "원소",
+          "분자",
+          "이온"
+        ],
+        "ans": 2,
+        "hint": "ㅂㅈ"
+      }
+    ]
+  },
+  "J2_U2": {
+    "id": "J2_U2",
+    "grade": "중2",
+    "diff": 2,
+    "unit": "전기와 자기",
+    "lesson": "정전기 유도와 옴의 법칙",
+    "name": "2단계: 전자기 회로 발전소",
+    "theme": "정전기, 전압·전류·저항, 전자기력",
+    "icon": "⚡",
+    "desc": "이중 루프로 회전하는 전류 몬스터와 저항 방해꾼을 요격하세요!",
+    "maxWaves": 5,
+    "roadColor": "#0369a1",
+    "grassColor": "#082f49",
+    "coreName": "발전기",
+    "coreColor": "#38bdf8",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "대전되지 않은 금속 도체에 대전체를 가까이 가져갈 때 도체 양 끝에 전하가 유도되는 현상은?",
+        "options": [
+          "정전기 유도",
+          "전자기 유도",
+          "방전",
+          "접지"
+        ],
+        "ans": 0,
+        "hint": "ㅈㅈㄱ ㅇㄷ"
+      },
+      {
+        "q": "전압(V), 전류(I), 저항(R) 사이의 관계를 나타낸 옴의 법칙 공식으로 옳은 것은?",
+        "options": [
+          "V = I / R",
+          "V = I × R",
+          "I = V × R",
+          "R = V × I"
+        ],
+        "ans": 1,
+        "hint": "V = I × R"
+      },
+      {
+        "q": "가정의 콘센트에 여러 가전제품을 연결할 때 전압이 일정하게 걸리도록 하는 연결 방법은?",
+        "options": [
+          "직렬연결",
+          "병렬연결",
+          "역방향연결",
+          "단락연결"
+        ],
+        "ans": 1,
+        "hint": "ㅂㄹㅇㄱ"
+      },
+      {
+        "q": "코일 내부의 자기장이 변할 때 코일에 스스로 전류가 유도되어 흐르는 현상은?",
+        "options": [
+          "전자기 유도",
+          "정전기 유도",
+          "직렬회로",
+          "옴의 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㅈㅈㄱ ㅇㄷ"
+      },
+      {
+        "q": "자기장 안에서 전류가 흐르는 도선이 받는 힘을 이용해 회전 운동을 만드는 장치는?",
+        "options": [
+          "전동기(모터)",
+          "온도계",
+          "나침반",
+          "축전기"
+        ],
+        "ans": 0,
+        "hint": "ㅈㄷㄱ"
+      }
+    ]
+  },
+  "J2_U3": {
+    "id": "J2_U3",
+    "grade": "중2",
+    "diff": 3,
+    "unit": "태양계",
+    "lesson": "지구와 달의 크기, 천체 관측",
+    "name": "3단계: 천체 관측 기지",
+    "theme": "태양 표면, 별의 운동, 달의 위상",
+    "icon": "🔭",
+    "desc": "우주의 깊은 어둠 속에서 태양계 관측 장비를 파괴하려는 외계 오개념을 막아내세요!",
+    "maxWaves": 6,
+    "roadColor": "#78350f",
+    "grassColor": "#1c1917",
+    "coreName": "관측돔",
+    "coreColor": "#f59e0b",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "에라토스테네스가 하짓날 정오 막대 그림자 각도(7.2°)를 이용해 최초로 측정한 것은?",
+        "options": [
+          "태양 크기",
+          "지구 크기",
+          "달까지의 거리",
+          "지구 공전 속도"
+        ],
+        "ans": 1,
+        "hint": "ㅈㄱ ㅋㅋ"
+      },
+      {
+        "q": "북극성을 중심으로 북쪽 밤하늘 별들이 하루에 시계 반대 방향으로 회전하는 원인은?",
+        "options": [
+          "지구 공전",
+          "지구 자전",
+          "달의 공전",
+          "별의 실제 이동"
+        ],
+        "ans": 1,
+        "hint": "ㅈㄱ ㅈㅈ"
+      },
+      {
+        "q": "달이 지구 주위를 공전하면서 태양-지구-달의 순서로 놓여 보름달이 되는 위상은?",
+        "options": [
+          "삭",
+          "상현",
+          "망(보름달)",
+          "하현"
+        ],
+        "ans": 2,
+        "hint": "ㅁ"
+      },
+      {
+        "q": "태양 표면(광구)에서 주변보다 온도가 약 2,000℃ 낮아서 검게 보이는 부분은?",
+        "options": [
+          "쌀알 무늬",
+          "흑점",
+          "플레어",
+          "홍염"
+        ],
+        "ans": 1,
+        "hint": "ㅎㅈ"
+      },
+      {
+        "q": "태양 대기층인 채층 위로 고온의 가스가 수백만 km 뻗쳐 있는 진주색 바깥 대기는?",
+        "options": [
+          "코로나",
+          "흑점",
+          "광구",
+          "홍염"
+        ],
+        "ans": 0,
+        "hint": "ㅋㄹㄴ"
+      }
+    ]
+  },
+  "J2_U4": {
+    "id": "J2_U4",
+    "grade": "중2",
+    "diff": 4,
+    "unit": "식물과 에너지",
+    "lesson": "광합성과 호흡, 증산 작용",
+    "name": "4단계: 엽록체 엽록소 온실",
+    "theme": "광합성, 증산 작용, 유기 양분",
+    "icon": "🍃",
+    "desc": "광합성 공장을 멈추려는 어둠의 오개념 포자를 정화하세요!",
+    "maxWaves": 6,
+    "roadColor": "#14532d",
+    "grassColor": "#052e16",
+    "coreName": "엽록체",
+    "coreColor": "#22c55e",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "식물이 빛에너지를 이용하여 물과 이산화탄소로부터 유기 양분을 합성하는 과정은?",
+        "options": [
+          "증산 작용",
+          "광합성",
+          "세포 호흡",
+          "소화 작용"
+        ],
+        "ans": 1,
+        "hint": "ㄱㅎㅅ"
+      },
+      {
+        "q": "광합성 결과 엽록체에서 최초로 만들어진 포도당이 낮 동안 잎에 임시 저장되는 형태는?",
+        "options": [
+          "단백질",
+          "녹말",
+          "지방",
+          "포도당"
+        ],
+        "ans": 1,
+        "hint": "ㄴㅁ"
+      },
+      {
+        "q": "잎의 기공을 통해 물이 수증기 형태로 공기 중으로 증발하여 나가는 현상은?",
+        "options": [
+          "증산 작용",
+          "광합성",
+          "응결 작용",
+          "삼투 현상"
+        ],
+        "ans": 0,
+        "hint": "ㅈㅅ ㅈㅇ"
+      },
+      {
+        "q": "식물의 광합성에 영향을 주는 3대 환경 요인이 아닌 것은?",
+        "options": [
+          "빛의 세기",
+          "이산화탄소 농도",
+          "온도",
+          "토양의 색깔"
+        ],
+        "ans": 3,
+        "hint": "ㅌㅇ ㅅㄲ"
+      },
+      {
+        "q": "식물이 밤낮을 가리지 않고 24시간 내내 산소를 흡수하고 에너지를 얻는 작용은?",
+        "options": [
+          "호흡",
+          "광합성",
+          "증산",
+          "배설"
+        ],
+        "ans": 0,
+        "hint": "ㅎㅎ"
+      }
+    ]
+  },
+  "J2_U5": {
+    "id": "J2_U5",
+    "grade": "중2",
+    "diff": 5,
+    "unit": "동물과 에너지",
+    "lesson": "소화, 순환, 호흡, 배설계",
+    "name": "5단계: 인체 대사 통제 센터",
+    "theme": "소화·순환·호흡·배설계의 통합 작용",
+    "icon": "🫀",
+    "desc": "인체 4대 대사 기관을 마비시키려는 노폐물 바이러스를 차단하세요!",
+    "maxWaves": 6,
+    "roadColor": "#881337",
+    "grassColor": "#2b0610",
+    "coreName": "심장",
+    "coreColor": "#ef4444",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "소장에서 3대 영양소(녹말, 단백질, 지방)를 분해하는 소화 효소를 모두 분비하는 기관은?",
+        "options": [
+          "위",
+          "이자",
+          "간",
+          "쓸개"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅈ"
+      },
+      {
+        "q": "소장 안쪽 벽에 수없이 돋아 있어 영양소의 흡수 표면적을 극대화하는 구조는?",
+        "options": [
+          "융털",
+          "사구체",
+          "세뇨관",
+          "폐포"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅌ"
+      },
+      {
+        "q": "심장 좌심실에서 온몸으로 산소가 풍부한 피를 뿜어내는 가장 두꺼운 혈관은?",
+        "options": [
+          "대동맥",
+          "대정맥",
+          "폐동맥",
+          "폐정맥"
+        ],
+        "ans": 0,
+        "hint": "ㄷㄷㅁ"
+      },
+      {
+        "q": "콩팥의 네프론에서 일어나는 오줌 생성 3단계 과정이 올바르게 짝지어진 것은?",
+        "options": [
+          "여과 - 재흡수 - 분비",
+          "흡수 - 소화 - 배출",
+          "산화 - 환원 - 여과",
+          "여과 - 침전 - 분별"
+        ],
+        "ans": 0,
+        "hint": "ㅇㄱ ㅈㅎㅅ ㅂㅂ"
+      },
+      {
+        "q": "폐포와 모세혈관 사이에서 산소와 이산화탄소가 교환되는 주된 원리는?",
+        "options": [
+          "기압 차이",
+          "기체의 농도 차이에 의한 확산",
+          "삼투 현상",
+          "체온 변화"
+        ],
+        "ans": 1,
+        "hint": "ㅎㅅ"
+      }
+    ]
+  },
+  "J2_U6": {
+    "id": "J2_U6",
+    "grade": "중2",
+    "diff": 6,
+    "unit": "물질의 특성",
+    "lesson": "밀도, 끓는점, 용해도, 혼합물 분리",
+    "name": "6단계: 물질 정제 분리소",
+    "theme": "물질의 고유한 특성과 혼합물 분리",
+    "icon": "🧪",
+    "desc": "물질 고유의 특성을 무너뜨리려는 불순물 오개념을 걸러내세요!",
+    "maxWaves": 6,
+    "roadColor": "#164e63",
+    "grassColor": "#083344",
+    "coreName": "증류탑",
+    "coreColor": "#06b6d4",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "물질의 질량을 부피로 나눈 값으로, 물질의 종류를 구별할 수 있는 고유한 특성은?",
+        "options": [
+          "무게",
+          "농도",
+          "밀도",
+          "부피"
+        ],
+        "ans": 2,
+        "hint": "ㅁㄷ"
+      },
+      {
+        "q": "물과 기름처럼 서로 섞이지 않고 밀도가 다른 두 액체 혼합물을 분리하는 기구는?",
+        "options": [
+          "분별 깔때기",
+          "증류 플라스크",
+          "뷰렛",
+          "냉각기"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅂ ㄲㄸㄱ"
+      },
+      {
+        "q": "물과 에탄올 혼합물을 가열하여 끓는점 차이를 이용해 순수한 액체를 분리하는 방법은?",
+        "options": [
+          "여과",
+          "증류",
+          "거름",
+          "추출"
+        ],
+        "ans": 1,
+        "hint": "ㅈㄹ"
+      },
+      {
+        "q": "특정 온도에서 물(용매) 100g에 최대로 녹을 수 있는 용질의 g수를 무엇이라 하는가?",
+        "options": [
+          "밀도",
+          "끓는점",
+          "용해도",
+          "어는점"
+        ],
+        "ans": 2,
+        "hint": "ㅇㅎㄷ"
+      },
+      {
+        "q": "사인펜 잉크나 시금치 색소처럼 용매를 따라 성분 물질이 이동하는 속도 차를 이용한 분리법은?",
+        "options": [
+          "크로마토그래피",
+          "재결정",
+          "분별 증류",
+          "거름"
+        ],
+        "ans": 0,
+        "hint": "ㅋㄹㅁㅌㄱㄹㅍ"
+      }
+    ]
+  },
+  "J2_U7": {
+    "id": "J2_U7",
+    "grade": "중2",
+    "diff": 7,
+    "unit": "수권과 해수의 순환",
+    "lesson": "해수의 층상 구조와 해류",
+    "name": "7단계: 해양 심해 관측소",
+    "theme": "해수의 층상 구조와 염분비 일정 법칙",
+    "icon": "🌊",
+    "desc": "깊은 심해의 열과 염분을 교란하는 해류 오개념을 차단하세요!",
+    "maxWaves": 6,
+    "roadColor": "#075985",
+    "grassColor": "#082f49",
+    "coreName": "심해핵",
+    "coreColor": "#0284c7",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "지구 전체 물 중 약 97.2%를 차지하며 가장 많은 비중을 차지하는 것은?",
+        "options": [
+          "빙하",
+          "지하수",
+          "해수(바닷물)",
+          "호수와 하천수"
+        ],
+        "ans": 2,
+        "hint": "ㅎㅅ"
+      },
+      {
+        "q": "깊이에 따른 해수의 3대 층상 구조 중 바람의 혼합 작용으로 수온이 일정한 층은?",
+        "options": [
+          "혼합층",
+          "수온 약층",
+          "심해층",
+          "대류층"
+        ],
+        "ans": 0,
+        "hint": "ㅎㅎㅊ"
+      },
+      {
+        "q": "위는 따뜻하고 아래는 차가워 대류가 일어나지 않아 혼합층과 심해층의 물질 교환을 차단하는 층은?",
+        "options": [
+          "혼합층",
+          "수온 약층",
+          "심해층",
+          "중간층"
+        ],
+        "ans": 1,
+        "hint": "ㅅㅇ ㅇㅊ"
+      },
+      {
+        "q": "전 세계 바다의 전체 염분은 달라도 각 염류 사이의 질량 비율은 일정하다는 법칙은?",
+        "options": [
+          "질량 보존 법칙",
+          "염분비 일정 법칙",
+          "일정 성분비 법칙",
+          "보일 법칙"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅂㅂ ㅇㅈ ㅂㅊ"
+      },
+      {
+        "q": "우리나라 동해안으로 북상하는 고온 고염의 대표적인 난류는?",
+        "options": [
+          "쿠로시오 해류",
+          "북한 한류",
+          "리만 해류",
+          "캘리포니아 해류"
+        ],
+        "ans": 0,
+        "hint": "ㅋㄹㅅㅇ"
+      }
+    ]
+  },
+  "J2_U8": {
+    "id": "J2_U8",
+    "grade": "중2",
+    "diff": 8,
+    "unit": "열과 우리 생활",
+    "lesson": "열평형, 비열, 열팽창과 단열",
+    "name": "8단계: 열에너지 단열 돔",
+    "theme": "열평형과 비열의 응용",
+    "icon": "🌡️",
+    "desc": "급격한 열 방출과 열 손실을 일으키는 열역학 바이러스를 봉쇄하세요!",
+    "maxWaves": 6,
+    "roadColor": "#713f12",
+    "grassColor": "#291500",
+    "coreName": "보온병",
+    "coreColor": "#eab308",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "온도가 다른 두 물체가 접촉할 때 고온에서 저온으로 열이 이동하다가 온도가 같아지는 상태는?",
+        "options": [
+          "단열",
+          "열평형",
+          "과포화",
+          "융해"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅍㅎ"
+      },
+      {
+        "q": "물질이 열을 얻으면 구성 입자의 진동이 활발해져서 부피가 팽창하는 현상은?",
+        "options": [
+          "열팽창",
+          "열전도",
+          "대류",
+          "열평형"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅍㅊ"
+      },
+      {
+        "q": "차가운 공기는 가라앉고 따뜻한 공기는 뜨는 대류 때문에 냉방기(에어컨)를 설치하기 좋은 위치는?",
+        "options": [
+          "방의 위쪽",
+          "방바닥",
+          "벽의 가장 아래쪽",
+          "아무 곳이나 상관없음"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇ ㅇㅉ"
+      },
+      {
+        "q": "금속 숟가락의 한쪽 끝을 뜨거운 국에 넣었을 때 입자 충돌로 손잡이까지 뜨거워지는 열 이동은?",
+        "options": [
+          "전도",
+          "대류",
+          "복사",
+          "단열"
+        ],
+        "ans": 0,
+        "hint": "ㅈㄷ"
+      },
+      {
+        "q": "진공 층으로 전도와 대류를 차단하고, 은도금 면으로 복사를 반사하는 단열 기구는?",
+        "options": [
+          "보온병",
+          "선풍기",
+          "프라이팬",
+          "가스레인지"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇㅂ"
+      }
+    ]
+  },
+  "J3_U1": {
+    "id": "J3_U1",
+    "grade": "중3",
+    "diff": 1,
+    "unit": "화학 반응의 규칙과 에너지 변화",
+    "lesson": "화학 반응식과 반응 법칙",
+    "name": "1단계: 화학 반응 통제소",
+    "theme": "화학 반응식, 질량 보존, 일정 성분비, 기체 반응",
+    "icon": "💥",
+    "desc": "밀폐 용기 밖으로 빠져나가려는 기체 오개념 몬스터를 막아내세요!",
+    "maxWaves": 5,
+    "roadColor": "#334155",
+    "grassColor": "#0f172a",
+    "coreName": "밀폐용기",
+    "coreColor": "#38bdf8",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "밀폐된 용기 안에서 화학 반응이 일어날 때 반응 전후 물질의 전체 질량이 변하지 않는다는 법칙은?",
+        "options": [
+          "질량 보존 법칙",
+          "일정 성분비 법칙",
+          "기체 반응 법칙",
+          "에너지 보존 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㅈㄹ ㅂㅈ ㅂㅊ"
+      },
+      {
+        "q": "화합물을 구성하는 성분 원소 사이에 일정한 질량비가 성립한다는 법칙은?",
+        "options": [
+          "질량 보존 법칙",
+          "일정 성분비 법칙",
+          "배수 비례 법칙",
+          "보일 법칙"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅈ ㅅㅂㅂ ㅂㅊ"
+      },
+      {
+        "q": "일정한 온도와 압력에서 기체가 반응하여 새로운 기체를 생성할 때 부피 사이에 간단한 정수비가 성립한다는 법칙은?",
+        "options": [
+          "기체 반응 법칙",
+          "샤를 법칙",
+          "옴의 법칙",
+          "뉴턴 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㄱㅊ ㅂㅇ ㅂㅊ"
+      },
+      {
+        "q": "화학 반응이 일어날 때 주변으로 에너지를 방출하여 주위 온도가 높아지는 반응은?",
+        "options": [
+          "발열 반응",
+          "흡열 반응",
+          "상태 변화",
+          "분해 반응"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅇ ㅂㅇ"
+      },
+      {
+        "q": "물의 전기 분해나 식물의 광합성처럼 주변에서 에너지를 흡수하여 일어나는 화학 반응은?",
+        "options": [
+          "발열 반응",
+          "흡열 반응",
+          "연소 반응",
+          "중화 반응"
+        ],
+        "ans": 1,
+        "hint": "ㅎㅇ ㅂㅇ"
+      }
+    ]
+  },
+  "J3_U2": {
+    "id": "J3_U2",
+    "grade": "중3",
+    "diff": 2,
+    "unit": "기권과 날씨",
+    "lesson": "기권 구조, 복사 평형, 습도, 전선",
+    "name": "2단계: 기상 관측 타워",
+    "theme": "기권 4층, 복사 평형, 온대 저기압",
+    "icon": "🌪️",
+    "desc": "급격한 기압 변화와 폭우를 동반한 한랭 전선의 침투를 방어하세요!",
+    "maxWaves": 5,
+    "roadColor": "#0369a1",
+    "grassColor": "#082f49",
+    "coreName": "기상청",
+    "coreColor": "#0ea5e9",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "기권의 층상 구조 중 수증기와 대류가 모두 활발하여 눈, 비 등 기상 현상이 일어나는 층은?",
+        "options": [
+          "대류권",
+          "성층권",
+          "중간권",
+          "열권"
+        ],
+        "ans": 0,
+        "hint": "ㄷㄹㄱ"
+      },
+      {
+        "q": "지구가 흡수하는 태양 복사 에너지양과 방출하는 지구 복사 에너지양이 같아 평균 기온이 일정하게 유지되는 상태는?",
+        "options": [
+          "복사 평형",
+          "온실 효과",
+          "지구 온난화",
+          "열평형"
+        ],
+        "ans": 0,
+        "hint": "ㅂㅅ ㅍㅎ"
+      },
+      {
+        "q": "공기가 상승하여 외부와 열 교환 없이 팽창하면서 기온이 낮아져 구름이 만들어지는 현상은?",
+        "options": [
+          "단열 팽창",
+          "단열 압축",
+          "증발",
+          "승화"
+        ],
+        "ans": 0,
+        "hint": "ㄷㅇ ㅍㅊ"
+      },
+      {
+        "q": "차가운 기단이 따뜻한 기단 아래로 급경사로 파고들 때 형성되며 적운형 구름과 소나기가 내리는 전선은?",
+        "options": [
+          "한랭 전선",
+          "온난 전선",
+          "폐색 전선",
+          "정체 전선"
+        ],
+        "ans": 0,
+        "hint": "ㅎㄹ ㅈㅅ"
+      },
+      {
+        "q": "중심부에 하강 기류가 발달하여 구름이 소멸하고 날씨가 맑은 기압계는?",
+        "options": [
+          "고기압",
+          "저기압",
+          "온대 저기압",
+          "열대 저기압"
+        ],
+        "ans": 0,
+        "hint": "ㄱㄱㅇ"
+      }
+    ]
+  },
+  "J3_U3": {
+    "id": "J3_U3",
+    "grade": "중3",
+    "diff": 3,
+    "unit": "운동과 에너지",
+    "lesson": "등속 운동, 자유 낙하 운동, 일과 에너지",
+    "name": "3단계: 역학 동역학 연구소",
+    "theme": "자유 낙하 운동과 중력 가속도, 역학적 에너지",
+    "icon": "🏎️",
+    "desc": "가속도가 붙어 돌진하는 역학 에너지 몬스터들을 요격하세요!",
+    "maxWaves": 6,
+    "roadColor": "#312e81",
+    "grassColor": "#1e1b4b",
+    "coreName": "중력탑",
+    "coreColor": "#6366f1",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "공기 저항이 없을 때 물체가 오직 지구 중력만을 받으며 아래로 떨어지는 운동은?",
+        "options": [
+          "등속 운동",
+          "자유 낙하 운동",
+          "진자 운동",
+          "포물선 운동"
+        ],
+        "ans": 1,
+        "hint": "ㅈㅇ ㄴㅎ ㅇㄷ"
+      },
+      {
+        "q": "지구에서 자유 낙하 하는 물체의 속력은 1초마다 약 몇 m/s씩 일정하게 증가하는가?",
+        "options": [
+          "1 m/s",
+          "4.9 m/s",
+          "9.8 m/s",
+          "19.6 m/s"
+        ],
+        "ans": 2,
+        "hint": "9.8"
+      },
+      {
+        "q": "과학에서 물체에 힘을 주어 힘의 방향으로 물체가 이동했을 때 한 일의 양(W)을 구하는 공식은?",
+        "options": [
+          "힘 × 이동 거리",
+          "힘 ÷ 이동 거리",
+          "질량 × 속력",
+          "질량 × 높이"
+        ],
+        "ans": 0,
+        "hint": "W = F x s"
+      },
+      {
+        "q": "질량 2kg인 물체가 기준면으로부터 높이 5m에 있을 때 가지는 중력에 의한 위치 에너지는?",
+        "options": [
+          "10 J",
+          "49 J",
+          "98 J",
+          "196 J"
+        ],
+        "ans": 2,
+        "hint": "98 J"
+      },
+      {
+        "q": "질량이 m인 물체가 속력 v로 운동할 때 가지는 운동 에너지(Ek) 공식은?",
+        "options": [
+          "mv",
+          "1/2 mv",
+          "1/2 m v²",
+          "9.8 mv"
+        ],
+        "ans": 2,
+        "hint": "1/2 m v²"
+      }
+    ]
+  },
+  "J3_U4": {
+    "id": "J3_U4",
+    "grade": "중3",
+    "diff": 4,
+    "unit": "자극과 반응",
+    "lesson": "감각 기관, 뉴런, 신경계, 호르몬",
+    "name": "4단계: 신경계 뉴런 코어",
+    "theme": "감각 신경, 무조건 반사, 항상성",
+    "icon": "🧠",
+    "desc": "신경망을 따라 침투하는 자극-반응 오개념 바이러스를 방어하세요!",
+    "maxWaves": 6,
+    "roadColor": "#831843",
+    "grassColor": "#4c0519",
+    "coreName": "대뇌",
+    "coreColor": "#ec4899",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "눈에서 빛 자극을 받아들이는 시각 세포가 분포하며 물체의 상이 맺히는 부위는?",
+        "options": [
+          "망막",
+          "각막",
+          "수정체",
+          "유리체"
+        ],
+        "ans": 0,
+        "hint": "ㅁㅁ"
+      },
+      {
+        "q": "귀에서 몸이 회전하는 자극을 감지하는 평형 감각 기관은?",
+        "options": [
+          "전정 기관",
+          "반고리관",
+          "달팽이관",
+          "귀인두관"
+        ],
+        "ans": 1,
+        "hint": "ㅂㄱㄹㄱ"
+      },
+      {
+        "q": "신경계를 구성하는 기본 단위인 신경 세포의 명칭은?",
+        "options": [
+          "적혈구",
+          "뉴런",
+          "백혈구",
+          "상피세포"
+        ],
+        "ans": 1,
+        "hint": "ㄴㄹ"
+      },
+      {
+        "q": "뜨거운 냄비에 손이 닿았을 때 생각하기도 전에 손을 떼는 반사의 중추는?",
+        "options": [
+          "대뇌",
+          "소뇌",
+          "척수",
+          "간뇌"
+        ],
+        "ans": 2,
+        "hint": "ㅊㅅ"
+      },
+      {
+        "q": "이자에서 분비되며 포도당을 글리코젠으로 저장시켜 혈당량을 낮추는 호르몬은?",
+        "options": [
+          "인슐린",
+          "글루카곤",
+          "티록신",
+          "아드레날린"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅅㄹ"
+      }
+    ]
+  },
+  "J3_U5": {
+    "id": "J3_U5",
+    "grade": "중3",
+    "diff": 5,
+    "unit": "생식과 유전",
+    "lesson": "세포 분열, 멘델 유전, 사람의 유전",
+    "name": "5단계: 멘델 유전체 온실",
+    "theme": "체세포/감수 분열, 유전 법칙, 반성유전",
+    "icon": "🧬",
+    "desc": "염색체 복제와 분리를 방해하는 변이 오개념을 막아내세요!",
+    "maxWaves": 6,
+    "roadColor": "#065f46",
+    "grassColor": "#022c22",
+    "coreName": "염색체",
+    "coreColor": "#10b981",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 1
+      },
+      {
+        "x": 3,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 1
+      },
+      {
+        "x": 10,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 3
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 6
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 7
+      },
+      {
+        "x": 4,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "생식세포 형성 시 일어나며, 딸세포의 염색체 수가 모세포의 절반(2n→n)으로 줄어드는 분열은?",
+        "options": [
+          "체세포 분열",
+          "감수 분열",
+          "난할",
+          "무성 생식"
+        ],
+        "ans": 1,
+        "hint": "ㄱㅅ ㅂㅇ"
+      },
+      {
+        "q": "순종의 둥근 완두(RR)와 주름진 완두(rr) 교배 시 잡종 1대에서 둥근 완두만 나타나는 원리는?",
+        "options": [
+          "우열의 원리",
+          "분리의 법칙",
+          "독립의 법칙",
+          "반성유전"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅇㅇ ㅇㄹ"
+      },
+      {
+        "q": "잡종 1대(Rr)를 자가 수분했을 때 잡종 2대에서 우성(둥근 완두)과 열성(주름진 완두)의 분리비는?",
+        "options": [
+          "1 : 1",
+          "2 : 1",
+          "3 : 1",
+          "9 : 3 : 3 : 1"
+        ],
+        "ans": 2,
+        "hint": "3 : 1"
+      },
+      {
+        "q": "사람의 체세포에 들어 있는 상염색체와 성염색체의 총 개수는?",
+        "options": [
+          "23개",
+          "44개",
+          "46개",
+          "48개"
+        ],
+        "ans": 2,
+        "hint": "46개"
+      },
+      {
+        "q": "적록 색맹 유전자가 X 염색체에 있어 남녀에 따라 발현 빈도에 차이가 나는 유전 현상은?",
+        "options": [
+          "상염색체 유전",
+          "반성유전",
+          "복대립 유전",
+          "다인자 유전"
+        ],
+        "ans": 1,
+        "hint": "ㅂㅅㅇㅈ"
+      }
+    ]
+  },
+  "J3_U6": {
+    "id": "J3_U6",
+    "grade": "중3",
+    "diff": 6,
+    "unit": "에너지 전환과 보존",
+    "lesson": "역학적 에너지 보존, 발전기, 소비 전력",
+    "name": "6단계: 에너지 발전 변환소",
+    "theme": "전자기 유도, 에너지 전환, 소비 전력량",
+    "icon": "💡",
+    "desc": "에너지 누출과 과소비를 일으키는 에너지 낭비 몬스터를 격퇴하세요!",
+    "maxWaves": 6,
+    "roadColor": "#713f12",
+    "grassColor": "#291500",
+    "coreName": "변전소",
+    "coreColor": "#eab308",
+    "grid": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 2
+      },
+      {
+        "x": 3,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 4
+      },
+      {
+        "x": 5,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 0
+      },
+      {
+        "x": 8,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 2
+      },
+      {
+        "x": 12,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 10,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 6
+      },
+      {
+        "x": 1,
+        "y": 8
+      },
+      {
+        "x": 12,
+        "y": 8
+      }
+    ],
+    "questions": [
+      {
+        "q": "공기 저항과 마찰이 없을 때 위치 에너지와 운동 에너지의 합이 일정하게 보존된다는 법칙은?",
+        "options": [
+          "역학적 에너지 보존 법칙",
+          "질량 보존 법칙",
+          "에너지 증폭 법칙",
+          "관성 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅎㅈ ㅇㄴㅈ ㅂㅈ"
+      },
+      {
+        "q": "코일 근처에서 자석을 움직일 때 유도 전류가 흘러 역학적 에너지를 전기 에너지로 바꾸는 장치는?",
+        "options": [
+          "전동기",
+          "발전기",
+          "전열기",
+          "축전기"
+        ],
+        "ans": 1,
+        "hint": "ㅂㅈㄱ"
+      },
+      {
+        "q": "전기 기구가 1초 동안 사용하는 전기 에너지의 양을 뜻하는 물리량은?",
+        "options": [
+          "소비 전력",
+          "전력량",
+          "전압",
+          "전기 저항"
+        ],
+        "ans": 0,
+        "hint": "ㅅㅂ ㅈㄹ"
+      },
+      {
+        "q": "소비 전력 100W인 전구를 5시간 동안 켰을 때 소비한 전력량(Wh)은?",
+        "options": [
+          "20 Wh",
+          "100 Wh",
+          "500 Wh",
+          "5000 Wh"
+        ],
+        "ans": 2,
+        "hint": "500 Wh"
+      },
+      {
+        "q": "에너지가 다른 형태로 전환될 때 전체 에너지의 총량은 새로 생기거나 사라지지 않는다는 법칙은?",
+        "options": [
+          "에너지 보존 법칙",
+          "역학적 에너지 보존 법칙",
+          "질량 보존 법칙",
+          "열역학 법칙"
+        ],
+        "ans": 0,
+        "hint": "ㅇㄴㅈ ㅂㅈ ㅂㅊ"
+      }
+    ]
+  },
+  "J3_U7": {
+    "id": "J3_U7",
+    "grade": "중3",
+    "diff": 7,
+    "unit": "별과 우주",
+    "lesson": "연주 시차, 별의 등급, 우주 팽창",
+    "name": "7단계: 심우주 천체 관측 기지",
+    "theme": "연주 시차, 절대 등급, 허블 법칙",
+    "icon": "🌌",
+    "desc": "빛의 속도로 팽창하는 심우주 속에서 별과 은하의 관측 기지를 수호하세요!",
+    "maxWaves": 7,
+    "roadColor": "#4c1d95",
+    "grassColor": "#1e1035",
+    "coreName": "허블망원경",
+    "coreColor": "#8b5cf6",
+    "grid": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 1
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 1,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 7
+      },
+      {
+        "x": 3,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 8,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 3
+      },
+      {
+        "x": 11,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 7
+      },
+      {
+        "x": 12,
+        "y": 7
+      }
+    ],
+    "questions": [
+      {
+        "q": "지구 공전 때문에 6개월 간격으로 관측한 별의 위치 차이 각도의 1/2을 무엇이라 하는가?",
+        "options": [
+          "시차",
+          "연주 시차",
+          "시지름",
+          "남중 고도"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅈ ㅅㅊ"
+      },
+      {
+        "q": "별이 10pc(파섹) 거리에 있다고 가정했을 때의 실제 밝기를 나타낸 등급은?",
+        "options": [
+          "겉보기 등급",
+          "절대 등급",
+          "분광 등급",
+          "유효 등급"
+        ],
+        "ans": 1,
+        "hint": "ㅈㄷ ㄷㄱ"
+      },
+      {
+        "q": "표면 온도가 가장 높은 고온의 별이 나타내는 색깔은?",
+        "options": [
+          "붉은색",
+          "주황색",
+          "노란색",
+          "청색(파란색)"
+        ],
+        "ans": 3,
+        "hint": "ㅊㅅ"
+      },
+      {
+        "q": "우리은하의 중심에 막대 구조가 있고 나선팔이 감겨 있는 형태 분류는?",
+        "options": [
+          "타원 은하",
+          "정상 나선 은하",
+          "막대 나선 은하",
+          "불규칙 은하"
+        ],
+        "ans": 2,
+        "hint": "ㅁㄷ ㄴㅅ ㅇㅎ"
+      },
+      {
+        "q": "에드윈 허블이 외부 은하들의 스펙트럼 적색편이를 관측하여 입증한 사실은?",
+        "options": [
+          "우주가 수축하고 있다",
+          "우주가 팽창하고 있다",
+          "우주의 크기는 정지해 있다",
+          "은하들이 충돌하고 있다"
+        ],
+        "ans": 1,
+        "hint": "ㅇㅈ ㅍㅊ"
+      }
+    ]
+  },
+  "J3_U8": {
+    "id": "J3_U8",
+    "grade": "중3",
+    "diff": 8,
+    "unit": "과학기술과 인류 문명",
+    "lesson": "과학 원리 발견, 첨단 기술, 공학적 설계",
+    "name": "8단계: 미래 문명 공학 센터",
+    "theme": "과학기술과 문명 발전, 공학적 설계",
+    "icon": "🛰️",
+    "desc": "과학 지식을 왜곡하고 문명을 퇴보시키려는 사이버 오개념 침입자를 차단하세요!",
+    "maxWaves": 7,
+    "roadColor": "#134e4a",
+    "grassColor": "#042f2e",
+    "coreName": "양자코어",
+    "coreColor": "#14b8a6",
+    "grid": [
+      [
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    ],
+    "waypoints": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 0
+      },
+      {
+        "x": 13,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 8
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 10,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 6
+      },
+      {
+        "x": 2,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 4
+      },
+      {
+        "x": 7,
+        "y": 5
+      },
+      {
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "questions": [
+      {
+        "q": "하버가 공기 중의 질소로부터 대량 합성에 성공하여 화학 비료 생산으로 식량 문제를 해결한 물질은?",
+        "options": [
+          "암모니아",
+          "이산화탄소",
+          "메테인",
+          "염화수소"
+        ],
+        "ans": 0,
+        "hint": "ㅇㅁㄴㅇ"
+      },
+      {
+        "q": "물질을 나노미터(10억분의 1m) 크기로 조작하여 새로운 성질을 가진 소재나 제품을 만드는 기술은?",
+        "options": [
+          "생명 공학 기술",
+          "나노 기술",
+          "우주 기술",
+          "원자력 기술"
+        ],
+        "ans": 1,
+        "hint": "ㄴㄴ ㄱㅅ"
+      },
+      {
+        "q": "생물의 특성을 인위적으로 조작하여 인류에게 유용한 물질을 만들거나 질병을 치료하는 기술은?",
+        "options": [
+          "나노 기술",
+          "생명 공학 기술",
+          "정보 통신 기술",
+          "항공 우주 기술"
+        ],
+        "ans": 1,
+        "hint": "ㅅㅁ ㄱㅎ ㄱㅅ"
+      },
+      {
+        "q": "인공지능, 센서, 빅데이터가 결합하여 운전자 조작 없이 스스로 주행하는 미래 이동 수단은?",
+        "options": [
+          "자율 주행 자동차",
+          "증기 기관차",
+          "열기구",
+          "케이블카"
+        ],
+        "ans": 0,
+        "hint": "ㅈㅇ ㅈㅎ ㅈㄷㅊ"
+      },
+      {
+        "q": "과학 원리를 바탕으로 인간 생활을 편리하게 만들기 위해 기획, 설계, 제작, 평가하는 과정은?",
+        "options": [
+          "공학적 설계",
+          "자연 관찰",
+          "가설 검증",
+          "분류 조사"
+        ],
+        "ans": 0,
+        "hint": "ㄱㅎㅈ ㅅㄱ"
+      }
+    ]
+  }
+};
+
+/* ==========================================================================
+   2. AUDIO SYNTHESIZER
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, type, duration, gainVal = 0.15) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+const SFX = {
+  laser: () => {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(750, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    } catch(e) {}
+  },
+  freeze: () => {
+    playTone(980, 'sine', 0.18, 0.08);
+    setTimeout(() => playTone(1280, 'sine', 0.22, 0.06), 40);
+  },
+  explosion: () => {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
+    } catch(e) {}
+  },
+  correct: () => {
+    playTone(523.25, 'triangle', 0.12, 0.2);
+    setTimeout(() => playTone(659.25, 'triangle', 0.15, 0.2), 80);
+    setTimeout(() => playTone(783.99, 'triangle', 0.25, 0.2), 160);
+  },
+  wrong: () => {
+    playTone(220, 'sawtooth', 0.2, 0.25);
+    setTimeout(() => playTone(170, 'sawtooth', 0.25, 0.25), 100);
+  },
+  fanfare: () => {
+    playTone(523.25, 'triangle', 0.15, 0.25);
+    setTimeout(() => playTone(659.25, 'triangle', 0.15, 0.25), 120);
+    setTimeout(() => playTone(783.99, 'triangle', 0.15, 0.25), 240);
+    setTimeout(() => playTone(1046.5, 'triangle', 0.45, 0.3), 360);
+  }
+};
+
+/* ==========================================================================
+   3. GAME ENGINE & STAGE LOGIC
+   ========================================================================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const COLS = 14;
+const ROWS = 9;
+let TILE_SIZE = 50;
+
+function fitCanvas() {
+  const containerWidth = canvas.parentElement.clientWidth - 16;
+  const targetWidth = Math.min(700, containerWidth);
+  canvas.width = 700;
+  canvas.height = 450;
+  TILE_SIZE = canvas.width / COLS;
+}
+fitCanvas();
+window.addEventListener('resize', fitCanvas);
+
+const TOWER_SPECS = {
+  neuron: { name: "뉴런 전기 타워", cost: 100, range: 115, fireRate: 24, damage: 30, color: "#38bdf8", splash: 0, slow: 0 },
+  cryo: { name: "냉각 열평형 타워", cost: 130, range: 95, fireRate: 45, damage: 14, color: "#22d3ee", splash: 45, slow: 0.5 },
+  chem: { name: "화학 반응 플라스크", cost: 160, range: 130, fireRate: 55, damage: 60, color: "#c084fc", splash: 65, slow: 0 }
+};
+
+let curGrade = '중3';
+let currentStageId = 'J3_U1';
+
+let hp = 5;
+let energy = 150;
+let wave = 1;
+let score = 0;
+let gameSpeed = 1;
+let isPaused = false;
+let isRunning = false;
+
+let towers = [];
+let enemies = [];
+let projectiles = [];
+let particles = [];
+let missedQuestions = [];
+
+let selectedBuildType = null;
+let selectedTowerInstance = null;
+let waveSpawning = false;
+let waveSpawnCount = 0;
+let waveSpawnTimer = 0;
+let tickCount = 0;
+
+/* Quiz State */
+let currentQ = null;
+let quizPool = [];
+let isQuizCooldown = false;
+
+let isTeacherMode = false;
+
+function toggleTeacherMode() {
+  isTeacherMode = !isTeacherMode;
+  const btn = document.getElementById('btnModeToggle');
+  const panel = document.getElementById('teacherToolsPanel');
+  
+  if (isTeacherMode) {
+    btn.innerHTML = '👨‍🏫 교사용 (정답 ON)';
+    btn.classList.add('teacher');
+    panel.classList.remove('hidden');
+  } else {
+    btn.innerHTML = '🧑‍🎓 학생용';
+    btn.classList.remove('teacher');
+    panel.classList.add('hidden');
+  }
+  updateQuizView();
+}
+
+function updateQuizView() {
+  if (!currentQ) return;
+  const tBox = document.getElementById('teacherAnswerBox');
+  const hBox = document.getElementById('hintBox');
+  const btnOptions = document.querySelectorAll('.btn-option');
+
+  if (isTeacherMode) {
+    tBox.classList.remove('hidden');
+    tBox.innerHTML = `🎯 <b>[교사용 해답]</b> 정답: <b>${currentQ.ans + 1}번 (${currentQ.options[currentQ.ans]})</b> (초성: ${currentQ.hint})`;
+    hBox.classList.remove('hidden');
+    btnOptions.forEach((btn, idx) => {
+      btn.classList.toggle('teacher-correct', idx === currentQ.ans);
+    });
+  } else {
+    tBox.classList.add('hidden');
+    hBox.classList.add('hidden');
+    btnOptions.forEach(btn => btn.classList.remove('teacher-correct'));
+  }
+}
+
+function teacherAddEnergy(amt) {
+  energy += amt;
+  updateHUD();
+  showWaveToast(`⚡ 에너지 +${amt} 충전 완료!`);
+}
+
+function teacherAddHp(amt) {
+  hp += amt;
+  updateHUD();
+  showWaveToast(`❤️ 기지 체력 +${amt} 회복 완료!`);
+}
+
+function teacherSkipWave() {
+  enemies.forEach(e => { e.hp = 0; });
+  waveSpawning = false;
+  showWaveToast(`⏩ 웨이브 ${wave} 즉시 격퇴!`);
+}
+
+function openAnswerModal() {
+  const modal = document.getElementById('answerModal');
+  const content = document.getElementById('answerModalContent');
+  modal.classList.remove('hidden');
+
+  let html = '';
+  for (const [id, stg] of Object.entries(STAGES)) {
+    html += `
+      <div class="ans-unit-card">
+        <div class="ans-unit-title">${stg.icon} [${stg.grade}] ${stg.unit} - ${stg.name} (${stg.lesson})</div>
+    `;
+    stg.questions.forEach((q, idx) => {
+      html += `
+        <div class="ans-q-row">
+          <b>Q${idx + 1}.</b> ${q.q}<br>
+          <span class="ans-tag">▶ 정답: ${q.ans + 1}번. ${q.options[q.ans]}</span> (초성: ${q.hint})
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+  content.innerHTML = html;
+}
+
+function closeAnswerModal() {
+  document.getElementById('answerModal').classList.add('hidden');
+}
+
+function nextQuiz() {
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  if (quizPool.length === 0) {
+    quizPool = [...stg.questions];
+    for (let i = quizPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quizPool[i], quizPool[j]] = [quizPool[j], quizPool[i]];
+    }
+  }
+  currentQ = quizPool.pop();
+
+  document.getElementById('qText').textContent = currentQ.q;
+  document.getElementById('hintBox').classList.add('hidden');
+  document.getElementById('hintText').textContent = currentQ.hint;
+
+  const btnOptions = document.querySelectorAll('.btn-option');
+  btnOptions.forEach((btn, idx) => {
+    btn.textContent = `${idx + 1}. ${currentQ.options[idx]}`;
+    btn.disabled = false;
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--card-bg)';
+  });
+
+  updateQuizView();
+}
+
+function handleAnswer(choiceIdx) {
+  if (isQuizCooldown || !currentQ) return;
+  initAudio();
+
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  const diff = stg.diff || 1;
+
+  if (choiceIdx === currentQ.ans) {
+    SFX.correct();
+    const earned = 60 + diff * 10;
+    energy += earned;
+    score += 50 * wave * diff;
+    updateHUD();
+
+    const chosenBtn = document.querySelectorAll('.btn-option')[choiceIdx];
+    chosenBtn.style.background = '#065f46';
+    chosenBtn.style.borderColor = '#10b981';
+
+    setTimeout(nextQuiz, 280);
+  } else {
+    SFX.wrong();
+    missedQuestions.push({ q: currentQ.q, ans: currentQ.options[currentQ.ans] });
+    
+    isQuizCooldown = true;
+    document.getElementById('hintBox').classList.remove('hidden');
+
+    const chosenBtn = document.querySelectorAll('.btn-option')[choiceIdx];
+    chosenBtn.style.background = '#7f1d1d';
+    chosenBtn.style.borderColor = '#ef4444';
+
+    const coolWrap = document.getElementById('coolWrap');
+    const coolBar = document.getElementById('coolBar');
+    coolWrap.style.display = 'block';
+    coolBar.style.width = '100%';
+
+    const btnOptions = document.querySelectorAll('.btn-option');
+    btnOptions.forEach(b => b.disabled = true);
+
+    const startCd = Date.now();
+    const cdDuration = 3000;
+    const cdInterval = setInterval(() => {
+      const elapsed = Date.now() - startCd;
+      const rem = Math.max(0, 1 - elapsed / cdDuration);
+      coolBar.style.width = (rem * 100) + '%';
+      if (rem <= 0) {
+        clearInterval(cdInterval);
+        coolWrap.style.display = 'none';
+        isQuizCooldown = false;
+        btnOptions.forEach(b => b.disabled = false);
+        chosenBtn.style.background = 'var(--card-bg)';
+        chosenBtn.style.borderColor = 'var(--border)';
+      }
+    }, 50);
+  }
+}
+
+function showWaveToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'wave-toast';
+  toast.textContent = msg;
+  document.querySelector('.canvas-panel').appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function startWave() {
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  const maxW = stg.maxWaves;
+  if (wave > maxW) return;
+  waveSpawning = true;
+  const diff = stg.diff || 1;
+  waveSpawnCount = 5 + wave * 3 + diff * 2;
+  waveSpawnTimer = 0;
+  showWaveToast(`웨이브 ${wave}/${maxW} 시작!`);
+}
+
+function spawnMonster() {
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  const diff = stg.diff || 1;
+  let type = 'virus';
+  let hpMult = 1 + (wave - 1) * 0.35 + (diff - 1) * 0.25;
+  let speed = 1.05 + (diff - 1) * 0.06;
+  let maxHp = 90 * hpMult;
+  let color = '#f43f5e';
+  let size = 12;
+
+  const rand = Math.random();
+  if (wave >= 2 && rand < 0.35) {
+    type = 'radical';
+    speed = 1.75;
+    maxHp = 60 * hpMult;
+    color = '#f59e0b';
+    size = 10;
+  } else if (wave >= 3 && rand > 0.65) {
+    type = 'golem';
+    speed = 0.55;
+    maxHp = 280 * hpMult;
+    color = '#64748b';
+    size = 15;
+  }
+
+  // Final Wave Boss
+  const maxW = stg.maxWaves;
+  if (wave === maxW && waveSpawnCount === 1) {
+    type = 'boss';
+    speed = 0.45;
+    maxHp = 500 + diff * 200;
+    color = '#dc2626';
+    size = 19;
+    showWaveToast("⚠️ 대형 오개념 보스 등장!");
+  }
+
+  const startPt = stg.waypoints[0];
+  enemies.push({
+    type,
+    x: startPt.x * TILE_SIZE + TILE_SIZE / 2,
+    y: startPt.y * TILE_SIZE + TILE_SIZE / 2,
+    wpIdx: 0,
+    hp: maxHp,
+    maxHp: maxHp,
+    speed: speed,
+    baseSpeed: speed,
+    slowTimer: 0,
+    size: size,
+    color: color,
+    reward: Math.round(15 + wave * 2 + diff * 2)
+  });
+}
+
+function updateTowers() {
+  towers.forEach(t => {
+    t.cd = Math.max(0, t.cd - 1);
+    if (t.cd > 0) return;
+
+    let bestTarget = null;
+    let maxDistAlongPath = -1;
+
+    enemies.forEach(e => {
+      const dx = e.x - t.x;
+      const dy = e.y - t.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= t.range) {
+        const progress = e.wpIdx * 100 + dist;
+        if (progress > maxDistAlongPath) {
+          maxDistAlongPath = progress;
+          bestTarget = e;
+        }
+      }
+    });
+
+    if (bestTarget) {
+      t.cd = Math.round(t.fireRate / (t.level === 2 ? 1.25 : 1));
+      shootProjectile(t, bestTarget);
+    }
+  });
+}
+
+function shootProjectile(tower, target) {
+  if (tower.type === 'neuron') {
+    SFX.laser();
+    const dmg = tower.damage * (tower.level === 2 ? 1.5 : 1);
+    target.hp -= dmg;
+    projectiles.push({
+      type: 'beam',
+      sx: tower.x, sy: tower.y,
+      tx: target.x, ty: target.y,
+      life: 6,
+      color: '#38bdf8'
+    });
+    spawnParticles(target.x, target.y, '#38bdf8', 4);
+  } else if (tower.type === 'cryo') {
+    SFX.freeze();
+    projectiles.push({
+      type: 'cryoPulse',
+      x: tower.x, y: tower.y,
+      r: 10, maxR: tower.range,
+      life: 14,
+      damage: tower.damage,
+      slow: tower.slow
+    });
+  } else if (tower.type === 'chem') {
+    SFX.explosion();
+    projectiles.push({
+      type: 'flask',
+      x: tower.x, y: tower.y,
+      tx: target.x, ty: target.y,
+      target: target,
+      speed: 6.5,
+      splash: tower.splash,
+      damage: tower.damage * (tower.level === 2 ? 1.5 : 1)
+    });
+  }
+}
+
+function spawnParticles(x, y, color, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = Math.random() * 2.5 + 1;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 18,
+      maxLife: 18,
+      color: color,
+      r: Math.random() * 2 + 1.5
+    });
+  }
+}
+
+function update() {
+  if (!isRunning || isPaused) return;
+
+  for (let step = 0; step < gameSpeed; step++) {
+    tickCount++;
+
+    // Spawner
+    if (waveSpawning) {
+      waveSpawnTimer++;
+      if (waveSpawnTimer >= 42) {
+        waveSpawnTimer = 0;
+        spawnMonster();
+        waveSpawnCount--;
+        if (waveSpawnCount <= 0) waveSpawning = false;
+      }
+    }
+
+    const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+    const currentWps = stg.waypoints;
+
+    // Enemies
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const e = enemies[i];
+      if (e.slowTimer > 0) {
+        e.slowTimer--;
+        e.speed = e.baseSpeed * 0.5;
+      } else {
+        e.speed = e.baseSpeed;
+      }
+
+      const targetWp = currentWps[e.wpIdx + 1];
+      if (targetWp) {
+        const tx = targetWp.x * TILE_SIZE + TILE_SIZE / 2;
+        const ty = targetWp.y * TILE_SIZE + TILE_SIZE / 2;
+        const dx = tx - e.x;
+        const dy = ty - e.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist <= e.speed) {
+          e.x = tx; e.y = ty;
+          e.wpIdx++;
+        } else {
+          e.x += (dx / dist) * e.speed;
+          e.y += (dy / dist) * e.speed;
+        }
+      } else {
+        // Core reached
+        hp--;
+        updateHUD();
+        spawnParticles(e.x, e.y, '#ef4444', 15);
+        SFX.wrong();
+        enemies.splice(i, 1);
+        if (hp <= 0) {
+          handleStageEnd(false);
+          return;
+        }
+        continue;
+      }
+
+      if (e.hp <= 0) {
+        energy += e.reward;
+        score += e.reward * 10;
+        updateHUD();
+        spawnParticles(e.x, e.y, e.color, 12);
+        enemies.splice(i, 1);
+      }
+    }
+
+    // Towers & Projectiles
+    updateTowers();
+
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const p = projectiles[i];
+      if (p.type === 'beam') {
+        p.life--;
+        if (p.life <= 0) projectiles.splice(i, 1);
+      } else if (p.type === 'cryoPulse') {
+        p.r += (p.maxR - p.r) * 0.25;
+        p.life--;
+        enemies.forEach(e => {
+          if (Math.hypot(e.x - p.x, e.y - p.y) <= p.r) {
+            e.hp -= p.damage / 12;
+            e.slowTimer = 40;
+          }
+        });
+        if (p.life <= 0) projectiles.splice(i, 1);
+      } else if (p.type === 'flask') {
+        const dx = p.tx - p.x;
+        const dy = p.ty - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= p.speed) {
+          SFX.explosion();
+          spawnParticles(p.tx, p.ty, '#c084fc', 16);
+          enemies.forEach(e => {
+            if (Math.hypot(e.x - p.tx, e.y - p.ty) <= p.splash) {
+              e.hp -= p.damage;
+              spawnParticles(e.x, e.y, '#a855f7', 4);
+            }
+          });
+          projectiles.splice(i, 1);
+        } else {
+          p.x += (dx / dist) * p.speed;
+          p.y += (dy / dist) * p.speed;
+        }
+      }
+    }
+
+    // Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pt = particles[i];
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.life--;
+      if (pt.life <= 0) particles.splice(i, 1);
+    }
+
+    // Check Wave Completion
+    const maxW = stg.maxWaves;
+    if (!waveSpawning && enemies.length === 0) {
+      if (wave >= maxW) {
+        handleStageEnd(true);
+        return;
+      } else {
+        wave++;
+        updateHUD();
+        startWave();
+      }
+    }
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  const grid = stg.grid;
+
+  // 1. Draw Map Tiles
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const tile = grid[r][c];
+      const px = c * TILE_SIZE;
+      const py = r * TILE_SIZE;
+
+      if (tile === 1 || tile === 3) {
+        // Path
+        ctx.fillStyle = stg.roadColor;
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+      } else if (tile === 2) {
+        // Core Base
+        ctx.fillStyle = stg.coreColor;
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(stg.coreName, px + TILE_SIZE / 2, py + TILE_SIZE / 2 + 4);
+      } else {
+        // Buildable Grass
+        ctx.fillStyle = stg.grassColor;
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = "rgba(255,255,255,0.03)";
+        ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+      }
+    }
+  }
+
+  // Selected Build Indicator
+  if (selectedBuildType) {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 2;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (grid[r][c] === 0 && !towers.some(t => t.c === c && t.r === r)) {
+          ctx.strokeRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        }
+      }
+    }
+    ctx.setLineDash([]);
+  }
+
+  // 2. Draw Towers
+  towers.forEach(t => {
+    if (selectedTowerInstance === t || selectedBuildType) {
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2);
+      ctx.strokeStyle = selectedTowerInstance === t ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    ctx.save();
+    ctx.translate(t.x, t.y);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = t.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, TILE_SIZE * 0.4, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    if (t.type === 'neuron') {
+      ctx.strokeStyle = '#bae6fd';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI / 2) + Math.sin(tickCount * 0.1) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 6, Math.sin(a) * 6);
+        ctx.lineTo(Math.cos(a) * 16, Math.sin(a) * 16);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+    } else if (t.type === 'cryo') {
+      ctx.rotate(tickCount * 0.05);
+      ctx.strokeStyle = '#cffafe';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.rotate(Math.PI / 3);
+        ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.stroke();
+      }
+      ctx.fillStyle = '#67e8f9';
+      ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (t.type === 'chem') {
+      ctx.fillStyle = '#9333ea';
+      ctx.beginPath();
+      ctx.moveTo(-8, 8); ctx.lineTo(8, 8); ctx.lineTo(3, -6); ctx.lineTo(-3, -6);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(0, 2 + Math.sin(tickCount * 0.2) * 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    if (t.level > 1) {
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('★', 0, -14);
+    }
+    ctx.restore();
+  });
+
+  // 3. Draw Enemies
+  enemies.forEach(e => {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+
+    const barW = 24, barH = 3.5;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(-barW / 2, -e.size - 8, barW, barH);
+    const hpRatio = Math.max(0, e.hp / e.maxHp);
+    ctx.fillStyle = hpRatio > 0.5 ? '#10b981' : (hpRatio > 0.25 ? '#f59e0b' : '#ef4444');
+    ctx.fillRect(-barW / 2, -e.size - 8, barW * hpRatio, barH);
+
+    ctx.fillStyle = e.color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, e.size, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    if (e.type === 'virus') {
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3 + tickCount * 0.05;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * e.size, Math.sin(a) * e.size);
+        ctx.lineTo(Math.cos(a) * (e.size + 4), Math.sin(a) * (e.size + 4));
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    } else if (e.type === 'radical') {
+      ctx.rotate(tickCount * 0.15);
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath(); ctx.arc(e.size + 3, 0, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-e.size - 3, 0, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (e.type === 'boss') {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('BOSS', 0, 3);
+    }
+    ctx.restore();
+  });
+
+  // 4. Draw Projectiles
+  projectiles.forEach(p => {
+    if (p.type === 'beam') {
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = p.life * 0.7 + 1;
+      ctx.beginPath();
+      ctx.moveTo(p.sx, p.sy);
+      const mx = (p.sx + p.tx) / 2 + (Math.random() - 0.5) * 16;
+      const my = (p.sy + p.ty) / 2 + (Math.random() - 0.5) * 16;
+      ctx.lineTo(mx, my);
+      ctx.lineTo(p.tx, p.ty);
+      ctx.stroke();
+    } else if (p.type === 'cryoPulse') {
+      ctx.strokeStyle = `rgba(34, 211, 238, ${p.life / 14})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (p.type === 'flask') {
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // 5. Draw Particles
+  particles.forEach(pt => {
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = pt.life / pt.maxLife;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1.0;
+}
+
+function gameLoop() {
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+/* ==========================================================================
+   4. UI, STAGE CONTROLS & EVENT HANDLERS
+   ========================================================================== */
+function updateHUD() {
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  document.getElementById('hpVal').textContent = hp;
+  document.getElementById('energyVal').textContent = energy;
+  document.getElementById('waveVal').textContent = `${wave}/${stg.maxWaves}`;
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('stageTag').textContent = stg.name;
+
+  document.getElementById('tBtnNeuron').classList.toggle('disabled', energy < TOWER_SPECS.neuron.cost);
+  document.getElementById('tBtnCryo').classList.toggle('disabled', energy < TOWER_SPECS.cryo.cost);
+  document.getElementById('tBtnChem').classList.toggle('disabled', energy < TOWER_SPECS.chem.cost);
+}
+
+function selectGrade(grade) {
+  curGrade = grade;
+  document.querySelectorAll('#gradeTabs .grade-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.grade === grade);
+  });
+  renderStageChips();
+  // Select 1st stage of grade if current not in grade
+  if (!STAGES[currentStageId] || STAGES[currentStageId].grade !== curGrade) {
+    const firstStage = Object.values(STAGES).find(s => s.grade === curGrade);
+    if (firstStage) {
+      selectStage(firstStage.id);
+    }
+  }
+}
+
+function renderStageChips() {
+  const container = document.getElementById('stageChipsBar');
+  container.innerHTML = '';
+  
+  const gradeStages = Object.values(STAGES).filter(s => s.grade === curGrade);
+  gradeStages.forEach(stg => {
+    const chip = document.createElement('button');
+    chip.className = 'stage-chip' + (stg.id === currentStageId ? ' active' : '');
+    chip.dataset.stageId = stg.id;
+    
+    let isCleared = false;
+    try {
+      isCleared = localStorage.getItem(`sci_td_cleared_${stg.id}`) === 'true';
+    } catch(e) {}
+    
+    chip.innerHTML = `<span>${stg.icon} ${stg.name}</span>${isCleared ? '<span class="clear-badge">★</span>' : ''}`;
+    chip.addEventListener('click', () => selectStage(stg.id));
+    container.appendChild(chip);
+  });
+}
+
+function selectStage(stgId) {
+  if (!STAGES[stgId]) return;
+  currentStageId = stgId;
+  curGrade = STAGES[stgId].grade;
+  document.querySelectorAll('#gradeTabs .grade-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.grade === curGrade);
+  });
+  renderStageChips();
+  prepareStage();
+}
+
+function prepareStage() {
+  isRunning = false;
+  isPaused = false;
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  hp = 5;
+  energy = 150;
+  wave = 1;
+  towers = [];
+  enemies = [];
+  projectiles = [];
+  particles = [];
+  selectedBuildType = null;
+  selectedTowerInstance = null;
+  quizPool = [];
+
+  document.getElementById('startTitle').textContent = `${stg.grade} ${stg.unit} : ${stg.name}`;
+  document.getElementById('startDesc').innerHTML = `
+    <b>[테마: ${stg.theme}]</b><br>${stg.desc}<br><br>
+    • 총 ${stg.maxWaves}개 웨이브 방어 시 클리어 별(★) 획득!<br>
+    • 오른쪽 <b>${stg.unit}</b> 퀴즈를 풀어 과학 에너지를 획득하세요.
+  `;
+  document.getElementById('startOverlay').classList.remove('hidden');
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  document.getElementById('endOverlay').classList.add('hidden');
+  document.getElementById('towerDetail').classList.add('hidden');
+
+  updateHUD();
+  nextQuiz();
+}
+
+function handleStageEnd(cleared) {
+  isRunning = false;
+  const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+  const endOverlay = document.getElementById('endOverlay');
+  const endTitle = document.getElementById('endTitle');
+  const endSub = document.getElementById('endSubtitle');
+  const btnNext = document.getElementById('btnNextStage');
+  const reviewList = document.getElementById('reviewList');
+
+  endOverlay.classList.remove('hidden');
+
+  if (cleared) {
+    SFX.fanfare();
+    try {
+      localStorage.setItem(`sci_td_cleared_${currentStageId}`, 'true');
+    } catch(e) {}
+    renderStageChips();
+
+    endTitle.textContent = `🎉 ${stg.name} 완벽 방어!`;
+    endTitle.style.color = "#38bdf8";
+
+    // Find next stage in same grade
+    const allStages = Object.values(STAGES);
+    const currIdx = allStages.findIndex(s => s.id === currentStageId);
+    if (currIdx !== -1 && currIdx < allStages.length - 1) {
+      const nextStg = allStages[currIdx + 1];
+      endSub.textContent = `모든 오개념 몬스터를 격퇴했습니다! 다음 단원 [${nextStg.grade} ${nextStg.name}]으로 진격할 수 있습니다.`;
+      btnNext.classList.remove('hidden');
+      btnNext.onclick = () => selectStage(nextStg.id);
+    } else {
+      endSub.textContent = `대단합니다! 중학교 과학의 모든 24개 대단원 스테이지를 완벽히 정복하셨습니다!`;
+      btnNext.classList.add('hidden');
+    }
+  } else {
+    endTitle.textContent = `⚠️ 연구소 함락 (Game Over)`;
+    endTitle.style.color = "#ef4444";
+    endSub.textContent = `기지 체력이 소진되었습니다. 다시 도전하여 개념을 완성해 보세요!`;
+    btnNext.classList.add('hidden');
+  }
+
+  // Populate Missed Questions Review
+  reviewList.innerHTML = '';
+  if (missedQuestions.length > 0) {
+    const seen = new Set();
+    missedQuestions.forEach(m => {
+      if (!seen.has(m.q)) {
+        seen.add(m.q);
+        const div = document.createElement('div');
+        div.className = 'review-item';
+        div.innerHTML = `Q. ${m.q}<br>→ <b>정답: ${m.ans}</b>`;
+        reviewList.appendChild(div);
+      }
+    });
+  } else {
+    reviewList.innerHTML = '<div style="color:#10b981;">오답 없이 완벽하게 클리어했습니다!</div>';
+  }
+}
+
+function startCurrentStage() {
+  initAudio();
+  document.getElementById('startOverlay').classList.add('hidden');
+  isRunning = true;
+  isPaused = false;
+  startWave();
+}
+
+/* Canvas Click Handler */
+canvas.addEventListener('click', (e) => {
+  initAudio();
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clickX = (e.clientX - rect.left) * scaleX;
+  const clickY = (e.clientY - rect.top) * scaleY;
+
+  const c = Math.floor(clickX / TILE_SIZE);
+  const r = Math.floor(clickY / TILE_SIZE);
+  if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return;
+
+  const existingTower = towers.find(t => t.c === c && t.r === r);
+  if (existingTower) {
+    selectTowerInstance(existingTower);
+    return;
+  }
+
+  if (selectedBuildType) {
+    const stg = STAGES[currentStageId] || STAGES['J3_U1'];
+    const grid = stg.grid;
+    if (grid[r][c] === 0) {
+      const spec = TOWER_SPECS[selectedBuildType];
+      if (energy >= spec.cost) {
+        energy -= spec.cost;
+        towers.push({
+          c, r,
+          x: c * TILE_SIZE + TILE_SIZE / 2,
+          y: r * TILE_SIZE + TILE_SIZE / 2,
+          type: selectedBuildType,
+          level: 1,
+          name: spec.name,
+          cost: spec.cost,
+          range: spec.range,
+          fireRate: spec.fireRate,
+          damage: spec.damage,
+          color: spec.color,
+          splash: spec.splash,
+          slow: spec.slow,
+          cd: 0
+        });
+        spawnParticles(c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2, spec.color, 12);
+        selectedBuildType = null;
+        document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+        updateHUD();
+      }
+    }
+  } else {
+    selectTowerInstance(null);
+  }
+});
+
+function selectBuildType(type) {
+  selectedTowerInstance = null;
+  document.getElementById('towerDetail').classList.add('hidden');
+  selectedBuildType = (selectedBuildType === type) ? null : (energy >= TOWER_SPECS[type].cost ? type : null);
+  document.querySelectorAll('.tower-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.type === selectedBuildType);
+  });
+}
+
+function selectTowerInstance(inst) {
+  selectedBuildType = null;
+  document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+  selectedTowerInstance = inst;
+  const detailBox = document.getElementById('towerDetail');
+  if (inst) {
+    detailBox.classList.remove('hidden');
+    const upCost = Math.round(inst.cost * 0.7);
+    document.getElementById('tdText').innerHTML = `<b>${inst.name} Lv.${inst.level}</b>`;
+    const btnUp = document.getElementById('btnUpgrade');
+    btnUp.textContent = inst.level === 1 ? `강화 (${upCost}⚡)` : `최고 레벨`;
+    btnUp.disabled = inst.level > 1 || energy < upCost;
+  } else {
+    detailBox.classList.add('hidden');
+  }
+}
+
+document.getElementById('btnUpgrade').addEventListener('click', () => {
+  if (!selectedTowerInstance || selectedTowerInstance.level > 1) return;
+  const upCost = Math.round(selectedTowerInstance.cost * 0.7);
+  if (energy >= upCost) {
+    energy -= upCost;
+    selectedTowerInstance.level = 2;
+    selectedTowerInstance.range = Math.round(selectedTowerInstance.range * 1.25);
+    spawnParticles(selectedTowerInstance.x, selectedTowerInstance.y, '#fde047', 15);
+    selectTowerInstance(selectedTowerInstance);
+    updateHUD();
+  }
+});
+
+document.getElementById('btnSell').addEventListener('click', () => {
+  if (!selectedTowerInstance) return;
+  energy += Math.round(selectedTowerInstance.cost * 0.5);
+  towers = towers.filter(t => t !== selectedTowerInstance);
+  selectTowerInstance(null);
+  updateHUD();
+});
+
+document.querySelectorAll('.tower-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    initAudio();
+    selectBuildType(btn.dataset.type);
+  });
+});
+
+document.querySelectorAll('.btn-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    handleAnswer(parseInt(btn.dataset.idx));
+  });
+});
+
+document.getElementById('btnStartGame').addEventListener('click', startCurrentStage);
+document.getElementById('btnRetryStage').addEventListener('click', prepareStage);
+
+document.getElementById('btnPause').addEventListener('click', () => {
+  if (!isRunning) return;
+  isPaused = !isPaused;
+  document.getElementById('pauseOverlay').classList.toggle('hidden', !isPaused);
+  document.getElementById('btnPause').textContent = isPaused ? '▶ 재개' : '⏸ 일시정지';
+});
+document.getElementById('btnResume').addEventListener('click', () => {
+  isPaused = false;
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  document.getElementById('btnPause').textContent = '⏸ 일시정지';
+});
+
+document.getElementById('btnSpeed').addEventListener('click', (e) => {
+  gameSpeed = gameSpeed === 1 ? 2 : 1;
+  e.target.textContent = `⏩ ${gameSpeed}x`;
+  e.target.classList.toggle('active', gameSpeed === 2);
+});
+
+document.getElementById('btnSound').addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btnSound').textContent = soundEnabled ? '🔊 소리 ON' : '🔇 소리 OFF';
+});
+
+// Initialization
+selectGrade('중3');
+prepareStage();
+requestAnimationFrame(gameLoop);
+</script>
+
+
+<!-- Master Answer Key Modal (교사용 전체 정답표 모달) -->
+<div class="answer-modal-backdrop hidden" id="answerModal">
+  <div class="answer-modal-box">
+    <div class="answer-modal-header">
+      <h3><span>📋</span> 중학교 과학 24개 대단원 120문항 정답 일람표</h3>
+      <button class="btn-ctrl" onclick="closeAnswerModal()">닫기 ✖</button>
+    </div>
+    <div class="answer-modal-body" id="answerModalContent">
+      <!-- JS dynamic render -->
+    </div>
+  </div>
+</div>
+
+<script src="./sounds/kjs-sound.js"></script>
+<script id="kjs-sound-bridge">
+(function(){
+  var T={toast:false};
+  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
+  function wrap(o, m, kind){
+    if(!o || typeof o[m]!=="function") return;
+    var orig=o[m];
+    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
+  }
+  if(typeof SFX!=="undefined"){ wrap(SFX,"correct","ok"); wrap(SFX,"wrong","no"); wrap(SFX,"fanfare","win"); }
+})();
+</script>
+</body>
+</html>

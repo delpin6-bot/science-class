@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>과학 퍼즐 - 개념 격추 (업그레이드 에디션)</title>
+<style>
+  :root{
+    --paper: #f6f2e7;
+    --paper-line: #ddd4bd;
+    --ink: #21301f;
+    --ink-soft: #55624f;
+    --membrane: #2f6a5b;
+    --membrane-soft: #d5e5df;
+    --nucleus: #5c4a84;
+    --nucleus-soft: #eae2f4;
+    --highlight: #d99b26;
+    --highlight-soft: #fbf1d8;
+    --error: #b5432b;
+    --error-soft: #f7ded8;
+    --card: #fffdf7;
+    --accent: #205c8a;
+    --accent-soft: #e3effa;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif; -webkit-tap-highlight-color:transparent; }
+  body{
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, var(--paper-line) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, var(--paper-line) 28px);
+    background-size:28px 28px; min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{ max-width:920px; margin:0 auto; }
+
+  header{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:14px; margin-bottom:18px; border-bottom:2px solid var(--ink); padding-bottom:14px; }
+  .badge{ display:inline-block; background:var(--nucleus); color:#fff; font-size:12px; font-weight:600;
+    padding:3px 10px; border-radius:3px; margin-bottom:6px; }
+  .badge.gold{ background:var(--highlight); color:#fff; }
+  .title-block h1{ font-family:"Batang","바탕",serif; font-weight:700; font-size:clamp(24px,3.8vw,36px);
+    margin:0 0 4px; letter-spacing:-0.01em; }
+  .title-block p{ margin:0; color:var(--ink-soft); font-size:13.5px; }
+
+  .stats{ display:flex; gap:8px; flex-wrap:wrap; }
+  .stat{ background:var(--card); border:1.5px solid var(--ink); padding:6px 12px; min-width:68px;
+    text-align:center; box-shadow:3px 3px 0 var(--ink); }
+  .stat .n{ font-family:"Batang","바탕",serif; font-size:20px; font-weight:700; line-height:1.1; }
+  .stat .l{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .hearts{ font-size:18px; letter-spacing:2px; color:var(--error); }
+  .hearts .lost{ opacity:.25; color:var(--ink-soft); }
+  .combo-n{ color:var(--highlight); }
+
+  .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .opt-group{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; }
+  .opt-btn{ border:1.5px solid var(--ink); background:var(--card); color:var(--ink); border-radius:4px;
+    padding:5px 10px; font:inherit; font-size:12px; cursor:pointer; font-weight:700; }
+  .opt-btn.active{ background:var(--ink); color:var(--paper); }
+
+  .panel{ background:var(--card); border:1.5px solid var(--ink); box-shadow:5px 5px 0 var(--ink);
+    padding:16px 18px; margin-bottom:18px; }
+  .panel h2{ font-family:"Batang","바탕",serif; font-size:18px; margin:0 0 4px; }
+  .panel .sub{ font-size:12.5px; color:var(--ink-soft); margin-bottom:12px; }
+
+  textarea{ width:100%; font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif; font-size:13.5px; padding:10px;
+    border:1.5px solid var(--paper-line); border-radius:4px; background:#fffef9; color:var(--ink);
+    resize:vertical; line-height:1.6; }
+  .input-msg{ font-size:12px; min-height:16px; margin-top:6px; color:var(--error); }
+
+  .controls{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  button{ font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif; font-weight:600; font-size:13px; padding:8px 14px;
+    border-radius:4px; cursor:pointer; border:1.5px solid var(--ink); background:var(--card); color:var(--ink); }
+  button.primary{ background:var(--ink); color:var(--paper); }
+  button:active{ transform:translateY(1px); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  #board{
+    position:relative; height:430px; background:linear-gradient(180deg,#fbfaf3 0%,#f4eee2 100%);
+    border:1.5px solid var(--ink); box-shadow:5px 5px 0 var(--ink); overflow:hidden;
+  }
+  #board::after{
+    content:""; position:absolute; left:0; right:0; bottom:38px; height:2px;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 18px);
+    opacity:.4;
+  }
+  .bubble{
+    position:absolute; transform:translate(-50%,0); max-width:210px; min-width:110px;
+    padding:8px 12px; border-radius:18px; font-size:13px; font-weight:700;
+    text-align:center; line-height:1.35; box-shadow:2px 3px 0 rgba(33,48,31,.25);
+    border:1.5px solid var(--ink); background:var(--membrane-soft); color:var(--membrane);
+    transition: background .2s, border-color .2s;
+    user-select:none;
+  }
+  .bubble.alt{ background:var(--nucleus-soft); color:var(--nucleus); }
+  .bubble.urgent{ border-color:var(--error); animation: pulseUrgent .6s infinite alternate; }
+  @keyframes pulseUrgent{
+    from{ box-shadow:0 0 0 rgba(181,67,43,.2); }
+    to{ box-shadow:0 0 8px rgba(181,67,43,.7); }
+  }
+  .bubble-hint{
+    display:inline-block; font-size:11px; margin-top:5px; padding:1px 6px;
+    border-radius:10px; background:rgba(217,155,38,.2); color:var(--highlight);
+    border:1px dashed var(--highlight); font-weight:800; letter-spacing:1px;
+    animation: hintFade .25s ease-in;
+  }
+  @keyframes hintFade{ from{ opacity:0; transform:scale(0.8); } to{ opacity:1; transform:scale(1); } }
+
+  .bubble.pop{ animation: pop .22s ease forwards; }
+  @keyframes pop{ to{ transform:translate(-50%,-10px) scale(1.35); opacity:0; } }
+  .bubble.dropped{ animation: drop .2s ease forwards; }
+  @keyframes drop{ to{ transform:translate(-50%,20px) scale(0.9); opacity:0; filter: blur(2px); } }
+
+  /* Popups & Toasts */
+  .toast-miss{
+    position:absolute; bottom:46px; left:50%; transform:translateX(-50%);
+    background:var(--error); color:#fff; font-size:13px; font-weight:700;
+    padding:6px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,.25);
+    animation: toastUp 1.4s ease forwards; pointer-events:none; z-index:30;
+  }
+  @keyframes toastUp{
+    0%{ opacity:0; transform:translate(-50%,10px); }
+    15%{ opacity:1; transform:translate(-50%,0); }
+    80%{ opacity:1; transform:translate(-50%,0); }
+    100%{ opacity:0; transform:translate(-50%,-15px); }
+  }
+  .float-score{
+    position:absolute; font-family:"Batang","바탕",serif; font-weight:800; font-size:16px;
+    color:var(--membrane); pointer-events:none; z-index:25; animation: floatUp .7s ease forwards;
+  }
+  @keyframes floatUp{
+    0%{ opacity:1; transform:translate(-50%,0) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-30px) scale(1.3); }
+  }
+
+  /* Screens */
+  .start-screen, .over-screen, .pause-screen{
+    position:absolute; inset:0; background:rgba(246,242,231,.97);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:20px; gap:10px; z-index:40;
+  }
+  .start-screen h2, .over-screen h2, .pause-screen h2{ font-family:"Batang","바탕",serif; font-size:24px; margin:2px 0; }
+  .start-screen p, .over-screen p, .pause-screen p{ color:var(--ink-soft); font-size:13.5px; max-width:440px; margin:0; line-height:1.5; }
+  .over-screen .score-final{ font-family:"Batang","바탕",serif; font-size:38px; font-weight:700; margin:2px 0; }
+  .hidden{ display:none !important; }
+
+  /* Review Box on Game Over */
+  .review-box{
+    width:100%; max-width:540px; max-height:160px; overflow-y:auto;
+    background:#fffefb; border:1.5px solid var(--ink); border-radius:6px;
+    padding:10px 14px; text-align:left; margin:6px 0; font-size:13px;
+  }
+  .review-box h3{ margin:0 0 6px; font-size:13px; color:var(--error); font-weight:700; }
+  .review-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px; }
+  .review-list li{ display:flex; justify-content:space-between; gap:10px; border-bottom:1px dashed var(--paper-line); padding-bottom:3px; }
+  .review-list li span.desc{ color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .review-list li span.ans{ color:var(--error); font-weight:700; white-space:nowrap; }
+
+  /* Quick Touch Chips Pad */
+  .touch-pad-wrap{
+    margin-top:10px; background:var(--card); border:1.5px solid var(--ink);
+    border-radius:6px; padding:10px 12px; box-shadow:3px 3px 0 var(--ink);
+  }
+  .touch-pad-head{ display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:8px; }
+  .touch-chips{ display:flex; gap:6px; flex-wrap:wrap; min-height:36px; align-items:center; }
+  .touch-chip{
+    border:1.5px solid var(--ink); background:#fff; color:var(--ink); font-size:13px;
+    font-weight:700; padding:6px 12px; border-radius:20px; cursor:pointer;
+    box-shadow:1.5px 1.5px 0 var(--ink); transition: transform .1s, background .1s;
+  }
+  .touch-chip:hover{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .touch-chip:active{ transform:translateY(1px); }
+
+  .answer-row{ display:flex; gap:10px; margin-top:12px; }
+  .answer-row input[type=text]{
+    flex:1; font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif; font-size:15px; padding:11px 14px;
+    border:1.5px solid var(--ink); border-radius:6px; background:var(--card); color:var(--ink);
+  }
+  .answer-row input[type=text].shake{ animation: shake .28s ease; border-color:var(--error); }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+  .answer-row button{ min-width:88px; }
+
+  .picker{ background:var(--card); border:1.5px solid var(--ink); border-radius:8px; padding:16px 18px; margin-bottom:16px; }
+  .picker h2{ margin:0 0 4px; font-size:18px; }
+  .picker .sub{ color:var(--ink-soft); font-size:13.5px; margin-bottom:12px; }
+  .picker .gchips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .picker .gchip{ border:1.5px solid var(--ink); background:var(--card); color:var(--ink); border-radius:999px;
+    padding:6px 14px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+  .picker .gchip[aria-pressed="true"]{ background:var(--ink); color:var(--card); }
+  .picker .uh{ font-size:13px; font-weight:700; color:var(--ink-soft); margin:14px 0 6px;
+    display:flex; align-items:center; gap:8px; }
+  .picker .uh::after{ content:""; flex:1; height:1px; background:var(--paper-line); }
+  .picker .grid{ display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
+  .picker .sbtn{ text-align:left; border:1.5px solid var(--paper-line); background:var(--paper); color:var(--ink);
+    border-radius:6px; padding:10px 12px; font:inherit; cursor:pointer; }
+  .picker .sbtn:hover{ border-color:var(--membrane); }
+  .picker .sbtn b{ display:block; font-size:14px; }
+  .picker .sbtn span{ font-size:12px; color:var(--ink-soft); }
+  #pickbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:14px; }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <span class="badge">중1~중3 과학 · 단원별 개념</span>
+      <span class="badge gold">스피드 & 터치 업그레이드</span>
+      <h1>과학 퍼즐 - 개념 격추</h1>
+      <p>설명이 담긴 방울이 바닥에 닿기 전에 알맞은 용어를 입력하거나 터치해 격추하세요.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n" id="levelDisplay">1</div><div class="l">레벨</div></div>
+      <div class="stat"><div class="n" id="scoreDisplay">0</div><div class="l">점수</div></div>
+      <div class="stat"><div class="n combo-n" id="comboDisplay">0</div><div class="l">콤보</div></div>
+      <div class="stat"><div class="n hearts" id="livesDisplay">♥♥♥</div><div class="l">생명</div></div>
+    </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+  <div class="toolbar">
+    <div class="opt-group">
+      <span>속도 난이도:</span>
+      <button class="opt-btn" data-speed="0.75" id="speedSlow">쉬움</button>
+      <button class="opt-btn active" data-speed="1.0" id="speedNorm">보통</button>
+      <button class="opt-btn" data-speed="1.3" id="speedFast">도전</button>
+    </div>
+    <div class="opt-group">
+      <button class="opt-btn" id="pauseBtn">⏸ 일시정지</button>
+      <button class="opt-btn" id="togglePadBtn">📱 빠른 터치 패드 숨기기</button>
+    </div>
+  </div>
+
+  <div class="picker" id="picker">
+    <h2>학년 · 단원 · 차시 고르기</h2>
+    <div class="sub">차시를 누르면 그 차시의 개념으로 바로 게임이 시작됩니다. 아래 편집창에서 문제를 고쳐 쓸 수도 있습니다.</div>
+    <div class="gchips" id="gchips"></div>
+    <div id="picklist"></div>
+    <div id="pickbar" class="hidden"></div>
+  </div>
+
+  <div class="panel" id="editorPanel">
+    <h2>문제 편집 (설명 → 정답)</h2>
+    <div class="sub">한 줄에 하나씩, <b>설명|정답</b> 형식으로 입력하세요. 최소 3개, 최대 30개. (예: 동공 크기 조절|중간뇌)</div>
+    <textarea id="qInput" rows="5"></textarea>
+    <div class="input-msg" id="qMsg"></div>
+    <div class="controls">
+      <button class="primary" id="applyQBtn">이 문제로 게임 시작</button>
+      <button id="resetQBtn">기본 문제로 되돌리기</button>
+    </div>
+  </div>
+
+  <div id="board">
+    <div class="start-screen" id="startScreen">
+      <span class="badge">새로워진 기능 안내</span>
+      <h2>화면 위에서 설명 방울이 떨어집니다</h2>
+      <p>
+        • <b>초성 힌트</b>: 방울이 절반 이상 내려오면 초성 힌트가 켜집니다.<br>
+        • <b>유연한 정답</b>: 띄어쓰기나 대소문자를 틀려도 정답으로 인정됩니다.<br>
+        • <b>원터치 격추</b>: 아래의 '빠른 터치 패드'를 누르면 타이핑 없이 즉시 격추!<br>
+        • <b>오답 복습</b>: 바닥에 닿은 개념은 게임 종료 후 한눈에 복습할 수 있습니다.
+      </p>
+      <button class="primary" id="startBtn" style="font-size:15px; padding:10px 24px; margin-top:8px;">게임 시작</button>
+    </div>
+
+    <div class="pause-screen hidden" id="pauseScreen">
+      <span class="badge">일시 정지</span>
+      <h2>잠시 멈춤</h2>
+      <p>수업 설명 또는 정리를 위해 게임이 멈췄습니다.</p>
+      <button class="primary" id="resumeBtn">계속 진행하기</button>
+    </div>
+
+    <div class="over-screen hidden" id="overScreen">
+      <span class="badge">게임 종료</span>
+      <h2 id="overTitle">학습 완료!</h2>
+      <div class="score-final" id="finalScore">0</div>
+      <p id="overStats"></p>
+      <div class="review-box hidden" id="reviewBox">
+        <h3>📝 오늘 놓친 개념 복습</h3>
+        <ul class="review-list" id="reviewList"></ul>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button class="primary" id="retryBtn">다시 도전하기</button>
+        <button id="changeTopicBtn">다른 차시 고르기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Touch Chips Pad for Mobile / Tablet / Fast Input -->
+  <div class="touch-pad-wrap" id="touchPadWrap">
+    <div class="touch-pad-head">
+      <span>⚡ 빠른 터치 패드 (클릭/터치 시 즉시 격추)</span>
+      <span style="font-size:11px; font-weight:normal; color:var(--ink-soft);">화면의 방울 정답을 바로 터치하세요</span>
+    </div>
+    <div class="touch-chips" id="touchChips"></div>
+  </div>
+
+  <div class="answer-row">
+    <input type="text" id="answerInput" placeholder="직접 정답 입력 후 Enter (띄어쓰기 무관)" autocomplete="off" disabled />
+    <button class="primary" id="fireBtn" disabled>격추</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const DEFAULT_QUESTIONS = [
+    ["동공 크기 조절","중간뇌"],
+    ["체온 및 체액 농도 조절","간뇌"],
+    ["자세와 균형 유지","소뇌"],
+    ["기억, 학습, 감정 등 정신활동","대뇌"],
+    ["호흡과 심장 박동 조절","연수"],
+    ["무릎반사의 중추","척수"],
+    ["자극을 중추로 전달하는 뉴런","감각뉴런"],
+    ["명령을 근육으로 전달하는 뉴런","운동뉴런"],
+    ["감각뉴런과 운동뉴런을 연결하는 뉴런","연합뉴런"],
+    ["자극을 받아들이는 세포","감각세포"]
+  ];
+  const MIN_Q = 3, MAX_Q = 30, MAX_ANSWER_LEN = 14;
+
+  const CHOSUNG_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  function getChosung(str) {
+    return str.split('').map(ch => {
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if(code >= 0 && code <= 11171) {
+        return CHOSUNG_LIST[Math.floor(code / 588)];
+      }
+      return ch;
+    }).join('');
+  }
+
+  function cleanStr(s) {
+    return (s || '').replace(/\s+/g, '').toLowerCase();
+  }
+
+  let questions = [...DEFAULT_QUESTIONS];
+  let pool = [];
+  let active = [];
+  let missedList = [];
+  let lives, score, level, combo, maxCombo, hitsThisLevel, running, paused;
+  let speedMultiplier = 1.0;
+  let showTouchPad = true;
+  let spawnTimer = null, lastTick = null, rafId = null;
+  let bubbleSeq = 0;
+
+  const board = document.getElementById('board');
+  const startScreen = document.getElementById('startScreen');
+  const pauseScreen = document.getElementById('pauseScreen');
+  const overScreen = document.getElementById('overScreen');
+  const answerInput = document.getElementById('answerInput');
+  const fireBtn = document.getElementById('fireBtn');
+  const editorPanel = document.getElementById('editorPanel');
+  const touchChips = document.getElementById('touchChips');
+  const touchPadWrap = document.getElementById('touchPadWrap');
+
+  function shuffledPool(){
+    const arr = [...questions];
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function nextQuestion(){
+    if(pool.length === 0) pool = shuffledPool();
+    const inUse = new Set(active.map(b=>cleanStr(b.answer)));
+    let idx = pool.findIndex(q => !inUse.has(cleanStr(q[1])));
+    if(idx === -1) idx = 0;
+    const [desc, answer] = pool.splice(idx,1)[0];
+    return { desc, answer };
+  }
+
+  function levelConfig(lv){
+    const baseSpeed = Math.min(26, 7.5 + (lv-1)*1.4);
+    const speed = baseSpeed * speedMultiplier;
+    const spawnMs = Math.max(900, (2300 - (lv-1)*120) / Math.sqrt(speedMultiplier));
+    const maxConcurrent = Math.min(5, 3 + Math.floor((lv-1)/3));
+    return { speed, spawnMs, maxConcurrent };
+  }
+
+  function renderTouchChips(){
+    if(!showTouchPad){
+      touchChips.innerHTML = '';
+      return;
+    }
+    const uniqueAnswers = Array.from(new Set(active.map(b => b.answer)));
+    uniqueAnswers.sort(() => Math.random() - 0.5);
+    touchChips.innerHTML = '';
+    uniqueAnswers.forEach(ans => {
+      const btn = document.createElement('button');
+      btn.className = 'touch-chip';
+      btn.textContent = ans;
+      btn.onclick = () => {
+        answerInput.value = ans;
+        tryFire();
+      };
+      touchChips.appendChild(btn);
+    });
+  }
+
+  function spawnBubble(){
+    const cfg = levelConfig(level);
+    if(active.length >= cfg.maxConcurrent) return;
+    const { desc, answer } = nextQuestion();
+    const el = document.createElement('div');
+    el.className = 'bubble' + (bubbleSeq % 2 ? ' alt' : '');
+    el.textContent = desc;
+
+    const leftPct = 12 + Math.random()*76;
+    el.style.left = leftPct + '%';
+    el.style.top = '-10%';
+    board.appendChild(el);
+    active.push({
+      id: bubbleSeq++, el, desc, answer,
+      top: -10, speed: cfg.speed, hintShown: false
+    });
+    renderTouchChips();
+  }
+
+  function updateHUD(){
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('levelDisplay').textContent = level;
+    document.getElementById('comboDisplay').textContent = combo > 1 ? combo + 'x' : combo;
+    document.getElementById('livesDisplay').innerHTML =
+      '♥'.repeat(lives) + '<span class="lost">' + '♥'.repeat(Math.max(0,3-lives)) + '</span>';
+  }
+
+  function removeBubble(b, cls){
+    if(cls){
+      b.el.classList.add(cls);
+      setTimeout(()=> b.el.remove(), 220);
+    } else {
+      b.el.remove();
+    }
+    active = active.filter(x => x.id !== b.id);
+    renderTouchChips();
+  }
+
+  function showMissToast(ans){
+    const toast = document.createElement('div');
+    toast.className = 'toast-miss';
+    toast.textContent = `놓침! 정답: [${ans}]`;
+    board.appendChild(toast);
+    setTimeout(() => toast.remove(), 1400);
+  }
+
+  function showScorePopup(x, y, pts, c){
+    const p = document.createElement('div');
+    p.className = 'float-score';
+    p.style.left = x + '%';
+    p.style.top = Math.max(10, y) + '%';
+    p.textContent = c > 1 ? `+${pts} (${c} COMBO!)` : `+${pts}`;
+    board.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
+
+  function tryFire(){
+    const raw = cleanStr(answerInput.value);
+    if(!raw) return;
+    let target = null;
+    for(const b of active){
+      if(cleanStr(b.answer) === raw){
+        if(!target || b.top > target.top) target = b;
+      }
+    }
+    if(target){
+      combo++;
+      if(combo > maxCombo) maxCombo = combo;
+      const pts = 10 * level + Math.min(combo, 10) * 2;
+      score += pts;
+      hitsThisLevel++;
+      if(hitsThisLevel >= 5){
+        hitsThisLevel = 0;
+        level++;
+      }
+      showScorePopup(parseFloat(target.el.style.left), target.top, pts, combo);
+      removeBubble(target, 'pop');
+      updateHUD();
+      answerInput.value = '';
+    } else {
+      combo = 0;
+      updateHUD();
+      answerInput.classList.remove('shake');
+      void answerInput.offsetWidth;
+      answerInput.classList.add('shake');
+    }
+  }
+
+  function tick(ts){
+    if(!running || paused){ rafId = null; return; }
+    if(lastTick === null) lastTick = ts;
+    const dt = (ts - lastTick) / 1000;
+    lastTick = ts;
+
+    for(const b of [...active]){
+      b.top += b.speed * dt;
+      b.el.style.top = b.top + '%';
+
+      // 45% 이상 내려왔을 때 초성 힌트 노출
+      if(b.top >= 45 && !b.hintShown){
+        b.hintShown = true;
+        const hintEl = document.createElement('div');
+        hintEl.className = 'bubble-hint';
+        hintEl.textContent = '힌트: ' + getChosung(b.answer);
+        b.el.appendChild(hintEl);
+      }
+
+      // 75% 이상 내려왔을 때 경고 애니메이션
+      if(b.top >= 75 && !b.el.classList.contains('urgent')){
+        b.el.classList.add('urgent');
+      }
+
+      // 바닥 충돌 판정
+      if(b.top >= 90){
+        missedList.push({ desc: b.desc, answer: b.answer });
+        showMissToast(b.answer);
+        removeBubble(b, 'dropped');
+        lives--;
+        combo = 0;
+        updateHUD();
+        if(lives <= 0){
+          endGame();
+          return;
+        }
+      }
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function startSpawnLoop(){
+    clearTimeout(spawnTimer);
+    function loop(){
+      if(!running || paused) return;
+      spawnBubble();
+      const cfg = levelConfig(level);
+      spawnTimer = setTimeout(loop, cfg.spawnMs);
+    }
+    loop();
+  }
+
+  function togglePause(){
+    if(!running) return;
+    paused = !paused;
+    if(paused){
+      pauseScreen.classList.remove('hidden');
+      document.getElementById('pauseBtn').textContent = '▶ 계속';
+      if(rafId) cancelAnimationFrame(rafId);
+      clearTimeout(spawnTimer);
+    } else {
+      pauseScreen.classList.add('hidden');
+      document.getElementById('pauseBtn').textContent = '⏸ 일시정지';
+      lastTick = null;
+      rafId = requestAnimationFrame(tick);
+      startSpawnLoop();
+      answerInput.focus();
+    }
+  }
+
+  function startGame(){
+    active.forEach(b => b.el.remove());
+    active = [];
+    missedList = [];
+    pool = shuffledPool();
+    lives = 3; score = 0; level = 1; combo = 0; maxCombo = 0; hitsThisLevel = 0; bubbleSeq = 0;
+    running = true; paused = false; lastTick = null;
+    updateHUD();
+    startScreen.classList.add('hidden');
+    pauseScreen.classList.add('hidden');
+    overScreen.classList.add('hidden');
+    editorPanel.classList.add('hidden');
+    answerInput.disabled = false;
+    fireBtn.disabled = false;
+    answerInput.value = '';
+    answerInput.focus();
+    renderTouchChips();
+    startSpawnLoop();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function endGame(){
+    running = false;
+    clearTimeout(spawnTimer);
+    if(rafId) cancelAnimationFrame(rafId);
+    answerInput.disabled = true;
+    fireBtn.disabled = true;
+    touchChips.innerHTML = '';
+    document.getElementById('overTitle').textContent = '게임 종료';
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('overStats').textContent =
+      `도달 레벨 ${level} · 최종 점수 ${score}점 · 최대 콤보 ${maxCombo}연속`;
+
+    // 오답 복습 목록 표시
+    const reviewBox = document.getElementById('reviewBox');
+    const reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '';
+    if(missedList.length > 0){
+      reviewBox.classList.remove('hidden');
+      const seen = new Set();
+      missedList.forEach(m => {
+        if(seen.has(m.answer)) return;
+        seen.add(m.answer);
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="desc">${m.desc}</span><span class="ans">${m.answer}</span>`;
+        reviewList.appendChild(li);
+      });
+    } else {
+      reviewBox.classList.add('hidden');
+    }
+    overScreen.classList.remove('hidden');
+  }
+
+  function parseQuestionsInput(text){
+    const lines = text.split('\n').map(s=>s.trim()).filter(Boolean);
+    const valid = []; const rejected = [];
+    const seen = new Set();
+    for(const line of lines){
+      const parts = line.split('|').map(s=>s.trim());
+      if(parts.length !== 2 || !parts[0] || !parts[1] || parts[1].length > MAX_ANSWER_LEN){
+        rejected.push(line); continue;
+      }
+      if(seen.has(parts[1])) continue;
+      seen.add(parts[1]);
+      valid.push(parts);
+      if(valid.length >= MAX_Q) break;
+    }
+    return { valid, rejected };
+  }
+
+  const SETS = [{"grade": "중1", "unit": "과학과 인류의 지속가능한 삶", "sets": [{"t": "1차시 · 과학적 탐구 방법", "q": [["관찰에서 생긴 의문을 탐구 문제로 나타내는 것", "문제 인식"], ["탐구 문제에 대한 잠정적인 결론을 내리는 것", "가설 설정"], ["실험에서 다르게 해야 할 조건", "조작 변인"], ["실험에서 같게 해야 할 조건", "통제 변인"], ["조작 변인의 영향을 받아 변하는 실험 결과", "종속변인"], ["조건을 확인하고 조절하는 것", "변인 통제"], ["실험 결과를 표나 그래프로 정리하는 것", "자료 변환"], ["자료 사이의 관계나 규칙을 찾는 것", "자료 해석"], ["가설이 맞는지 판단해 결론을 내리는 것", "결론 도출"], ["탐구 과정과 결과를 정리해 쓰는 글", "탐구 보고서"]]}, {"t": "2차시 · 과학과 인류 문명, 첨단 과학기술", "q": [["증기의 압력으로 기계를 움직이는 장치", "증기 기관"], ["증기 기관으로 사회 모습이 크게 바뀐 사건", "산업 혁명"], ["세균 감염을 치료해 평균 수명을 늘린 약", "항생제"], ["작은 물체를 확대해 보는 기기", "현미경"], ["컴퓨터가 인간처럼 학습하고 일을 처리하는 기술", "인공지능"], ["실제 영상에 가상 이미지를 겹치는 기술", "증강 현실"], ["무선 통신으로 사물을 연결하는 기술", "사물 인터넷"], ["유전정보로 유용한 물질을 만드는 기술", "첨단 바이오"], ["스스로 도로 상황을 판단해 달리는 자동차", "자율주행 자동차"], ["미래 사회에 갖추어야 할 태도", "인공지능 윤리"]]}, {"t": "3차시 · 과학기술과 지속가능한 삶", "q": [["석탄·석유 등 지하자원이 줄어드는 문제", "자원 고갈"], ["공기와 물, 흙이 더러워지는 문제", "환경오염"], ["온실 기체로 지구의 기온이 높아지는 현상", "지구 온난화"], ["태양 빛으로 에너지를 얻는 발전", "태양광 발전"], ["수소를 이용해 에너지를 얻는 발전", "수소 연료 전지"], ["이산화 탄소를 수집해 제거하는 장치", "탄소 포집 장치"], ["화석 연료 사용과 배출량을 줄인 자동차", "전기 자동차"], ["바다의 쓰레기를 모아 없애는 장치", "수거 로봇"], ["버려지는 제품에 가치를 더해 새로 만드는 것", "업사이클링"], ["미래 세대와 현재 세대가 함께 살아가는 삶", "지속가능한 삶"]]}]}, {"grade": "중1", "unit": "생물의 구성과 다양성", "sets": [{"t": "1차시 · 세포와 생물의 구성 단계", "q": [["생물을 이루는 기본 단위", "세포"], ["유전 물질이 있어 생명활동을 조절하는 곳", "핵"], ["세포를 둘러싸 물질 출입을 조절하는 막", "세포막"], ["식물세포에만 있으며 모양을 유지하는 구조", "세포벽"], ["식물세포에서 광합성이 일어나는 곳", "엽록체"], ["모양과 기능이 비슷한 세포의 모임", "조직"], ["여러 조직이 모여 일정한 일을 하는 부분", "기관"], ["동물에만 있는 기관의 모임", "기관계"], ["식물에만 있는 조직의 모임", "조직계"], ["세포를 확대해 관찰하는 기구", "광학 현미경"]]}, {"t": "2차시 · 생물다양성", "q": [["한 지역에 사는 생물종의 많고 적은 정도", "생물종의 다양성"], ["같은 종 안에서 나타나는 형질의 차이", "유전적 다양성"], ["숲·바다·사막처럼 생태계가 다양한 정도", "생태계 다양성"], ["생물다양성이 높을 때 잘 유지되는 것", "생태계 평형"], ["개발로 생물이 살 곳이 사라지는 일", "서식지 파괴"], ["필요 이상으로 많이 잡는 일", "남획"], ["다른 지역에서 들어와 생태계를 위협하는 생물", "외래종"], ["수가 크게 줄어 보호가 필요한 생물", "멸종 위기종"], ["보호가 필요한 지역을 법으로 정한 곳", "국립공원"], ["여러 나라가 함께 맺는 보전 약속", "국제 협약"]]}, {"t": "3차시 · 생물의 분류", "q": [["생물 분류의 기본 단위", "종"], ["비슷한 종을 묶은 분류 단계", "속"], ["가장 큰 분류 단계", "계"], ["핵막이 없는 단세포 생물이 속한 계", "원핵생물계"], ["아메바와 짚신벌레가 속한 계", "원생생물계"], ["버섯과 곰팡이가 속한 계", "균계"], ["광합성을 하는 생물이 속한 계", "식물계"], ["전 세계에서 함께 쓰는 생물의 이름", "학명"], ["속명과 종소명으로 이름을 짓는 방법", "이명법"], ["이명법을 제안한 과학자", "린네"]]}]}, {"grade": "중1", "unit": "열", "sets": [{"t": "1차시 · 온도와 열평형", "q": [["물체의 차갑고 뜨거운 정도를 나타낸 값", "온도"], ["온도가 다른 두 물체 사이에서 이동하는 에너지", "열"], ["온도가 높을수록 활발해지는 것", "입자 운동"], ["열이 이동하는 방향", "고온에서 저온"], ["두 물체의 온도가 같아진 상태", "열평형"], ["열평형에 이르면 멈추는 것", "열의 이동"], ["열을 얻은 물체에서 일어나는 변화", "온도 상승"], ["열을 잃은 물체에서 일어나는 변화", "온도 하강"], ["몸과 열평형을 이루어 체온을 재는 기구", "체온계"], ["생선 위에 올려 온도를 낮게 유지하는 것", "얼음"]]}, {"t": "2차시 · 열의 이동", "q": [["고체에서 입자의 충돌로 열이 전달되는 방법", "전도"], ["액체나 기체에서 입자가 직접 이동하는 방법", "대류"], ["매질 없이 열이 직접 전달되는 방법", "복사"], ["태양의 열이 지구에 오는 방법", "복사열"], ["열이 잘 이동하지 못하게 막는 것", "단열"], ["유리 사이 공기로 열을 막는 창", "이중창"], ["진공층으로 열의 이동을 막는 용기", "보온병"], ["공기를 많이 품은 대표적인 단열재", "스타이로폼"], ["효율을 위해 아래쪽에 두는 기구", "난방기"], ["효율을 위해 위쪽에 두는 기구", "냉방기"]]}, {"t": "3차시 · 비열과 열팽창", "q": [["1 kg의 온도를 1 ℃ 높이는 데 필요한 열량", "비열"], ["비열이 매우 커서 잘 데워지지 않는 물질", "물"], ["비열이 클수록 느리게 변하는 것", "온도 변화"], ["물의 비열 때문에 일교차가 작은 지역", "해안 지방"], ["육지와 바다의 비열 차이로 부는 바람", "해륙풍"], ["천천히 식어 국물 요리에 쓰는 그릇", "뚝배기"], ["온도가 높아질 때 물체의 부피가 커지는 현상", "열팽창"], ["열팽창으로 멀어지는 것", "입자 사이 거리"], ["팽창 정도가 다른 두 금속을 붙인 장치", "바이메탈"], ["열팽창에 대비해 철교에 만들어 둔 것", "이음새 틈"]]}]}, {"grade": "중1", "unit": "물질의 상태 변화", "sets": [{"t": "1차시 · 입자의 운동과 물질의 상태", "q": [["입자가 스스로 퍼져 나가는 현상", "확산"], ["액체 표면의 입자가 기체로 변하는 현상", "증발"], ["모양과 부피가 일정한 상태", "고체"], ["부피는 일정하고 모양이 변하는 상태", "액체"], ["모양과 부피가 모두 변하는 상태", "기체"], ["고체에서 입자가 배열된 모습", "규칙적"], ["기체에서 입자 사이 거리의 특징", "매우 멀다"], ["확산과 증발을 빠르게 하는 조건", "높은 온도"], ["빨래가 마르는 현상의 이름", "증발 현상"], ["향수 냄새가 퍼지는 현상의 이름", "확산 현상"]]}, {"t": "2차시 · 상태 변화와 입자 배열", "q": [["고체가 액체로 변하는 현상", "융해"], ["액체가 기체로 변하는 현상", "기화"], ["액체가 고체로 변하는 현상", "응고"], ["기체가 액체로 변하는 현상", "액화"], ["고체와 기체가 바로 변하는 현상", "승화"], ["상태가 변해도 변하지 않는 것", "입자의 개수"], ["상태가 변해도 보존되는 물리량", "질량"], ["얼 때 부피가 늘어나는 예외적인 물질", "물"], ["이슬이 맺히는 현상의 이름", "액화 현상"], ["드라이아이스가 사라지는 현상", "승화 현상"]]}, {"t": "3차시 · 상태 변화와 열에너지", "q": [["고체가 녹을 때 흡수하는 열", "융해열"], ["액체가 기체로 변할 때 흡수하는 열", "기화열"], ["액체가 얼 때 방출하는 열", "응고열"], ["기체가 액체로 변할 때 방출하는 열", "액화열"], ["열을 흡수할 때 주위에서 일어나는 변화", "온도 하강"], ["열을 방출할 때 주위에서 일어나는 변화", "온도 상승"], ["상태가 변하는 동안 물질의 온도", "일정"], ["고체가 녹는 동안 유지되는 온도", "녹는점"], ["액체가 끓는 동안 유지되는 온도", "끓는점"], ["녹으면서 주위를 시원하게 하는 물건", "아이스팩"]]}]}, {"grade": "중1", "unit": "힘의 작용", "sets": [{"t": "1차시 · 힘의 표현과 중력", "q": [["물체의 모양이나 운동 상태를 바꾸는 원인", "힘"], ["힘의 크기를 나타내는 단위", "뉴턴"], ["힘의 3요소에 해당하는 세 가지", "크기·방향·작용점"], ["힘을 나타낼 때 쓰는 그림", "화살표"], ["화살표의 시작점", "작용점"], ["지구가 물체를 끌어당기는 힘", "중력"], ["중력의 방향", "지구 중심 쪽"], ["물체에 작용하는 중력의 크기", "무게"], ["장소가 달라져도 변하지 않는 물체의 양", "질량"], ["달에서 무게가 되는 정도", "지구의 6분의 1"]]}, {"t": "2차시 · 탄성력·마찰력·부력", "q": [["변형된 물체가 되돌아가려는 힘", "탄성력"], ["탄성력을 이용해 힘을 재는 기구", "용수철저울"], ["접촉면에서 운동을 방해하는 힘", "마찰력"], ["마찰력이 커지는 접촉면의 상태", "거칠수록"], ["마찰력과 관계가 없는 조건", "접촉면의 넓이"], ["액체나 기체가 물체를 위로 미는 힘", "부력"], ["부력이 커지는 조건", "잠긴 부피가 클 때"], ["부력을 크게 해 물에 뜨게 하는 도구", "구명조끼"], ["공기의 부력으로 떠오르는 기구", "열기구"], ["번지점프 줄에 작용하는 힘", "줄의 탄성력"]]}, {"t": "3차시 · 힘의 평형과 물체의 운동", "q": [["두 힘이 평형을 이룰 때 크기의 관계", "같다"], ["두 힘이 평형을 이룰 때 방향의 관계", "반대"], ["평형을 이룬 두 힘의 합력", "0"], ["여러 힘을 합친 하나의 힘", "합력"], ["물체에 실제로 작용하는 힘", "알짜힘"], ["같은 방향의 두 힘을 합치는 방법", "더한다"], ["반대 방향의 두 힘을 합치는 방법", "뺀다"], ["책상 위의 책에 작용해 평형을 이루는 두 힘", "중력과 떠받치는 힘"], ["공기 저항과 중력이 평형을 이루는 예", "낙하산"], ["알짜힘이 0일 때 물체의 운동 상태", "그대로 유지"]]}]}, {"grade": "중1", "unit": "기체의 성질", "sets": [{"t": "1~2차시 · 압력과 보일 법칙", "q": [["일정한 면적에 작용하는 힘의 크기", "압력"], ["기체 입자가 용기 벽에 충돌하여 생기는 압력", "기체의 압력"], ["온도가 일정할 때 기체의 압력과 부피의 관계", "반비례"], ["온도가 일정할 때 압력과 부피가 반비례한다는 법칙", "보일 법칙"], ["지구를 둘러싼 공기가 누르는 압력", "대기압"], ["물이 누르는 압력으로 깊을수록 커진다", "수압"], ["면적을 넓혀 압력을 작게 한 예", "스키"], ["면적을 좁혀 압력을 크게 한 예", "아이젠"], ["압력이 커질 때 기체 입자 사이에서 줄어드는 것", "입자 사이 거리"], ["보일이 실험에 사용한 3 m 길이의 기구", "J자 유리관"]]}, {"t": "3~4차시 · 샤를 법칙과 생활 속 기체", "q": [["압력이 일정할 때 온도를 높이면 부피가 늘어나는 법칙", "샤를 법칙"], ["온도가 높아질 때 빨라지는 것", "입자 운동"], ["가열하면 부피가 늘어 하늘로 떠오르는 기구", "열기구"], ["겨울에 바깥에 두면 찌그러지는 공", "축구공"], ["뜨거운 물에 넣으면 펴지는 찌그러진 공", "탁구공"], ["높은 산에서 과자 봉지가 부푸는 까닭", "대기압 감소"], ["잠수부의 공기 방울이 올라갈수록 커지는 까닭", "수압 감소"], ["눌리면 속 기체의 부피가 줄어 물건을 지켜 주는 포장재", "뽁뽁이"], ["기체의 부피와 압력을 측정할 때 쓰는 실험 기구", "주사기"], ["공기를 빼면 부풀어 오르는 간식", "마시멜로"]]}]}, {"grade": "중1", "unit": "태양계", "sets": [{"t": "1차시 · 태양계 구성 천체와 태양의 활동", "q": [["태양계에서 스스로 빛을 내는 천체", "태양"], ["행성 주위를 도는 천체", "위성"], ["화성과 목성 사이에 많이 모여 있는 작은 천체", "소행성"], ["태양에 가까워지면 긴 꼬리가 생기는 천체", "혜성"], ["수성·금성·지구·화성처럼 반지름이 작고 밀도가 큰 행성", "지구형 행성"], ["목성·토성처럼 반지름이 크고 밀도가 작은 행성", "목성형 행성"], ["태양 광구에서 주위보다 온도가 낮아 어둡게 보이는 곳", "흑점"], ["개기 일식 때 보이는 태양 바깥의 옅은 대기", "코로나"], ["광구에서 솟아오르는 붉은 불기둥", "홍염"], ["흑점 주변에서 일어나는 폭발 현상", "플레어"], ["태양에서 나오는 전기를 띤 입자의 흐름", "태양풍"], ["태양 활동이 활발할 때 극지방에 나타나는 빛", "오로라"]]}, {"t": "2차시 · 지구와 달의 운동", "q": [["지구가 하루에 한 바퀴씩 도는 운동", "자전"], ["지구가 태양 주위를 1년에 한 바퀴 도는 운동", "공전"], ["자전 때문에 천체가 하루에 한 바퀴 도는 것처럼 보이는 운동", "일주 운동"], ["공전 때문에 천체가 1년에 한 바퀴 도는 것처럼 보이는 운동", "연주 운동"], ["천구에서 태양이 1년 동안 지나가는 길", "황도"], ["달이 태양과 같은 쪽에 있어 보이지 않는 때", "삭"], ["오른쪽 반이 보이는 달", "상현달"], ["둥글게 다 보이는 달", "망"], ["왼쪽 반이 보이는 달", "하현달"], ["달이 태양을 가리는 현상", "일식"], ["달이 지구 그림자에 들어가는 현상", "월식"]]}]}, {"grade": "중2", "unit": "물질의 특성", "sets": [{"t": "1~2차시 · 밀도", "q": [["단위 부피당 물질의 질량", "밀도"], ["물질마다 고유해 물질을 구별할 수 있는 성질", "물질의 특성"], ["밀도를 구할 때 질량을 나누어 주는 값", "부피"], ["물보다 밀도가 작은 물질이 물에서 하는 행동", "뜬다"], ["물보다 밀도가 큰 물질이 물에서 하는 행동", "가라앉는다"], ["밀도를 구하려고 부피와 함께 측정하는 값", "질량"], ["물체의 부피를 물에 넣어 재는 방법", "물 넘침법"], ["기름이 물 위에 뜨는 까닭", "밀도 차"], ["양이 달라져도 변하지 않는 물질의 성질", "특성"]]}, {"t": "3~4차시 · 용해도", "q": [["어떤 물질이 다른 물질에 고르게 섞이는 현상", "용해"], ["녹는 물질", "용질"], ["녹이는 물질", "용매"], ["용질이 용매에 녹아 만들어진 물질", "용액"], ["일정 온도에서 용매 100 g에 최대로 녹는 용질의 g수", "용해도"], ["더 이상 용질이 녹지 않는 상태의 용액", "포화 용액"], ["온도가 높아질 때 고체의 용해도 변화", "증가"], ["온도가 높아질 때 기체의 용해도 변화", "감소"], ["탄산음료 뚜껑을 열면 기포가 생기는 까닭", "압력 감소"], ["온도에 따른 용해도 차를 나타낸 곡선", "용해도 곡선"]]}, {"t": "5~6차시 · 녹는점과 끓는점", "q": [["고체가 녹아 액체로 변하는 온도", "녹는점"], ["액체가 끓어 기체로 변하는 온도", "끓는점"], ["액체가 얼어 고체로 변하는 온도", "어는점"], ["순물질이 상태 변화하는 동안 일정하게 유지되는 것", "온도"], ["압력이 높아질 때 끓는점의 변화", "높아진다"], ["압력솥으로 밥이 빨리 되는 까닭", "끓는점 상승"], ["높은 산에서 물이 100 ℃보다 낮게 끓는 까닭", "기압 감소"], ["끓는점과 녹는점으로 구별할 수 있는 것", "물질의 종류"], ["물질의 양이 늘어날 때 끓는점의 변화", "변화 없음"]]}, {"t": "7~9차시 · 혼합물의 분리", "q": [["한 가지 물질로만 이루어진 물질", "순물질"], ["두 가지 이상의 물질이 섞여 있는 물질", "혼합물"], ["끓는점 차를 이용해 액체 혼합물을 분리하는 방법", "증류"], ["원유를 끓는점 차로 분리하는 장치", "증류탑"], ["섞이지 않는 두 액체를 밀도 차로 분리하는 기구", "분별깔때기"], ["좋은 볍씨를 소금물에서 고를 때 이용하는 성질", "밀도"], ["온도에 따른 용해도 차로 고체를 분리하는 방법", "재결정"], ["성분이 이동하는 속도 차로 색소를 분리하는 방법", "크로마토그래피"], ["사금을 물에서 채취할 때 이용하는 방법", "밀도 차 분리"]]}]}, {"grade": "중2", "unit": "지권의 변화", "sets": [{"t": "1~3차시 · 지구계와 지권의 층상 구조", "q": [["서로 영향을 주고받는 지구의 구성 요소 전체", "지구계"], ["암석과 흙으로 이루어진 지구계의 구성 요소", "지권"], ["지권의 가장 바깥을 이루는 얇은 층", "지각"], ["지권에서 부피가 가장 큰 층", "맨틀"], ["액체 상태로 추정되는 층", "외핵"], ["가장 안쪽에 있는 고체 상태의 층", "내핵"], ["지구 내부를 알아보는 가장 효과적인 방법", "지진파 분석"], ["땅을 직접 파서 지구 내부를 조사하는 방법", "시추"], ["물이 차지하는 지구계의 구성 요소", "수권"]]}, {"t": "4~5차시 · 광물", "q": [["암석을 이루는 알갱이", "광물"], ["암석을 이루는 주된 광물", "조암 광물"], ["광물 가루의 색", "조흔색"], ["묽은 염산을 떨어뜨리면 거품이 나는 광물", "방해석"], ["자석에 붙는 성질을 가진 광물", "자철석"], ["광물의 단단한 정도", "굳기"], ["광물을 서로 긁어 굳기를 비교하는 방법", "긁기 실험"], ["지각에 가장 많은 광물", "장석"], ["금과 황철석처럼 겉색이 비슷할 때 구별하는 성질", "조흔색 차이"]]}, {"t": "6~7차시 · 암석", "q": [["마그마가 식어 굳어진 암석", "화성암"], ["지표 가까이에서 빠르게 식어 알갱이가 작은 암석", "현무암"], ["땅속 깊은 곳에서 천천히 식어 알갱이가 큰 암석", "화강암"], ["퇴적물이 다져지고 굳어져 만들어진 암석", "퇴적암"], ["퇴적암에서 볼 수 있는 나란한 줄무늬", "층리"], ["퇴적암에서 발견되는 과거 생물의 흔적", "화석"], ["열과 압력을 받아 성질이 변한 암석", "변성암"], ["화강암이 변성되어 만들어진 암석", "편마암"], ["석회암이 변성되어 만들어진 암석", "대리암"], ["변성암에서 광물이 나란히 배열된 줄무늬", "엽리"]]}, {"t": "8~10차시 · 풍화와 판의 운동", "q": [["암석이 잘게 부서지고 성분이 변하는 현상", "풍화"], ["풍화로 암석이 부서져 만들어진 흙", "토양"], ["대륙이 이동했다고 주장한 과학자", "베게너"], ["과거에 하나로 붙어 있던 거대한 대륙", "판게아"], ["지각과 맨틀 상부를 포함한 단단한 암석층 조각", "판"], ["두 판이 서로 멀어지는 경계", "발산형 경계"], ["두 판이 서로 가까워지는 경계", "수렴형 경계"], ["두 판이 스쳐 지나가는 경계", "보존형 경계"], ["판의 경계에서 땅이 흔들리는 현상", "지진"], ["마그마가 지표로 분출하는 현상", "화산 활동"]]}]}, {"grade": "중2", "unit": "빛과 파동", "sets": [{"t": "1~2차시 · 빛의 반사와 굴절", "q": [["빛이 물체에 부딪혀 되돌아 나오는 현상", "반사"], ["입사각과 반사각이 같다는 법칙", "반사 법칙"], ["거울 면에 수직으로 그은 선", "법선"], ["빛이 다른 물질로 들어갈 때 꺾이는 현상", "굴절"], ["물속의 젓가락이 꺾여 보이는 까닭", "빛의 굴절"], ["매끄러운 면에서 일정한 방향으로 반사되는 것", "정반사"], ["거친 면에서 여러 방향으로 반사되는 것", "난반사"], ["물속의 물체가 실제보다 떠 보이는 현상", "굴절 현상"]]}, {"t": "3~5차시 · 물체를 보는 과정과 거울·렌즈", "q": [["스스로 빛을 내는 물체", "광원"], ["거울이나 렌즈에 의해 맺히는 물체의 모습", "상"], ["빛이 실제로 모여 스크린에 맺히는 상", "실상"], ["빛이 모이지 않고 눈에만 보이는 상", "허상"], ["안쪽으로 오목한 거울", "오목거울"], ["바깥으로 볼록한 거울", "볼록거울"], ["넓은 범위를 보려고 도로에 설치한 거울", "도로 반사경"], ["빛을 모으는 렌즈", "볼록렌즈"], ["빛을 퍼지게 하는 렌즈", "오목렌즈"], ["평면거울에 생기는 상의 종류", "좌우 바뀐 상"]]}, {"t": "6~8차시 · 빛의 합성과 파동·소리", "q": [["여러 색의 빛이 합쳐져 다른 색으로 보이는 현상", "빛의 합성"], ["빨강·초록·파랑 빛을 모두 합쳤을 때의 색", "흰색"], ["진동이 퍼져 나가는 현상", "파동"], ["파동이 처음 생긴 곳", "파원"], ["파동에서 가장 높은 부분", "마루"], ["파동에서 가장 낮은 부분", "골"], ["이웃한 마루와 마루 사이의 거리", "파장"], ["1초 동안 진동하는 횟수", "진동수"], ["진동수가 클수록 높아지는 소리의 성질", "소리의 높이"], ["진폭이 클수록 커지는 소리의 성질", "소리의 세기"], ["악기마다 소리를 다르게 느끼게 하는 파형의 차이", "음색"]]}]}, {"grade": "중2", "unit": "물질의 구성", "sets": [{"t": "1~2차시 · 원소와 화합물", "q": [["더 이상 다른 물질로 분해되지 않는 물질", "원소"], ["두 가지 이상의 원소가 결합해 만들어진 물질", "화합물"], ["원소를 알파벳으로 간단히 나타낸 기호", "원소 기호"], ["물질을 원소 기호와 숫자로 나타낸 식", "화학식"], ["물의 화학식", "H2O"], ["이산화 탄소의 화학식", "CO2"], ["불꽃 반응에서 노란색을 나타내는 원소", "나트륨"], ["불꽃 반응에서 보라색을 나타내는 원소", "칼륨"], ["불꽃색이 비슷한 원소를 구별할 때 쓰는 방법", "선 스펙트럼"]]}, {"t": "3~4차시 · 원자·분자와 주기율표", "q": [["물질을 이루는 기본 알갱이", "원자"], ["원자의 중심에 있으며 (+)전하를 띠는 것", "원자핵"], ["원자핵 주위를 움직이며 (-)전하를 띤 입자", "전자"], ["원자에서 양성자 수와 전자 수의 관계", "같다"], ["물질의 성질을 나타내는 가장 작은 입자", "분자"], ["원소를 성질에 따라 배열한 표", "주기율표"], ["주기율표의 가로줄", "주기"], ["주기율표의 세로줄", "족"], ["같은 족 원소들이 가지는 공통점", "비슷한 성질"]]}, {"t": "5~6차시 · 이온", "q": [["원자가 전자를 잃거나 얻어 전하를 띤 입자", "이온"], ["전자를 잃어 (+)전하를 띤 이온", "양이온"], ["전자를 얻어 (-)전하를 띤 이온", "음이온"], ["전류가 흐를 때 양이온이 이동하는 극", "(-)극"], ["전류가 흐를 때 음이온이 이동하는 극", "(+)극"], ["이온이 반응해 물에 녹지 않는 물질이 되는 반응", "앙금 생성 반응"], ["염화 이온과 은 이온이 만나 생기는 흰색 앙금", "염화 은"], ["황산 이온과 바륨 이온이 만나 생기는 흰색 앙금", "황산 바륨"], ["이온이 들어 있는 용액이 통과시키는 것", "전류"]]}]}, {"grade": "중2", "unit": "식물과 에너지", "sets": [{"t": "1차시 · 식물의 광합성", "q": [["식물이 빛에너지를 이용해 양분을 만드는 과정", "광합성"], ["광합성이 일어나는 식물세포 속 기관", "엽록체"], ["빛에너지를 흡수하는 초록색 색소", "엽록소"], ["광합성으로 처음 만들어지는 양분", "포도당"], ["포도당이 바뀌어 엽록체에 저장되는 물질", "녹말"], ["광합성으로 만들어져 밖으로 나가는 기체", "산소"], ["잎에서 기체가 드나드는 구멍", "기공"], ["뿌리에서 흡수한 물이 이동하는 통로", "물관"], ["녹말을 확인할 때 쓰는 용액", "아이오딘"], ["녹말이 아이오딘 용액과 반응해 나타내는 색", "청람색"]]}, {"t": "2차시 · 광합성에 영향을 미치는 환경요인", "q": [["셀수록 광합성량이 늘어나는 환경요인", "빛의 세기"], ["일정 온도 이상에서 광합성량이 빠르게 줄어드는 요인", "온도"], ["높을수록 광합성량이 늘어나는 기체의 농도", "이산화 탄소"], ["빛의 세기가 일정 수준을 넘었을 때 광합성량", "일정해진다"], ["광합성량이 계속 늘지 않는 까닭", "엽록체 수 한정"], ["탐구에서 하나만 바꾸는 조건", "변인"], ["탐구 문제에 대한 잠정적인 결론", "가설"], ["빛의 세기를 조절할 때 개수를 바꾸는 기구", "LED 전등"], ["일조량 부족과 폭염으로 줄어드는 것", "농작물 생산량"]]}, {"t": "3차시 · 식물의 호흡과 광합성", "q": [["세포에서 양분을 분해해 에너지를 얻는 과정", "호흡"], ["호흡이 주로 일어나는 세포 속 기관", "마이토콘드리아"], ["호흡에 사용되는 기체", "산소"], ["호흡 결과 생성되는 기체", "이산화 탄소"], ["빛이 강한 낮에 식물이 흡수하는 기체", "낮의 이산화탄소"], ["밤에 식물이 흡수하는 기체", "밤의 산소"], ["광합성에서 흡수되는 에너지", "빛에너지"], ["호흡에서 방출되어 생명활동에 쓰이는 것", "에너지"], ["호흡이 일어나는 시기", "낮과 밤"]]}, {"t": "4차시 · 광합성산물의 저장과 이용", "q": [["녹말이 이동할 때 바뀌는 물질", "설탕"], ["광합성산물이 이동하는 통로", "체관"], ["감자가 줄기에 양분을 저장하는 형태", "녹말"], ["땅콩이 씨에 저장하는 양분의 형태", "지방과 단백질"], ["포도가 열매에 저장하는 양분의 형태", "포도당"], ["사탕수수가 줄기에 저장하는 양분의 형태", "설탕 저장"], ["양분이 분해되어 식물이 얻는 것", "에너지"], ["광합성산물이 동물에게 하는 역할", "먹이"], ["밤에 더우면 호흡이 늘어 낮아지는 것", "과일의 당도"]]}]}, {"grade": "중2", "unit": "동물과 에너지", "sets": [{"t": "1~2차시 · 영양소와 소화", "q": [["1 g당 약 4 kcal를 내는 주된 에너지원", "탄수화물"], ["몸을 구성하는 주성분인 영양소", "단백질"], ["1 g당 약 9 kcal로 가장 많은 에너지를 내는 영양소", "지방"], ["적은 양으로 몸의 기능을 조절하는 영양소", "바이타민"], ["뼈와 혈액을 이루며 기능을 조절하는 영양소", "무기염류"], ["단백질에 뷰렛 용액을 넣으면 나타나는 색", "보라색"], ["녹말을 엿당으로 분해하는 소화 효소", "아밀레이스"], ["위에서 단백질을 분해하는 소화 효소", "펩신"], ["지방을 분해하는 소화 효소", "라이페이스"], ["소장 안쪽의 돌기로 표면적을 넓히는 구조", "융털"], ["지방산이 흡수되는 융털 속 통로", "암죽관"]]}, {"t": "3~5차시 · 순환·호흡·배설", "q": [["온몸으로 혈액을 내보내 벽이 가장 두꺼운 곳", "좌심실"], ["혈액이 거꾸로 흐르지 못하게 막는 구조", "판막"], ["헤모글로빈이 있어 산소를 운반하는 혈구", "적혈구"], ["세균을 잡아먹는 식균 작용을 하는 혈구", "백혈구"], ["혈액을 굳혀 출혈을 막는 혈구", "혈소판"], ["좌심실에서 나가 온몸을 도는 순환", "온몸 순환"], ["우심실에서 나가 폐를 도는 순환", "폐순환"], ["기관지 끝에 있는 작은 공기주머니", "폐포"], ["가슴 아래에서 호흡 운동을 돕는 근육", "횡격막"], ["콩팥에서 오줌을 만드는 단위", "네프론"], ["간에서 암모니아가 바뀐 노폐물", "요소"], ["오줌을 모아 두는 기관", "방광"]]}]}, {"grade": "중2", "unit": "전기와 자기", "sets": [{"t": "1~2차시 · 마찰 전기와 정전기 유도", "q": [["두 물체를 마찰할 때 생기는 전기", "마찰 전기"], ["마찰할 때 물체 사이를 이동하는 입자", "전자"], ["물체가 전기를 띠는 것", "대전"], ["전기를 띤 물체", "대전체"], ["같은 종류의 전하 사이에 작용하는 힘", "척력"], ["다른 종류의 전하 사이에 작용하는 힘", "인력"], ["대전체를 가까이 할 때 물체 양 끝이 전하를 띠는 현상", "정전기 유도"], ["물체의 대전 여부를 확인하는 기구", "검전기"]]}, {"t": "3~4차시 · 전류·전압·저항", "q": [["전하의 흐름", "전류"], ["전류를 흐르게 하는 능력", "전압"], ["전류의 흐름을 방해하는 정도", "저항"], ["전류의 단위", "암페어"], ["전압의 단위", "볼트"], ["저항의 단위", "옴"], ["전류는 전압에 비례하고 저항에 반비례한다는 법칙", "옴의 법칙"], ["도선이 길수록 저항은 어떻게 되는가", "커진다"], ["도선의 단면적이 넓을수록 저항은 어떻게 되는가", "작아진다"], ["전류를 만들어 주는 장치", "전지"]]}, {"t": "5~7차시 · 저항의 연결과 자기", "q": [["저항을 한 줄로 이어 연결하는 방법", "직렬연결"], ["저항을 여러 갈래로 나누어 연결하는 방법", "병렬연결"], ["직렬연결에서 각 저항에 흐르는 전류", "같다"], ["병렬연결에서 각 저항에 걸리는 전압", "전압 같다"], ["전류가 흐르는 도선 주위에 생기는 것", "자기장"], ["자기장의 모습을 선으로 나타낸 것", "자기력선"], ["코일에 전류를 흘려 자석이 되게 한 장치", "전자석"], ["자기장 속에서 전류가 흐르는 도선이 받는 힘", "자기력"], ["전류의 자기 작용으로 회전하는 장치", "전동기"]]}]}, {"grade": "중2", "unit": "별과 우주", "sets": [{"t": "1~3차시 · 별까지의 거리와 밝기", "q": [["서로 다른 두 지점에서 물체를 볼 때 생기는 방향 차이", "시차"], ["지구 공전 때문에 생기는 시차의 절반", "연주 시차"], ["연주 시차가 클수록 별까지의 거리는 어떠한가", "가깝다"], ["별의 밝기를 나타내는 수", "등급"], ["등급이 작을수록 별은 어떠한가", "밝다"], ["우리 눈에 보이는 밝기를 나타낸 등급", "겉보기 등급"], ["별을 같은 거리에 두었다고 가정한 등급", "절대 등급"], ["표면 온도가 높은 별의 색", "청색"], ["표면 온도가 낮은 별의 색", "붉은색"]]}, {"t": "4~6차시 · 우리은하와 우주", "q": [["태양계가 속해 있는 은하", "우리은하"], ["밤하늘에 뿌옇게 보이는 우리은하의 일부", "은하수"], ["수많은 별이 공 모양으로 모여 있는 집단", "구상 성단"], ["별이 엉성하게 흩어져 모여 있는 집단", "산개 성단"], ["성간 물질이 구름처럼 모여 보이는 천체", "성운"], ["우주가 계속 커지고 있다는 사실", "우주 팽창"], ["우주가 한 점의 대폭발로 시작되었다는 이론", "빅뱅 우주론"], ["지구 둘레를 돌며 관측하는 인공 물체", "인공위성"], ["다른 천체를 조사하러 보내는 무인 우주선", "탐사선"]]}]}, {"grade": "중3", "unit": "자극과 반응", "sets": [{"t": "1차시 · 감각 기관", "q": [["눈에서 상이 맺히며 시각 세포가 있는 곳", "망막"], ["시각 세포가 가장 많이 모여 있는 곳", "황반"], ["시각 세포가 없어 상이 맺혀도 보이지 않는 곳", "맹점"], ["밝기에 따라 동공 크기를 조절하는 것", "홍채"], ["수정체의 두께를 조절하는 것", "섬모체"], ["소리에 의해 떨리는 얇은 막", "고막"], ["청각 세포가 있어 소리를 받아들이는 기관", "달팽이관"], ["몸의 회전을 느끼는 평형 감각 기관", "반고리관"], ["몸이 기울어진 정도를 느끼는 기관", "전정 기관"], ["기체 상태의 화학 물질을 받아들이는 곳", "후각 상피"], ["혀에서 액체 상태의 물질을 받아들이는 세포", "맛세포"], ["피부에서 가장 많이 분포하는 감각점", "통점"]]}, {"t": "2차시 · 뉴런과 신경계", "q": [["자극과 흥분을 전달하는 신경 세포", "뉴런"], ["다른 뉴런에서 자극을 받아들이는 부분", "가지 돌기"], ["자극을 다른 뉴런으로 전달하는 긴 부분", "축삭 돌기"], ["감각 기관의 자극을 중추로 전달하는 뉴런", "감각 뉴런"], ["중추의 명령을 반응 기관으로 전달하는 뉴런", "운동 뉴런"], ["기억·학습·판단 등 정신 활동을 담당하는 중추", "대뇌"], ["몸의 자세와 균형을 유지하는 중추", "소뇌"], ["체온과 체액 농도를 일정하게 유지하는 중추", "간뇌"], ["심장 박동과 호흡을 조절하는 중추", "연수"], ["무릎 반사의 중추", "척수"], ["긴장했을 때 심장 박동을 빠르게 하는 신경", "교감 신경"], ["대뇌가 관여하지 않아 매우 빠른 반응", "무조건 반사"]]}, {"t": "3차시 · 호르몬과 항상성 유지", "q": [["내분비샘에서 분비되어 혈액으로 운반되는 물질", "호르몬"], ["호르몬이 작용하는 정해진 기관", "표적 기관"], ["이자에서 분비되어 혈당량을 낮추는 호르몬", "인슐린"], ["이자에서 분비되어 혈당량을 높이는 호르몬", "글루카곤"], ["갑상샘에서 분비되어 물질대사를 촉진하는 호르몬", "티록신"], ["뇌하수체에서 분비되어 몸의 생장을 촉진하는 호르몬", "생장 호르몬"], ["심장 박동과 혈당량을 높이는 부신의 호르몬", "아드레날린"], ["몸속 상태를 일정하게 유지하려는 성질", "항상성"], ["더울 때 증발하며 체온을 낮추는 것", "땀"], ["추울 때 근육을 떨어 열을 내는 반응", "몸 떨림"]]}]}, {"grade": "중3", "unit": "생식과 유전", "sets": [{"t": "1~2차시 · 세포 분열과 생식", "q": [["유전 정보를 담고 있으며 DNA로 이루어진 것", "염색체"], ["사람의 체세포에 들어 있는 염색체 수", "46개"], ["모양과 크기가 같은 한 쌍의 염색체", "상동 염색체"], ["몸이 자라고 상처가 아물게 하는 세포 분열", "체세포 분열"], ["염색체 수가 절반이 되는 세포 분열", "감수 분열"], ["정자와 난자가 결합하는 과정", "수정"], ["수정란 초기에 일어나는 빠른 세포 분열", "난할"], ["수정란이 자궁 안쪽 벽에 파묻히는 것", "착상"], ["정자를 만드는 기관", "정소"], ["난자를 만드는 기관", "난소"]]}, {"t": "3차시 · 유전", "q": [["유전 원리를 밝힌 과학자", "멘델"], ["멘델이 실험에 사용한 식물", "완두"], ["잡종 1대에서 나타나는 형질", "우성"], ["잡종 1대에서 나타나지 않는 형질", "열성"], ["대립유전자 구성이 같은 것", "순종"], ["겉으로 드러나는 형질", "표현형"], ["유전자 구성을 기호로 나타낸 것", "유전자형"], ["성염색체에 유전자가 있어 남자에게 많이 나타나는 유전", "반성유전"], ["대립유전자가 세 가지인 사람의 형질", "ABO식 혈액형"], ["여러 세대의 형질을 그려 유전 방식을 알아보는 방법", "가계도"]]}]}, {"grade": "중3", "unit": "에너지 전환과 보존", "sets": [{"t": "1차시 · 역학적 에너지", "q": [["높은 곳에 있는 물체가 가지는 에너지", "위치 에너지"], ["운동하는 물체가 가지는 에너지", "운동 에너지"], ["위치 에너지와 운동 에너지를 더한 값", "역학적 에너지"], ["공기 저항이 없을 때 역학적 에너지의 합", "일정"], ["높이를 재는 기준이 되는 면", "기준면"], ["자유 낙하 하는 물체에서 늘어나는 에너지", "낙하 시 운동"], ["던져 올린 공이 가장 높은 곳에서 가장 큰 에너지", "최고점 위치"], ["진자가 가장 빠르게 움직이는 위치", "가장 낮은 곳"], ["마찰과 공기 저항 때문에 전환되는 에너지", "열에너지"], ["위치 에너지를 구하는 식에서 쓰는 수", "9.8"]]}, {"t": "2차시 · 전기 에너지", "q": [["자석을 코일에 넣고 뺄 때 전류가 흐르는 현상", "전자기 유도"], ["전자기 유도로 코일에 흐르는 전류", "유도 전류"], ["운동 에너지를 전기 에너지로 바꾸는 장치", "발전기"], ["물이나 바람이 돌려 발전기를 작동시키는 장치", "터빈"], ["전기 에너지를 운동 에너지로 바꾸는 장치", "전동기"], ["전등에서 전기 에너지가 바뀌는 형태", "빛에너지"], ["전기다리미에서 전기 에너지가 바뀌는 형태", "열에너지"], ["스피커에서 전기 에너지가 바뀌는 형태", "소리 에너지"], ["1초 동안 사용하는 전기 에너지의 양", "소비 전력"], ["소비 전력의 단위", "와트"], ["일정 시간 동안 사용한 전기 에너지의 총량", "전력량"], ["전력량의 단위", "와트시"]]}]}, {"grade": "중3", "unit": "별과 우주", "sets": [{"t": "1차시 · 별의 특성", "q": [["서로 다른 두 지점에서 볼 때 생기는 방향 차이", "시차"], ["지구 공전으로 생기는 시차의 절반", "연주 시차"], ["연주 시차가 큰 별까지의 거리", "가깝다"], ["우리 눈에 보이는 밝기를 나타낸 등급", "겉보기 등급"], ["별을 10 pc에 두었다고 가정한 등급", "절대 등급"], ["1등급이 6등급보다 밝은 정도", "100배"], ["별의 실제 밝기를 비교할 때 쓰는 등급", "실제 밝기 등급"], ["표면 온도가 가장 높은 별의 색", "청색"], ["표면 온도가 가장 낮은 별의 색", "붉은색"], ["태양의 색", "황색"]]}, {"t": "2차시 · 은하와 우주", "q": [["성간 물질이 구름처럼 모여 보이는 천체", "성운"], ["많은 별이 무리 지어 모여 있는 집단", "성단"], ["수십~수백 개의 별이 엉성하게 모인 성단", "산개 성단"], ["수만~수십만 개의 별이 공 모양으로 모인 성단", "구상 성단"], ["뒤쪽 별빛을 가려 어둡게 보이는 성운", "암흑 성운"], ["태양계가 속해 있는 은하", "우리은하"], ["지구에서 본 우리은하가 띠처럼 보이는 것", "은하수"], ["우리은하를 위에서 본 모양", "막대 나선 은하"], ["우리은하 밖에 있는 수많은 은하", "외부 은하"], ["외부 은하가 멀어지고 있음을 밝힌 과학자", "허블"], ["우주가 한 점의 대폭발로 시작되었다는 이론", "빅뱅 우주론"]]}, {"t": "3차시 · 우주 탐사", "q": [["지구 둘레를 돌며 관측·통신에 쓰이는 물체", "인공위성"], ["다른 천체에 접근해 조사하는 무인 우주선", "우주 탐사선"], ["대기의 방해 없이 우주를 관측하는 장비", "우주 망원경"], ["사람이 우주에 머물며 실험하는 시설", "우주 정거장"], ["천체 표면을 돌아다니며 조사하는 장치", "탐사 로버"], ["세계 최초의 인공위성", "스푸트니크1호"], ["사람이 처음 달에 발을 디딘 탐사", "아폴로 11호"], ["태양계 바깥쪽 행성을 지나며 탐사한 탐사선", "보이저호"], ["인공위성을 이용한 길 찾기 기술", "위성 항법"], ["원래 모양으로 되돌아가는 금속", "형상 기억 합금"]]}]}];
+  const GRADES = []; SETS.forEach(u => { if(GRADES.indexOf(u.grade) < 0) GRADES.push(u.grade); });
+  let curGrade = GRADES[1] || GRADES[0];
+
+  function loadSet(set, unit){
+    questions = set.q.map(p => [p[0], p[1]]);
+    pool = [];
+    document.getElementById('qInput').value = questions.map(q => q.join('|')).join('\n');
+    document.getElementById('qMsg').textContent = unit.grade + ' ' + unit.unit + ' · ' + set.t + ' (' + questions.length + '개)';
+    overScreen.classList.add('hidden');
+    document.getElementById('gchips').classList.add('hidden');
+    document.getElementById('picklist').classList.add('hidden');
+    document.querySelector('.picker h2').classList.add('hidden');
+    document.querySelector('.picker .sub').classList.add('hidden');
+    const bar = document.getElementById('pickbar');
+    bar.classList.remove('hidden');
+    bar.innerHTML = '<span><b>' + unit.grade + ' ' + unit.unit + '</b> · ' + set.t +
+      ' (개념 ' + set.q.length + '개)</span>';
+    const ch = document.createElement('button');
+    ch.className = 'gchip'; ch.textContent = '다른 차시 고르기';
+    ch.onclick = () => {
+      bar.classList.add('hidden');
+      document.getElementById('gchips').classList.remove('hidden');
+      document.getElementById('picklist').classList.remove('hidden');
+      document.querySelector('.picker h2').classList.remove('hidden');
+      document.querySelector('.picker .sub').classList.remove('hidden');
+      document.querySelector('.picker').scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    bar.appendChild(ch);
+    startGame();
+    document.getElementById('board').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function renderPicker(){
+    const gc = document.getElementById('gchips'); gc.innerHTML = '';
+    GRADES.forEach(g => {
+      const b = document.createElement('button');
+      b.className = 'gchip'; b.textContent = g;
+      b.setAttribute('aria-pressed', String(curGrade === g));
+      b.onclick = () => { curGrade = g; renderPicker(); };
+      gc.appendChild(b);
+    });
+    const box = document.getElementById('picklist'); box.innerHTML = '';
+    SETS.filter(u => u.grade === curGrade).forEach(u => {
+      const h = document.createElement('div');
+      h.className = 'uh'; h.textContent = u.grade + ' · ' + u.unit;
+      box.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'grid';
+      u.sets.forEach(s => {
+        const b = document.createElement('button');
+        b.className = 'sbtn';
+        b.innerHTML = '<b>' + s.t + '</b><span>개념 ' + s.q.length + '개</span>';
+        b.onclick = () => loadSet(s, u);
+        grid.appendChild(b);
+      });
+      box.appendChild(grid);
+    });
+  }
+  renderPicker();
+
+  // Toolbar & Options
+  document.querySelectorAll('[data-speed]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('[data-speed]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      speedMultiplier = parseFloat(e.target.dataset.speed);
+    });
+  });
+
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('resumeBtn').addEventListener('click', togglePause);
+
+  document.getElementById('togglePadBtn').addEventListener('click', (e) => {
+    showTouchPad = !showTouchPad;
+    touchPadWrap.style.display = showTouchPad ? 'block' : 'none';
+    e.target.textContent = showTouchPad ? '📱 빠른 터치 패드 숨기기' : '📱 빠른 터치 패드 켜기';
+    if(showTouchPad) renderTouchChips();
+  });
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+  document.getElementById('changeTopicBtn').addEventListener('click', () => {
+    overScreen.classList.add('hidden');
+    editorPanel.classList.remove('hidden');
+    startScreen.classList.remove('hidden');
+    const picker = document.getElementById('picker');
+    picker.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  document.getElementById('applyQBtn').addEventListener('click', ()=>{
+    const text = document.getElementById('qInput').value;
+    const { valid, rejected } = parseQuestionsInput(text);
+    const msg = document.getElementById('qMsg');
+    if(valid.length < MIN_Q){
+      msg.textContent = `형식(설명|정답)에 맞는 문제를 최소 ${MIN_Q}개 이상 입력해주세요.`;
+      return;
+    }
+    questions = valid;
+    msg.style.color = rejected.length ? 'var(--error)' : 'var(--ink-soft)';
+    msg.textContent = rejected.length ? `${rejected.length}줄은 형식이 맞지 않아 제외되었습니다.` : '';
+    startGame();
+  });
+
+  document.getElementById('resetQBtn').addEventListener('click', ()=>{
+    questions = [...DEFAULT_QUESTIONS];
+    document.getElementById('qInput').value = DEFAULT_QUESTIONS.map(q=>q.join('|')).join('\n');
+    document.getElementById('qMsg').textContent = '';
+    startScreen.classList.remove('hidden');
+    overScreen.classList.add('hidden');
+    editorPanel.classList.remove('hidden');
+  });
+
+  answerInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') tryFire();
+  });
+  fireBtn.addEventListener('click', tryFire);
+
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden && running && !paused){
+      togglePause();
+    }
+  });
+
+  document.getElementById('qInput').value = DEFAULT_QUESTIONS.map(q=>q.join('|')).join('\n');
+})();
+</script>
+
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload();
+});
+</script>
+</body>
+</html>

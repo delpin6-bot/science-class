@@ -1,0 +1,1203 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script id="kjs-menu-lib">
+/* 수업 게임 서랍 · 공통 메뉴 (학년 → 대단원 → 중단원·차시, 검색)
+   KJSMenu.init({
+     key, items:[{id, grade, unit, mid, title, sub, kind:'unit'|'mid'|'lesson', words:[], tags:[]}],
+     extras:['내 세트'],            // 누르면 게임의 원래 선택 화면(내가 만든 목록)을 보여 줌
+     mount: Element,                // 이 요소 앞에 메뉴를 넣음
+     legacyCss: 'selector, ...',    // 메뉴가 켜져 있을 때 숨길 원래 선택 UI
+     isVisible: () => bool,         // 선택 화면일 때만 메뉴 표시 (생략 가능)
+     observe: Element,              // 화면이 바뀌는지 지켜볼 요소 (생략 가능)
+     mode: 'start' | 'select',      // start: 누르면 바로 시작 / select: 고른 뒤 ▶ 시작
+     onPick(item), onStart(item), startLabel
+   })
+*/
+(function(){
+  var ORDER = {
+    "중1": ["과학과 인류의 지속가능한 삶","생물의 구성과 다양성","열","물질의 상태 변화","힘의 작용","기체의 성질","태양계"],
+    "중2": ["물질의 특성","지권의 변화","빛과 파동","물질의 구성","식물과 에너지","동물과 에너지","전기와 자기","별과 우주"],
+    "중3": ["화학 반응의 규칙과 에너지 변화","기권과 날씨","운동과 에너지","자극과 반응","생식과 유전","에너지 전환과 보존","별과 우주"]
+  };
+  var CSS = [
+    ".km{background:#fff;color:#1b2b2a;border:1.5px solid #dfe3de;border-radius:16px;padding:0 14px 14px;margin:12px 0 16px;",
+    " font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',system-ui,sans-serif;text-align:left;line-height:1.45}",
+    ".km *{box-sizing:border-box}",
+    ".km-nav{position:sticky;top:0;z-index:30;background:#fff;padding:12px 0 10px;border-bottom:1px solid #e6e9e4;border-radius:16px 16px 0 0}",
+    ".km-search{display:flex;align-items:center;gap:8px;background:#f5f7f4;border:1.5px solid #dfe3de;border-radius:12px;padding:0 12px;margin-bottom:8px}",
+    ".km-search:focus-within{border-color:#0CA678;background:#fff}",
+    ".km-search input{flex:1;min-width:0;border:0!important;box-shadow:none!important;outline:0;background:transparent;font:inherit;font-size:16px;padding:10px 0;color:#1b2b2a}",
+    ".km-search button{border:0;background:transparent;font-size:15px;cursor:pointer;color:#6b7672;padding:4px}",
+    ".km-row{display:flex;align-items:flex-start;gap:10px;margin-top:6px}",
+    ".km-row[hidden]{display:none!important}",
+    ".km-lab{flex:none;width:58px;padding-top:7px;font-size:12.5px;font-weight:800;color:#6b7672}",
+    ".km-chips{display:flex;gap:6px;flex-wrap:wrap}",
+    ".km-row>.km-scroll,.km-row>.km-chips{min-width:0;flex:1 1 auto}",
+    ".km-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}",
+    ".km-chip{flex:none;border:1px solid #dfe3de;background:#fff;color:#1b2b2a;border-radius:9px;padding:7px 13px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}",
+    ".km-chip.g[aria-pressed=true]{background:#1b2b2a;color:#fff;border-color:#1b2b2a}",
+    ".km-chip.u[aria-pressed=true]{background:#0CA678;color:#fff;border-color:#0CA678}",
+    ".km-chip.j{font-size:12.5px;padding:5px 10px;border-radius:999px}",
+    ".km-chip.j.m{border-color:#7048E8;color:#5f3dc4}.km-chip.j.un{border-color:#0CA678;color:#0b7a5a}",
+    ".km-sel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;padding:9px 12px;background:#fff8e1;border:1px solid #f3d27a;border-radius:10px;font-size:14px}",
+    ".km-sel[hidden]{display:none!important}",
+    ".km-sel b{font-weight:800}",
+    ".km-go{border:0;background:#1b2b2a;color:#fff;border-radius:9px;padding:8px 16px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-left:auto}",
+    ".km-body{padding-top:6px}",
+    ".km-uh{font-size:14px;font-weight:800;color:#6b7672;margin:14px 0 8px;display:flex;align-items:center;gap:8px}",
+    ".km-uh::after{content:'';flex:1;height:1px;background:#e6e9e4}",
+    ".km-mh{font-size:13.5px;font-weight:800;margin:14px 0 8px 2px;scroll-margin-top:200px}",
+    ".km-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}",
+    ".km-card{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e1e5e0;border-radius:14px;padding:13px 15px;cursor:pointer;font:inherit;color:#1b2b2a;scroll-margin-top:200px;transition:border-color .12s,box-shadow .12s}",
+    ".km-card:hover{border-color:#0CA678;box-shadow:0 4px 14px rgba(0,0,0,.06)}",
+    ".km-card[aria-pressed=true]{border-color:#e8900c;box-shadow:0 0 0 3px #ffe8b0}",
+    ".km-card .k{font-size:12px;font-weight:800;color:#e8900c}",
+    ".km-card .w{font-size:12px;font-weight:800;color:#6b7672}",
+    ".km-card .t{display:block;font-size:17px;font-weight:800;margin:2px 0 3px;letter-spacing:-.01em}",
+    ".km-card .s{display:block;font-size:13px;color:#6b7672}",
+    ".km-card .h{display:block;font-size:12.5px;color:#6b7672;margin-top:5px}",
+    ".km-card.unit{background:linear-gradient(135deg,#eef6f2,#fff);border-color:#0CA678;grid-column:1/-1}",
+    ".km-card.unit .k{color:#0b7a5a}",
+    ".km-card.mid{background:linear-gradient(135deg,#f3f0fb,#fff);border-color:#7048E8;grid-column:1/-1}",
+    ".km-card.mid .k{color:#5f3dc4}",
+    ".km-hit{background:#fff3bf;border-radius:3px}",
+    ".km-empty{color:#6b7672;padding:16px 4px}",
+    ".km-note{font-size:13px;color:#6b7672;margin:8px 2px}",
+    "@media (max-width:640px){.km{padding:0 10px 12px}.km-row{flex-direction:column;gap:4px}.km-lab{width:auto;padding-top:0}.km-grid{grid-template-columns:1fr}.km-mh,.km-card{scroll-margin-top:260px}}",
+    "@media print{.km{display:none!important}}"
+  ].join("\n");
+
+  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function nrm(s){ return String(s || "").toLowerCase().replace(/\s+/g, ""); }
+  function mark(text, q){
+    var t = String(text), i = t.toLowerCase().indexOf(q.toLowerCase());
+    if (!q || i < 0) return esc(t);
+    return esc(t.slice(0, i)) + '<span class="km-hit">' + esc(t.slice(i, i + q.length)) + "</span>" + esc(t.slice(i + q.length));
+  }
+
+  /* 차시 고유 코드: 학년|단원|제목 → 짧은 영문 코드 (QR 주소용, 파일이 바뀌어도 제목이 같으면 그대로) */
+  function hcode(str){
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36);
+  }
+  function itemKey(x){ return [x.grade || "", x.unit || "", x.mid || "", x.title || ""].join("|"); }
+
+  function init(o){
+    if (!document.getElementById("km-style")) { var st = el("style"); st.id = "km-style"; st.textContent = CSS; document.head.appendChild(st); }
+    var items = o.items || [];
+    var grades = ["중1","중2","중3"].filter(function(g){ return items.some(function(x){ return x.grade === g; }); });
+    items.forEach(function(x){ if (["중1","중2","중3"].indexOf(x.grade) < 0 && grades.indexOf(x.grade) < 0) grades.push(x.grade); });
+    (o.extras || []).forEach(function(g){ if (grades.indexOf(g) < 0) grades.push(g); });
+    items.forEach(function(x){
+      x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|"));
+      x.th = nrm([x.unit, x.mid, x.title].join("|"));
+    });
+    items.forEach(function(x){ x.q = hcode(itemKey(x)); });
+    window.KJSMenu._items = items.map(function(x){ return { q: x.q, grade: x.grade, unit: x.unit || "", mid: x.mid || "", title: x.title, kind: x.kind || "lesson" }; });
+    var LS = "km-" + (o.key || location.pathname);
+    var st = { g: grades[0], u: 0, q: "", sel: null };
+    try { var sv = JSON.parse(localStorage.getItem(LS) || "{}"); if (grades.indexOf(sv.g) >= 0) st.g = sv.g; if (sv.u >= 0) st.u = sv.u; } catch(e) {}
+    function save(){ try { localStorage.setItem(LS, JSON.stringify({ g: st.g, u: st.u })); } catch(e) {} }
+
+    var root = el("section", "km"); root.setAttribute("aria-label", "학년 · 단원 · 차시 고르기");
+    var nav = el("div", "km-nav");
+    nav.innerHTML =
+      '<label class="km-search"><span aria-hidden="true">🔍</span><input type="text" placeholder="단원·차시·낱말 검색 (예: 광합성, 보일, 뉴런)" autocomplete="off"><button type="button" hidden aria-label="검색어 지우기">✕</button></label>' +
+      '<div class="km-row"><span class="km-lab">학년</span><div class="km-chips km-g"></div></div>' +
+      '<div class="km-row km-urow"><span class="km-lab">대단원</span><div class="km-scroll km-u"></div></div>' +
+      '<div class="km-row km-jrow"><span class="km-lab">바로가기</span><div class="km-scroll km-j"></div></div>' +
+      '<div class="km-sel" hidden><span>선택: <b></b></span><button type="button" class="km-go"></button></div>';
+    var body = el("div", "km-body");
+    root.appendChild(nav); root.appendChild(body);
+    var mountEl = typeof o.mount === "function" ? o.mount() : o.mount;
+    mountEl.parentNode.insertBefore(root, mountEl);
+
+    var qIn = nav.querySelector("input"), qX = nav.querySelector(".km-search button");
+    var selBox = nav.querySelector(".km-sel"), goBtn = nav.querySelector(".km-go");
+    goBtn.textContent = "▶ " + (o.startLabel || "시작하기");
+    goBtn.onclick = function(){ if (st.sel && o.onStart) o.onStart(st.sel); };
+
+    var legacyStyle = el("style"); document.head.appendChild(legacyStyle);
+    function setLegacy(show){ var t = (!show && o.legacyCss) ? o.legacyCss + "{display:none!important}" : ""; if (legacyStyle.textContent !== t) legacyStyle.textContent = t; }
+
+    function pick(x){
+      if (o.mode === "select") {
+        st.sel = x; if (o.onPick) o.onPick(x);
+        selBox.hidden = false; selBox.querySelector("b").textContent = x.grade + " · " + (x.unit ? x.unit + " · " : "") + x.title;
+        paintSel();
+      } else if (o.onPick) o.onPick(x);
+    }
+    function paintSel(){
+      body.querySelectorAll(".km-card").forEach(function(c){ c.setAttribute("aria-pressed", String(!!st.sel && c._item === st.sel)); });
+    }
+    function card(x, q){
+      var c = el("button", "km-card " + (x.kind || "lesson"));
+      c.type = "button"; c._item = x;
+      var kind = x.kind === "unit" ? "🌳 대단원 종합" : x.kind === "mid" ? "🌿 중단원 종합" : (x.badge || "");
+      c.innerHTML = (q ? '<span class="w">' + esc(x.grade + (x.unit ? " · " + x.unit : "")) + "</span> " : "") +
+        (kind ? '<span class="k">' + esc(kind) + "</span>" : "") +
+        '<span class="t">' + (q ? mark(x.title, q) : esc(x.title)) + "</span>" +
+        (x.sub ? '<span class="s">' + esc(x.sub) + "</span>" : "");
+      if (q) {
+        var hits = (x.words || []).filter(function(w){ return String(w).toLowerCase().indexOf(q.toLowerCase()) >= 0; });
+        var u = []; hits.forEach(function(h){ if (u.indexOf(h) < 0) u.push(h); });
+        if (u.length) c.appendChild(el("span", "h", "찾은 낱말: " + u.slice(0, 5).map(function(w){ return mark(String(w).slice(0, 40), q); }).join(", ") + (u.length > 5 ? " …" : "")));
+      }
+      c.onclick = function(){ pick(x); };
+      return c;
+    }
+    function unitsOf(g){
+      var list = [];
+      items.forEach(function(x){ if (x.grade === g && x.unit && list.indexOf(x.unit) < 0) list.push(x.unit); });
+      var ord = ORDER[g] || [];
+      return list.sort(function(a, b){ var ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+    }
+    function render(){
+      var gBox = nav.querySelector(".km-g"), uBox = nav.querySelector(".km-u"), jBox = nav.querySelector(".km-j");
+      gBox.innerHTML = ""; uBox.innerHTML = ""; jBox.innerHTML = ""; body.innerHTML = "";
+      grades.forEach(function(g){
+        var b = el("button", "km-chip g"); b.type = "button"; b.textContent = g;
+        b.setAttribute("aria-pressed", String(g === st.g && !st.q));
+        b.onclick = function(){ st.g = g; st.u = 0; clearQ(); save(); render(); };
+        gBox.appendChild(b);
+      });
+      var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+      setLegacy(isExtra && !st.q);
+      var units = unitsOf(st.g);
+      if (st.u >= units.length) st.u = 0;
+      nav.querySelector(".km-urow").hidden = !units.length || !!st.q;
+      units.forEach(function(u, i){
+        var b = el("button", "km-chip u"); b.type = "button"; b.textContent = u;
+        b.setAttribute("aria-pressed", String(i === st.u));
+        b.onclick = function(){ st.u = i; save(); render(); };
+        uBox.appendChild(b);
+      });
+      var cur = uBox.children[st.u]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "nearest", block: "nearest" });
+
+      if (st.q) {
+        nav.querySelector(".km-jrow").hidden = true;
+        var q = nrm(st.q);
+        var res = items.filter(function(x){ return x.hay.indexOf(q) >= 0; }).sort(function(a, b){
+          var ka = { unit: 0, mid: 1 }[a.kind]; var kb = { unit: 0, mid: 1 }[b.kind];
+          return ((b.th.indexOf(q) >= 0) - (a.th.indexOf(q) >= 0)) || ((ka == null ? 2 : ka) - (kb == null ? 2 : kb));
+        });
+        body.appendChild(el("div", "km-uh", "‘" + esc(st.q) + "’ 검색 결과 " + res.length + "개"));
+        if (!res.length) body.appendChild(el("p", "km-empty", "찾는 내용이 없습니다. 다른 낱말로 검색해 보세요."));
+        var grid = el("div", "km-grid");
+        res.slice(0, 60).forEach(function(x){ grid.appendChild(card(x, st.q.trim())); });
+        body.appendChild(grid); paintSel(); return;
+      }
+      if (isExtra) {
+        nav.querySelector(".km-jrow").hidden = true;
+        if (o.onExtra) setTimeout(function(){ o.onExtra(st.g); }, 0);
+        body.appendChild(el("p", "km-note", (o.extraNote || "아래에서 직접 만든 목록을 고르거나 새로 만들 수 있습니다.")));
+        return;
+      }
+      var unit = units[st.u];
+      var list = items.filter(function(x){ return x.grade === st.g && (unit ? x.unit === unit : !x.unit); });
+      if (!unit) list = items.filter(function(x){ return x.grade === st.g; });
+      if (unit) body.appendChild(el("div", "km-uh", esc(st.g + " · " + unit)));
+      var groups = [], gmap = {};
+      list.forEach(function(x){
+        var key = x.kind === "unit" ? "__unit" : (x.mid || "");
+        if (!gmap[key]) { gmap[key] = { name: key, list: [] }; groups.push(gmap[key]); }
+        gmap[key].list.push(x);
+      });
+      var jumps = 0;
+      groups.forEach(function(gr, gi){
+        var sec = el("div", "km-sec");
+        if (gr.name && gr.name !== "__unit") {
+          var mh = el("div", "km-mh", esc(gr.name)); sec.appendChild(mh);
+          var jb = el("button", "km-chip j m", "🌿 " + esc(gr.name)); jb.type = "button";
+          jb.onclick = function(){ mh.scrollIntoView({ behavior: "smooth", block: "start" }); };
+          jBox.appendChild(jb); jumps++;
+        }
+        var grid = el("div", "km-grid");
+        gr.list.forEach(function(x){
+          var c = card(x, "");
+          grid.appendChild(c);
+          if (x.kind === "unit") {
+            var ub = el("button", "km-chip j un", "🌳 대단원"); ub.type = "button";
+            ub.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "start" }); };
+            jBox.insertBefore(ub, jBox.firstChild); jumps++;
+          } else if (x.kind !== "mid") {
+            var lb = el("button", "km-chip j", esc(x.short || x.title)); lb.type = "button";
+            lb.onclick = function(){ c.scrollIntoView({ behavior: "smooth", block: "center" }); };
+            jBox.appendChild(lb); jumps++;
+          }
+        });
+        sec.appendChild(grid); body.appendChild(sec);
+      });
+      nav.querySelector(".km-jrow").hidden = jumps < 2;
+      paintSel();
+    }
+    function clearQ(){ st.q = ""; qIn.value = ""; qX.hidden = true; }
+    qIn.addEventListener("input", function(){ st.q = qIn.value.trim(); qX.hidden = !st.q; render(); });
+    qX.addEventListener("click", function(){ clearQ(); render(); qIn.focus(); });
+
+    function sync(){
+      if (typeof o.mount === "function") {
+        var m = o.mount();
+        if (m && m !== root && m.parentNode && root.nextSibling !== m) m.parentNode.insertBefore(root, m);
+      }
+      var vis = o.isVisible ? !!o.isVisible() : true;
+      var want = vis ? "" : "none";
+      if (root.style.display !== want) root.style.display = want;
+      if (!vis) setLegacy(true); else {
+        var isExtra = (o.extras || []).indexOf(st.g) >= 0 && !items.some(function(x){ return x.grade === st.g; });
+        setLegacy(isExtra && !st.q);
+      }
+    }
+    if (o.observe) {
+      var busy = false;
+      new MutationObserver(function(){
+        if (busy) return; busy = true;
+        requestAnimationFrame(function(){ try { sync(); } finally { busy = false; } });
+      }).observe(o.observe, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    }
+    render(); sync();
+    /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
+    try {
+      var qp = new URLSearchParams(location.search).get("q");
+      var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      if (target) {
+        st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
+        render(); sync();
+        setTimeout(function(){
+          pick(target);
+          if (o.mode === "select") {
+            selBox.hidden = false;
+            selBox.style.boxShadow = "0 0 0 3px #f59e0b";
+            var note = selBox.querySelector(".km-qr-note");
+            if (!note) { note = el("span", "km-qr-note", "📱 선생님이 고른 차시예요. 아래 설정을 확인하고 시작하세요."); note.style.cssText = "flex-basis:100%;font-size:12.5px;color:#92400e"; selBox.appendChild(note); }
+            root.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 350);
+      }
+    } catch(e) {}
+    return { refresh: function(newItems){ if (newItems) { items = newItems; items.forEach(function(x){ x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|")); x.th = nrm([x.unit, x.mid, x.title].join("|")); }); } render(); sync(); },
+             root: root, select: function(x){ st.sel = x; paintSel(); } };
+  }
+  window.KJSMenu = { init: init, hcode: hcode };
+})();
+
+</script>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head><body>
+<header class="unified-game-header">
+  <div class="header-brand">
+    <span class="game-badge">수업 게임</span>
+    <span class="game-title">빙산의 일각</span>
+  </div>
+  <div class="header-actions unified-nav-actions">
+    <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+<title>빙산의 일각</title>
+<style>
+  :root{
+    --bg:#eef6f9; --surface:#ffffff; --surface-2:#dcecf1; --abyss:#0b2d42;
+    --text:#0d2436; --muted:#5c7a8a; --border:#c3dde6;
+    --glacier:#2f8fae; --glacier-ink:#ffffff; --aurora:#1fb88f; --spark:#ff9142; --danger:#e2503a;
+    --tile-hidden:#bcdce6; --tile-hidden-2:#a6cfdc; --shadow: 0 10px 30px -12px rgba(11,45,66,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#071b28; --surface:#0f2c3d; --surface-2:#123448; --abyss:#051520;
+      --text:#e7f3f7; --muted:#86a8b8; --border:#1c4054;
+      --glacier:#5fc3de; --glacier-ink:#04222e; --aurora:#3fe0b0; --spark:#ffab5e; --danger:#ff6b53;
+      --tile-hidden:#183c50; --tile-hidden-2:#0f2c3d; --shadow: 0 10px 30px -10px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#071b28; --surface:#0f2c3d; --surface-2:#123448; --abyss:#051520;
+    --text:#e7f3f7; --muted:#86a8b8; --border:#1c4054;
+    --glacier:#5fc3de; --glacier-ink:#04222e; --aurora:#3fe0b0; --spark:#ffab5e; --danger:#ff6b53;
+    --tile-hidden:#183c50; --tile-hidden-2:#0f2c3d; --shadow: 0 10px 30px -10px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif; margin:0; padding-block:0;}
+  h1,h2,h3,.display{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif; letter-spacing:.02em; text-wrap:balance;}
+  .mono{font-family:"D2Coding","Consolas",monospace; font-variant-numeric:tabular-nums;}
+  button{font-family:inherit; cursor:pointer;}
+  input{font-family:inherit;}
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{outline:3px solid var(--spark); outline-offset:2px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 20px 64px;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+  /* ---------- hero ---------- */
+  .hero{background:linear-gradient(180deg,var(--abyss) 0%,#0e3a52 100%); color:#eaf6fa; padding:34px 20px 46px; position:relative; overflow:hidden;}
+  .hero-inner{max-width:1180px; margin:0 auto; display:flex; align-items:center; gap:20px; position:relative; z-index:2; flex-wrap:wrap;}
+  .berg-icon{flex:0 0 auto; filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));}
+  .hero-text h1{font-size:clamp(28px,4vw,40px); margin:0 0 6px; color:#eaf6fa;}
+  .hero-text p{margin:0; color:#a9cddb; font-size:14.5px;}
+  .hero-wave{position:absolute; left:0; right:0; bottom:-2px; height:26px; background:
+     radial-gradient(circle at 10px -6px, transparent 12px, var(--bg) 13px) repeat-x; background-size:24px 20px;}
+
+  /* ---------- setup layout ---------- */
+  .setup-grid{display:grid; grid-template-columns:300px 1fr; gap:22px; margin-top:26px;}
+  @media (max-width:820px){ .setup-grid{grid-template-columns:1fr;} }
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--shadow);}
+  .panel h2{font-size:19px; margin:0 0 4px; color:var(--text);}
+  .panel .sub{font-size:12.5px; color:var(--muted); margin:0 0 16px;}
+
+  .team-row{display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:12px; margin-bottom:10px; background:var(--surface-2);}
+  .team-swatch{width:16px; height:16px; border-radius:50%; flex:0 0 auto; box-shadow:inset 0 0 0 2px rgba(255,255,255,.5);}
+  .team-row input[type="text"]{flex:1; min-width:0; border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--surface); color:var(--text); font-weight:700; font-size:14px;}
+  .key-badge{font-size:12px; padding:4px 8px; border-radius:6px; background:var(--abyss); color:#eaf6fa; flex:0 0 auto;}
+  .icon-btn{border:1px solid var(--border); background:var(--surface); color:var(--muted); width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:16px;}
+  .icon-btn:hover{color:var(--danger); border-color:var(--danger);}
+
+  .btn{border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:14px; transition:transform .1s ease;}
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:var(--glacier); color:var(--glacier-ink);}
+  .btn-ghost{background:var(--surface-2); color:var(--text); border:1px solid var(--border);}
+  .btn-spark{background:var(--spark); color:#2b1400;}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:.45; cursor:not-allowed;}
+
+  .cat-card{border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; background:var(--surface-2);}
+  .cat-head{display:flex; gap:10px; align-items:center; margin-bottom:10px;}
+  .cat-head .num{font-family:"D2Coding","Consolas",monospace; font-weight:700; color:var(--glacier); font-size:13px; flex:0 0 auto;}
+  .cat-head input{flex:1; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-weight:900; font-size:15px; background:var(--surface); color:var(--text);}
+  .word-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px;}
+  @media (max-width:640px){ .word-grid{grid-template-columns:repeat(2,1fr);} }
+  .word-grid input{width:100%; border:1px solid var(--border); border-radius:8px; padding:7px 8px; background:var(--surface); color:var(--text); font-size:13.5px; text-align:center;}
+  .word-grid input:nth-child(1){outline:2px dashed color-mix(in srgb, var(--glacier) 45%, transparent); outline-offset:1px;}
+
+  details.tools{margin-top:18px; border:1px dashed var(--border); border-radius:12px; padding:10px 14px; background:var(--surface-2);}
+  details.tools summary{cursor:pointer; font-weight:700; color:var(--glacier); font-size:13.5px;}
+  details.tools textarea{width:100%; min-height:90px; margin-top:10px; border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--surface); color:var(--text); font-family:"D2Coding","Consolas",monospace; font-size:11.5px;}
+  .tools-row{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+
+  /* ---------- play screen ---------- */
+  .stage{background:linear-gradient(180deg,var(--abyss),#0e3547 60%,var(--abyss)); min-height:calc(100vh - 0px); color:#eaf6fa; padding-bottom:110px;}
+  .score-row{display:flex; gap:12px; flex-wrap:wrap; padding:18px 20px 0; max-width:1180px; margin:0 auto;}
+  .team-card{flex:1 1 160px; min-width:150px; border-radius:14px; padding:12px 14px; color:#fff; position:relative; box-shadow:var(--shadow); border:2px solid transparent; transition:transform .15s ease, box-shadow .15s ease;}
+  .team-card.locked{border-color:#fff; transform:translateY(-4px) scale(1.03); box-shadow:0 0 0 4px rgba(255,255,255,.25), var(--shadow);}
+  .team-card .tname{font-weight:900; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:6px;}
+  .team-card .tscore{font-family:"D2Coding","Consolas",monospace; font-size:26px; font-weight:700; margin-top:2px;}
+  .team-card .tkey{font-family:"D2Coding","Consolas",monospace; font-size:11px; opacity:.85; background:rgba(0,0,0,.2); padding:2px 6px; border-radius:5px;}
+  .team-card button.buzz{position:absolute; inset:0; width:100%; height:100%; background:transparent; border:none; border-radius:14px;}
+
+  .round-wrap{max-width:900px; margin:26px auto 0; padding:0 20px;}
+  .round-top{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:14px;}
+  .round-label{font-size:12.5px; color:#9fc8d9; letter-spacing:.08em;}
+  .round-title{font-size:clamp(22px,4vw,30px); color:#fff; margin:2px 0 0;}
+  .timer-wrap{display:flex; align-items:center; gap:10px;}
+  .timer-gauge{width:120px; height:14px; border-radius:8px; background:rgba(255,255,255,.12); overflow:hidden; position:relative;}
+  .timer-fill{height:100%; background:linear-gradient(90deg,var(--aurora),var(--glacier)); transition:width 1s linear, background .3s;}
+  .timer-num{font-family:"D2Coding","Consolas",monospace; font-size:20px; font-weight:700; color:#fff; min-width:44px; text-align:right;}
+
+  .words{display:flex; flex-direction:column; gap:10px;}
+  .word-row{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:8px 10px;}
+  .word-row.solved{background:rgba(31,184,143,.16); border-color:var(--aurora);}
+  .tiles{display:flex; gap:5px; flex-wrap:wrap; flex:1;}
+  .tile{width:34px; height:34px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:16px; transition:transform .25s ease, background .25s ease;}
+  .tile.hidden{background:linear-gradient(160deg,var(--tile-hidden),var(--tile-hidden-2)); color:transparent;}
+  .tile.revealed{background:#fff; color:var(--abyss); transform:scale(1.06);}
+  .word-row.solved .tile{background:var(--aurora); color:#04241b;}
+  .word-pts{font-family:"D2Coding","Consolas",monospace; font-size:12px; color:#9fc8d9; flex:0 0 auto; width:52px; text-align:right;}
+  .word-row.solved .word-pts{color:var(--aurora); font-weight:700;}
+
+  .buzz-banner{position:fixed; left:0; right:0; top:14px; display:flex; justify-content:center; z-index:5; pointer-events:none;}
+  .buzz-banner span{background:var(--spark); color:#2b1400; font-weight:900; padding:10px 22px; border-radius:999px; font-size:15px; box-shadow:0 10px 24px -6px rgba(0,0,0,.4); animation:pop .25s ease;}
+  @keyframes pop{from{transform:scale(.7); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  .host-bar{position:fixed; left:0; right:0; bottom:0; background:rgba(5,21,32,.92); backdrop-filter:blur(6px); border-top:1px solid rgba(255,255,255,.12); padding:10px 20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; z-index:6;}
+  .host-bar .btn{font-size:13px; padding:9px 14px;}
+
+  .resolve-row{display:flex; gap:6px;}
+  .resolve-row button{width:30px; height:30px; border-radius:8px; border:none; font-weight:900; font-size:15px;}
+  .btn-yes{background:var(--aurora); color:#04241b;}
+  .btn-no{background:var(--danger); color:#2b0704;}
+
+  .final-wrap{max-width:640px; margin:60px auto; padding:0 20px; text-align:center; color:#fff;}
+  .final-wrap h1{font-size:clamp(30px,6vw,46px); margin-bottom:6px;}
+  .podium{display:flex; flex-direction:column; gap:10px; margin:26px 0;}
+  .podium-row{display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:12px 16px;}
+  .rank{font-family:"D2Coding","Consolas",monospace; font-size:22px; font-weight:700; width:34px;}
+  .podium-row .pname{flex:1; text-align:left; font-weight:900; font-size:17px;}
+  .podium-row .pscore{font-family:"D2Coding","Consolas",monospace; font-size:20px;}
+
+  .topbar{position:sticky; top:0; z-index:4; display:flex; justify-content:flex-end; gap:8px; padding:10px 20px; max-width:1180px; margin:0 auto;}
+  .pick-panel{margin-bottom:18px;}
+  .pick-chips{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px;}
+  .pick-chip{border:1px solid var(--line,#c9d8e2); background:#fff; color:#123; border-radius:999px;
+    padding:8px 16px; font:inherit; font-size:14px; font-weight:700; cursor:pointer;}
+  .pick-chip[aria-pressed="true"]{background:#123a4a; color:#fff; border-color:#123a4a;}
+  .pick-grid{display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+  .pick-unit{display:flex; gap:6px;}
+  .pick-main{flex:1; text-align:left; border:1px solid var(--line,#c9d8e2); background:#fff; color:#123;
+    border-radius:10px; padding:10px 12px; font:inherit; cursor:pointer;}
+  .pick-main:hover{border-color:#2f8fae;}
+  .pick-main b{display:block; font-size:15px;}
+  .pick-main span{display:block; font-size:12px; opacity:.65; margin-top:2px;}
+  .pick-go{border:1px solid #2f8fae; background:#2f8fae; color:#fff; border-radius:10px;
+    padding:0 14px; font:inherit; font-size:15px; font-weight:800; cursor:pointer;}
+  .pick-go:hover{background:#1f7c99;}
+  .pick-now{font-size:13.5px; margin-top:12px;}
+
+  .stage .topbar{padding-right:170px}
+  @media (max-width:820px){ .stage .topbar{padding-right:52px} }
+  #confetti{position:fixed; inset:0; pointer-events:none; z-index:1;}
+  .aria-live{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+</style>
+
+<div id="app"></div>
+<canvas id="confetti" hidden></canvas>
+<div id="live" class="aria-live" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "iceberg-game-data-v1";
+  var TEAM_COLORS = ["#2f8fae","#ff9142","#8a5fd6","#1fb88f","#e2503a","#4f6fd1"];
+  var BUZZ_KEYS = ["f","j","d","k","s","l"];
+  var ROUND_DURATION = 90;
+  var HINT_INTERVAL = 14;
+  var WRONG_PENALTY = 5;
+
+  function sampleData(){
+    return {
+      teams: [
+        {id:"t1", name:"1팀", color:TEAM_COLORS[0], key:BUZZ_KEYS[0]},
+        {id:"t2", name:"2팀", color:TEAM_COLORS[1], key:BUZZ_KEYS[1]}
+      ],
+      categories: [
+        {id:"g1", topic:"중1 · 기체의 압력", words:["압력", "면적", "충돌", "입자", "쇠구슬"]},
+        {id:"g2", topic:"중1 · 보일 법칙", words:["반비례", "부피감소", "대기압", "뽁뽁이", "공기침대"]},
+        {id:"g3", topic:"중1 · 샤를 법칙", words:["비례", "온도", "열기구", "축구공", "피스톤"]},
+        {id:"g4", topic:"중1 · 생활 속 기체", words:["탁구공", "타이어", "과자봉지", "공기방울", "마시멜로"]}
+      ]
+    };
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+
+  function loadData(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ var parsed = JSON.parse(raw); if(parsed && parsed.teams && parsed.categories) return parsed; }
+    }catch(e){}
+    return sampleData();
+  }
+  function saveData(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({teams:S.teams, categories:S.categories})); }catch(e){}
+  }
+
+  var S = Object.assign({view:"setup", currentRound:-1, scores:{}, round:null}, loadData());
+
+  /* ---------------- sound ---------------- */
+  var actx = null;
+  function ctx(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+  function beep(freq, dur, type, delay, vol){
+    var c = ctx(); if(!c) return;
+    var t0 = c.currentTime + (delay||0);
+    var osc = c.createOscillator(); var gain = c.createGain();
+    osc.type = type||"sine"; osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol||0.12, t0+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    osc.connect(gain); gain.connect(c.destination);
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  }
+  var SND = {
+    buzz: function(){ beep(880,0.09,"square",0); beep(1180,0.09,"square",0.06); },
+    correct: function(){ beep(660,0.11,"triangle",0); beep(880,0.11,"triangle",0.09); beep(1320,0.18,"triangle",0.18); },
+    wrong: function(){ beep(180,0.28,"sawtooth",0,0.1); },
+    hint: function(){ beep(1500,0.05,"sine",0,0.05); },
+    roundClear: function(){ beep(523,0.12,"triangle",0); beep(659,0.12,"triangle",0.1); beep(784,0.12,"triangle",0.2); beep(1046,0.22,"triangle",0.3); },
+    timeUp: function(){ beep(300,0.3,"sawtooth",0,0.09); beep(220,0.35,"sawtooth",0.25,0.09); }
+  };
+
+  function announce(msg){ var el=document.getElementById("live"); if(el) el.textContent = msg; }
+
+  /* ---------------- helpers ---------------- */
+  function shuffledIdx(n){
+    var arr=[]; for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp; }
+    return arr;
+  }
+  function pointsForHintLevel(level){ return Math.max(20, 120 - (level-1)*20); }
+
+  function startRound(catIndex){
+    var cat = S.categories[catIndex];
+    var words = cat.words.map(function(w){
+      var chars = Array.from(w);
+      return { text:w, chars:chars, order:shuffledIdx(chars.length), solved:false, awarded:0 };
+    });
+    S.currentRound = catIndex;
+    S.round = {
+      words: words, hintLevel: 1, timeLeft: ROUND_DURATION, running:true,
+      lockedTeam: null, elapsedSinceHint: 0, ended:false
+    };
+    render();
+    tick();
+  }
+
+  var timerHandle = null;
+  function tick(){
+    clearInterval(timerHandle);
+    timerHandle = setInterval(function(){
+      var r = S.round; if(!r || !r.running) return;
+      r.timeLeft--; r.elapsedSinceHint++;
+      if(r.elapsedSinceHint >= HINT_INTERVAL && r.timeLeft > 0){
+        r.elapsedSinceHint = 0; revealHint();
+      }
+      if(r.timeLeft <= 0){
+        r.timeLeft = 0; r.running = false; clearInterval(timerHandle);
+        finishRoundTimeout();
+      }
+      renderTimerOnly();
+    }, 1000);
+  }
+
+  function revealHint(){
+    var r = S.round; if(!r) return;
+    var changed = false;
+    r.words.forEach(function(w){ if(!w.solved && w.order.length > 0){ } });
+    r.hintLevel = Math.min(r.hintLevel + 1, 12);
+    SND.hint();
+    render();
+  }
+
+  function currentRevealSet(word, hintLevel){
+    var n = Math.min(hintLevel, word.chars.length);
+    var set = {};
+    for(var i=0;i<n;i++) set[word.order[i]] = true;
+    return set;
+  }
+
+  function finishRoundTimeout(){
+    var r = S.round; if(!r) return;
+    r.words.forEach(function(w){ if(!w.solved){ w.solved = true; w.awarded = 0; w.timedOut = true; } });
+    r.ended = true; SND.timeUp();
+    render();
+  }
+
+  function allSolved(){
+    return S.round && S.round.words.every(function(w){ return w.solved; });
+  }
+
+  function tryBuzz(teamId){
+    var r = S.round; if(!r || !r.running || r.ended) return;
+    if(r.lockedTeam) return;
+    r.lockedTeam = teamId;
+    SND.buzz();
+    var t = S.teams.filter(function(x){return x.id===teamId;})[0];
+    announce((t?t.name:"팀") + " 버저를 눌렀습니다.");
+    render();
+  }
+
+  function resolveWord(wordIdx, correct){
+    var r = S.round; if(!r || !r.lockedTeam) return;
+    var team = r.lockedTeam;
+    if(correct){
+      var w = r.words[wordIdx];
+      if(!w.solved){
+        w.solved = true; w.awarded = pointsForHintLevel(r.hintLevel);
+        S.scores[team] = (S.scores[team]||0) + w.awarded;
+        window.KJS&&KJS.ok();
+        announce("정답! " + w.awarded + "점 획득");
+      }
+      r.lockedTeam = null;
+      if(allSolved()){ r.running = false; r.ended = true; clearInterval(timerHandle); SND.roundClear(); }
+    } else {
+      r.timeLeft = Math.max(0, r.timeLeft - WRONG_PENALTY);
+      r.lockedTeam = null;
+      window.KJS&&KJS.no();
+      announce("오답 처리. " + WRONG_PENALTY + "초 감점.");
+      if(r.timeLeft <= 0){ r.running=false; clearInterval(timerHandle); finishRoundTimeout(); }
+    }
+    render();
+  }
+
+  function nextRound(){
+    var idx = S.currentRound + 1;
+    if(idx >= S.categories.length){ S.view = "final"; render(); return; }
+    startRound(idx);
+  }
+
+  function skipRound(){
+    var r = S.round; if(!r) return;
+    r.running = false; clearInterval(timerHandle);
+    r.words.forEach(function(w){ if(!w.solved){ w.solved=true; w.awarded=0; w.timedOut=true; } });
+    r.ended = true; render();
+  }
+
+  function toggleTimer(){
+    var r = S.round; if(!r || r.ended) return;
+    r.running = !r.running;
+    if(r.running) tick(); else clearInterval(timerHandle);
+    render();
+  }
+
+  function goPlay(){
+    if(S.categories.length === 0) return;
+    S.scores = {}; S.teams.forEach(function(t){ S.scores[t.id]=0; });
+    S.view = "play"; saveData(); startRound(0);
+  }
+
+  function backToSetup(){
+    clearInterval(timerHandle); S.round=null; S.currentRound=-1; S.view="setup"; render();
+  }
+
+  /* ---------------- keyboard buzz ---------------- */
+  document.addEventListener("keydown", function(e){
+    if(S.view !== "play") return;
+    var tag = (e.target.tagName||"").toLowerCase();
+    if(tag==="input"||tag==="textarea") return;
+    var key = e.key.toLowerCase();
+    var team = S.teams.filter(function(t){ return t.key===key; })[0];
+    if(team) tryBuzz(team.id);
+  });
+
+  /* ---------------- setup mutations ---------------- */
+  function addTeam(){
+    if(S.teams.length>=6) return;
+    var i = S.teams.length;
+    S.teams.push({id:"t"+uid(), name:(i+1)+"팀", color:TEAM_COLORS[i%TEAM_COLORS.length], key:BUZZ_KEYS[i%BUZZ_KEYS.length]});
+    saveData(); render();
+  }
+  function removeTeam(id){
+    if(S.teams.length<=2) return;
+    S.teams = S.teams.filter(function(t){return t.id!==id;});
+    saveData(); render();
+  }
+  function addCategory(){
+    S.categories.push({id:"c"+uid(), topic:"", words:["","","","",""]});
+    saveData(); render();
+  }
+  function removeCategory(id){
+    S.categories = S.categories.filter(function(c){return c.id!==id;});
+    saveData(); render();
+  }
+  function loadSample(){ var d = sampleData(); S.teams=d.teams; S.categories=d.categories; saveData(); render(); }
+  function parseLegacy(text){
+    var cats = [];
+    var jRe = /&j(\d+)=([^&]+)&/g, m;
+    var topics = {};
+    while((m = jRe.exec(text))){ topics[m[1]] = m[2].trim(); }
+    var mRe = /&m(\d+)=([^&]+)&/g;
+    var words = {};
+    while((m = mRe.exec(text))){ words[m[1]] = m[2].split(",").map(function(s){return s.trim();}).filter(Boolean); }
+    Object.keys(topics).sort(function(a,b){return +a-+b;}).forEach(function(k){
+      var ws = words[k] || [];
+      while(ws.length<5) ws.push("");
+      cats.push({id:"c"+uid(), topic:topics[k], words:ws.slice(0,5)});
+    });
+    return cats;
+  }
+
+  /* ---------------- rendering ---------------- */
+  var app = document.getElementById("app");
+
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function bergIcon(w){
+    w = w||64;
+    return '<svg width="'+w+'" height="'+w+'" viewBox="0 0 64 64" fill="none">'+
+      '<path d="M32 6 L46 24 L38 24 L48 40 L16 40 L26 24 L18 24 Z" fill="#eaf6fa"/>'+
+      '<path d="M16 40 L48 40 L54 50 L10 50 Z" fill="#9fd8ea" opacity=".55"/>'+
+      '</svg>';
+  }
+
+  var CATALOG = [{"g":"중1","u":"과학과 인류의 지속가능한 삶","unit":"과학과 인류의 지속가능한 삶","title":"과학과 인류의 지속가능한 삶 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 탐구 과정","words":["문제인식","가설설정","탐구설계","자료해석","결론도출"]},{"topic":"중1 · 첨단 과학기술","words":["인공지능","증강현실","사물인터넷","바이오","자율주행"]},{"topic":"중1 · 지속가능한 삶","words":["자원고갈","환경오염","온난화","태양광","업사이클링"]},{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]},{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ① 과학적 탐구 방법 종합","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"과학적 탐구 방법 중단원 종합","kind":"mid","rounds":[{"topic":"탐구 설계와 자료 해석 용어","words":["탐구계획서","탐구설계","신뢰성","독립변인","그래프"]},{"topic":"과학적 탐구 방법 용어 ②","words":["변인통제","자료변환","자료해석","결론도출","탐구보고서"]},{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 1차시 · 과학적 탐구 방법","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"1차시 · 과학적 탐구 방법","kind":"lesson","rounds":[{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]},{"topic":"과학적 탐구 방법 용어 ②","words":["변인통제","자료변환","자료해석","결론도출","탐구보고서"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 2차시 · 탐구 설계와 자료 해석","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"2차시 · 탐구 설계와 자료 해석","kind":"lesson","rounds":[{"topic":"탐구 설계와 자료 해석 용어","words":["탐구계획서","탐구설계","신뢰성","독립변인","그래프"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ② 과학기술과 인류 문명 종합","unit":"과학과 인류의 지속가능한 삶","mid":"② 과학기술과 인류 문명","title":"과학기술과 인류 문명 중단원 종합","kind":"mid","rounds":[{"topic":"과학과 인류 문명, 첨단 과학기술 용어","words":["증기기관","산업혁명","항생제","현미경","인공지능"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 3차시 · 과학과 인류 문명, 첨단 과학기술","unit":"과학과 인류의 지속가능한 삶","mid":"② 과학기술과 인류 문명","title":"3차시 · 과학과 인류 문명, 첨단 과학기술","kind":"lesson","rounds":[{"topic":"과학과 인류 문명, 첨단 과학기술 용어","words":["증기기관","산업혁명","항생제","현미경","인공지능"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ③ 과학기술과 지속가능한 삶 종합","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"과학기술과 지속가능한 삶 중단원 종합","kind":"mid","rounds":[{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]},{"topic":"지속가능한 삶을 위한 실천 용어","words":["줄이기","재사용하기","거절하기","재활용하기","새활용"]},{"topic":"과학기술과 지속가능한 삶 용어","words":["자원고갈","환경오염","지구온난화","태양광발전","수소연료전지"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 4차시 · 과학기술과 지속가능한 삶","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"4차시 · 과학기술과 지속가능한 삶","kind":"lesson","rounds":[{"topic":"과학기술과 지속가능한 삶 용어","words":["자원고갈","환경오염","지구온난화","태양광발전","수소연료전지"]},{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 5차시 · 지속가능한 삶을 위한 실천","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"5차시 · 지속가능한 삶을 위한 실천","kind":"lesson","rounds":[{"topic":"지속가능한 삶을 위한 실천 용어","words":["줄이기","재사용하기","거절하기","재활용하기","새활용"]}]},{"g":"중1","u":"생물의 구성과 다양성","unit":"생물의 구성과 다양성","title":"생물의 구성과 다양성 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 세포","words":["핵","세포막","세포벽","엽록체","액포"]},{"topic":"중1 · 생물다양성","words":["서식지파괴","남획","외래종","국립공원","멸종위기"]},{"topic":"중1 · 생물의 분류","words":["종","속","계","학명","이명법"]},{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]},{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]},{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ① 생물의 구성 종합","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"생물의 구성 중단원 종합","kind":"mid","rounds":[{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]},{"topic":"세포의 구조와 현미경 용어","words":["액포","세포질","마이토콘드리아","재물대","접안렌즈"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 1차시 · 세포와 생물의 구성 단계","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"1차시 · 세포와 생물의 구성 단계","kind":"lesson","rounds":[{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 2차시 · 세포의 구조와 현미경","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"2차시 · 세포의 구조와 현미경","kind":"lesson","rounds":[{"topic":"세포의 구조와 현미경 용어","words":["액포","세포질","마이토콘드리아","재물대","접안렌즈"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ② 생물의 다양성 종합","unit":"생물의 구성과 다양성","mid":"② 생물의 다양성","title":"생물의 다양성 중단원 종합","kind":"mid","rounds":[{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]},{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 3차시 · 생물다양성","unit":"생물의 구성과 다양성","mid":"② 생물의 다양성","title":"3차시 · 생물다양성","kind":"lesson","rounds":[{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]},{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ③ 생물의 분류 종합","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"생물의 분류 중단원 종합","kind":"mid","rounds":[{"topic":"생물의 5계 용어","words":["원핵생물계","대장균","원생생물계","균계","곰팡이"]},{"topic":"생물의 분류 용어","words":["원핵생물계","원생생물계","균계","식물계","학명"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 4차시 · 생물의 분류","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"4차시 · 생물의 분류","kind":"lesson","rounds":[{"topic":"생물의 분류 용어","words":["원핵생물계","원생생물계","균계","식물계","학명"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 5차시 · 생물의 5계","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"5차시 · 생물의 5계","kind":"lesson","rounds":[{"topic":"생물의 5계 용어","words":["원핵생물계","대장균","원생생물계","균계","곰팡이"]}]},{"g":"중1","u":"열","unit":"열","title":"열 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 열의 이동","words":["전도","대류","복사","단열","보온병"]},{"topic":"중1 · 온도와 열평형","words":["온도","열","열평형","입자운동","체온계"]},{"topic":"중1 · 비열과 열팽창","words":["비열","해륙풍","뚝배기","열팽창","바이메탈"]},{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]},{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]},{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]}]},{"g":"중1","u":"열 · ① 온도와 열의 이동 종합","unit":"열","mid":"① 온도와 열의 이동","title":"온도와 열의 이동 중단원 종합","kind":"mid","rounds":[{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]},{"topic":"온도와 열평형 용어","words":["온도","입자운동","고온에서저온","열평형","열의이동"]},{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]},{"topic":"열의 이동 용어 ②","words":["이중창","보온병","스타이로폼","난방기","냉방기"]}]},{"g":"중1","u":"열 · 1차시 · 온도와 열평형","unit":"열","mid":"① 온도와 열의 이동","title":"1차시 · 온도와 열평형","kind":"lesson","rounds":[{"topic":"온도와 열평형 용어","words":["온도","입자운동","고온에서저온","열평형","열의이동"]}]},{"g":"중1","u":"열 · 2차시 · 열의 이동","unit":"열","mid":"① 온도와 열의 이동","title":"2차시 · 열의 이동","kind":"lesson","rounds":[{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]},{"topic":"열의 이동 용어 ②","words":["이중창","보온병","스타이로폼","난방기","냉방기"]}]},{"g":"중1","u":"열 · 3차시 · 단열과 냉난방","unit":"열","mid":"① 온도와 열의 이동","title":"3차시 · 단열과 냉난방","kind":"lesson","rounds":[{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]}]},{"g":"중1","u":"열 · ② 비열과 열팽창 종합","unit":"열","mid":"② 비열과 열팽창","title":"비열과 열팽창 중단원 종합","kind":"mid","rounds":[{"topic":"비열과 열팽창 용어","words":["비열","온도변화","해안지방","해륙풍","뚝배기"]},{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]}]},{"g":"중1","u":"열 · 4차시 · 비열과 열팽창","unit":"열","mid":"② 비열과 열팽창","title":"4차시 · 비열과 열팽창","kind":"lesson","rounds":[{"topic":"비열과 열팽창 용어","words":["비열","온도변화","해안지방","해륙풍","뚝배기"]}]},{"g":"중1","u":"열 · 5차시 · 열팽창의 이용","unit":"열","mid":"② 비열과 열팽창","title":"5차시 · 열팽창의 이용","kind":"lesson","rounds":[{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]}]},{"g":"중1","u":"물질의 상태 변화","unit":"물질의 상태 변화","title":"물질의 상태 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 입자의 운동","words":["확산","증발","고체","액체","기체"]},{"topic":"중1 · 상태 변화","words":["융해","기화","응고","액화","승화"]},{"topic":"중1 · 열에너지","words":["융해열","기화열","응고열","녹는점","끓는점"]},{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]},{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]},{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · ① 입자의 운동과 물질의 상태 종합","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"입자의 운동과 물질의 상태 중단원 종합","kind":"mid","rounds":[{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]},{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · 1차시 · 입자의 운동과 물질의 상태","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"1차시 · 입자의 운동과 물질의 상태","kind":"lesson","rounds":[{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]}]},{"g":"중1","u":"물질의 상태 변화 · 2차시 · 확산과 증발","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"2차시 · 확산과 증발","kind":"lesson","rounds":[{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · ② 물질의 상태 변화 종합","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"물질의 상태 변화 중단원 종합","kind":"mid","rounds":[{"topic":"상태 변화의 이용 용어","words":["융해열흡수","기화열흡수","응고열방출","액화열방출","기화열"]},{"topic":"상태 변화와 열에너지 용어","words":["융해열","기화열","응고열","액화열","온도하강"]},{"topic":"상태 변화와 열에너지 용어 ②","words":["온도상승","일정","녹는점","끓는점","아이스팩"]},{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]}]},{"g":"중1","u":"물질의 상태 변화 · 3차시 · 상태 변화와 입자 배열","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"3차시 · 상태 변화와 입자 배열","kind":"lesson","rounds":[{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]}]},{"g":"중1","u":"물질의 상태 변화 · 4차시 · 상태 변화와 열에너지","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"4차시 · 상태 변화와 열에너지","kind":"lesson","rounds":[{"topic":"상태 변화와 열에너지 용어","words":["융해열","기화열","응고열","액화열","온도하강"]},{"topic":"상태 변화와 열에너지 용어 ②","words":["온도상승","일정","녹는점","끓는점","아이스팩"]}]},{"g":"중1","u":"물질의 상태 변화 · 5차시 · 상태 변화의 이용","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"5차시 · 상태 변화의 이용","kind":"lesson","rounds":[{"topic":"상태 변화의 이용 용어","words":["융해열흡수","기화열흡수","응고열방출","액화열방출","기화열"]}]},{"g":"중1","u":"힘의 작용","unit":"힘의 작용","title":"힘의 작용 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 여러 가지 힘","words":["중력","탄성력","마찰력","부력","무게"]},{"topic":"중1 · 힘의 표현","words":["크기","방향","작용점","화살표","뉴턴"]},{"topic":"중1 · 힘의 평형","words":["합력","알짜힘","평형","낙하산","줄다리기"]},{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]},{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]},{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]}]},{"g":"중1","u":"힘의 작용 · ① 여러 가지 힘 종합","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"여러 가지 힘 중단원 종합","kind":"mid","rounds":[{"topic":"탄성력·마찰력·부력 용어","words":["탄성력","용수철저울","마찰력","거칠수록","접촉면의넓이"]},{"topic":"탄성력·마찰력·부력 용어 ②","words":["부력","잠긴부피가클때","구명조끼","열기구","줄의탄성력"]},{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]},{"topic":"생활 속 여러 가지 힘 용어","words":["마찰력증가","마찰력감소","미끄럼방지","부력","탄성력"]}]},{"g":"중1","u":"힘의 작용 · 1차시 · 힘의 표현과 중력","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"1차시 · 힘의 표현과 중력","kind":"lesson","rounds":[{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]}]},{"g":"중1","u":"힘의 작용 · 2차시 · 탄성력·마찰력·부력","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"2차시 · 탄성력·마찰력·부력","kind":"lesson","rounds":[{"topic":"탄성력·마찰력·부력 용어","words":["탄성력","용수철저울","마찰력","거칠수록","접촉면의넓이"]},{"topic":"탄성력·마찰력·부력 용어 ②","words":["부력","잠긴부피가클때","구명조끼","열기구","줄의탄성력"]}]},{"g":"중1","u":"힘의 작용 · 3차시 · 생활 속 여러 가지 힘","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"3차시 · 생활 속 여러 가지 힘","kind":"lesson","rounds":[{"topic":"생활 속 여러 가지 힘 용어","words":["마찰력증가","마찰력감소","미끄럼방지","부력","탄성력"]}]},{"g":"중1","u":"힘의 작용 · ② 힘과 물체의 운동 종합","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"힘과 물체의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]},{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]}]},{"g":"중1","u":"힘의 작용 · 4차시 · 힘의 평형과 물체의 운동","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"4차시 · 힘의 평형과 물체의 운동","kind":"lesson","rounds":[{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]}]},{"g":"중1","u":"힘의 작용 · 5차시 · 힘과 운동 상태의 변화","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"5차시 · 힘과 운동 상태의 변화","kind":"lesson","rounds":[{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]}]},{"g":"중1","u":"기체의 성질","unit":"기체의 성질","title":"기체의 성질 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 기체의 압력","words":["압력","면적","충돌","입자","쇠구슬"]},{"topic":"중1 · 보일 법칙","words":["반비례","부피감소","대기압","뽁뽁이","공기침대"]},{"topic":"중1 · 샤를 법칙","words":["비례","온도","열기구","축구공","피스톤"]},{"topic":"중1 · 생활 속 기체","words":["탁구공","타이어","과자봉지","공기방울","마시멜로"]},{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]},{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · ① 기체의 압력과 부피 관계 종합","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"기체의 압력과 부피 관계 중단원 종합","kind":"mid","rounds":[{"topic":"압력과 보일 법칙 용어 ②","words":["수압","스키","아이젠","입자사이거리","J자유리관"]},{"topic":"압력과 보일 법칙 용어","words":["압력","기체의압력","반비례","보일법칙","대기압"]},{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · 1차시 · 압력과 보일 법칙","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"1차시 · 압력과 보일 법칙","kind":"lesson","rounds":[{"topic":"압력과 보일 법칙 용어","words":["압력","기체의압력","반비례","보일법칙","대기압"]},{"topic":"압력과 보일 법칙 용어 ②","words":["수압","스키","아이젠","입자사이거리","J자유리관"]}]},{"g":"중1","u":"기체의 성질 · 2차시 · 보일 법칙과 입자 모형","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"2차시 · 보일 법칙과 입자 모형","kind":"lesson","rounds":[{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · ② 기체의 온도와 부피 관계 종합","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"기체의 온도와 부피 관계 중단원 종합","kind":"mid","rounds":[{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]},{"topic":"샤를 법칙과 생활 속 기체 용어 ②","words":["대기압감소","수압감소","뽁뽁이","주사기","마시멜로"]}]},{"g":"중1","u":"기체의 성질 · 3차시 · 샤를 법칙과 생활 속 기체","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"3차시 · 샤를 법칙과 생활 속 기체","kind":"lesson","rounds":[{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 생활 속 기체 용어 ②","words":["대기압감소","수압감소","뽁뽁이","주사기","마시멜로"]}]},{"g":"중1","u":"기체의 성질 · 4차시 · 샤를 법칙과 입자 모형","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"4차시 · 샤를 법칙과 입자 모형","kind":"lesson","rounds":[{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]}]},{"g":"중1","u":"태양계","unit":"태양계","title":"태양계 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 태양계 천체","words":["태양","행성","위성","소행성","혜성"]},{"topic":"중1 · 태양의 활동","words":["흑점","코로나","홍염","플레어","태양풍"]},{"topic":"중1 · 지구와 달","words":["자전","공전","일식","월식","보름달"]},{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]},{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]}]},{"g":"중1","u":"태양계 · ① 태양계 구성 천체와 태양 종합","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"태양계 구성 천체와 태양 중단원 종합","kind":"mid","rounds":[{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어 ②","words":["목성형행성","흑점","코로나","홍염","플레어"]}]},{"g":"중1","u":"태양계 · 1차시 · 태양계 구성 천체와 태양의 활동","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"1차시 · 태양계 구성 천체와 태양의 활동","kind":"lesson","rounds":[{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어 ②","words":["목성형행성","흑점","코로나","홍염","플레어"]}]},{"g":"중1","u":"태양계 · 2차시 · 태양계 행성의 특징","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"2차시 · 태양계 행성의 특징","kind":"lesson","rounds":[{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]}]},{"g":"중1","u":"태양계 · ② 지구와 달의 운동 종합","unit":"태양계","mid":"② 지구와 달의 운동","title":"지구와 달의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]},{"topic":"지구와 달의 운동 용어","words":["자전","공전","일주운동","연주운동","황도"]}]},{"g":"중1","u":"태양계 · 3차시 · 지구와 달의 운동","unit":"태양계","mid":"② 지구와 달의 운동","title":"3차시 · 지구와 달의 운동","kind":"lesson","rounds":[{"topic":"지구와 달의 운동 용어","words":["자전","공전","일주운동","연주운동","황도"]}]},{"g":"중1","u":"태양계 · 4차시 · 달의 위상과 일식·월식","unit":"태양계","mid":"② 지구와 달의 운동","title":"4차시 · 달의 위상과 일식·월식","kind":"lesson","rounds":[{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]}]},{"g":"중2","u":"물질의 특성","unit":"물질의 특성","title":"물질의 특성 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 물질의 특성","words":["밀도","용해도","끓는점","녹는점","증류"]},{"topic":"중2 · 혼합물의 분리","words":["증류","재결정","분별깔때기","밀도차","색소"]},{"topic":"중2 · 용해도","words":["용질","용매","포화용액","석출","용해도곡선"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]},{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]},{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]}]},{"g":"중2","u":"물질의 특성 · ① 물질의 특성 종합","unit":"물질의 특성","mid":"① 물질의 특성","title":"물질의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]},{"topic":"녹는점과 끓는점 용어","words":["녹는점","끓는점","어는점","온도","끓는점상승"]},{"topic":"용해도 용어","words":["용해","용질","용매","용액","용해도"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]}]},{"g":"중2","u":"물질의 특성 · 1차시 · 밀도","unit":"물질의 특성","mid":"① 물질의 특성","title":"1차시 · 밀도","kind":"lesson","rounds":[{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]}]},{"g":"중2","u":"물질의 특성 · 2차시 · 용해도","unit":"물질의 특성","mid":"① 물질의 특성","title":"2차시 · 용해도","kind":"lesson","rounds":[{"topic":"용해도 용어","words":["용해","용질","용매","용액","용해도"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]}]},{"g":"중2","u":"물질의 특성 · 3차시 · 녹는점과 끓는점","unit":"물질의 특성","mid":"① 물질의 특성","title":"3차시 · 녹는점과 끓는점","kind":"lesson","rounds":[{"topic":"녹는점과 끓는점 용어","words":["녹는점","끓는점","어는점","온도","끓는점상승"]}]},{"g":"중2","u":"물질의 특성 · ② 혼합물의 분리 종합","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"혼합물의 분리 중단원 종합","kind":"mid","rounds":[{"topic":"순물질과 혼합물 용어","words":["순물질","홑원소물질","화합물","균일혼합물","불균일혼합물"]},{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]},{"topic":"생활 속 분리의 예 용어","words":["증류","끓는점차","분별깔때기","밀도차","재결정"]}]},{"g":"중2","u":"물질의 특성 · 4차시 · 순물질과 혼합물","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"4차시 · 순물질과 혼합물","kind":"lesson","rounds":[{"topic":"순물질과 혼합물 용어","words":["순물질","홑원소물질","화합물","균일혼합물","불균일혼합물"]}]},{"g":"중2","u":"물질의 특성 · 5차시 · 혼합물의 분리","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"5차시 · 혼합물의 분리","kind":"lesson","rounds":[{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]}]},{"g":"중2","u":"물질의 특성 · 6차시 · 생활 속 분리의 예","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"6차시 · 생활 속 분리의 예","kind":"lesson","rounds":[{"topic":"생활 속 분리의 예 용어","words":["증류","끓는점차","분별깔때기","밀도차","재결정"]}]},{"g":"중2","u":"지권의 변화","unit":"지권의 변화","title":"지권의 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 지권의 구조","words":["지각","맨틀","외핵","내핵","지진파"]},{"topic":"중2 · 암석","words":["화강암","현무암","사암","편마암","대리암"]},{"topic":"중2 · 판의 운동","words":["베게너","판게아","맨틀대류","발산형","수렴형"]},{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]},{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]},{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"지권의 변화 · ① 지권의 층상 구조 종합","unit":"지권의 변화","mid":"① 지권의 층상 구조","title":"지권의 층상 구조 중단원 종합","kind":"mid","rounds":[{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]}]},{"g":"중2","u":"지권의 변화 · 1차시 · 지구계와 지권의 층상 구조","unit":"지권의 변화","mid":"① 지권의 층상 구조","title":"1차시 · 지구계와 지권의 층상 구조","kind":"lesson","rounds":[{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]}]},{"g":"중2","u":"지권의 변화 · ② 지각을 이루는 물질 종합","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"지각을 이루는 물질 중단원 종합","kind":"mid","rounds":[{"topic":"암석 용어","words":["화성암","현무암","화강암","퇴적암","층리"]},{"topic":"암석 용어 ②","words":["화석","변성암","편마암","대리암","엽리"]},{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]},{"topic":"광물 용어","words":["광물","조암광물","조흔색","방해석","자철석"]}]},{"g":"중2","u":"지권의 변화 · 2차시 · 광물","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"2차시 · 광물","kind":"lesson","rounds":[{"topic":"광물 용어","words":["광물","조암광물","조흔색","방해석","자철석"]}]},{"g":"중2","u":"지권의 변화 · 3차시 · 암석","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"3차시 · 암석","kind":"lesson","rounds":[{"topic":"암석 용어","words":["화성암","현무암","화강암","퇴적암","층리"]},{"topic":"암석 용어 ②","words":["화석","변성암","편마암","대리암","엽리"]}]},{"g":"중2","u":"지권의 변화 · 4차시 · 암석의 순환","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"4차시 · 암석의 순환","kind":"lesson","rounds":[{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]}]},{"g":"중2","u":"지권의 변화 · ③ 지권의 운동 종합","unit":"지권의 변화","mid":"③ 지권의 운동","title":"지권의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"풍화와 판의 운동 용어","words":["풍화","토양","베게너","판게아","발산형경계"]},{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"지권의 변화 · 5차시 · 풍화와 판의 운동","unit":"지권의 변화","mid":"③ 지권의 운동","title":"5차시 · 풍화와 판의 운동","kind":"lesson","rounds":[{"topic":"풍화와 판의 운동 용어","words":["풍화","토양","베게너","판게아","발산형경계"]}]},{"g":"중2","u":"지권의 변화 · 6차시 · 지진과 화산","unit":"지권의 변화","mid":"③ 지권의 운동","title":"6차시 · 지진과 화산","kind":"lesson","rounds":[{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"빛과 파동","unit":"빛과 파동","title":"빛과 파동 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 빛","words":["반사","굴절","법선","실상","허상"]},{"topic":"중2 · 소리","words":["파장","진폭","진동수","음색","매질"]},{"topic":"중2 · 거울과 렌즈","words":["오목거울","볼록거울","볼록렌즈","오목렌즈","돋보기"]},{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]},{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]},{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]}]},{"g":"중2","u":"빛과 파동 · ① 빛 종합","unit":"빛과 파동","mid":"① 빛","title":"빛 중단원 종합","kind":"mid","rounds":[{"topic":"빛의 반사와 굴절 용어","words":["반사","반사법칙","법선","굴절","빛의굴절"]},{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]},{"topic":"빛의 합성과 색 용어","words":["빨강·초록·파랑","노란색","청록색","자홍색","흰색"]}]},{"g":"중2","u":"빛과 파동 · 1차시 · 빛의 반사와 굴절","unit":"빛과 파동","mid":"① 빛","title":"1차시 · 빛의 반사와 굴절","kind":"lesson","rounds":[{"topic":"빛의 반사와 굴절 용어","words":["반사","반사법칙","법선","굴절","빛의굴절"]}]},{"g":"중2","u":"빛과 파동 · 2차시 · 물체를 보는 과정과 거울·렌즈","unit":"빛과 파동","mid":"① 빛","title":"2차시 · 물체를 보는 과정과 거울·렌즈","kind":"lesson","rounds":[{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]}]},{"g":"중2","u":"빛과 파동 · 3차시 · 빛의 합성과 색","unit":"빛과 파동","mid":"① 빛","title":"3차시 · 빛의 합성과 색","kind":"lesson","rounds":[{"topic":"빛의 합성과 색 용어","words":["빨강·초록·파랑","노란색","청록색","자홍색","흰색"]}]},{"g":"중2","u":"빛과 파동 · ② 파동과 소리 종합","unit":"빛과 파동","mid":"② 파동과 소리","title":"파동과 소리 중단원 종합","kind":"mid","rounds":[{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]},{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]},{"topic":"빛의 합성과 파동·소리 용어 ②","words":["파장","진동수","소리의높이","소리의세기","음색"]},{"topic":"소리의 특성 용어","words":["전달안됨","높은소리","큰소리","초음파","초음파진단기"]}]},{"g":"중2","u":"빛과 파동 · 4차시 · 파동의 종류와 요소","unit":"빛과 파동","mid":"② 파동과 소리","title":"4차시 · 파동의 종류와 요소","kind":"lesson","rounds":[{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]}]},{"g":"중2","u":"빛과 파동 · 5차시 · 소리의 특성","unit":"빛과 파동","mid":"② 파동과 소리","title":"5차시 · 소리의 특성","kind":"lesson","rounds":[{"topic":"소리의 특성 용어","words":["전달안됨","높은소리","큰소리","초음파","초음파진단기"]}]},{"g":"중2","u":"빛과 파동 · 6차시 · 빛의 합성과 파동·소리","unit":"빛과 파동","mid":"② 파동과 소리","title":"6차시 · 빛의 합성과 파동·소리","kind":"lesson","rounds":[{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]},{"topic":"빛의 합성과 파동·소리 용어 ②","words":["파장","진동수","소리의높이","소리의세기","음색"]}]},{"g":"중2","u":"물질의 구성","unit":"물질의 구성","title":"물질의 구성 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 물질의 구성","words":["원소","원자","분자","이온","화합물"]},{"topic":"중2 · 원자와 분자","words":["원자핵","전자","분자","주기율표","족"]},{"topic":"중2 · 이온","words":["양이온","음이온","전해질","앙금","염화은"]},{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]},{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]},{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · ① 원소 종합","unit":"물질의 구성","mid":"① 원소","title":"원소 중단원 종합","kind":"mid","rounds":[{"topic":"원소 기호 용어","words":["수소","산소","탄소","질소","나트륨"]},{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]}]},{"g":"중2","u":"물질의 구성 · 1차시 · 원소와 화합물","unit":"물질의 구성","mid":"① 원소","title":"1차시 · 원소와 화합물","kind":"lesson","rounds":[{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]}]},{"g":"중2","u":"물질의 구성 · 2차시 · 원소 기호","unit":"물질의 구성","mid":"① 원소","title":"2차시 · 원소 기호","kind":"lesson","rounds":[{"topic":"원소 기호 용어","words":["수소","산소","탄소","질소","나트륨"]}]},{"g":"중2","u":"물질의 구성 · ② 원자와 분자 종합","unit":"물질의 구성","mid":"② 원자와 분자","title":"원자와 분자 중단원 종합","kind":"mid","rounds":[{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]},{"topic":"원자·분자와 주기율표 용어","words":["원자","원자핵","전자","분자","주기율표"]}]},{"g":"중2","u":"물질의 구성 · 3차시 · 원자·분자와 주기율표","unit":"물질의 구성","mid":"② 원자와 분자","title":"3차시 · 원자·분자와 주기율표","kind":"lesson","rounds":[{"topic":"원자·분자와 주기율표 용어","words":["원자","원자핵","전자","분자","주기율표"]}]},{"g":"중2","u":"물질의 구성 · 4차시 · 분자와 화학식","unit":"물질의 구성","mid":"② 원자와 분자","title":"4차시 · 분자와 화학식","kind":"lesson","rounds":[{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]}]},{"g":"중2","u":"물질의 구성 · ③ 이온 종합","unit":"물질의 구성","mid":"③ 이온","title":"이온 중단원 종합","kind":"mid","rounds":[{"topic":"이온의 이름과 확인 용어","words":["나트륨이온","염화이온","칼슘이온","황산이온","탄산이온"]},{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · 5차시 · 이온","unit":"물질의 구성","mid":"③ 이온","title":"5차시 · 이온","kind":"lesson","rounds":[{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · 6차시 · 이온의 이름과 확인","unit":"물질의 구성","mid":"③ 이온","title":"6차시 · 이온의 이름과 확인","kind":"lesson","rounds":[{"topic":"이온의 이름과 확인 용어","words":["나트륨이온","염화이온","칼슘이온","황산이온","탄산이온"]}]},{"g":"중2","u":"식물과 에너지","unit":"식물과 에너지","title":"식물과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 광합성","words":["엽록체","포도당","산소","기공","빛에너지"]},{"topic":"중2 · 환경요인","words":["빛의세기","이산화탄소","온도","광합성량","엽록소"]},{"topic":"중2 · 호흡과 광합성","words":["호흡","포도당","산소","에너지","기체출입"]},{"topic":"중2 · 광합성산물","words":["녹말","설탕","체관","감자","땅콩"]},{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]},{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]},{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]}]},{"g":"중2","u":"식물과 에너지 · ① 광합성 종합","unit":"식물과 에너지","mid":"① 광합성","title":"광합성 중단원 종합","kind":"mid","rounds":[{"topic":"광합성 탐구 용어","words":["에탄올","물중탕","엽록소제거","청람색","산소"]},{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]},{"topic":"식물의 광합성 용어 ②","words":["산소","기공","물관","아이오딘","청람색"]},{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]}]},{"g":"중2","u":"식물과 에너지 · 1차시 · 식물의 광합성","unit":"식물과 에너지","mid":"① 광합성","title":"1차시 · 식물의 광합성","kind":"lesson","rounds":[{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]},{"topic":"식물의 광합성 용어 ②","words":["산소","기공","물관","아이오딘","청람색"]}]},{"g":"중2","u":"식물과 에너지 · 2차시 · 광합성에 영향을 미치는 환경요인","unit":"식물과 에너지","mid":"① 광합성","title":"2차시 · 광합성에 영향을 미치는 환경요인","kind":"lesson","rounds":[{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]}]},{"g":"중2","u":"식물과 에너지 · 3차시 · 광합성 탐구","unit":"식물과 에너지","mid":"① 광합성","title":"3차시 · 광합성 탐구","kind":"lesson","rounds":[{"topic":"광합성 탐구 용어","words":["에탄올","물중탕","엽록소제거","청람색","산소"]}]},{"g":"중2","u":"식물과 에너지 · ② 식물의 호흡과 에너지 종합","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"식물의 호흡과 에너지 중단원 종합","kind":"mid","rounds":[{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]},{"topic":"광합성산물의 저장과 이용 용어","words":["설탕","체관","녹말","지방과단백질","포도당"]}]},{"g":"중2","u":"식물과 에너지 · 4차시 · 식물의 호흡과 광합성","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"4차시 · 식물의 호흡과 광합성","kind":"lesson","rounds":[{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]}]},{"g":"중2","u":"식물과 에너지 · 5차시 · 광합성산물의 저장과 이용","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"5차시 · 광합성산물의 저장과 이용","kind":"lesson","rounds":[{"topic":"광합성산물의 저장과 이용 용어","words":["설탕","체관","녹말","지방과단백질","포도당"]}]},{"g":"중2","u":"동물과 에너지","unit":"동물과 에너지","title":"동물과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 영양소","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"중2 · 소화","words":["아밀레이스","펩신","쓸개즙","융털","암죽관"]},{"topic":"중2 · 순환","words":["좌심실","판막","적혈구","혈장","폐순환"]},{"topic":"중2 · 호흡과 배설","words":["폐포","횡격막","콩팥","네프론","요소"]},{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]}]},{"g":"중2","u":"동물과 에너지 · ① 영양소와 소화 종합","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"영양소와 소화 중단원 종합","kind":"mid","rounds":[{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"영양소와 소화 정리 용어 ②","words":["보라색","아밀레이스","펩신","라이페이스","융털"]},{"topic":"영양소 용어","words":["탄수화물","단백질","지방","무기염류","바이타민"]},{"topic":"소화와 흡수 용어 ②","words":["라이페이스","소장","융털","암죽관","대장"]},{"topic":"소화와 흡수 용어","words":["아밀레이스","펩신","염산","쓸개즙","트립신"]}]},{"g":"중2","u":"동물과 에너지 · 1차시 · 영양소","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"1차시 · 영양소","kind":"lesson","rounds":[{"topic":"영양소 용어","words":["탄수화물","단백질","지방","무기염류","바이타민"]}]},{"g":"중2","u":"동물과 에너지 · 2차시 · 소화와 흡수","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"2차시 · 소화와 흡수","kind":"lesson","rounds":[{"topic":"소화와 흡수 용어","words":["아밀레이스","펩신","염산","쓸개즙","트립신"]},{"topic":"소화와 흡수 용어 ②","words":["라이페이스","소장","융털","암죽관","대장"]}]},{"g":"중2","u":"동물과 에너지 · 3차시 · 영양소와 소화 정리","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"3차시 · 영양소와 소화 정리","kind":"lesson","rounds":[{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"영양소와 소화 정리 용어 ②","words":["보라색","아밀레이스","펩신","라이페이스","융털"]}]},{"g":"중2","u":"동물과 에너지 · ② 순환 종합","unit":"동물과 에너지","mid":"② 순환","title":"순환 중단원 종합","kind":"mid","rounds":[{"topic":"혈액과 혈액 순환 용어","words":["적혈구","헤모글로빈","백혈구","혈소판","혈장"]},{"topic":"심장과 혈관 용어","words":["심방","심실","좌심실","판막","동맥"]}]},{"g":"중2","u":"동물과 에너지 · 4차시 · 심장과 혈관","unit":"동물과 에너지","mid":"② 순환","title":"4차시 · 심장과 혈관","kind":"lesson","rounds":[{"topic":"심장과 혈관 용어","words":["심방","심실","좌심실","판막","동맥"]}]},{"g":"중2","u":"동물과 에너지 · 5차시 · 혈액과 혈액 순환","unit":"동물과 에너지","mid":"② 순환","title":"5차시 · 혈액과 혈액 순환","kind":"lesson","rounds":[{"topic":"혈액과 혈액 순환 용어","words":["적혈구","헤모글로빈","백혈구","혈소판","혈장"]}]},{"g":"중2","u":"동물과 에너지 · ③ 호흡과 배설 종합","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"호흡과 배설 중단원 종합","kind":"mid","rounds":[{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"호흡 용어","words":["기관지","폐포","횡격막","들숨","날숨"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]},{"topic":"배설 용어","words":["배설","암모니아","콩팥","네프론","사구체"]}]},{"g":"중2","u":"동물과 에너지 · 6차시 · 호흡","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"6차시 · 호흡","kind":"lesson","rounds":[{"topic":"호흡 용어","words":["기관지","폐포","횡격막","들숨","날숨"]}]},{"g":"중2","u":"동물과 에너지 · 7차시 · 배설","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"7차시 · 배설","kind":"lesson","rounds":[{"topic":"배설 용어","words":["배설","암모니아","콩팥","네프론","사구체"]}]},{"g":"중2","u":"동물과 에너지 · 8차시 · 순환·호흡·배설 정리","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"8차시 · 순환·호흡·배설 정리","kind":"lesson","rounds":[{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]}]},{"g":"중2","u":"전기와 자기","unit":"전기와 자기","title":"전기와 자기 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 전기","words":["전류","전압","저항","옴의법칙","전자석"]},{"topic":"중2 · 마찰 전기","words":["대전","전자","인력","척력","검전기"]},{"topic":"중2 · 자기","words":["자기장","자기력선","전자석","코일","전동기"]},{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]},{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]},{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · ① 전기 종합","unit":"전기와 자기","mid":"① 전기","title":"전기 중단원 종합","kind":"mid","rounds":[{"topic":"마찰 전기와 정전기 유도 용어","words":["마찰전기","전자","대전","대전체","척력"]},{"topic":"옴의 법칙과 회로 용어","words":["저항","직렬","병렬","그대로","병렬연결"]},{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · 1차시 · 마찰 전기와 정전기 유도","unit":"전기와 자기","mid":"① 전기","title":"1차시 · 마찰 전기와 정전기 유도","kind":"lesson","rounds":[{"topic":"마찰 전기와 정전기 유도 용어","words":["마찰전기","전자","대전","대전체","척력"]}]},{"g":"중2","u":"전기와 자기 · 2차시 · 전류·전압·저항","unit":"전기와 자기","mid":"① 전기","title":"2차시 · 전류·전압·저항","kind":"lesson","rounds":[{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · 3차시 · 옴의 법칙과 회로","unit":"전기와 자기","mid":"① 전기","title":"3차시 · 옴의 법칙과 회로","kind":"lesson","rounds":[{"topic":"옴의 법칙과 회로 용어","words":["저항","직렬","병렬","그대로","병렬연결"]}]},{"g":"중2","u":"전기와 자기 · ② 자기 종합","unit":"전기와 자기","mid":"② 자기","title":"자기 중단원 종합","kind":"mid","rounds":[{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]},{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]}]},{"g":"중2","u":"전기와 자기 · 4차시 · 저항의 연결과 자기","unit":"전기와 자기","mid":"② 자기","title":"4차시 · 저항의 연결과 자기","kind":"lesson","rounds":[{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]}]},{"g":"중2","u":"전기와 자기 · 5차시 · 자기장과 전자석","unit":"전기와 자기","mid":"② 자기","title":"5차시 · 자기장과 전자석","kind":"lesson","rounds":[{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]}]},{"g":"중2","u":"별과 우주","unit":"별과 우주","title":"별과 우주 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 별과 우주","words":["연주시차","등급","성운","성단","우리은하"]},{"topic":"중2 · 별의 밝기","words":["겉보기등급","절대등급","표면온도","청색","붉은색"]},{"topic":"중2 · 우리은하","words":["은하수","나선팔","산개성단","구상성단","외부은하"]},{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]},{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]},{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]}]},{"g":"중2","u":"별과 우주 · ① 별의 특성 종합","unit":"별과 우주","mid":"① 별의 특성","title":"별의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]},{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]}]},{"g":"중2","u":"별과 우주 · 1차시 · 별까지의 거리와 밝기","unit":"별과 우주","mid":"① 별의 특성","title":"1차시 · 별까지의 거리와 밝기","kind":"lesson","rounds":[{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]}]},{"g":"중2","u":"별과 우주 · 2차시 · 별의 밝기 비교","unit":"별과 우주","mid":"① 별의 특성","title":"2차시 · 별의 밝기 비교","kind":"lesson","rounds":[{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]}]},{"g":"중2","u":"별과 우주 · ② 은하와 우주 종합","unit":"별과 우주","mid":"② 은하와 우주","title":"은하와 우주 중단원 종합","kind":"mid","rounds":[{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]},{"topic":"우주 탐사 용어","words":["스푸트니크1호","아폴로11호","우주망원경","탐사선","로버"]}]},{"g":"중2","u":"별과 우주 · 3차시 · 우리은하와 우주","unit":"별과 우주","mid":"② 은하와 우주","title":"3차시 · 우리은하와 우주","kind":"lesson","rounds":[{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]}]},{"g":"중2","u":"별과 우주 · 4차시 · 우주 탐사","unit":"별과 우주","mid":"② 은하와 우주","title":"4차시 · 우주 탐사","kind":"lesson","rounds":[{"topic":"우주 탐사 용어","words":["스푸트니크1호","아폴로11호","우주망원경","탐사선","로버"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화","unit":"화학 반응의 규칙과 에너지 변화","title":"화학 반응의 규칙과 에너지 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 물질의 변화","words":["물리변화","화학변화","반응물","생성물","계수"]},{"topic":"중3 · 화학 반응의 규칙","words":["질량보존","일정성분비","기체반응","라부아지에","부피비"]},{"topic":"중3 · 에너지 출입","words":["발열반응","흡열반응","손난로","냉찜질","광합성"]},{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]},{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]},{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ① 물질의 변화와 화학 반응식 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"물질의 변화와 화학 반응식 중단원 종합","kind":"mid","rounds":[{"topic":"화학 반응식 읽기 용어","words":["수소와산소","이산화탄소와물","이산화탄소","반응의진행방향","원자수"]},{"topic":"물질의 변화와 화학 반응식 용어 ②","words":["생성물","계수","분자수의비","연소","앙금"]},{"topic":"물질의 변화와 화학 반응식 용어","words":["물리변화","화학변화","원자","화학반응식","반응물"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 1차시 · 물질의 변화와 화학 반응식","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"1차시 · 물질의 변화와 화학 반응식","kind":"lesson","rounds":[{"topic":"물질의 변화와 화학 반응식 용어","words":["물리변화","화학변화","원자","화학반응식","반응물"]},{"topic":"물질의 변화와 화학 반응식 용어 ②","words":["생성물","계수","분자수의비","연소","앙금"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 2차시 · 화학 반응식 읽기","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"2차시 · 화학 반응식 읽기","kind":"lesson","rounds":[{"topic":"화학 반응식 읽기 용어","words":["수소와산소","이산화탄소와물","이산화탄소","반응의진행방향","원자수"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ② 화학 반응의 규칙 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"화학 반응의 규칙 중단원 종합","kind":"mid","rounds":[{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]},{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 3차시 · 화학 반응의 규칙","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"3차시 · 화학 반응의 규칙","kind":"lesson","rounds":[{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 4차시 · 질량 변화 실험","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"4차시 · 질량 변화 실험","kind":"lesson","rounds":[{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ③ 화학 반응과 에너지 변화 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"③ 화학 반응과 에너지 변화","title":"화학 반응과 에너지 변화 중단원 종합","kind":"mid","rounds":[{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 5차시 · 화학 반응과 에너지 출입","unit":"화학 반응의 규칙과 에너지 변화","mid":"③ 화학 반응과 에너지 변화","title":"5차시 · 화학 반응과 에너지 출입","kind":"lesson","rounds":[{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]}]},{"g":"중3","u":"기권과 날씨","unit":"기권과 날씨","title":"기권과 날씨 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 기권의 구조","words":["대류권","성층권","중간권","열권","오존층"]},{"topic":"중3 · 대기 중의 물","words":["포화","응결","이슬점","상대습도","구름"]},{"topic":"중3 · 기압과 바람","words":["기압","해풍","육풍","기단","전선"]},{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]},{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]},{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"기권과 날씨 · ① 기권과 지구의 기온 종합","unit":"기권과 날씨","mid":"① 기권과 지구의 기온","title":"기권과 지구의 기온 중단원 종합","kind":"mid","rounds":[{"topic":"기권과 복사 평형 용어 ②","words":["복사평형","온실효과","이산화탄소","지구온난화","오존층"]},{"topic":"기권과 복사 평형 용어","words":["기권","대류권","성층권","중간권","열권"]}]},{"g":"중3","u":"기권과 날씨 · 1차시 · 기권과 복사 평형","unit":"기권과 날씨","mid":"① 기권과 지구의 기온","title":"1차시 · 기권과 복사 평형","kind":"lesson","rounds":[{"topic":"기권과 복사 평형 용어","words":["기권","대류권","성층권","중간권","열권"]},{"topic":"기권과 복사 평형 용어 ②","words":["복사평형","온실효과","이산화탄소","지구온난화","오존층"]}]},{"g":"중3","u":"기권과 날씨 · ② 구름과 강수 종합","unit":"기권과 날씨","mid":"② 구름과 강수","title":"구름과 강수 중단원 종합","kind":"mid","rounds":[{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]},{"topic":"대기 중의 물과 구름 용어","words":["포화상태","포화수증기량","응결","이슬점","상대습도"]}]},{"g":"중3","u":"기권과 날씨 · 2차시 · 상대 습도와 이슬점","unit":"기권과 날씨","mid":"② 구름과 강수","title":"2차시 · 상대 습도와 이슬점","kind":"lesson","rounds":[{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]}]},{"g":"중3","u":"기권과 날씨 · 3차시 · 대기 중의 물과 구름","unit":"기권과 날씨","mid":"② 구름과 강수","title":"3차시 · 대기 중의 물과 구름","kind":"lesson","rounds":[{"topic":"대기 중의 물과 구름 용어","words":["포화상태","포화수증기량","응결","이슬점","상대습도"]}]},{"g":"중3","u":"기권과 날씨 · ③ 기압과 날씨 종합","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"기압과 날씨 중단원 종합","kind":"mid","rounds":[{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]},{"topic":"기압과 바람, 날씨 변화 용어","words":["기압","토리첼리","기압차","해풍","육풍"]},{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"기권과 날씨 · 4차시 · 기압과 바람, 날씨 변화","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"4차시 · 기압과 바람, 날씨 변화","kind":"lesson","rounds":[{"topic":"기압과 바람, 날씨 변화 용어","words":["기압","토리첼리","기압차","해풍","육풍"]},{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]}]},{"g":"중3","u":"기권과 날씨 · 5차시 · 기단과 전선, 일기도","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"5차시 · 기단과 전선, 일기도","kind":"lesson","rounds":[{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"운동과 에너지","unit":"운동과 에너지","title":"운동과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 운동의 기록","words":["속력","등속운동","평균속력","시간기록계","섬광사진"]},{"topic":"중3 · 자유 낙하","words":["중력","9.8","중력가속도","공기저항","낙하산"]},{"topic":"중3 · 일과 에너지","words":["일","줄","위치에너지","운동에너지","기준면"]},{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]},{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]},{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]}]},{"g":"중3","u":"운동과 에너지 · ① 운동 종합","unit":"운동과 에너지","mid":"① 운동","title":"운동 중단원 종합","kind":"mid","rounds":[{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]},{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]},{"topic":"운동의 기록과 등속 운동 용어 ②","words":["이동거리","수평한직선","이동한거리","무빙워크","m/s"]},{"topic":"운동 그래프 읽기 용어","words":["속력","이동거리","수평선","등속운동","빨라지는운동"]}]},{"g":"중3","u":"운동과 에너지 · 1차시 · 운동의 기록과 등속 운동","unit":"운동과 에너지","mid":"① 운동","title":"1차시 · 운동의 기록과 등속 운동","kind":"lesson","rounds":[{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]},{"topic":"운동의 기록과 등속 운동 용어 ②","words":["이동거리","수평한직선","이동한거리","무빙워크","m/s"]}]},{"g":"중3","u":"운동과 에너지 · 2차시 · 자유 낙하 운동","unit":"운동과 에너지","mid":"① 운동","title":"2차시 · 자유 낙하 운동","kind":"lesson","rounds":[{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]}]},{"g":"중3","u":"운동과 에너지 · 3차시 · 운동 그래프 읽기","unit":"운동과 에너지","mid":"① 운동","title":"3차시 · 운동 그래프 읽기","kind":"lesson","rounds":[{"topic":"운동 그래프 읽기 용어","words":["속력","이동거리","수평선","등속운동","빨라지는운동"]}]},{"g":"중3","u":"운동과 에너지 · ② 일과 에너지 종합","unit":"운동과 에너지","mid":"② 일과 에너지","title":"일과 에너지 중단원 종합","kind":"mid","rounds":[{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]},{"topic":"위치 에너지와 운동 에너지 계산 용어","words":["위치에너지","운동에너지","에너지","½mv²","기준면"]}]},{"g":"중3","u":"운동과 에너지 · 4차시 · 일과 에너지","unit":"운동과 에너지","mid":"② 일과 에너지","title":"4차시 · 일과 에너지","kind":"lesson","rounds":[{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]}]},{"g":"중3","u":"운동과 에너지 · 5차시 · 위치 에너지와 운동 에너지 계산","unit":"운동과 에너지","mid":"② 일과 에너지","title":"5차시 · 위치 에너지와 운동 에너지 계산","kind":"lesson","rounds":[{"topic":"위치 에너지와 운동 에너지 계산 용어","words":["위치에너지","운동에너지","에너지","½mv²","기준면"]}]},{"g":"중3","u":"자극과 반응","unit":"자극과 반응","title":"자극과 반응 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 감각 기관","words":["망막","홍채","달팽이관","맛세포","통점"]},{"topic":"중3 · 신경계","words":["뉴런","대뇌","소뇌","연수","척수"]},{"topic":"중3 · 호르몬","words":["인슐린","글루카곤","티록신","항상성","혈당량"]},{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · ① 감각 기관 종합","unit":"자극과 반응","mid":"① 감각 기관","title":"감각 기관 중단원 종합","kind":"mid","rounds":[{"topic":"감각 기관 용어 ②","words":["고막","달팽이관","반고리관","전정기관","후각상피"]},{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"눈과 귀의 구조 용어","words":["각막","수정체","섬모체","홍채","고막"]}]},{"g":"중3","u":"자극과 반응 · 1차시 · 눈과 귀의 구조","unit":"자극과 반응","mid":"① 감각 기관","title":"1차시 · 눈과 귀의 구조","kind":"lesson","rounds":[{"topic":"눈과 귀의 구조 용어","words":["각막","수정체","섬모체","홍채","고막"]}]},{"g":"중3","u":"자극과 반응 · 2차시 · 감각 기관","unit":"자극과 반응","mid":"① 감각 기관","title":"2차시 · 감각 기관","kind":"lesson","rounds":[{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"감각 기관 용어 ②","words":["고막","달팽이관","반고리관","전정기관","후각상피"]}]},{"g":"중3","u":"자극과 반응 · ② 신경계 종합","unit":"자극과 반응","mid":"② 신경계","title":"신경계 중단원 종합","kind":"mid","rounds":[{"topic":"뉴런과 신경계 용어 ②","words":["대뇌","소뇌","간뇌","연수","척수"]},{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · 3차시 · 뉴런과 신경계","unit":"자극과 반응","mid":"② 신경계","title":"3차시 · 뉴런과 신경계","kind":"lesson","rounds":[{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"뉴런과 신경계 용어 ②","words":["대뇌","소뇌","간뇌","연수","척수"]}]},{"g":"중3","u":"자극과 반응 · 4차시 · 자극의 전달 경로","unit":"자극과 반응","mid":"② 신경계","title":"4차시 · 자극의 전달 경로","kind":"lesson","rounds":[{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · ③ 호르몬과 항상성 종합","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"호르몬과 항상성 중단원 종합","kind":"mid","rounds":[{"topic":"체온과 혈당량 조절 용어","words":["인슐린","글루카곤","글리코젠","당뇨병","간뇌"]},{"topic":"호르몬과 항상성 유지 용어","words":["호르몬","표적기관","인슐린","글루카곤","티록신"]}]},{"g":"중3","u":"자극과 반응 · 5차시 · 호르몬과 항상성 유지","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"5차시 · 호르몬과 항상성 유지","kind":"lesson","rounds":[{"topic":"호르몬과 항상성 유지 용어","words":["호르몬","표적기관","인슐린","글루카곤","티록신"]}]},{"g":"중3","u":"자극과 반응 · 6차시 · 체온과 혈당량 조절","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"6차시 · 체온과 혈당량 조절","kind":"lesson","rounds":[{"topic":"체온과 혈당량 조절 용어","words":["인슐린","글루카곤","글리코젠","당뇨병","간뇌"]}]},{"g":"중3","u":"생식과 유전","unit":"생식과 유전","title":"생식과 유전 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 세포 분열","words":["염색체","염색분체","상동염색체","방추사","2가염색체"]},{"topic":"중3 · 생식과 발생","words":["정소","난소","수정란","난할","착상"]},{"topic":"중3 · 멘델 유전","words":["우성","열성","순종","잡종","분리의법칙"]},{"topic":"중3 · 사람의 유전","words":["가계도","반성유전","색맹","혈액형","미맹"]},{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]},{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]},{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]}]},{"g":"중3","u":"생식과 유전 · ① 세포 분열 종합","unit":"생식과 유전","mid":"① 세포 분열","title":"세포 분열 중단원 종합","kind":"mid","rounds":[{"topic":"체세포 분열과 감수 분열 용어","words":["체세포분열","감수분열","간기","중기","후기"]},{"topic":"세포 분열과 생식 용어","words":["염색체","상동염색체","체세포분열","감수분열","수정"]},{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]}]},{"g":"중3","u":"생식과 유전 · 1차시 · 염색체와 유전자","unit":"생식과 유전","mid":"① 세포 분열","title":"1차시 · 염색체와 유전자","kind":"lesson","rounds":[{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]}]},{"g":"중3","u":"생식과 유전 · 2차시 · 체세포 분열과 감수 분열","unit":"생식과 유전","mid":"① 세포 분열","title":"2차시 · 체세포 분열과 감수 분열","kind":"lesson","rounds":[{"topic":"체세포 분열과 감수 분열 용어","words":["체세포분열","감수분열","간기","중기","후기"]}]},{"g":"중3","u":"생식과 유전 · 3차시 · 세포 분열과 생식","unit":"생식과 유전","mid":"① 세포 분열","title":"3차시 · 세포 분열과 생식","kind":"lesson","rounds":[{"topic":"세포 분열과 생식 용어","words":["염색체","상동염색체","체세포분열","감수분열","수정"]}]},{"g":"중3","u":"생식과 유전 · ② 생식과 발생 종합","unit":"생식과 유전","mid":"② 생식과 발생","title":"생식과 발생 중단원 종합","kind":"mid","rounds":[{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]}]},{"g":"중3","u":"생식과 유전 · 4차시 · 생식과 발생","unit":"생식과 유전","mid":"② 생식과 발생","title":"4차시 · 생식과 발생","kind":"lesson","rounds":[{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]}]},{"g":"중3","u":"생식과 유전 · ③ 유전 종합","unit":"생식과 유전","mid":"③ 유전","title":"유전 중단원 종합","kind":"mid","rounds":[{"topic":"사람의 유전 용어","words":["가계도","쌍둥이연구","X염색체","남자","반성유전"]},{"topic":"유전 용어 ②","words":["표현형","유전자형","반성유전","ABO식혈액형","가계도"]},{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]}]},{"g":"중3","u":"생식과 유전 · 5차시 · 유전","unit":"생식과 유전","mid":"③ 유전","title":"5차시 · 유전","kind":"lesson","rounds":[{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]},{"topic":"유전 용어 ②","words":["표현형","유전자형","반성유전","ABO식혈액형","가계도"]}]},{"g":"중3","u":"생식과 유전 · 6차시 · 사람의 유전","unit":"생식과 유전","mid":"③ 유전","title":"6차시 · 사람의 유전","kind":"lesson","rounds":[{"topic":"사람의 유전 용어","words":["가계도","쌍둥이연구","X염색체","남자","반성유전"]}]},{"g":"중3","u":"에너지 전환과 보존","unit":"에너지 전환과 보존","title":"에너지 전환과 보존 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 역학적 에너지","words":["위치","운동","기준면","진자","보존"]},{"topic":"중3 · 전기 에너지","words":["발전기","유도전류","소비전력","전력량","코일"]},{"topic":"중3 · 에너지 전환","words":["빛에너지","열에너지","소리에너지","전동기","충전"]},{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · ① 역학적 에너지 전환과 보존 종합","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"역학적 에너지 전환과 보존 중단원 종합","kind":"mid","rounds":[{"topic":"역학적 에너지 용어","words":["위치에너지","운동에너지","역학적에너지","일정","기준면"]},{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]}]},{"g":"중3","u":"에너지 전환과 보존 · 1차시 · 역학적 에너지","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"1차시 · 역학적 에너지","kind":"lesson","rounds":[{"topic":"역학적 에너지 용어","words":["위치에너지","운동에너지","역학적에너지","일정","기준면"]}]},{"g":"중3","u":"에너지 전환과 보존 · 2차시 · 역학적 에너지 보존의 예","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"2차시 · 역학적 에너지 보존의 예","kind":"lesson","rounds":[{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]}]},{"g":"중3","u":"에너지 전환과 보존 · ② 전기 에너지의 발생과 전환 종합","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"전기 에너지의 발생과 전환 중단원 종합","kind":"mid","rounds":[{"topic":"소비 전력과 전력량 용어","words":["소비전력","시간","Wh","대기전력","LED전등"]},{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · 3차시 · 전기 에너지","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"3차시 · 전기 에너지","kind":"lesson","rounds":[{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · 4차시 · 소비 전력과 전력량","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"4차시 · 소비 전력과 전력량","kind":"lesson","rounds":[{"topic":"소비 전력과 전력량 용어","words":["소비전력","시간","Wh","대기전력","LED전등"]}]},{"g":"중3","u":"별과 우주","unit":"별과 우주","title":"별과 우주 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 별의 특성","words":["연주시차","겉보기등급","절대등급","표면온도","청색"]},{"topic":"중3 · 은하와 우주","words":["성운","성단","우리은하","은하수","허블"]},{"topic":"중3 · 우주 탐사","words":["인공위성","탐사선","우주망원경","탐사로버","우주복"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]},{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]},{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · ① 별의 특성 종합","unit":"별과 우주","mid":"① 별의 특성","title":"별의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · 1차시 · 별의 특성","unit":"별과 우주","mid":"① 별의 특성","title":"1차시 · 별의 특성","kind":"lesson","rounds":[{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · ② 은하와 우주 종합","unit":"별과 우주","mid":"② 은하와 우주","title":"은하와 우주 중단원 종합","kind":"mid","rounds":[{"topic":"성운·성단과 은하의 종류 용어","words":["방출성운","반사성운","암흑성운","산개성단","구상성단"]},{"topic":"은하와 우주 용어 ②","words":["우리은하","은하수","막대나선은하","외부은하","허블"]},{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]}]},{"g":"중3","u":"별과 우주 · 2차시 · 은하와 우주","unit":"별과 우주","mid":"② 은하와 우주","title":"2차시 · 은하와 우주","kind":"lesson","rounds":[{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]},{"topic":"은하와 우주 용어 ②","words":["우리은하","은하수","막대나선은하","외부은하","허블"]}]},{"g":"중3","u":"별과 우주 · 3차시 · 성운·성단과 은하의 종류","unit":"별과 우주","mid":"② 은하와 우주","title":"3차시 · 성운·성단과 은하의 종류","kind":"lesson","rounds":[{"topic":"성운·성단과 은하의 종류 용어","words":["방출성운","반사성운","암흑성운","산개성단","구상성단"]}]},{"g":"중3","u":"별과 우주 · ③ 우주 탐사 종합","unit":"별과 우주","mid":"③ 우주 탐사","title":"우주 탐사 중단원 종합","kind":"mid","rounds":[{"topic":"우주 탐사 용어","words":["인공위성","우주탐사선","우주망원경","우주정거장","탐사로버"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]}]},{"g":"중3","u":"별과 우주 · 4차시 · 우주 탐사","unit":"별과 우주","mid":"③ 우주 탐사","title":"4차시 · 우주 탐사","kind":"lesson","rounds":[{"topic":"우주 탐사 용어","words":["인공위성","우주탐사선","우주망원경","우주정거장","탐사로버"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]}]},{"g":"기타","u":"예시 라운드","rounds":[{"topic":"중1 · 힘과 운동","words":["중력","마찰력","부력","등속운동","자유낙하"]},{"topic":"중3 · 화학 반응","words":["산화","환원","앙금생성","중화반응","화학반응식"]},{"topic":"고1 · 통합과학","words":["광합성","세포호흡","판구조론","에너지전환","생태계평형"]},{"topic":"고2 · 물리학Ⅰ","words":["관성의법칙","운동량보존","전자기유도","파동간섭","에너지보존"]},{"topic":"고3 · 생명과학","words":["유전자발현","세포분열","면역반응","신경전달","항상성유지"]}]}];
+  var PICK_GRADES = []; CATALOG.forEach(function(c){ if(PICK_GRADES.indexOf(c.g)<0) PICK_GRADES.push(c.g); });
+  var pickGrade = PICK_GRADES[0], pickLabel = "", pickG = "", pickU = "";
+  try{ var pg = localStorage.getItem("iceberg-grade"); if(pg && PICK_GRADES.indexOf(pg)>=0) pickGrade = pg; }catch(e){}
+
+  function loadUnit(g, u){
+    var item = null;
+    CATALOG.forEach(function(c){ if(c.g===g && c.u===u) item = c; });
+    if(!item) return false;
+    S.categories = item.rounds.map(function(r){
+      return { id: uid(), topic: r.topic, words: r.words.slice() };
+    });
+    pickLabel = g + " · " + u + " (" + item.rounds.length + "라운드)";
+    pickG = g; pickU = u;
+    saveData();
+    return true;
+  }
+
+  function pickerHtml(){
+    var chips = PICK_GRADES.map(function(g){
+      return '<button class="pick-chip" data-action="pick-grade" data-g="'+g+'" aria-pressed="'+(pickGrade===g)+'">'+g+'</button>';
+    }).join("");
+    var units = CATALOG.filter(function(c){ return c.g===pickGrade; }).map(function(c){
+      return '<div class="pick-unit">'+
+        '<button class="pick-main" data-action="pick-unit" data-g="'+c.g+'" data-u="'+esc(c.u)+'">'+
+          '<b>'+esc(c.u)+'</b><span>'+c.rounds.length+'라운드 · '+esc(c.rounds[0].topic)+' 외</span>'+
+        '</button>'+
+        '<button class="pick-go" data-action="pick-play" data-g="'+c.g+'" data-u="'+esc(c.u)+'" title="바로 시작">▶</button>'+
+      '</div>';
+    }).join("");
+    return '<div class="panel pick-panel">'+
+      '<h2>학년 · 단원 고르기</h2>'+
+      '<p class="sub">단원을 누르면 라운드가 채워집니다. ▶를 누르면 바로 시작해요.</p>'+
+      '<div class="pick-chips">'+chips+'</div>'+
+      '<div class="pick-grid">'+units+'</div>'+
+      (pickLabel ? '<p class="pick-now">지금 담긴 라운드 · <b>'+esc(pickLabel)+'</b></p>' : '')+
+    '</div>';
+  }
+
+  function renderSetup(){
+    var teamsHtml = S.teams.map(function(t){
+      return '<div class="team-row">'+
+        '<span class="team-swatch" style="background:'+t.color+'"></span>'+
+        '<input type="text" value="'+esc(t.name)+'" data-action="team-name" data-id="'+t.id+'" maxlength="10">'+
+        '<span class="key-badge mono">'+t.key.toUpperCase()+'</span>'+
+        '<button class="icon-btn" data-action="team-remove" data-id="'+t.id+'" title="팀 삭제" aria-label="팀 삭제">✕</button>'+
+      '</div>';
+    }).join("");
+
+    var catsHtml = S.categories.map(function(c, i){
+      var wordsHtml = c.words.map(function(w, wi){
+        return '<input type="text" value="'+esc(w)+'" placeholder="단어 '+(wi+1)+'" maxlength="8" data-action="word-edit" data-cid="'+c.id+'" data-widx="'+wi+'">';
+      }).join("");
+      return '<div class="cat-card">'+
+        '<div class="cat-head"><span class="num">R'+(i+1)+'</span>'+
+        '<input type="text" value="'+esc(c.topic)+'" placeholder="카테고리 주제 (예: 고1 · 통합과학)" data-action="topic-edit" data-cid="'+c.id+'">'+
+        '<button class="icon-btn" data-action="cat-remove" data-id="'+c.id+'" title="카테고리 삭제" aria-label="카테고리 삭제">✕</button>'+
+        '</div>'+
+        '<div class="word-grid">'+wordsHtml+'</div>'+
+      '</div>';
+    }).join("");
+
+    var canStart = S.categories.length>0 && S.categories.every(function(c){ return c.topic.trim() && c.words.every(function(w){return w.trim();}); });
+
+    app.innerHTML =
+      '<div class="hero">'+
+        '<div class="hero-inner">'+
+          '<div class="berg-icon">'+bergIcon(72)+'</div>'+
+          '<div class="hero-text"><h1>빙산의 일각</h1>'+
+          '<p>과학 개념어 팀 대결 게임 · 주제 하나에 숨겨진 5개의 답을 먼저 외쳐라</p></div>'+
+        '</div>'+
+        '<div class="hero-wave"></div>'+
+      '</div>'+
+      '<div class="wrap">'+
+        pickerHtml()+
+        '<div class="setup-grid">'+
+          '<div class="panel">'+
+            '<h2>팀 설정</h2><p class="sub">버저 키를 눌러 답변권을 가져와요 (클릭도 가능)</p>'+
+            teamsHtml+
+            '<button class="btn btn-ghost btn-block" data-action="team-add" '+(S.teams.length>=6?'disabled':'')+'>+ 팀 추가</button>'+
+          '</div>'+
+          '<div class="panel">'+
+            '<h2>라운드 &amp; 정답 편집</h2><p class="sub">각 라운드는 주제 1개 + 정답 단어 5개로 구성돼요. 학년·단원에 맞게 자유롭게 채워주세요.</p>'+
+            catsHtml+
+            '<div class="tools-row">'+
+              '<button class="btn btn-ghost" data-action="cat-add">+ 라운드 추가</button>'+
+              '<button class="btn btn-ghost" data-action="load-sample">예시 데이터 불러오기</button>'+
+            '</div>'+
+            '<details class="tools"><summary>기존 파일 / 백업 텍스트로 가져오기·내보내기</summary>'+
+              '<p class="sub" style="margin-top:8px;">예전 &amp;j1=...&amp; &amp;m1=...&amp; 형식이나, 이 게임의 백업 텍스트를 붙여넣고 변환할 수 있어요.</p>'+
+              '<textarea id="import-box" placeholder="여기에 붙여넣기"></textarea>'+
+              '<div class="tools-row">'+
+                '<button class="btn btn-primary" data-action="import-legacy">레거시 형식으로 가져오기</button>'+
+                '<button class="btn btn-ghost" data-action="import-json">백업 JSON으로 가져오기</button>'+
+                '<button class="btn btn-ghost" data-action="export-json">현재 데이터 백업 텍스트 만들기</button>'+
+              '</div>'+
+            '</details>'+
+          '</div>'+
+        '</div>'+
+        '<div style="margin-top:24px; text-align:center;">'+
+          '<button class="btn btn-spark" style="font-size:17px; padding:14px 40px;" data-action="go-play" '+(canStart?'':'disabled')+'>게임 시작 ▶</button>'+
+          (canStart?'':'<p class="sub" style="margin-top:8px;">모든 라운드의 주제와 5개 단어를 채워야 시작할 수 있어요</p>')+
+        '</div>'+
+      '</div>';
+  }
+
+  function renderTimerOnly(){
+    var fill = document.getElementById("timer-fill-el");
+    var num = document.getElementById("timer-num-el");
+    if(fill && S.round){
+      var pct = Math.max(0, S.round.timeLeft/ROUND_DURATION*100);
+      fill.style.width = pct+"%";
+      fill.style.background = pct<25 ? "linear-gradient(90deg,var(--danger),#ff8a6a)" : "linear-gradient(90deg,var(--aurora),var(--glacier))";
+    }
+    if(num && S.round) num.textContent = S.round.timeLeft+"s";
+  }
+
+  function renderPlay(){
+    var r = S.round; var cat = S.categories[S.currentRound];
+    var teamCards = S.teams.map(function(t){
+      var locked = r && r.lockedTeam===t.id;
+      return '<div class="team-card '+(locked?'locked':'')+'" style="background:'+t.color+'">'+
+        '<div class="tname"><span>'+esc(t.name)+'</span><span class="tkey">'+t.key.toUpperCase()+'</span></div>'+
+        '<div class="tscore mono">'+(S.scores[t.id]||0)+'</div>'+
+        '<button class="buzz" data-action="buzz" data-id="'+t.id+'" aria-label="'+esc(t.name)+' 버저"></button>'+
+      '</div>';
+    }).join("");
+
+    var wordsHtml = "";
+    if(r){
+      wordsHtml = r.words.map(function(w, wi){
+        var revealSet = currentRevealSet(w, r.solved_hintOverride || r.hintLevel);
+        var tiles = w.chars.map(function(ch, ci){
+          var shown = w.solved || revealSet[ci];
+          return '<div class="tile '+(shown?"revealed":"hidden")+'">'+(shown?esc(ch):"")+'</div>';
+        }).join("");
+        var canResolve = r.lockedTeam && !w.solved && !r.ended;
+        return '<div class="word-row '+(w.solved?"solved":"")+'">'+
+          '<div class="tiles">'+tiles+'</div>'+
+          (canResolve ? '<div class="resolve-row"><button class="btn-yes" data-action="resolve-yes" data-widx="'+wi+'" title="정답">✓</button><button class="btn-no" data-action="resolve-no" data-widx="'+wi+'" title="오답">✕</button></div>'
+            : '<div class="word-pts mono">'+(w.solved ? (w.timedOut ? "시간초과" : "+"+w.awarded) : "")+'</div>')+
+        '</div>';
+      }).join("");
+    }
+
+    var pct = r ? Math.max(0, r.timeLeft/ROUND_DURATION*100) : 100;
+    var timerColor = pct<25 ? "linear-gradient(90deg,var(--danger),#ff8a6a)" : "linear-gradient(90deg,var(--aurora),var(--glacier))";
+
+    var buzzBanner = "";
+    if(r && r.lockedTeam){
+      var lt = S.teams.filter(function(t){return t.id===r.lockedTeam;})[0];
+      buzzBanner = '<div class="buzz-banner"><span>🔔 '+esc(lt?lt.name:"")+' 답변 중!</span></div>';
+    }
+
+    var roundOverControls = "";
+    if(r && r.ended){
+      roundOverControls = '<button class="btn btn-spark" data-action="next-round">'+(S.currentRound+1>=S.categories.length? "최종 결과 보기 🏆" : "다음 라운드 ▶")+'</button>';
+    } else {
+      roundOverControls =
+        '<button class="btn btn-ghost" data-action="toggle-timer">'+(r&&r.running?"⏸ 일시정지":"▶ 재개")+'</button>'+
+        '<button class="btn btn-ghost" data-action="force-hint">💡 힌트 공개</button>'+
+        '<button class="btn btn-ghost" data-action="skip-round">라운드 건너뛰기</button>';
+    }
+
+    app.innerHTML =
+      '<div class="stage">'+
+        buzzBanner+
+        '<div class="topbar"><button class="btn btn-ghost" data-action="back-setup" style="font-size:12px; padding:6px 12px;">설정으로</button></div>'+
+        '<div class="score-row">'+teamCards+'</div>'+
+        '<div class="round-wrap">'+
+          '<div class="round-top">'+
+            '<div><div class="round-label">ROUND '+(S.currentRound+1)+' / '+S.categories.length+'</div>'+
+            '<h2 class="round-title">'+esc(cat.topic)+'</h2></div>'+
+            '<div class="timer-wrap"><div class="timer-gauge"><div id="timer-fill-el" class="timer-fill" style="width:'+pct+'%; background:'+timerColor+'"></div></div>'+
+            '<div id="timer-num-el" class="timer-num">'+(r?r.timeLeft:ROUND_DURATION)+'s</div></div>'+
+          '</div>'+
+          '<div class="words">'+wordsHtml+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="host-bar">'+roundOverControls+'</div>';
+  }
+
+  function renderFinal(){
+    var ranked = S.teams.slice().sort(function(a,b){ return (S.scores[b.id]||0)-(S.scores[a.id]||0); });
+    var medals = ["🥇","🥈","🥉"];
+    var rows = ranked.map(function(t,i){
+      return '<div class="podium-row" style="border-color:'+t.color+'66">'+
+        '<div class="rank">'+(medals[i]||(i+1))+'</div>'+
+        '<div class="pname">'+esc(t.name)+'</div>'+
+        '<div class="pscore mono" style="color:'+t.color+'">'+(S.scores[t.id]||0)+'</div>'+
+      '</div>';
+    }).join("");
+    app.innerHTML =
+      '<div class="stage" style="min-height:100vh;">'+
+        '<div class="final-wrap">'+bergIcon(90)+
+          '<h1>게임 종료!</h1>'+
+          '<p style="color:#a9cddb;">수고했어요, 오늘의 빙산 탐험가들 👏</p>'+
+          '<div class="podium">'+rows+'</div>'+
+          '<div id="scoreBoxBerg" style="max-width:360px;margin:10px auto 0;text-align:left;"></div>'+
+          '<div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">'+
+            '<button class="btn btn-spark" data-action="go-play">같은 문제로 다시하기</button>'+
+            '<button class="btn btn-ghost" data-action="back-setup">설정으로 돌아가기</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    fireConfetti();
+    window.KJSScore && KJSScore.finishTeams({
+      game: "iceberg", unit: pickU, lesson: pickLabel,
+      teams: S.teams.map(function(t){ return { name: t.name, score: S.scores[t.id] || 0 }; }),
+      container: document.getElementById("scoreBoxBerg")
+    });
+  }
+
+  function render(){
+    if(S.view==="setup") renderSetup();
+    else if(S.view==="play") renderPlay();
+    else renderFinal();
+  }
+
+  /* ---------------- confetti ---------------- */
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function fireConfetti(){
+    if(reduceMotion) return;
+    var cv = document.getElementById("confetti");
+    cv.hidden = false; cv.width = window.innerWidth; cv.height = window.innerHeight;
+    var c = cv.getContext("2d");
+    var colors = TEAM_COLORS;
+    var parts = [];
+    for(var i=0;i<120;i++){
+      parts.push({x:Math.random()*cv.width, y:-20-Math.random()*200, r:4+Math.random()*4,
+        c:colors[i%colors.length], vy:2+Math.random()*3, vx:-1+Math.random()*2, rot:Math.random()*6, vr:-0.2+Math.random()*0.4});
+    }
+    var start = Date.now();
+    function step(){
+      c.clearRect(0,0,cv.width,cv.height);
+      var t = Date.now()-start;
+      parts.forEach(function(p){
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+        c.save(); c.translate(p.x,p.y); c.rotate(p.rot);
+        c.fillStyle=p.c; c.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+        c.restore();
+      });
+      if(t<3200) requestAnimationFrame(step); else { cv.hidden = true; }
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------------- event delegation ---------------- */
+  document.addEventListener("click", function(e){
+    var el = e.target.closest("[data-action]"); if(!el) return;
+    var action = el.getAttribute("data-action");
+    if(action==="pick-grade"){ pickGrade = el.getAttribute("data-g");
+      try{ localStorage.setItem("iceberg-grade", pickGrade); }catch(err){} render(); }
+    else if(action==="pick-unit"){
+      if(loadUnit(el.getAttribute("data-g"), el.getAttribute("data-u"))){
+        render();
+        var btn = document.querySelector('[data-action="go-play"]');
+        if(btn) btn.scrollIntoView({behavior:"smooth", block:"center"});
+      }
+    }
+    else if(action==="pick-play"){
+      if(loadUnit(el.getAttribute("data-g"), el.getAttribute("data-u"))) goPlay();
+    }
+    else if(action==="team-add") addTeam();
+    else if(action==="team-remove") removeTeam(el.getAttribute("data-id"));
+    else if(action==="cat-add") addCategory();
+    else if(action==="cat-remove") removeCategory(el.getAttribute("data-id"));
+    else if(action==="load-sample"){ if(confirm("예시 데이터로 현재 설정을 덮어쓸까요?")) loadSample(); }
+    else if(action==="import-legacy"){
+      var txt = document.getElementById("import-box").value;
+      var cats = parseLegacy(txt);
+      if(cats.length){ S.categories = cats; saveData(); render(); } else alert("가져올 데이터를 찾지 못했어요. 형식을 확인해주세요.");
+    }
+    else if(action==="import-json"){
+      try{ var data = JSON.parse(document.getElementById("import-box").value);
+        if(data.teams) S.teams = data.teams; if(data.categories) S.categories = data.categories;
+        saveData(); render();
+      }catch(err){ alert("JSON 형식이 올바르지 않아요."); }
+    }
+    else if(action==="export-json"){
+      document.getElementById("import-box").value = JSON.stringify({teams:S.teams, categories:S.categories}, null, 1);
+    }
+    else if(action==="go-play") goPlay();
+    else if(action==="back-setup"){ if(S.view==="setup" || confirm("설정 화면으로 돌아갈까요? 현재 점수는 사라져요.")) backToSetup(); }
+    else if(action==="buzz") tryBuzz(el.getAttribute("data-id"));
+    else if(action==="resolve-yes") resolveWord(+el.getAttribute("data-widx"), true);
+    else if(action==="resolve-no") resolveWord(+el.getAttribute("data-widx"), false);
+    else if(action==="next-round") nextRound();
+    else if(action==="skip-round") skipRound();
+    else if(action==="toggle-timer") toggleTimer();
+    else if(action==="force-hint") revealHint();
+  });
+
+  document.addEventListener("input", function(e){
+    var el = e.target; var action = el.getAttribute("data-action");
+    if(action==="team-name"){
+      var t = S.teams.filter(function(x){return x.id===el.getAttribute("data-id");})[0];
+      if(t){ t.name = el.value; saveData(); }
+    } else if(action==="topic-edit"){
+      var c = S.categories.filter(function(x){return x.id===el.getAttribute("data-cid");})[0];
+      if(c){ c.topic = el.value; saveData(); }
+    } else if(action==="word-edit"){
+      var c2 = S.categories.filter(function(x){return x.id===el.getAttribute("data-cid");})[0];
+      if(c2){ c2.words[+el.getAttribute("data-widx")] = el.value; saveData(); }
+    }
+  });
+
+  render();
+
+  /* republish/hot-reload state carry (best-effort) */
+  try{
+    if(window.claude && window.claude.hot){
+      window.claude.hot.snapshot(function(){ return {S:S}; });
+      var boot = function(data){ if(data && data.S){ S = data.S; } render(); };
+      if(window.claude.hot.ready) window.claude.hot.ready(boot); else boot(window.claude.hot.data);
+    }
+  }catch(e){}
+})();
+</script>
+
+
+<script id="kjs-menu-adapter">
+(function(){
+var CAT = [{"g":"중1","u":"과학과 인류의 지속가능한 삶","unit":"과학과 인류의 지속가능한 삶","title":"과학과 인류의 지속가능한 삶 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 탐구 과정","words":["문제인식","가설설정","탐구설계","자료해석","결론도출"]},{"topic":"중1 · 첨단 과학기술","words":["인공지능","증강현실","사물인터넷","바이오","자율주행"]},{"topic":"중1 · 지속가능한 삶","words":["자원고갈","환경오염","온난화","태양광","업사이클링"]},{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]},{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ① 과학적 탐구 방법 종합","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"과학적 탐구 방법 중단원 종합","kind":"mid","rounds":[{"topic":"탐구 설계와 자료 해석 용어","words":["탐구계획서","탐구설계","신뢰성","독립변인","그래프"]},{"topic":"과학적 탐구 방법 용어 ②","words":["변인통제","자료변환","자료해석","결론도출","탐구보고서"]},{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 1차시 · 과학적 탐구 방법","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"1차시 · 과학적 탐구 방법","kind":"lesson","rounds":[{"topic":"과학적 탐구 방법 용어","words":["문제인식","가설설정","조작변인","통제변인","종속변인"]},{"topic":"과학적 탐구 방법 용어 ②","words":["변인통제","자료변환","자료해석","결론도출","탐구보고서"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 2차시 · 탐구 설계와 자료 해석","unit":"과학과 인류의 지속가능한 삶","mid":"① 과학적 탐구 방법","title":"2차시 · 탐구 설계와 자료 해석","kind":"lesson","rounds":[{"topic":"탐구 설계와 자료 해석 용어","words":["탐구계획서","탐구설계","신뢰성","독립변인","그래프"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ② 과학기술과 인류 문명 종합","unit":"과학과 인류의 지속가능한 삶","mid":"② 과학기술과 인류 문명","title":"과학기술과 인류 문명 중단원 종합","kind":"mid","rounds":[{"topic":"과학과 인류 문명, 첨단 과학기술 용어","words":["증기기관","산업혁명","항생제","현미경","인공지능"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 3차시 · 과학과 인류 문명, 첨단 과학기술","unit":"과학과 인류의 지속가능한 삶","mid":"② 과학기술과 인류 문명","title":"3차시 · 과학과 인류 문명, 첨단 과학기술","kind":"lesson","rounds":[{"topic":"과학과 인류 문명, 첨단 과학기술 용어","words":["증기기관","산업혁명","항생제","현미경","인공지능"]},{"topic":"과학과 인류 문명, 첨단 과학기술 용어 ②","words":["증강현실","사물인터넷","첨단바이오","자율주행자동차","인공지능윤리"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · ③ 과학기술과 지속가능한 삶 종합","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"과학기술과 지속가능한 삶 중단원 종합","kind":"mid","rounds":[{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]},{"topic":"지속가능한 삶을 위한 실천 용어","words":["줄이기","재사용하기","거절하기","재활용하기","새활용"]},{"topic":"과학기술과 지속가능한 삶 용어","words":["자원고갈","환경오염","지구온난화","태양광발전","수소연료전지"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 4차시 · 과학기술과 지속가능한 삶","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"4차시 · 과학기술과 지속가능한 삶","kind":"lesson","rounds":[{"topic":"과학기술과 지속가능한 삶 용어","words":["자원고갈","환경오염","지구온난화","태양광발전","수소연료전지"]},{"topic":"과학기술과 지속가능한 삶 용어 ②","words":["탄소포집장치","전기자동차","수거로봇","업사이클링","지속가능한삶"]}]},{"g":"중1","u":"과학과 인류의 지속가능한 삶 · 5차시 · 지속가능한 삶을 위한 실천","unit":"과학과 인류의 지속가능한 삶","mid":"③ 과학기술과 지속가능한 삶","title":"5차시 · 지속가능한 삶을 위한 실천","kind":"lesson","rounds":[{"topic":"지속가능한 삶을 위한 실천 용어","words":["줄이기","재사용하기","거절하기","재활용하기","새활용"]}]},{"g":"중1","u":"생물의 구성과 다양성","unit":"생물의 구성과 다양성","title":"생물의 구성과 다양성 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 세포","words":["핵","세포막","세포벽","엽록체","액포"]},{"topic":"중1 · 생물다양성","words":["서식지파괴","남획","외래종","국립공원","멸종위기"]},{"topic":"중1 · 생물의 분류","words":["종","속","계","학명","이명법"]},{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]},{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]},{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ① 생물의 구성 종합","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"생물의 구성 중단원 종합","kind":"mid","rounds":[{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]},{"topic":"세포의 구조와 현미경 용어","words":["액포","세포질","마이토콘드리아","재물대","접안렌즈"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 1차시 · 세포와 생물의 구성 단계","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"1차시 · 세포와 생물의 구성 단계","kind":"lesson","rounds":[{"topic":"세포와 생물의 구성 단계 용어","words":["세포","세포막","세포벽","엽록체","조직"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 2차시 · 세포의 구조와 현미경","unit":"생물의 구성과 다양성","mid":"① 생물의 구성","title":"2차시 · 세포의 구조와 현미경","kind":"lesson","rounds":[{"topic":"세포의 구조와 현미경 용어","words":["액포","세포질","마이토콘드리아","재물대","접안렌즈"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ② 생물의 다양성 종합","unit":"생물의 구성과 다양성","mid":"② 생물의 다양성","title":"생물의 다양성 중단원 종합","kind":"mid","rounds":[{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]},{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 3차시 · 생물다양성","unit":"생물의 구성과 다양성","mid":"② 생물의 다양성","title":"3차시 · 생물다양성","kind":"lesson","rounds":[{"topic":"생물다양성 용어","words":["생물종의다양성","유전적다양성","생태계다양성","생태계평형","서식지파괴"]},{"topic":"생물다양성 용어 ②","words":["남획","외래종","멸종위기종","국립공원","국제협약"]}]},{"g":"중1","u":"생물의 구성과 다양성 · ③ 생물의 분류 종합","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"생물의 분류 중단원 종합","kind":"mid","rounds":[{"topic":"생물의 5계 용어","words":["원핵생물계","대장균","원생생물계","균계","곰팡이"]},{"topic":"생물의 분류 용어","words":["원핵생물계","원생생물계","균계","식물계","학명"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 4차시 · 생물의 분류","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"4차시 · 생물의 분류","kind":"lesson","rounds":[{"topic":"생물의 분류 용어","words":["원핵생물계","원생생물계","균계","식물계","학명"]}]},{"g":"중1","u":"생물의 구성과 다양성 · 5차시 · 생물의 5계","unit":"생물의 구성과 다양성","mid":"③ 생물의 분류","title":"5차시 · 생물의 5계","kind":"lesson","rounds":[{"topic":"생물의 5계 용어","words":["원핵생물계","대장균","원생생물계","균계","곰팡이"]}]},{"g":"중1","u":"열","unit":"열","title":"열 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 열의 이동","words":["전도","대류","복사","단열","보온병"]},{"topic":"중1 · 온도와 열평형","words":["온도","열","열평형","입자운동","체온계"]},{"topic":"중1 · 비열과 열팽창","words":["비열","해륙풍","뚝배기","열팽창","바이메탈"]},{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]},{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]},{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]}]},{"g":"중1","u":"열 · ① 온도와 열의 이동 종합","unit":"열","mid":"① 온도와 열의 이동","title":"온도와 열의 이동 중단원 종합","kind":"mid","rounds":[{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]},{"topic":"온도와 열평형 용어","words":["온도","입자운동","고온에서저온","열평형","열의이동"]},{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]},{"topic":"열의 이동 용어 ②","words":["이중창","보온병","스타이로폼","난방기","냉방기"]}]},{"g":"중1","u":"열 · 1차시 · 온도와 열평형","unit":"열","mid":"① 온도와 열의 이동","title":"1차시 · 온도와 열평형","kind":"lesson","rounds":[{"topic":"온도와 열평형 용어","words":["온도","입자운동","고온에서저온","열평형","열의이동"]}]},{"g":"중1","u":"열 · 2차시 · 열의 이동","unit":"열","mid":"① 온도와 열의 이동","title":"2차시 · 열의 이동","kind":"lesson","rounds":[{"topic":"열의 이동 용어","words":["전도","대류","복사","복사열","단열"]},{"topic":"열의 이동 용어 ②","words":["이중창","보온병","스타이로폼","난방기","냉방기"]}]},{"g":"중1","u":"열 · 3차시 · 단열과 냉난방","unit":"열","mid":"① 온도와 열의 이동","title":"3차시 · 단열과 냉난방","kind":"lesson","rounds":[{"topic":"단열과 냉난방 용어","words":["단열","단열재","뽁뽁이","보온병","복사"]}]},{"g":"중1","u":"열 · ② 비열과 열팽창 종합","unit":"열","mid":"② 비열과 열팽창","title":"비열과 열팽창 중단원 종합","kind":"mid","rounds":[{"topic":"비열과 열팽창 용어","words":["비열","온도변화","해안지방","해륙풍","뚝배기"]},{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]}]},{"g":"중1","u":"열 · 4차시 · 비열과 열팽창","unit":"열","mid":"② 비열과 열팽창","title":"4차시 · 비열과 열팽창","kind":"lesson","rounds":[{"topic":"비열과 열팽창 용어","words":["비열","온도변화","해안지방","해륙풍","뚝배기"]}]},{"g":"중1","u":"열 · 5차시 · 열팽창의 이용","unit":"열","mid":"② 비열과 열팽창","title":"5차시 · 열팽창의 이용","kind":"lesson","rounds":[{"topic":"열팽창의 이용 용어","words":["바이메탈","덜늘어나는쪽","전기다리미","금속의팽창","신축이음"]}]},{"g":"중1","u":"물질의 상태 변화","unit":"물질의 상태 변화","title":"물질의 상태 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 입자의 운동","words":["확산","증발","고체","액체","기체"]},{"topic":"중1 · 상태 변화","words":["융해","기화","응고","액화","승화"]},{"topic":"중1 · 열에너지","words":["융해열","기화열","응고열","녹는점","끓는점"]},{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]},{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]},{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · ① 입자의 운동과 물질의 상태 종합","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"입자의 운동과 물질의 상태 중단원 종합","kind":"mid","rounds":[{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]},{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · 1차시 · 입자의 운동과 물질의 상태","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"1차시 · 입자의 운동과 물질의 상태","kind":"lesson","rounds":[{"topic":"입자의 운동과 물질의 상태 용어","words":["확산","증발","고체","액체","기체"]}]},{"g":"중1","u":"물질의 상태 변화 · 2차시 · 확산과 증발","unit":"물질의 상태 변화","mid":"① 입자의 운동과 물질의 상태","title":"2차시 · 확산과 증발","kind":"lesson","rounds":[{"topic":"확산과 증발 용어","words":["확산","기체","입자의운동","증발","높은온도"]}]},{"g":"중1","u":"물질의 상태 변화 · ② 물질의 상태 변화 종합","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"물질의 상태 변화 중단원 종합","kind":"mid","rounds":[{"topic":"상태 변화의 이용 용어","words":["융해열흡수","기화열흡수","응고열방출","액화열방출","기화열"]},{"topic":"상태 변화와 열에너지 용어","words":["융해열","기화열","응고열","액화열","온도하강"]},{"topic":"상태 변화와 열에너지 용어 ②","words":["온도상승","일정","녹는점","끓는점","아이스팩"]},{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]}]},{"g":"중1","u":"물질의 상태 변화 · 3차시 · 상태 변화와 입자 배열","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"3차시 · 상태 변화와 입자 배열","kind":"lesson","rounds":[{"topic":"상태 변화와 입자 배열 용어","words":["융해","기화","응고","액화","승화"]}]},{"g":"중1","u":"물질의 상태 변화 · 4차시 · 상태 변화와 열에너지","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"4차시 · 상태 변화와 열에너지","kind":"lesson","rounds":[{"topic":"상태 변화와 열에너지 용어","words":["융해열","기화열","응고열","액화열","온도하강"]},{"topic":"상태 변화와 열에너지 용어 ②","words":["온도상승","일정","녹는점","끓는점","아이스팩"]}]},{"g":"중1","u":"물질의 상태 변화 · 5차시 · 상태 변화의 이용","unit":"물질의 상태 변화","mid":"② 물질의 상태 변화","title":"5차시 · 상태 변화의 이용","kind":"lesson","rounds":[{"topic":"상태 변화의 이용 용어","words":["융해열흡수","기화열흡수","응고열방출","액화열방출","기화열"]}]},{"g":"중1","u":"힘의 작용","unit":"힘의 작용","title":"힘의 작용 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 여러 가지 힘","words":["중력","탄성력","마찰력","부력","무게"]},{"topic":"중1 · 힘의 표현","words":["크기","방향","작용점","화살표","뉴턴"]},{"topic":"중1 · 힘의 평형","words":["합력","알짜힘","평형","낙하산","줄다리기"]},{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]},{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]},{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]}]},{"g":"중1","u":"힘의 작용 · ① 여러 가지 힘 종합","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"여러 가지 힘 중단원 종합","kind":"mid","rounds":[{"topic":"탄성력·마찰력·부력 용어","words":["탄성력","용수철저울","마찰력","거칠수록","접촉면의넓이"]},{"topic":"탄성력·마찰력·부력 용어 ②","words":["부력","잠긴부피가클때","구명조끼","열기구","줄의탄성력"]},{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]},{"topic":"생활 속 여러 가지 힘 용어","words":["마찰력증가","마찰력감소","미끄럼방지","부력","탄성력"]}]},{"g":"중1","u":"힘의 작용 · 1차시 · 힘의 표현과 중력","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"1차시 · 힘의 표현과 중력","kind":"lesson","rounds":[{"topic":"힘의 표현과 중력 용어","words":["뉴턴","화살표","작용점","중력","지구중심쪽"]}]},{"g":"중1","u":"힘의 작용 · 2차시 · 탄성력·마찰력·부력","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"2차시 · 탄성력·마찰력·부력","kind":"lesson","rounds":[{"topic":"탄성력·마찰력·부력 용어","words":["탄성력","용수철저울","마찰력","거칠수록","접촉면의넓이"]},{"topic":"탄성력·마찰력·부력 용어 ②","words":["부력","잠긴부피가클때","구명조끼","열기구","줄의탄성력"]}]},{"g":"중1","u":"힘의 작용 · 3차시 · 생활 속 여러 가지 힘","unit":"힘의 작용","mid":"① 여러 가지 힘","title":"3차시 · 생활 속 여러 가지 힘","kind":"lesson","rounds":[{"topic":"생활 속 여러 가지 힘 용어","words":["마찰력증가","마찰력감소","미끄럼방지","부력","탄성력"]}]},{"g":"중1","u":"힘의 작용 · ② 힘과 물체의 운동 종합","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"힘과 물체의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]},{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]}]},{"g":"중1","u":"힘의 작용 · 4차시 · 힘의 평형과 물체의 운동","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"4차시 · 힘의 평형과 물체의 운동","kind":"lesson","rounds":[{"topic":"힘의 평형과 물체의 운동 용어","words":["반대","합력","알짜힘","중력과떠받치는힘","낙하산"]}]},{"g":"중1","u":"힘의 작용 · 5차시 · 힘과 운동 상태의 변화","unit":"힘의 작용","mid":"② 힘과 물체의 운동","title":"5차시 · 힘과 운동 상태의 변화","kind":"lesson","rounds":[{"topic":"힘과 운동 상태의 변화 용어","words":["속력","운동방향","계속정지","등속직선운동","원운동"]}]},{"g":"중1","u":"기체의 성질","unit":"기체의 성질","title":"기체의 성질 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 기체의 압력","words":["압력","면적","충돌","입자","쇠구슬"]},{"topic":"중1 · 보일 법칙","words":["반비례","부피감소","대기압","뽁뽁이","공기침대"]},{"topic":"중1 · 샤를 법칙","words":["비례","온도","열기구","축구공","피스톤"]},{"topic":"중1 · 생활 속 기체","words":["탁구공","타이어","과자봉지","공기방울","마시멜로"]},{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]},{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · ① 기체의 압력과 부피 관계 종합","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"기체의 압력과 부피 관계 중단원 종합","kind":"mid","rounds":[{"topic":"압력과 보일 법칙 용어 ②","words":["수압","스키","아이젠","입자사이거리","J자유리관"]},{"topic":"압력과 보일 법칙 용어","words":["압력","기체의압력","반비례","보일법칙","대기압"]},{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · 1차시 · 압력과 보일 법칙","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"1차시 · 압력과 보일 법칙","kind":"lesson","rounds":[{"topic":"압력과 보일 법칙 용어","words":["압력","기체의압력","반비례","보일법칙","대기압"]},{"topic":"압력과 보일 법칙 용어 ②","words":["수압","스키","아이젠","입자사이거리","J자유리관"]}]},{"g":"중1","u":"기체의 성질 · 2차시 · 보일 법칙과 입자 모형","unit":"기체의 성질","mid":"① 기체의 압력과 부피 관계","title":"2차시 · 보일 법칙과 입자 모형","kind":"lesson","rounds":[{"topic":"보일 법칙과 입자 모형 용어","words":["일정","반비례곡선","부레","압력","기체의압력"]}]},{"g":"중1","u":"기체의 성질 · ② 기체의 온도와 부피 관계 종합","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"기체의 온도와 부피 관계 중단원 종합","kind":"mid","rounds":[{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]},{"topic":"샤를 법칙과 생활 속 기체 용어 ②","words":["대기압감소","수압감소","뽁뽁이","주사기","마시멜로"]}]},{"g":"중1","u":"기체의 성질 · 3차시 · 샤를 법칙과 생활 속 기체","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"3차시 · 샤를 법칙과 생활 속 기체","kind":"lesson","rounds":[{"topic":"샤를 법칙과 생활 속 기체 용어","words":["샤를법칙","입자운동","열기구","축구공","탁구공"]},{"topic":"샤를 법칙과 생활 속 기체 용어 ②","words":["대기압감소","수압감소","뽁뽁이","주사기","마시멜로"]}]},{"g":"중1","u":"기체의 성질 · 4차시 · 샤를 법칙과 입자 모형","unit":"기체의 성질","mid":"② 기체의 온도와 부피 관계","title":"4차시 · 샤를 법칙과 입자 모형","kind":"lesson","rounds":[{"topic":"샤를 법칙과 입자 모형 용어","words":["변화없음","기울어진직선","공기의팽창","공기의수축","샤를법칙"]}]},{"g":"중1","u":"태양계","unit":"태양계","title":"태양계 대단원 종합","kind":"unit","rounds":[{"topic":"중1 · 태양계 천체","words":["태양","행성","위성","소행성","혜성"]},{"topic":"중1 · 태양의 활동","words":["흑점","코로나","홍염","플레어","태양풍"]},{"topic":"중1 · 지구와 달","words":["자전","공전","일식","월식","보름달"]},{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]},{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]}]},{"g":"중1","u":"태양계 · ① 태양계 구성 천체와 태양 종합","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"태양계 구성 천체와 태양 중단원 종합","kind":"mid","rounds":[{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어 ②","words":["목성형행성","흑점","코로나","홍염","플레어"]}]},{"g":"중1","u":"태양계 · 1차시 · 태양계 구성 천체와 태양의 활동","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"1차시 · 태양계 구성 천체와 태양의 활동","kind":"lesson","rounds":[{"topic":"태양계 구성 천체와 태양의 활동 용어","words":["태양","위성","소행성","혜성","지구형행성"]},{"topic":"태양계 구성 천체와 태양의 활동 용어 ②","words":["목성형행성","흑점","코로나","홍염","플레어"]}]},{"g":"중1","u":"태양계 · 2차시 · 태양계 행성의 특징","unit":"태양계","mid":"① 태양계 구성 천체와 태양","title":"2차시 · 태양계 행성의 특징","kind":"lesson","rounds":[{"topic":"태양계 행성의 특징 용어","words":["수성","금성","화성","목성","토성"]}]},{"g":"중1","u":"태양계 · ② 지구와 달의 운동 종합","unit":"태양계","mid":"② 지구와 달의 운동","title":"지구와 달의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]},{"topic":"지구와 달의 운동 용어","words":["자전","공전","일주운동","연주운동","황도"]}]},{"g":"중1","u":"태양계 · 3차시 · 지구와 달의 운동","unit":"태양계","mid":"② 지구와 달의 운동","title":"3차시 · 지구와 달의 운동","kind":"lesson","rounds":[{"topic":"지구와 달의 운동 용어","words":["자전","공전","일주운동","연주운동","황도"]}]},{"g":"중1","u":"태양계 · 4차시 · 달의 위상과 일식·월식","unit":"태양계","mid":"② 지구와 달의 운동","title":"4차시 · 달의 위상과 일식·월식","kind":"lesson","rounds":[{"topic":"달의 위상과 일식·월식 용어","words":["상현달","보름달","하현달","개기일식","코로나"]}]},{"g":"중2","u":"물질의 특성","unit":"물질의 특성","title":"물질의 특성 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 물질의 특성","words":["밀도","용해도","끓는점","녹는점","증류"]},{"topic":"중2 · 혼합물의 분리","words":["증류","재결정","분별깔때기","밀도차","색소"]},{"topic":"중2 · 용해도","words":["용질","용매","포화용액","석출","용해도곡선"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]},{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]},{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]}]},{"g":"중2","u":"물질의 특성 · ① 물질의 특성 종합","unit":"물질의 특성","mid":"① 물질의 특성","title":"물질의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]},{"topic":"녹는점과 끓는점 용어","words":["녹는점","끓는점","어는점","온도","끓는점상승"]},{"topic":"용해도 용어","words":["용해","용질","용매","용액","용해도"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]}]},{"g":"중2","u":"물질의 특성 · 1차시 · 밀도","unit":"물질의 특성","mid":"① 물질의 특성","title":"1차시 · 밀도","kind":"lesson","rounds":[{"topic":"밀도 용어","words":["밀도","물질의특성","부피","질량","물넘침법"]}]},{"g":"중2","u":"물질의 특성 · 2차시 · 용해도","unit":"물질의 특성","mid":"① 물질의 특성","title":"2차시 · 용해도","kind":"lesson","rounds":[{"topic":"용해도 용어","words":["용해","용질","용매","용액","용해도"]},{"topic":"용해도 용어 ②","words":["포화용액","증가","감소","압력감소","용해도곡선"]}]},{"g":"중2","u":"물질의 특성 · 3차시 · 녹는점과 끓는점","unit":"물질의 특성","mid":"① 물질의 특성","title":"3차시 · 녹는점과 끓는점","kind":"lesson","rounds":[{"topic":"녹는점과 끓는점 용어","words":["녹는점","끓는점","어는점","온도","끓는점상승"]}]},{"g":"중2","u":"물질의 특성 · ② 혼합물의 분리 종합","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"혼합물의 분리 중단원 종합","kind":"mid","rounds":[{"topic":"순물질과 혼합물 용어","words":["순물질","홑원소물질","화합물","균일혼합물","불균일혼합물"]},{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]},{"topic":"생활 속 분리의 예 용어","words":["증류","끓는점차","분별깔때기","밀도차","재결정"]}]},{"g":"중2","u":"물질의 특성 · 4차시 · 순물질과 혼합물","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"4차시 · 순물질과 혼합물","kind":"lesson","rounds":[{"topic":"순물질과 혼합물 용어","words":["순물질","홑원소물질","화합물","균일혼합물","불균일혼합물"]}]},{"g":"중2","u":"물질의 특성 · 5차시 · 혼합물의 분리","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"5차시 · 혼합물의 분리","kind":"lesson","rounds":[{"topic":"혼합물의 분리 용어","words":["순물질","혼합물","증류","증류탑","분별깔때기"]}]},{"g":"중2","u":"물질의 특성 · 6차시 · 생활 속 분리의 예","unit":"물질의 특성","mid":"② 혼합물의 분리","title":"6차시 · 생활 속 분리의 예","kind":"lesson","rounds":[{"topic":"생활 속 분리의 예 용어","words":["증류","끓는점차","분별깔때기","밀도차","재결정"]}]},{"g":"중2","u":"지권의 변화","unit":"지권의 변화","title":"지권의 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 지권의 구조","words":["지각","맨틀","외핵","내핵","지진파"]},{"topic":"중2 · 암석","words":["화강암","현무암","사암","편마암","대리암"]},{"topic":"중2 · 판의 운동","words":["베게너","판게아","맨틀대류","발산형","수렴형"]},{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]},{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]},{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"지권의 변화 · ① 지권의 층상 구조 종합","unit":"지권의 변화","mid":"① 지권의 층상 구조","title":"지권의 층상 구조 중단원 종합","kind":"mid","rounds":[{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]}]},{"g":"중2","u":"지권의 변화 · 1차시 · 지구계와 지권의 층상 구조","unit":"지권의 변화","mid":"① 지권의 층상 구조","title":"1차시 · 지구계와 지권의 층상 구조","kind":"lesson","rounds":[{"topic":"지구계와 지권의 층상 구조 용어","words":["지구계","지권","지각","맨틀","외핵"]}]},{"g":"중2","u":"지권의 변화 · ② 지각을 이루는 물질 종합","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"지각을 이루는 물질 중단원 종합","kind":"mid","rounds":[{"topic":"암석 용어","words":["화성암","현무암","화강암","퇴적암","층리"]},{"topic":"암석 용어 ②","words":["화석","변성암","편마암","대리암","엽리"]},{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]},{"topic":"광물 용어","words":["광물","조암광물","조흔색","방해석","자철석"]}]},{"g":"중2","u":"지권의 변화 · 2차시 · 광물","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"2차시 · 광물","kind":"lesson","rounds":[{"topic":"광물 용어","words":["광물","조암광물","조흔색","방해석","자철석"]}]},{"g":"중2","u":"지권의 변화 · 3차시 · 암석","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"3차시 · 암석","kind":"lesson","rounds":[{"topic":"암석 용어","words":["화성암","현무암","화강암","퇴적암","층리"]},{"topic":"암석 용어 ②","words":["화석","변성암","편마암","대리암","엽리"]}]},{"g":"중2","u":"지권의 변화 · 4차시 · 암석의 순환","unit":"지권의 변화","mid":"② 지각을 이루는 물질","title":"4차시 · 암석의 순환","kind":"lesson","rounds":[{"topic":"암석의 순환 용어","words":["암석의순환","마그마","풍화","퇴적","다짐작용"]}]},{"g":"중2","u":"지권의 변화 · ③ 지권의 운동 종합","unit":"지권의 변화","mid":"③ 지권의 운동","title":"지권의 운동 중단원 종합","kind":"mid","rounds":[{"topic":"풍화와 판의 운동 용어","words":["풍화","토양","베게너","판게아","발산형경계"]},{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"지권의 변화 · 5차시 · 풍화와 판의 운동","unit":"지권의 변화","mid":"③ 지권의 운동","title":"5차시 · 풍화와 판의 운동","kind":"lesson","rounds":[{"topic":"풍화와 판의 운동 용어","words":["풍화","토양","베게너","판게아","발산형경계"]}]},{"g":"중2","u":"지권의 변화 · 6차시 · 지진과 화산","unit":"지권의 변화","mid":"③ 지권의 운동","title":"6차시 · 지진과 화산","kind":"lesson","rounds":[{"topic":"지진과 화산 용어","words":["지진","진원","진앙","규모","진도"]}]},{"g":"중2","u":"빛과 파동","unit":"빛과 파동","title":"빛과 파동 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 빛","words":["반사","굴절","법선","실상","허상"]},{"topic":"중2 · 소리","words":["파장","진폭","진동수","음색","매질"]},{"topic":"중2 · 거울과 렌즈","words":["오목거울","볼록거울","볼록렌즈","오목렌즈","돋보기"]},{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]},{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]},{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]}]},{"g":"중2","u":"빛과 파동 · ① 빛 종합","unit":"빛과 파동","mid":"① 빛","title":"빛 중단원 종합","kind":"mid","rounds":[{"topic":"빛의 반사와 굴절 용어","words":["반사","반사법칙","법선","굴절","빛의굴절"]},{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]},{"topic":"빛의 합성과 색 용어","words":["빨강·초록·파랑","노란색","청록색","자홍색","흰색"]}]},{"g":"중2","u":"빛과 파동 · 1차시 · 빛의 반사와 굴절","unit":"빛과 파동","mid":"① 빛","title":"1차시 · 빛의 반사와 굴절","kind":"lesson","rounds":[{"topic":"빛의 반사와 굴절 용어","words":["반사","반사법칙","법선","굴절","빛의굴절"]}]},{"g":"중2","u":"빛과 파동 · 2차시 · 물체를 보는 과정과 거울·렌즈","unit":"빛과 파동","mid":"① 빛","title":"2차시 · 물체를 보는 과정과 거울·렌즈","kind":"lesson","rounds":[{"topic":"물체를 보는 과정과 거울·렌즈 용어","words":["광원","실상","허상","오목거울","볼록거울"]}]},{"g":"중2","u":"빛과 파동 · 3차시 · 빛의 합성과 색","unit":"빛과 파동","mid":"① 빛","title":"3차시 · 빛의 합성과 색","kind":"lesson","rounds":[{"topic":"빛의 합성과 색 용어","words":["빨강·초록·파랑","노란색","청록색","자홍색","흰색"]}]},{"g":"중2","u":"빛과 파동 · ② 파동과 소리 종합","unit":"빛과 파동","mid":"② 파동과 소리","title":"파동과 소리 중단원 종합","kind":"mid","rounds":[{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]},{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]},{"topic":"빛의 합성과 파동·소리 용어 ②","words":["파장","진동수","소리의높이","소리의세기","음색"]},{"topic":"소리의 특성 용어","words":["전달안됨","높은소리","큰소리","초음파","초음파진단기"]}]},{"g":"중2","u":"빛과 파동 · 4차시 · 파동의 종류와 요소","unit":"빛과 파동","mid":"② 파동과 소리","title":"4차시 · 파동의 종류와 요소","kind":"lesson","rounds":[{"topic":"파동의 종류와 요소 용어","words":["횡파","종파","S파","소리","매질"]}]},{"g":"중2","u":"빛과 파동 · 5차시 · 소리의 특성","unit":"빛과 파동","mid":"② 파동과 소리","title":"5차시 · 소리의 특성","kind":"lesson","rounds":[{"topic":"소리의 특성 용어","words":["전달안됨","높은소리","큰소리","초음파","초음파진단기"]}]},{"g":"중2","u":"빛과 파동 · 6차시 · 빛의 합성과 파동·소리","unit":"빛과 파동","mid":"② 파동과 소리","title":"6차시 · 빛의 합성과 파동·소리","kind":"lesson","rounds":[{"topic":"빛의 합성과 파동·소리 용어","words":["빛의합성","흰색","파동","파원","마루"]},{"topic":"빛의 합성과 파동·소리 용어 ②","words":["파장","진동수","소리의높이","소리의세기","음색"]}]},{"g":"중2","u":"물질의 구성","unit":"물질의 구성","title":"물질의 구성 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 물질의 구성","words":["원소","원자","분자","이온","화합물"]},{"topic":"중2 · 원자와 분자","words":["원자핵","전자","분자","주기율표","족"]},{"topic":"중2 · 이온","words":["양이온","음이온","전해질","앙금","염화은"]},{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]},{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]},{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · ① 원소 종합","unit":"물질의 구성","mid":"① 원소","title":"원소 중단원 종합","kind":"mid","rounds":[{"topic":"원소 기호 용어","words":["수소","산소","탄소","질소","나트륨"]},{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]}]},{"g":"중2","u":"물질의 구성 · 1차시 · 원소와 화합물","unit":"물질의 구성","mid":"① 원소","title":"1차시 · 원소와 화합물","kind":"lesson","rounds":[{"topic":"원소와 화합물 용어","words":["원소","화합물","원소기호","화학식","H2O"]}]},{"g":"중2","u":"물질의 구성 · 2차시 · 원소 기호","unit":"물질의 구성","mid":"① 원소","title":"2차시 · 원소 기호","kind":"lesson","rounds":[{"topic":"원소 기호 용어","words":["수소","산소","탄소","질소","나트륨"]}]},{"g":"중2","u":"물질의 구성 · ② 원자와 분자 종합","unit":"물질의 구성","mid":"② 원자와 분자","title":"원자와 분자 중단원 종합","kind":"mid","rounds":[{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]},{"topic":"원자·분자와 주기율표 용어","words":["원자","원자핵","전자","분자","주기율표"]}]},{"g":"중2","u":"물질의 구성 · 3차시 · 원자·분자와 주기율표","unit":"물질의 구성","mid":"② 원자와 분자","title":"3차시 · 원자·분자와 주기율표","kind":"lesson","rounds":[{"topic":"원자·분자와 주기율표 용어","words":["원자","원자핵","전자","분자","주기율표"]}]},{"g":"중2","u":"물질의 구성 · 4차시 · 분자와 화학식","unit":"물질의 구성","mid":"② 원자와 분자","title":"4차시 · 분자와 화학식","kind":"lesson","rounds":[{"topic":"분자와 화학식 용어","words":["H2O","CO2","O2","H2","NH3"]}]},{"g":"중2","u":"물질의 구성 · ③ 이온 종합","unit":"물질의 구성","mid":"③ 이온","title":"이온 중단원 종합","kind":"mid","rounds":[{"topic":"이온의 이름과 확인 용어","words":["나트륨이온","염화이온","칼슘이온","황산이온","탄산이온"]},{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · 5차시 · 이온","unit":"물질의 구성","mid":"③ 이온","title":"5차시 · 이온","kind":"lesson","rounds":[{"topic":"이온 용어","words":["이온","양이온","음이온","(-)극","(+)극"]}]},{"g":"중2","u":"물질의 구성 · 6차시 · 이온의 이름과 확인","unit":"물질의 구성","mid":"③ 이온","title":"6차시 · 이온의 이름과 확인","kind":"lesson","rounds":[{"topic":"이온의 이름과 확인 용어","words":["나트륨이온","염화이온","칼슘이온","황산이온","탄산이온"]}]},{"g":"중2","u":"식물과 에너지","unit":"식물과 에너지","title":"식물과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 광합성","words":["엽록체","포도당","산소","기공","빛에너지"]},{"topic":"중2 · 환경요인","words":["빛의세기","이산화탄소","온도","광합성량","엽록소"]},{"topic":"중2 · 호흡과 광합성","words":["호흡","포도당","산소","에너지","기체출입"]},{"topic":"중2 · 광합성산물","words":["녹말","설탕","체관","감자","땅콩"]},{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]},{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]},{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]}]},{"g":"중2","u":"식물과 에너지 · ① 광합성 종합","unit":"식물과 에너지","mid":"① 광합성","title":"광합성 중단원 종합","kind":"mid","rounds":[{"topic":"광합성 탐구 용어","words":["에탄올","물중탕","엽록소제거","청람색","산소"]},{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]},{"topic":"식물의 광합성 용어 ②","words":["산소","기공","물관","아이오딘","청람색"]},{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]}]},{"g":"중2","u":"식물과 에너지 · 1차시 · 식물의 광합성","unit":"식물과 에너지","mid":"① 광합성","title":"1차시 · 식물의 광합성","kind":"lesson","rounds":[{"topic":"식물의 광합성 용어","words":["광합성","엽록체","엽록소","포도당","녹말"]},{"topic":"식물의 광합성 용어 ②","words":["산소","기공","물관","아이오딘","청람색"]}]},{"g":"중2","u":"식물과 에너지 · 2차시 · 광합성에 영향을 미치는 환경요인","unit":"식물과 에너지","mid":"① 광합성","title":"2차시 · 광합성에 영향을 미치는 환경요인","kind":"lesson","rounds":[{"topic":"광합성에 영향을 미치는 환경요인 용어","words":["빛의세기","온도","이산화탄소","엽록체수한정","변인"]}]},{"g":"중2","u":"식물과 에너지 · 3차시 · 광합성 탐구","unit":"식물과 에너지","mid":"① 광합성","title":"3차시 · 광합성 탐구","kind":"lesson","rounds":[{"topic":"광합성 탐구 용어","words":["에탄올","물중탕","엽록소제거","청람색","산소"]}]},{"g":"중2","u":"식물과 에너지 · ② 식물의 호흡과 에너지 종합","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"식물의 호흡과 에너지 중단원 종합","kind":"mid","rounds":[{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]},{"topic":"광합성산물의 저장과 이용 용어","words":["설탕","체관","녹말","지방과단백질","포도당"]}]},{"g":"중2","u":"식물과 에너지 · 4차시 · 식물의 호흡과 광합성","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"4차시 · 식물의 호흡과 광합성","kind":"lesson","rounds":[{"topic":"식물의 호흡과 광합성 용어","words":["호흡","마이토콘드리아","산소","이산화탄소","낮의이산화탄소"]}]},{"g":"중2","u":"식물과 에너지 · 5차시 · 광합성산물의 저장과 이용","unit":"식물과 에너지","mid":"② 식물의 호흡과 에너지","title":"5차시 · 광합성산물의 저장과 이용","kind":"lesson","rounds":[{"topic":"광합성산물의 저장과 이용 용어","words":["설탕","체관","녹말","지방과단백질","포도당"]}]},{"g":"중2","u":"동물과 에너지","unit":"동물과 에너지","title":"동물과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 영양소","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"중2 · 소화","words":["아밀레이스","펩신","쓸개즙","융털","암죽관"]},{"topic":"중2 · 순환","words":["좌심실","판막","적혈구","혈장","폐순환"]},{"topic":"중2 · 호흡과 배설","words":["폐포","횡격막","콩팥","네프론","요소"]},{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]}]},{"g":"중2","u":"동물과 에너지 · ① 영양소와 소화 종합","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"영양소와 소화 중단원 종합","kind":"mid","rounds":[{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"영양소와 소화 정리 용어 ②","words":["보라색","아밀레이스","펩신","라이페이스","융털"]},{"topic":"영양소 용어","words":["탄수화물","단백질","지방","무기염류","바이타민"]},{"topic":"소화와 흡수 용어 ②","words":["라이페이스","소장","융털","암죽관","대장"]},{"topic":"소화와 흡수 용어","words":["아밀레이스","펩신","염산","쓸개즙","트립신"]}]},{"g":"중2","u":"동물과 에너지 · 1차시 · 영양소","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"1차시 · 영양소","kind":"lesson","rounds":[{"topic":"영양소 용어","words":["탄수화물","단백질","지방","무기염류","바이타민"]}]},{"g":"중2","u":"동물과 에너지 · 2차시 · 소화와 흡수","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"2차시 · 소화와 흡수","kind":"lesson","rounds":[{"topic":"소화와 흡수 용어","words":["아밀레이스","펩신","염산","쓸개즙","트립신"]},{"topic":"소화와 흡수 용어 ②","words":["라이페이스","소장","융털","암죽관","대장"]}]},{"g":"중2","u":"동물과 에너지 · 3차시 · 영양소와 소화 정리","unit":"동물과 에너지","mid":"① 영양소와 소화","title":"3차시 · 영양소와 소화 정리","kind":"lesson","rounds":[{"topic":"영양소와 소화 정리 용어","words":["탄수화물","단백질","지방","바이타민","무기염류"]},{"topic":"영양소와 소화 정리 용어 ②","words":["보라색","아밀레이스","펩신","라이페이스","융털"]}]},{"g":"중2","u":"동물과 에너지 · ② 순환 종합","unit":"동물과 에너지","mid":"② 순환","title":"순환 중단원 종합","kind":"mid","rounds":[{"topic":"혈액과 혈액 순환 용어","words":["적혈구","헤모글로빈","백혈구","혈소판","혈장"]},{"topic":"심장과 혈관 용어","words":["심방","심실","좌심실","판막","동맥"]}]},{"g":"중2","u":"동물과 에너지 · 4차시 · 심장과 혈관","unit":"동물과 에너지","mid":"② 순환","title":"4차시 · 심장과 혈관","kind":"lesson","rounds":[{"topic":"심장과 혈관 용어","words":["심방","심실","좌심실","판막","동맥"]}]},{"g":"중2","u":"동물과 에너지 · 5차시 · 혈액과 혈액 순환","unit":"동물과 에너지","mid":"② 순환","title":"5차시 · 혈액과 혈액 순환","kind":"lesson","rounds":[{"topic":"혈액과 혈액 순환 용어","words":["적혈구","헤모글로빈","백혈구","혈소판","혈장"]}]},{"g":"중2","u":"동물과 에너지 · ③ 호흡과 배설 종합","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"호흡과 배설 중단원 종합","kind":"mid","rounds":[{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"호흡 용어","words":["기관지","폐포","횡격막","들숨","날숨"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]},{"topic":"배설 용어","words":["배설","암모니아","콩팥","네프론","사구체"]}]},{"g":"중2","u":"동물과 에너지 · 6차시 · 호흡","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"6차시 · 호흡","kind":"lesson","rounds":[{"topic":"호흡 용어","words":["기관지","폐포","횡격막","들숨","날숨"]}]},{"g":"중2","u":"동물과 에너지 · 7차시 · 배설","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"7차시 · 배설","kind":"lesson","rounds":[{"topic":"배설 용어","words":["배설","암모니아","콩팥","네프론","사구체"]}]},{"g":"중2","u":"동물과 에너지 · 8차시 · 순환·호흡·배설 정리","unit":"동물과 에너지","mid":"③ 호흡과 배설","title":"8차시 · 순환·호흡·배설 정리","kind":"lesson","rounds":[{"topic":"순환·호흡·배설 정리 용어","words":["좌심실","판막","적혈구","백혈구","혈소판"]},{"topic":"순환·호흡·배설 정리 용어 ②","words":["온몸순환","폐순환","폐포","횡격막","네프론"]}]},{"g":"중2","u":"전기와 자기","unit":"전기와 자기","title":"전기와 자기 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 전기","words":["전류","전압","저항","옴의법칙","전자석"]},{"topic":"중2 · 마찰 전기","words":["대전","전자","인력","척력","검전기"]},{"topic":"중2 · 자기","words":["자기장","자기력선","전자석","코일","전동기"]},{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]},{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]},{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · ① 전기 종합","unit":"전기와 자기","mid":"① 전기","title":"전기 중단원 종합","kind":"mid","rounds":[{"topic":"마찰 전기와 정전기 유도 용어","words":["마찰전기","전자","대전","대전체","척력"]},{"topic":"옴의 법칙과 회로 용어","words":["저항","직렬","병렬","그대로","병렬연결"]},{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · 1차시 · 마찰 전기와 정전기 유도","unit":"전기와 자기","mid":"① 전기","title":"1차시 · 마찰 전기와 정전기 유도","kind":"lesson","rounds":[{"topic":"마찰 전기와 정전기 유도 용어","words":["마찰전기","전자","대전","대전체","척력"]}]},{"g":"중2","u":"전기와 자기 · 2차시 · 전류·전압·저항","unit":"전기와 자기","mid":"① 전기","title":"2차시 · 전류·전압·저항","kind":"lesson","rounds":[{"topic":"전류·전압·저항 용어","words":["전류","전압","저항","암페어","볼트"]}]},{"g":"중2","u":"전기와 자기 · 3차시 · 옴의 법칙과 회로","unit":"전기와 자기","mid":"① 전기","title":"3차시 · 옴의 법칙과 회로","kind":"lesson","rounds":[{"topic":"옴의 법칙과 회로 용어","words":["저항","직렬","병렬","그대로","병렬연결"]}]},{"g":"중2","u":"전기와 자기 · ② 자기 종합","unit":"전기와 자기","mid":"② 자기","title":"자기 중단원 종합","kind":"mid","rounds":[{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]},{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]}]},{"g":"중2","u":"전기와 자기 · 4차시 · 저항의 연결과 자기","unit":"전기와 자기","mid":"② 자기","title":"4차시 · 저항의 연결과 자기","kind":"lesson","rounds":[{"topic":"저항의 연결과 자기 용어","words":["직렬연결","병렬연결","자기장","자기력선","전자석"]}]},{"g":"중2","u":"전기와 자기 · 5차시 · 자기장과 전자석","unit":"전기와 자기","mid":"② 자기","title":"5차시 · 자기장과 전자석","kind":"lesson","rounds":[{"topic":"자기장과 전자석 용어","words":["자기장","자기력선","N극","나침반","오른손법칙"]}]},{"g":"중2","u":"별과 우주","unit":"별과 우주","title":"별과 우주 대단원 종합","kind":"unit","rounds":[{"topic":"중2 · 별과 우주","words":["연주시차","등급","성운","성단","우리은하"]},{"topic":"중2 · 별의 밝기","words":["겉보기등급","절대등급","표면온도","청색","붉은색"]},{"topic":"중2 · 우리은하","words":["은하수","나선팔","산개성단","구상성단","외부은하"]},{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]},{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]},{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]}]},{"g":"중2","u":"별과 우주 · ① 별의 특성 종합","unit":"별과 우주","mid":"① 별의 특성","title":"별의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]},{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]}]},{"g":"중2","u":"별과 우주 · 1차시 · 별까지의 거리와 밝기","unit":"별과 우주","mid":"① 별의 특성","title":"1차시 · 별까지의 거리와 밝기","kind":"lesson","rounds":[{"topic":"별까지의 거리와 밝기 용어","words":["시차","연주시차","등급","겉보기등급","절대등급"]}]},{"g":"중2","u":"별과 우주 · 2차시 · 별의 밝기 비교","unit":"별과 우주","mid":"① 별의 특성","title":"2차시 · 별의 밝기 비교","kind":"lesson","rounds":[{"topic":"별의 밝기 비교 용어","words":["약2.5배","약3.26광년","황색","청색","시차"]}]},{"g":"중2","u":"별과 우주 · ② 은하와 우주 종합","unit":"별과 우주","mid":"② 은하와 우주","title":"은하와 우주 중단원 종합","kind":"mid","rounds":[{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]},{"topic":"우주 탐사 용어","words":["스푸트니크1호","아폴로11호","우주망원경","탐사선","로버"]}]},{"g":"중2","u":"별과 우주 · 3차시 · 우리은하와 우주","unit":"별과 우주","mid":"② 은하와 우주","title":"3차시 · 우리은하와 우주","kind":"lesson","rounds":[{"topic":"우리은하와 우주 용어","words":["우리은하","은하수","구상성단","산개성단","성운"]}]},{"g":"중2","u":"별과 우주 · 4차시 · 우주 탐사","unit":"별과 우주","mid":"② 은하와 우주","title":"4차시 · 우주 탐사","kind":"lesson","rounds":[{"topic":"우주 탐사 용어","words":["스푸트니크1호","아폴로11호","우주망원경","탐사선","로버"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화","unit":"화학 반응의 규칙과 에너지 변화","title":"화학 반응의 규칙과 에너지 변화 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 물질의 변화","words":["물리변화","화학변화","반응물","생성물","계수"]},{"topic":"중3 · 화학 반응의 규칙","words":["질량보존","일정성분비","기체반응","라부아지에","부피비"]},{"topic":"중3 · 에너지 출입","words":["발열반응","흡열반응","손난로","냉찜질","광합성"]},{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]},{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]},{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ① 물질의 변화와 화학 반응식 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"물질의 변화와 화학 반응식 중단원 종합","kind":"mid","rounds":[{"topic":"화학 반응식 읽기 용어","words":["수소와산소","이산화탄소와물","이산화탄소","반응의진행방향","원자수"]},{"topic":"물질의 변화와 화학 반응식 용어 ②","words":["생성물","계수","분자수의비","연소","앙금"]},{"topic":"물질의 변화와 화학 반응식 용어","words":["물리변화","화학변화","원자","화학반응식","반응물"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 1차시 · 물질의 변화와 화학 반응식","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"1차시 · 물질의 변화와 화학 반응식","kind":"lesson","rounds":[{"topic":"물질의 변화와 화학 반응식 용어","words":["물리변화","화학변화","원자","화학반응식","반응물"]},{"topic":"물질의 변화와 화학 반응식 용어 ②","words":["생성물","계수","분자수의비","연소","앙금"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 2차시 · 화학 반응식 읽기","unit":"화학 반응의 규칙과 에너지 변화","mid":"① 물질의 변화와 화학 반응식","title":"2차시 · 화학 반응식 읽기","kind":"lesson","rounds":[{"topic":"화학 반응식 읽기 용어","words":["수소와산소","이산화탄소와물","이산화탄소","반응의진행방향","원자수"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ② 화학 반응의 규칙 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"화학 반응의 규칙 중단원 종합","kind":"mid","rounds":[{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]},{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 3차시 · 화학 반응의 규칙","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"3차시 · 화학 반응의 규칙","kind":"lesson","rounds":[{"topic":"화학 반응의 규칙 용어","words":["질량보존법칙","라부아지에","일정성분비법칙","기체반응법칙","증가"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 4차시 · 질량 변화 실험","unit":"화학 반응의 규칙과 에너지 변화","mid":"② 화학 반응의 규칙","title":"4차시 · 질량 변화 실험","kind":"lesson","rounds":[{"topic":"질량 변화 실험 용어","words":["감소","이산화탄소","변화없음","증가","산소"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · ③ 화학 반응과 에너지 변화 종합","unit":"화학 반응의 규칙과 에너지 변화","mid":"③ 화학 반응과 에너지 변화","title":"화학 반응과 에너지 변화 중단원 종합","kind":"mid","rounds":[{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]}]},{"g":"중3","u":"화학 반응의 규칙과 에너지 변화 · 5차시 · 화학 반응과 에너지 출입","unit":"화학 반응의 규칙과 에너지 변화","mid":"③ 화학 반응과 에너지 변화","title":"5차시 · 화학 반응과 에너지 출입","kind":"lesson","rounds":[{"topic":"화학 반응과 에너지 출입 용어","words":["발열반응","흡열반응","손난로","냉찜질팩","발열도시락"]}]},{"g":"중3","u":"기권과 날씨","unit":"기권과 날씨","title":"기권과 날씨 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 기권의 구조","words":["대류권","성층권","중간권","열권","오존층"]},{"topic":"중3 · 대기 중의 물","words":["포화","응결","이슬점","상대습도","구름"]},{"topic":"중3 · 기압과 바람","words":["기압","해풍","육풍","기단","전선"]},{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]},{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]},{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"기권과 날씨 · ① 기권과 지구의 기온 종합","unit":"기권과 날씨","mid":"① 기권과 지구의 기온","title":"기권과 지구의 기온 중단원 종합","kind":"mid","rounds":[{"topic":"기권과 복사 평형 용어 ②","words":["복사평형","온실효과","이산화탄소","지구온난화","오존층"]},{"topic":"기권과 복사 평형 용어","words":["기권","대류권","성층권","중간권","열권"]}]},{"g":"중3","u":"기권과 날씨 · 1차시 · 기권과 복사 평형","unit":"기권과 날씨","mid":"① 기권과 지구의 기온","title":"1차시 · 기권과 복사 평형","kind":"lesson","rounds":[{"topic":"기권과 복사 평형 용어","words":["기권","대류권","성층권","중간권","열권"]},{"topic":"기권과 복사 평형 용어 ②","words":["복사평형","온실효과","이산화탄소","지구온난화","오존층"]}]},{"g":"중3","u":"기권과 날씨 · ② 구름과 강수 종합","unit":"기권과 날씨","mid":"② 구름과 강수","title":"구름과 강수 중단원 종합","kind":"mid","rounds":[{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]},{"topic":"대기 중의 물과 구름 용어","words":["포화상태","포화수증기량","응결","이슬점","상대습도"]}]},{"g":"중3","u":"기권과 날씨 · 2차시 · 상대 습도와 이슬점","unit":"기권과 날씨","mid":"② 구름과 강수","title":"2차시 · 상대 습도와 이슬점","kind":"lesson","rounds":[{"topic":"상대 습도와 이슬점 용어","words":["기온상승","한낮","새벽","응결","습도계"]}]},{"g":"중3","u":"기권과 날씨 · 3차시 · 대기 중의 물과 구름","unit":"기권과 날씨","mid":"② 구름과 강수","title":"3차시 · 대기 중의 물과 구름","kind":"lesson","rounds":[{"topic":"대기 중의 물과 구름 용어","words":["포화상태","포화수증기량","응결","이슬점","상대습도"]}]},{"g":"중3","u":"기권과 날씨 · ③ 기압과 날씨 종합","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"기압과 날씨 중단원 종합","kind":"mid","rounds":[{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]},{"topic":"기압과 바람, 날씨 변화 용어","words":["기압","토리첼리","기압차","해풍","육풍"]},{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"기권과 날씨 · 4차시 · 기압과 바람, 날씨 변화","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"4차시 · 기압과 바람, 날씨 변화","kind":"lesson","rounds":[{"topic":"기압과 바람, 날씨 변화 용어","words":["기압","토리첼리","기압차","해풍","육풍"]},{"topic":"기압과 바람, 날씨 변화 용어 ②","words":["계절풍","기단","전선","고기압","저기압"]}]},{"g":"중3","u":"기권과 날씨 · 5차시 · 기단과 전선, 일기도","unit":"기권과 날씨","mid":"③ 기압과 날씨","title":"5차시 · 기단과 전선, 일기도","kind":"lesson","rounds":[{"topic":"기단과 전선, 일기도 용어","words":["시베리아기단","북태평양기단","오호츠크해기단","한랭전선","온난전선"]}]},{"g":"중3","u":"운동과 에너지","unit":"운동과 에너지","title":"운동과 에너지 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 운동의 기록","words":["속력","등속운동","평균속력","시간기록계","섬광사진"]},{"topic":"중3 · 자유 낙하","words":["중력","9.8","중력가속도","공기저항","낙하산"]},{"topic":"중3 · 일과 에너지","words":["일","줄","위치에너지","운동에너지","기준면"]},{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]},{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]},{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]}]},{"g":"중3","u":"운동과 에너지 · ① 운동 종합","unit":"운동과 에너지","mid":"① 운동","title":"운동 중단원 종합","kind":"mid","rounds":[{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]},{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]},{"topic":"운동의 기록과 등속 운동 용어 ②","words":["이동거리","수평한직선","이동한거리","무빙워크","m/s"]},{"topic":"운동 그래프 읽기 용어","words":["속력","이동거리","수평선","등속운동","빨라지는운동"]}]},{"g":"중3","u":"운동과 에너지 · 1차시 · 운동의 기록과 등속 운동","unit":"운동과 에너지","mid":"① 운동","title":"1차시 · 운동의 기록과 등속 운동","kind":"lesson","rounds":[{"topic":"운동의 기록과 등속 운동 용어","words":["속력","평균속력","다중섬광사진","시간기록계","등속운동"]},{"topic":"운동의 기록과 등속 운동 용어 ②","words":["이동거리","수평한직선","이동한거리","무빙워크","m/s"]}]},{"g":"중3","u":"운동과 에너지 · 2차시 · 자유 낙하 운동","unit":"운동과 에너지","mid":"① 운동","title":"2차시 · 자유 낙하 운동","kind":"lesson","rounds":[{"topic":"자유 낙하 운동 용어","words":["자유낙하","중력가속도","동시에","기울어진직선","공기저항"]}]},{"g":"중3","u":"운동과 에너지 · 3차시 · 운동 그래프 읽기","unit":"운동과 에너지","mid":"① 운동","title":"3차시 · 운동 그래프 읽기","kind":"lesson","rounds":[{"topic":"운동 그래프 읽기 용어","words":["속력","이동거리","수평선","등속운동","빨라지는운동"]}]},{"g":"중3","u":"운동과 에너지 · ② 일과 에너지 종합","unit":"운동과 에너지","mid":"② 일과 에너지","title":"일과 에너지 중단원 종합","kind":"mid","rounds":[{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]},{"topic":"위치 에너지와 운동 에너지 계산 용어","words":["위치에너지","운동에너지","에너지","½mv²","기준면"]}]},{"g":"중3","u":"운동과 에너지 · 4차시 · 일과 에너지","unit":"운동과 에너지","mid":"② 일과 에너지","title":"4차시 · 일과 에너지","kind":"lesson","rounds":[{"topic":"일과 에너지 용어","words":["에너지","위치에너지","운동에너지","½mv²","기준면"]}]},{"g":"중3","u":"운동과 에너지 · 5차시 · 위치 에너지와 운동 에너지 계산","unit":"운동과 에너지","mid":"② 일과 에너지","title":"5차시 · 위치 에너지와 운동 에너지 계산","kind":"lesson","rounds":[{"topic":"위치 에너지와 운동 에너지 계산 용어","words":["위치에너지","운동에너지","에너지","½mv²","기준면"]}]},{"g":"중3","u":"자극과 반응","unit":"자극과 반응","title":"자극과 반응 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 감각 기관","words":["망막","홍채","달팽이관","맛세포","통점"]},{"topic":"중3 · 신경계","words":["뉴런","대뇌","소뇌","연수","척수"]},{"topic":"중3 · 호르몬","words":["인슐린","글루카곤","티록신","항상성","혈당량"]},{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · ① 감각 기관 종합","unit":"자극과 반응","mid":"① 감각 기관","title":"감각 기관 중단원 종합","kind":"mid","rounds":[{"topic":"감각 기관 용어 ②","words":["고막","달팽이관","반고리관","전정기관","후각상피"]},{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"눈과 귀의 구조 용어","words":["각막","수정체","섬모체","홍채","고막"]}]},{"g":"중3","u":"자극과 반응 · 1차시 · 눈과 귀의 구조","unit":"자극과 반응","mid":"① 감각 기관","title":"1차시 · 눈과 귀의 구조","kind":"lesson","rounds":[{"topic":"눈과 귀의 구조 용어","words":["각막","수정체","섬모체","홍채","고막"]}]},{"g":"중3","u":"자극과 반응 · 2차시 · 감각 기관","unit":"자극과 반응","mid":"① 감각 기관","title":"2차시 · 감각 기관","kind":"lesson","rounds":[{"topic":"감각 기관 용어","words":["망막","황반","맹점","홍채","섬모체"]},{"topic":"감각 기관 용어 ②","words":["고막","달팽이관","반고리관","전정기관","후각상피"]}]},{"g":"중3","u":"자극과 반응 · ② 신경계 종합","unit":"자극과 반응","mid":"② 신경계","title":"신경계 중단원 종합","kind":"mid","rounds":[{"topic":"뉴런과 신경계 용어 ②","words":["대뇌","소뇌","간뇌","연수","척수"]},{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · 3차시 · 뉴런과 신경계","unit":"자극과 반응","mid":"② 신경계","title":"3차시 · 뉴런과 신경계","kind":"lesson","rounds":[{"topic":"뉴런과 신경계 용어","words":["뉴런","가지돌기","축삭돌기","감각뉴런","운동뉴런"]},{"topic":"뉴런과 신경계 용어 ②","words":["대뇌","소뇌","간뇌","연수","척수"]}]},{"g":"중3","u":"자극과 반응 · 4차시 · 자극의 전달 경로","unit":"자극과 반응","mid":"② 신경계","title":"4차시 · 자극의 전달 경로","kind":"lesson","rounds":[{"topic":"자극의 전달 경로 용어","words":["감각기관","감각뉴런","연합뉴런","운동뉴런","대뇌"]}]},{"g":"중3","u":"자극과 반응 · ③ 호르몬과 항상성 종합","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"호르몬과 항상성 중단원 종합","kind":"mid","rounds":[{"topic":"체온과 혈당량 조절 용어","words":["인슐린","글루카곤","글리코젠","당뇨병","간뇌"]},{"topic":"호르몬과 항상성 유지 용어","words":["호르몬","표적기관","인슐린","글루카곤","티록신"]}]},{"g":"중3","u":"자극과 반응 · 5차시 · 호르몬과 항상성 유지","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"5차시 · 호르몬과 항상성 유지","kind":"lesson","rounds":[{"topic":"호르몬과 항상성 유지 용어","words":["호르몬","표적기관","인슐린","글루카곤","티록신"]}]},{"g":"중3","u":"자극과 반응 · 6차시 · 체온과 혈당량 조절","unit":"자극과 반응","mid":"③ 호르몬과 항상성","title":"6차시 · 체온과 혈당량 조절","kind":"lesson","rounds":[{"topic":"체온과 혈당량 조절 용어","words":["인슐린","글루카곤","글리코젠","당뇨병","간뇌"]}]},{"g":"중3","u":"생식과 유전","unit":"생식과 유전","title":"생식과 유전 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 세포 분열","words":["염색체","염색분체","상동염색체","방추사","2가염색체"]},{"topic":"중3 · 생식과 발생","words":["정소","난소","수정란","난할","착상"]},{"topic":"중3 · 멘델 유전","words":["우성","열성","순종","잡종","분리의법칙"]},{"topic":"중3 · 사람의 유전","words":["가계도","반성유전","색맹","혈액형","미맹"]},{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]},{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]},{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]}]},{"g":"중3","u":"생식과 유전 · ① 세포 분열 종합","unit":"생식과 유전","mid":"① 세포 분열","title":"세포 분열 중단원 종합","kind":"mid","rounds":[{"topic":"체세포 분열과 감수 분열 용어","words":["체세포분열","감수분열","간기","중기","후기"]},{"topic":"세포 분열과 생식 용어","words":["염색체","상동염색체","체세포분열","감수분열","수정"]},{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]}]},{"g":"중3","u":"생식과 유전 · 1차시 · 염색체와 유전자","unit":"생식과 유전","mid":"① 세포 분열","title":"1차시 · 염색체와 유전자","kind":"lesson","rounds":[{"topic":"염색체와 유전자 용어","words":["염색체","DNA","유전자","상동염색체","성염색체"]}]},{"g":"중3","u":"생식과 유전 · 2차시 · 체세포 분열과 감수 분열","unit":"생식과 유전","mid":"① 세포 분열","title":"2차시 · 체세포 분열과 감수 분열","kind":"lesson","rounds":[{"topic":"체세포 분열과 감수 분열 용어","words":["체세포분열","감수분열","간기","중기","후기"]}]},{"g":"중3","u":"생식과 유전 · 3차시 · 세포 분열과 생식","unit":"생식과 유전","mid":"① 세포 분열","title":"3차시 · 세포 분열과 생식","kind":"lesson","rounds":[{"topic":"세포 분열과 생식 용어","words":["염색체","상동염색체","체세포분열","감수분열","수정"]}]},{"g":"중3","u":"생식과 유전 · ② 생식과 발생 종합","unit":"생식과 유전","mid":"② 생식과 발생","title":"생식과 발생 중단원 종합","kind":"mid","rounds":[{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]}]},{"g":"중3","u":"생식과 유전 · 4차시 · 생식과 발생","unit":"생식과 유전","mid":"② 생식과 발생","title":"4차시 · 생식과 발생","kind":"lesson","rounds":[{"topic":"생식과 발생 용어","words":["정소","난소","수란관","수정","난할"]}]},{"g":"중3","u":"생식과 유전 · ③ 유전 종합","unit":"생식과 유전","mid":"③ 유전","title":"유전 중단원 종합","kind":"mid","rounds":[{"topic":"사람의 유전 용어","words":["가계도","쌍둥이연구","X염색체","남자","반성유전"]},{"topic":"유전 용어 ②","words":["표현형","유전자형","반성유전","ABO식혈액형","가계도"]},{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]}]},{"g":"중3","u":"생식과 유전 · 5차시 · 유전","unit":"생식과 유전","mid":"③ 유전","title":"5차시 · 유전","kind":"lesson","rounds":[{"topic":"유전 용어","words":["멘델","완두","우성","열성","순종"]},{"topic":"유전 용어 ②","words":["표현형","유전자형","반성유전","ABO식혈액형","가계도"]}]},{"g":"중3","u":"생식과 유전 · 6차시 · 사람의 유전","unit":"생식과 유전","mid":"③ 유전","title":"6차시 · 사람의 유전","kind":"lesson","rounds":[{"topic":"사람의 유전 용어","words":["가계도","쌍둥이연구","X염색체","남자","반성유전"]}]},{"g":"중3","u":"에너지 전환과 보존","unit":"에너지 전환과 보존","title":"에너지 전환과 보존 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 역학적 에너지","words":["위치","운동","기준면","진자","보존"]},{"topic":"중3 · 전기 에너지","words":["발전기","유도전류","소비전력","전력량","코일"]},{"topic":"중3 · 에너지 전환","words":["빛에너지","열에너지","소리에너지","전동기","충전"]},{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · ① 역학적 에너지 전환과 보존 종합","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"역학적 에너지 전환과 보존 중단원 종합","kind":"mid","rounds":[{"topic":"역학적 에너지 용어","words":["위치에너지","운동에너지","역학적에너지","일정","기준면"]},{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]}]},{"g":"중3","u":"에너지 전환과 보존 · 1차시 · 역학적 에너지","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"1차시 · 역학적 에너지","kind":"lesson","rounds":[{"topic":"역학적 에너지 용어","words":["위치에너지","운동에너지","역학적에너지","일정","기준면"]}]},{"g":"중3","u":"에너지 전환과 보존 · 2차시 · 역학적 에너지 보존의 예","unit":"에너지 전환과 보존","mid":"① 역학적 에너지 전환과 보존","title":"2차시 · 역학적 에너지 보존의 예","kind":"lesson","rounds":[{"topic":"역학적 에너지 보존의 예 용어","words":["가장낮은곳","가장높은곳","위치에너지","운동에너지","역학적에너지"]}]},{"g":"중3","u":"에너지 전환과 보존 · ② 전기 에너지의 발생과 전환 종합","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"전기 에너지의 발생과 전환 중단원 종합","kind":"mid","rounds":[{"topic":"소비 전력과 전력량 용어","words":["소비전력","시간","Wh","대기전력","LED전등"]},{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · 3차시 · 전기 에너지","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"3차시 · 전기 에너지","kind":"lesson","rounds":[{"topic":"전기 에너지 용어","words":["전자기유도","유도전류","발전기","터빈","전동기"]},{"topic":"전기 에너지 용어 ②","words":["빛에너지","열에너지","소리에너지","소비전력","와트"]}]},{"g":"중3","u":"에너지 전환과 보존 · 4차시 · 소비 전력과 전력량","unit":"에너지 전환과 보존","mid":"② 전기 에너지의 발생과 전환","title":"4차시 · 소비 전력과 전력량","kind":"lesson","rounds":[{"topic":"소비 전력과 전력량 용어","words":["소비전력","시간","Wh","대기전력","LED전등"]}]},{"g":"중3","u":"별과 우주","unit":"별과 우주","title":"별과 우주 대단원 종합","kind":"unit","rounds":[{"topic":"중3 · 별의 특성","words":["연주시차","겉보기등급","절대등급","표면온도","청색"]},{"topic":"중3 · 은하와 우주","words":["성운","성단","우리은하","은하수","허블"]},{"topic":"중3 · 우주 탐사","words":["인공위성","탐사선","우주망원경","탐사로버","우주복"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]},{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]},{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · ① 별의 특성 종합","unit":"별과 우주","mid":"① 별의 특성","title":"별의 특성 중단원 종합","kind":"mid","rounds":[{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · 1차시 · 별의 특성","unit":"별과 우주","mid":"① 별의 특성","title":"1차시 · 별의 특성","kind":"lesson","rounds":[{"topic":"별의 특성 용어","words":["시차","연주시차","겉보기등급","절대등급","실제밝기등급"]}]},{"g":"중3","u":"별과 우주 · ② 은하와 우주 종합","unit":"별과 우주","mid":"② 은하와 우주","title":"은하와 우주 중단원 종합","kind":"mid","rounds":[{"topic":"성운·성단과 은하의 종류 용어","words":["방출성운","반사성운","암흑성운","산개성단","구상성단"]},{"topic":"은하와 우주 용어 ②","words":["우리은하","은하수","막대나선은하","외부은하","허블"]},{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]}]},{"g":"중3","u":"별과 우주 · 2차시 · 은하와 우주","unit":"별과 우주","mid":"② 은하와 우주","title":"2차시 · 은하와 우주","kind":"lesson","rounds":[{"topic":"은하와 우주 용어","words":["성운","성단","산개성단","구상성단","암흑성운"]},{"topic":"은하와 우주 용어 ②","words":["우리은하","은하수","막대나선은하","외부은하","허블"]}]},{"g":"중3","u":"별과 우주 · 3차시 · 성운·성단과 은하의 종류","unit":"별과 우주","mid":"② 은하와 우주","title":"3차시 · 성운·성단과 은하의 종류","kind":"lesson","rounds":[{"topic":"성운·성단과 은하의 종류 용어","words":["방출성운","반사성운","암흑성운","산개성단","구상성단"]}]},{"g":"중3","u":"별과 우주 · ③ 우주 탐사 종합","unit":"별과 우주","mid":"③ 우주 탐사","title":"우주 탐사 중단원 종합","kind":"mid","rounds":[{"topic":"우주 탐사 용어","words":["인공위성","우주탐사선","우주망원경","우주정거장","탐사로버"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]}]},{"g":"중3","u":"별과 우주 · 4차시 · 우주 탐사","unit":"별과 우주","mid":"③ 우주 탐사","title":"4차시 · 우주 탐사","kind":"lesson","rounds":[{"topic":"우주 탐사 용어","words":["인공위성","우주탐사선","우주망원경","우주정거장","탐사로버"]},{"topic":"우주 탐사 용어 ②","words":["스푸트니크1호","아폴로11호","보이저호","위성항법","형상기억합금"]}]},{"g":"기타","u":"예시 라운드","rounds":[{"topic":"중1 · 힘과 운동","words":["중력","마찰력","부력","등속운동","자유낙하"]},{"topic":"중3 · 화학 반응","words":["산화","환원","앙금생성","중화반응","화학반응식"]},{"topic":"고1 · 통합과학","words":["광합성","세포호흡","판구조론","에너지전환","생태계평형"]},{"topic":"고2 · 물리학Ⅰ","words":["관성의법칙","운동량보존","전자기유도","파동간섭","에너지보존"]},{"topic":"고3 · 생명과학","words":["유전자발현","세포분열","면역반응","신경전달","항상성유지"]}]}];
+
+function clickWhere(sel, test){ var els = document.querySelectorAll(sel); for (var i = 0; i < els.length; i++) { if (test(els[i])) { els[i].click(); return true; } } return false; }
+function plain(t){ return String(t).replace(/^[①-⑳]\s*/, ""); }
+
+var items = CAT.map(function(c, i){
+  var ex = c.g === "기타";
+  return { id: "b" + i, grade: c.g, unit: ex ? "" : (c.unit || c.u), title: c.title || c.u, mid: c.mid, kind: c.kind,
+    short: String(c.title || c.u).split(" · ")[0],
+    sub: c.rounds.length + "라운드 · " + c.rounds.map(function(r){ return r.topic.replace(/^중\d\s*·\s*/, ""); }).slice(0, 3).join(", "),
+    words: [].concat.apply([], c.rounds.map(function(r){ return [r.topic].concat(r.words); })), ref: c };
+});
+function toGrade(c){ clickWhere(".pick-chip", function(e){ return e.getAttribute("data-g") === c.g; }); }
+KJSMenu.init({ key: "iceberg", items: items,
+  mount: function(){ var w = document.querySelector("#app .wrap"); return w ? w.firstChild : null; },
+  legacyCss: ".pick-panel", mode: "select", startLabel: "게임 시작",
+  isVisible: function(){ return !!document.querySelector('[data-action="go-play"]'); },
+  observe: document.getElementById("app"),
+  onPick: function(x){ var c = x.ref; toGrade(c);
+    clickWhere(".pick-main", function(e){ return e.getAttribute("data-g") === c.g && e.getAttribute("data-u") === c.u; });
+    setTimeout(function(){ window.scrollTo({ top: 0, behavior: "smooth" }); }, 50); },
+  onStart: function(x){ var c = x.ref; toGrade(c);
+    clickWhere(".pick-go", function(e){ return e.getAttribute("data-g") === c.g && e.getAttribute("data-u") === c.u; }); } });
+
+})();
+</script>
+
+<script>
+document.getElementById('kjsHome').addEventListener('click', function(){
+  if(confirm('이 게임의 처음 화면으로 돌아갑니다. 진행 중인 내용은 사라집니다.')) location.reload();
+});
+</script>
+<script src="./sounds/kjs-sound.js"></script>
+<script src="./sounds/kjs-scoreboard.js"></script>
+</body></html>

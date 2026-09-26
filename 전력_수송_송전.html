@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>높은 전압으로 송전하는 이유 가상실험실 (전력 수송과 손실 전력)</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #eff6ff;
+    --accent-red: #ef4444;
+    --accent-blue: #3b82f6;
+    --accent-amber: #d97706;
+    --accent-green: #16a34a;
+    --ink: #0f172a;
+    --ink-light: #334155;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --bg: #f8fafc;
+    --panel-bg: #ffffff;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", "맑은 고딕", sans-serif;
+    line-height: 1.5;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow-x: hidden;
+  }
+
+  /* 상단 헤더 바 */
+  .top-bar {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .top-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    background: #16a34a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+  }
+  .brand-title h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+  .brand-title p {
+    margin: 0;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .top-links {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-top {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .btn-top:hover {
+    background: #334155;
+    color: #fff;
+  }
+
+  /* 메인 랩 컨테이너 */
+  .lab-wrapper {
+    max-width: 1240px;
+    margin: 14px auto 30px;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* 탐구 가이드 배너 */
+  .guide-strip {
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .guide-instructions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+    flex-wrap: wrap;
+  }
+  .guide-step {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  /* 캔버스 스테이지 */
+  .canvas-container {
+    position: relative;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 하단 컨트롤 패널 & HUD */
+  .control-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 860px) {
+    .control-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel-card {
+    background: var(--panel-bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel-header {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* 슬라이더 컨트롤러 */
+  .slider-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .slider-row input[type="range"] {
+    cursor: pointer;
+  }
+
+  /* HUD 박스 */
+  .hud-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .hud-box {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .hud-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .hud-val {
+    font-size: 15px;
+    font-weight: 900;
+    font-family: monospace;
+  }
+  .val-loss1 { color: #dc2626; }
+  .val-loss2 { color: #16a34a; }
+  .val-ratio { color: #2563eb; }
+
+  /* 개념 설명 박스 */
+  .concept-box {
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+  }
+  .concept-box h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
+<style id="unified-drawer-nav-style">
+/* ==========================================================================
+   통일화된 상단 네비게이션 서랍 링크 바 (Universal Drawer Navigation)
+   ========================================================================== */
+.unified-nav-actions, .header-actions, .nav-actions, .top-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-unified-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.btn-unified-nav:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-unified-nav.btn-hub-main {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.btn-unified-nav.btn-hub-main:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-sim {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+.btn-unified-nav.btn-hub-sim:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-unified-nav.btn-hub-game {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #7e22ce !important;
+}
+.btn-unified-nav.btn-hub-game:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-unified-nav.btn-ws {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.btn-unified-nav.btn-ws:hover {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.btn-unified-nav.btn-theory {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+.btn-unified-nav.btn-theory:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 통일된 게임 헤더 */
+header.unified-game-header {
+  background: #ffffff !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding: 10px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+}
+header.unified-game-header .header-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+header.unified-game-header .game-badge {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+header.unified-game-header .game-title {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+</style>
+<style id="kjs-mobile-fix">@media (max-width:760px){
+  html,body{overflow-x:clip}
+  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
+  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
+  .unit-chips-row{flex-wrap:wrap!important}
+  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
+  .control-grid,.puzzle-container{min-width:0!important}
+}</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-brand">
+    <div class="brand-icon">⚡</div>
+    <div class="brand-title">
+      <h1>높은 전압으로 송전하는 이유 가상실험실</h1>
+      <p>중3 과학 · Ⅵ. 에너지 전환과 보존 · 전력 수송과 손실 전력(I²R) 비교 시뮬레이션</p>
+    </div>
+  </div>
+  <div class="unified-nav-actions top-links">
+    <a href="./전력_수송_송전_오프라인_수업활동지.html" class="btn-top" target="_blank">
+      <span>📄 탐구 활동지</span>
+    </a>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+  </div>
+</header>
+
+<div class="lab-wrapper">
+
+  <!-- 가이드 안내 -->
+  <div class="guide-strip">
+    <div class="guide-instructions">
+      <span class="guide-step">실험 가이드</span>
+      <span>① 상단(선로 1)과 하단(선로 2)의 <b>송전 전압</b>을 다르게 설정하여 실시간 전력 손실을 비교하세요.</span>
+      <span>② 전압 $V$를 2배로 높이면 송전 전류 $I$는 <b>1/2배</b>로 감소합니다 ($P = V \cdot I$).</span>
+      <span>③ 송전선 손실 전력($P_{손실} = I^2 \cdot R$)은 <b>1/4배(1/n²)</b>로 대폭 감소하여 에너지 낭비를 막습니다!</span>
+    </div>
+  </div>
+
+  <!-- 캔버스 스테이지 -->
+  <div class="canvas-container">
+    <canvas id="simCanvas" width="1180" height="560"></canvas>
+  </div>
+
+  <!-- 컨트롤 패널 & HUD -->
+  <div class="control-grid">
+    <!-- 컨트롤 카드 -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span>🎮 송전선로 1 & 2 조건 제어</span>
+        <button class="btn-top" style="padding:4px 8px; font-size:11px;" onclick="resetParams()">기본값 복원</button>
+      </div>
+
+      <!-- 선로 1 (상단) -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:10px;">
+        <div style="font-size:12px; font-weight:800; color:#dc2626; margin-bottom:6px;">🔴 상단 선로 1 (기준 전압)</div>
+        <div class="slider-row">
+          <span>송전 전압:</span>
+          <input type="range" id="v1Slider" min="22" max="440" step="11" value="110" oninput="updateLine1()">
+          <span id="v1Text" style="color:#dc2626; font-weight:900;">110 kV</span>
+        </div>
+        <div class="slider-row">
+          <span>송전 저항:</span>
+          <input type="range" id="r1Slider" min="50" max="500" step="10" value="220" oninput="updateLine1()">
+          <span id="r1Text" style="color:#2563eb; font-weight:900;">220 Ω</span>
+        </div>
+      </div>
+
+      <!-- 선로 2 (하단) -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px;">
+        <div style="font-size:12px; font-weight:800; color:#16a34a; margin-bottom:6px;">🟢 하단 선로 2 (초고압 비교)</div>
+        <div class="slider-row">
+          <span>송전 전압:</span>
+          <input type="range" id="v2Slider" min="22" max="440" step="11" value="220" oninput="updateLine2()">
+          <span id="v2Text" style="color:#16a34a; font-weight:900;">220 kV</span>
+        </div>
+        <div class="slider-row">
+          <span>송전 저항:</span>
+          <input type="range" id="r2Slider" min="50" max="500" step="10" value="220" oninput="updateLine2()">
+          <span id="r2Text" style="color:#2563eb; font-weight:900;">220 Ω</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 비교 HUD -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span>📊 실시간 손실 전력 & 수송 효율 비교</span>
+      </div>
+      <div class="hud-stats">
+        <div class="hud-box">
+          <div class="hud-label">선로 1 손실 전력</div>
+          <div class="hud-val val-loss1" id="hudLoss1">8.80 W</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">선로 2 손실 전력</div>
+          <div class="hud-val val-loss2" id="hudLoss2">2.20 W</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">손실 전력 감소비</div>
+          <div class="hud-val val-ratio" id="hudRatio">1 / 4.0 배</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px; font-size:12.5px; line-height:1.6; color:#1e40af;">
+        <b>💡 수치 분석 요약:</b><br>
+        발전소 생산 전력 $P_0 = 22\text{ kW}$ ($22\text{ kV} \times 1\text{ A}$) 동일 기준:<br>
+        • 전압을 <b><span id="vRatioText">2.0배</span></b> 높이면 송전 전류는 <b><span id="iRatioText">1/2.0배</span></b>로 줄어듭니다.<br>
+        • 손실 전력($P = I^2 R$)은 <b><span id="lossRatioText">1/4.0배</span></b>로 격감하여 약 <b><span id="savedPowerText">6.60 W</span></b>의 전기 에너지가 절약됩니다!
+      </div>
+    </div>
+  </div>
+
+  <!-- 과학 개념 원리 설명 -->
+  <div class="concept-box">
+    <h3>💡 높은 전압으로 송전하는 이유 (손실 전력 줄이기)</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <div>
+        <b>1. 전력 수송 공식 ($P = V \cdot I$)</b><br>
+        • 발전소에서 생산된 전력 $P_0$가 일정할 때, 송전 전압 $V$를 $n$배로 높이면 송전선에 흐르는 전류 $I$는 <b>$1/n$배로 감소</b>합니다.<br>
+        • 전선 속을 이동하는 전하의 흐름(전류)이 덜 빽빽해져 충돌 가능성이 대폭 낮아집니다.
+      </div>
+      <div>
+        <b>2. 손실 전력 공식 ($P_{손실} = I^2 \cdot R$)</b><br>
+        • 송전선에서 발생하는 줄열에 의한 손실 전력은 <b>전류의 제곱($I^2$)에 비례</b>합니다.<br>
+        • 따라서 전류를 $1/n$배로 줄이면 손실 전력은 <b>$1/n^2$배로 대폭 감소</b>하므로, 초고압(154kV, 345kV, 765kV)으로 송전합니다.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("simCanvas");
+const ctx = canvas.getContext("2d");
+
+/* ==========================================================================
+   물리 파라미터 정의 (발전소 기준: 22kV x 1A = 22,000 W)
+   ========================================================================== */
+const P0 = 22000; // 발전소 생산 전력: 22 kW
+
+// 선로 1 상태
+let V1_kV = 110;  // kV
+let R1 = 220;     // Ω
+
+// 선로 2 상태
+let V2_kV = 220;  // kV
+let R2 = 220;     // Ω
+
+// 전자 애니메이션 입자들 (각 도선 내 흐름)
+const ELECTRONS_LINE1 = [];
+const ELECTRONS_LINE2 = [];
+
+for (let i = 0; i < 40; i++) {
+  ELECTRONS_LINE1.push({ progress: Math.random() });
+  ELECTRONS_LINE2.push({ progress: Math.random() });
+}
+
+/* ==========================================================================
+   조작 핸들러
+   ========================================================================== */
+function updateLine1() {
+  V1_kV = parseFloat(document.getElementById("v1Slider").value);
+  R1 = parseFloat(document.getElementById("r1Slider").value);
+  document.getElementById("v1Text").textContent = `${V1_kV} kV`;
+  document.getElementById("r1Text").textContent = `${R1} Ω`;
+  updateCalculations();
+}
+
+function updateLine2() {
+  V2_kV = parseFloat(document.getElementById("v2Slider").value);
+  R2 = parseFloat(document.getElementById("r2Slider").value);
+  document.getElementById("v2Text").textContent = `${V2_kV} kV`;
+  document.getElementById("r2Text").textContent = `${R2} Ω`;
+  updateCalculations();
+}
+
+function resetParams() {
+  document.getElementById("v1Slider").value = 110;
+  document.getElementById("r1Slider").value = 220;
+  document.getElementById("v2Slider").value = 220;
+  document.getElementById("r2Slider").value = 220;
+  updateLine1();
+  updateLine2();
+}
+
+function updateCalculations() {
+  // 선로 1 전류 & 손실
+  const I1 = P0 / (V1_kV * 1000); // A
+  const Ploss1 = Math.pow(I1, 2) * R1; // W
+
+  // 선로 2 전류 & 손실
+  const I2 = P0 / (V2_kV * 1000); // A
+  const Ploss2 = Math.pow(I2, 2) * R2; // W
+
+  // HUD 갱신
+  document.getElementById("hudLoss1").textContent = `${Ploss1.toFixed(2)} W`;
+  document.getElementById("hudLoss2").textContent = `${Ploss2.toFixed(2)} W`;
+
+  const ratio = Ploss1 / Math.max(0.0001, Ploss2);
+  document.getElementById("hudRatio").textContent = `1 / ${ratio.toFixed(1)} 배`;
+
+  const vRatio = V2_kV / V1_kV;
+  document.getElementById("vRatioText").textContent = `${vRatio.toFixed(1)}배`;
+  document.getElementById("iRatioText").textContent = `1/${vRatio.toFixed(1)}배`;
+  document.getElementById("lossRatioText").textContent = `1/${ratio.toFixed(1)}배`;
+  document.getElementById("savedPowerText").textContent = `${Math.abs(Ploss1 - Ploss2).toFixed(2)} W`;
+}
+
+/* ==========================================================================
+   캔버스 렌더링 루프 (발전소, 변전소 송전탑, 송전선, 공장/가정)
+   ========================================================================== */
+function drawPowerLine(yCenter, V_kV, R, electrons, colorTheme, labelTitle) {
+  const I = P0 / (V_kV * 1000);
+  const Ploss = Math.pow(I, 2) * R;
+
+  // 가정/공장 전압: 220V 도달 전력
+  const P_delivered = P0 - Ploss;
+  const I_home = P_delivered / 220;
+
+  // 1. 좌측 발전소 (Power Plant)
+  drawPowerPlant(60, yCenter);
+
+  // 발전소 라벨
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+  ctx.font = "bold 15px Pretendard, sans-serif";
+  ctx.fillText("발전소", 95, yCenter + 88);
+  ctx.fillStyle = "#1e293b";
+  ctx.font = "bold 16px Pretendard, sans-serif";
+  ctx.fillText("22kV × 1A →", 155, yCenter - 75);
+  ctx.restore();
+
+  // 2. 1차 승압 변전소 및 송전탑
+  drawTower(320, yCenter, true);
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+  ctx.font = "bold 14px Pretendard, sans-serif";
+  ctx.fillText("변전소", 298, yCenter + 88);
+
+  // 승압 점선 구분선
+  ctx.strokeStyle = "#ea580c";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(320, yCenter - 90);
+  ctx.lineTo(320, yCenter - 50);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // 3. 중앙 고전압 송전선 (Transmission Cable with Resistor)
+  const tower1X = 320;
+  const tower2X = 880;
+  const cableY = yCenter - 40;
+
+  // 송전선 케이블 (현수 곡선 효과)
+  ctx.save();
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(tower1X, cableY);
+  ctx.quadraticCurveTo((tower1X + tower2X) / 2, cableY + 28, tower2X, cableY);
+  ctx.stroke();
+
+  // 도선 내부 심선
+  ctx.strokeStyle = "#cbd5e1";
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(tower1X, cableY);
+  ctx.quadraticCurveTo((tower1X + tower2X) / 2, cableY + 28, tower2X, cableY);
+  ctx.stroke();
+
+  // 중앙 송전선 저항 기호 (Zigzag Resistor)
+  const midX = (tower1X + tower2X) / 2;
+  const midY = cableY + 14;
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(midX - 30, midY);
+  ctx.lineTo(midX - 20, midY - 12);
+  ctx.lineTo(midX - 10, midY + 12);
+  ctx.lineTo(midX, midY - 12);
+  ctx.lineTo(midX + 10, midY + 12);
+  ctx.lineTo(midX + 20, midY - 12);
+  ctx.lineTo(midX + 30, midY);
+  ctx.stroke();
+
+  // 저항값 및 송전 상태 텍스트
+  ctx.fillStyle = "#2563eb";
+  ctx.font = "bold 20px monospace";
+  ctx.fillText(`${R}Ω`, midX - 24, midY + 36);
+
+  ctx.fillStyle = colorTheme;
+  ctx.font = "bold 20px Pretendard, sans-serif";
+  ctx.fillText(`${V_kV}kV × ${I.toFixed(2)}A`, midX - 65, midY - 32);
+
+  // 손실 전력 배출 효과 (Heat Glow)
+  if (Ploss > 5) {
+    ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.4, Ploss / 50)})`;
+    ctx.beginPath();
+    ctx.arc(midX, midY, 40, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 전하 입자(전자) 이동 애니메이션 (흐름 시뮬레이션)
+  // 전류 I가 클수록 속도가 빠르고 굵음
+  const speed = I * 0.007;
+  electrons.forEach(el => {
+    el.progress += speed;
+    if (el.progress > 1) el.progress = 0;
+
+    const px = tower1X + (tower2X - tower1X) * el.progress;
+    // 2차 베지어 곡선상의 Y좌표 계산
+    const py = Math.pow(1 - el.progress, 2) * cableY +
+               2 * (1 - el.progress) * el.progress * (cableY + 28) +
+               Math.pow(el.progress, 2) * cableY;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#3b82f6";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // 4. 2차 감압 변전소 및 송전탑
+  drawTower(880, yCenter, false);
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+  ctx.font = "bold 14px Pretendard, sans-serif";
+  ctx.fillText("변전소", 858, yCenter + 88);
+
+  // 감압 점선 구분선
+  ctx.strokeStyle = "#ea580c";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(880, yCenter - 90);
+  ctx.lineTo(880, yCenter - 50);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // 5. 우측 공장 및 가정 (Consumer)
+  drawCity(1010, yCenter);
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+  ctx.font = "bold 15px Pretendard, sans-serif";
+  ctx.fillText("공장, 가정", 1000, yCenter + 88);
+
+  ctx.fillStyle = "#1e293b";
+  ctx.font = "bold 16px Pretendard, sans-serif";
+  ctx.fillText(`→ 220V × ${I_home.toFixed(2)}A`, 900, yCenter - 75);
+  ctx.restore();
+}
+
+// 발전소 벡터 일러스트
+function drawPowerPlant(x, y) {
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+
+  // 태양광 패널 그리드
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 3; c++) {
+      ctx.fillRect(x + c * 14, y + 25 + r * 14, 11, 10);
+    }
+  }
+
+  // 풍력 발전기 타워 & 블레이드
+  ctx.beginPath();
+  ctx.moveTo(x + 55, y + 50);
+  ctx.lineTo(x + 58, y - 5);
+  ctx.lineTo(x + 61, y + 50);
+  ctx.fill();
+  // 프로펠러 날개
+  ctx.beginPath();
+  ctx.arc(x + 58, y - 5, 18, 0, Math.PI * 2);
+  ctx.strokeStyle = "#16a34a";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 발전소 건물 굴뚝
+  ctx.beginPath();
+  ctx.moveTo(x + 95, y + 50);
+  ctx.lineTo(x + 105, y - 30);
+  ctx.lineTo(x + 120, y - 30);
+  ctx.lineTo(x + 130, y + 50);
+  ctx.closePath();
+  ctx.fill();
+
+  // 연기 구름 (친환경 수증기)
+  ctx.beginPath();
+  ctx.arc(x + 112, y - 45, 12, 0, Math.PI * 2);
+  ctx.arc(x + 122, y - 55, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// 송전탑 및 변전소 박스
+function drawTower(x, y, isStepUp) {
+  ctx.save();
+  // 변전소 하부 건물 박스
+  ctx.fillStyle = "#16a34a";
+  ctx.roundRect(x - 22, y + 25, 44, 45, 6);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  // 변전소 창문 4개
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(x - 16 + i * 9, y + 35, 6, 8);
+  }
+
+  // 송전철탑 트러스 구조
+  ctx.strokeStyle = "#16a34a";
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  // 탑 다리
+  ctx.moveTo(x - 30, y + 25);
+  ctx.lineTo(x - 10, y - 45);
+  ctx.lineTo(x - 10, y - 75);
+  ctx.lineTo(x, y - 88);
+  ctx.lineTo(x + 10, y - 75);
+  ctx.lineTo(x + 10, y - 45);
+  ctx.lineTo(x + 30, y + 25);
+
+  // 철탑 크로스바 (완철)
+  ctx.moveTo(x - 42, y - 45);
+  ctx.lineTo(x + 42, y - 45);
+  ctx.moveTo(x - 28, y - 70);
+  ctx.lineTo(x + 28, y - 70);
+
+  // 내부 X자 보강 트러스
+  ctx.moveTo(x - 10, y - 45);
+  ctx.lineTo(x + 10, y - 75);
+  ctx.moveTo(x + 10, y - 45);
+  ctx.lineTo(x - 10, y - 75);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// 도시 공장/빌딩군
+function drawCity(x, y) {
+  ctx.save();
+  ctx.fillStyle = "#16a34a";
+
+  // 높은 빌딩 1
+  ctx.fillRect(x + 30, y - 35, 34, 85);
+  // 빌딩 창문들
+  ctx.fillStyle = "#ffffff";
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 2; c++) {
+      ctx.fillRect(x + 36 + c * 13, y - 28 + r * 14, 7, 7);
+    }
+  }
+
+  // 낮은 빌딩 2
+  ctx.fillStyle = "#16a34a";
+  ctx.fillRect(x - 15, y + 5, 36, 45);
+  ctx.fillStyle = "#ffffff";
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 2; c++) {
+      ctx.fillRect(x - 9 + c * 14, y + 15 + r * 14, 8, 7);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* ==========================================================================
+   메인 렌더 애니메이션 루프
+   ========================================================================== */
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 상단 선로 1 (빨간색 계열)
+  drawPowerLine(160, V1_kV, R1, ELECTRONS_LINE1, "#dc2626", "선로 1");
+
+  // 중앙 분리 경계선
+  ctx.save();
+  ctx.strokeStyle = "#e2e8f0";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.moveTo(40, 290);
+  ctx.lineTo(canvas.width - 40, 290);
+  ctx.stroke();
+  ctx.restore();
+
+  // 하단 선로 2 (초록색 계열)
+  drawPowerLine(430, V2_kV, R2, ELECTRONS_LINE2, "#16a34a", "선로 2");
+
+  requestAnimationFrame(animate);
+}
+
+// 초기화
+updateCalculations();
+animate();
+</script>
+</body>
+</html>
