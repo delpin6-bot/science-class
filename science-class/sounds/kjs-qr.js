@@ -2308,7 +2308,7 @@ var qrcode = function() {
     if (/^https?:/.test(location.protocol)) return normBase(location.href.split("?")[0].split("#")[0]);
     try { return localStorage.getItem(LS) || ""; } catch(e){ return ""; }
   }
-  function urlFor(file, q){ var b = base(); return b ? b + "go.html?f=" + hcode(file) + (q ? "&q=" + q : "") : ""; }
+  function urlFor(file, q){ var b = base(); return b ? b + "go.html?f=" + hcode(file) + (q ? "&q=" + q : "") + "&qr=1" : ""; }
   function svg(text, cell){ var qr = qrcode(0, "M"); qr.addData(text); qr.make(); return qr.createSvgTag({ cellSize: cell || 8, margin: 2, scalable: true }); }
   function thisFile(){ var p = decodeURIComponent(location.pathname.split("/").pop() || ""); return p || "index.html"; }
 

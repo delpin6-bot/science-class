@@ -216,6 +216,47 @@
   .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
   .control-grid,.puzzle-container{min-width:0!important}
 }</style>
+<style id="qr-focus-style">
+:is(html,body).qr-focus-mode :is(.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,header.header:not(:has(.unified-nav-actions)),nav.primary-nav-bar,nav.category-nav-bar,.flow-selector-card,.filter-search-row,.extra-tools-card,#btnHub,.dh-foot .r a,#kjsBgm,#kjsSfx,.kjs-qr-btn){display:none!important}
+:is(html,body).qr-focus-mode .unified-nav-actions :is(a[href*="서랍"],.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod){display:none!important}
+:is(html,body).qr-focus-mode .btn-unified-nav:not(#kjsHome):not(#snResetBtn):not(.btn-ws){display:none!important}
+:is(html,body).qr-focus-mode .sim-nav-inner{grid-template-columns:1fr auto!important}
+:is(html,body).qr-lesson-lock :is(.km-nav,.km-search,.km-g,.km-u,.km-j,.km-grid,.picker,#libCard,#picker,#pickHost,#navBar){display:none!important}
+.qr-focus-badge{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;font:800 12.5px/1 -apple-system,"Malgun Gothic",sans-serif;white-space:nowrap}
+.qr-focus-badge.float{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:99990}
+.qr-reset{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font:700 13px/1 -apple-system,"Malgun Gothic",sans-serif;cursor:pointer}
+.qr-lesson-label{margin-left:8px;font-size:.85em;font-weight:800;color:#b45309;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw}
+</style>
+<script id="qr-focus-js">
+(function(){try{
+  var p=new URLSearchParams(location.search), on=p.get("qr")==="1"||p.get("mode")==="focus"||p.has("q"), lock=p.has("q");
+  if(!on) return;
+  var add=function(el){ if(!el) return; el.classList.add("qr-focus-mode"); if(lock) el.classList.add("qr-lesson-lock"); };
+  add(document.documentElement);
+  function ui(){
+    add(document.body);
+    var nav=document.querySelector(".unified-nav-actions")||document.querySelector(".m-right");
+    var b=document.createElement("span"); b.className="qr-focus-badge"; b.textContent="📱 학생 집중 모드";
+    if(nav) nav.insertBefore(b, nav.firstChild); else { b.className+=" float"; document.body.appendChild(b); }
+    var home=document.getElementById("kjsHome");
+    if(home) home.textContent="↺ 다시하기";
+    else if(nav){ var r=document.createElement("button"); r.type="button"; r.className="qr-reset"; r.textContent="↺ 다시하기";
+      r.onclick=function(){ if(confirm("처음부터 다시 할까요?")) location.reload(); }; nav.appendChild(r); }
+    var tries=0, t=setInterval(function(){                      /* 단원·차시명 표시 */
+      var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
+      if(c&&c.title){ b.textContent="📱 "+[c.unit,c.title].filter(Boolean).join(" · "); b.title="학생 집중 모드"; clearInterval(t); }
+      else if(++tries>20) clearInterval(t);
+    },300);
+  }
+  if(document.body) ui(); else document.addEventListener("DOMContentLoaded",ui);
+  document.addEventListener("click",function(e){                /* 집중 모드 유지 */
+    var a=e.target.closest&&e.target.closest("a[href]"); if(!a) return;
+    var u; try{ u=new URL(a.getAttribute("href"),location.href); }catch(_){ return; }
+    if(u.origin!==location.origin||!/\.html$/.test(u.pathname)) return;
+    if(u.searchParams.get("qr")!=="1"){ u.searchParams.set("qr","1"); a.setAttribute("href",u.pathname.split("/").pop()+u.search+u.hash); }
+  },true);
+}catch(e){}})();
+</script>
 </head>
 <body>
 
