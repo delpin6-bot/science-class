@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>코일 주위의 자기장 (오에르스테드 3D & 오른손 법칙) · 자바실험실 복각</title>
+<title>코일 주위의 자기장 (오에르스테드 3D & 오른손 법칙) · 가상실험실 복각</title>
 <style>
 :root {
   --bg: #edf2f7;
@@ -622,13 +622,24 @@ header.unified-game-header .game-title {
   },true);
 }catch(e){}})();
 </script>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 
 <!-- 상단 헤더 -->
 <header>
   <div class="brand-wrap">
-    <span class="brand-badge">자바실험실 3D</span>
+    <span class="brand-badge">가상실험 3D</span>
     <h1>
       코일 주위의 자기장
       <span class="sub-date">(오른손의 법칙)</span>
@@ -638,9 +649,7 @@ header.unified-game-header .game-title {
     <button class="btn-top" id="theoryToggleBtn" onclick="toggleTheory()">
       <span>📖 원리 설명 보기 ▾</span>
     </button>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim on" style="--c:#2563eb" title="가상실험 서랍" aria-current="page">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game" style="--c:#7c3aed" title="수업게임 서랍">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
 
@@ -805,7 +814,7 @@ function project3D(x, y, z, cx, cy) {
   
   // 원근 투영 (Perspective)
   const depth = cam.distance + z2;
-  const scale = cam.fov / Math.max(10, depth);
+  const scale = (cam.fovEff || cam.fov) / Math.max(10, depth);   // fovEff: 캔버스 크기에 맞춘 배율
   
   return {
     x: cx + x1 * scale,
@@ -948,6 +957,8 @@ function render() {
   const h = canvas.height / (window.devicePixelRatio || 1);
   const cx = w / 2;
   const cy = h / 2 + 15;
+  // 장면이 캔버스에 비해 작지 않도록 화면 크기에 맞춰 확대 (기준 700×430)
+  STATE.camera.fovEff = STATE.camera.fov * Math.max(0.6, Math.min(2.2, Math.min(w / 700, h / 430)));
   
   // 자동 회전
   if (STATE.autoRotate && !STATE.isDragging) {
@@ -1165,14 +1176,10 @@ function drawCompassGrid(cx, cy) {
     
     // 2. 3D 자침 회전 (카메라 Yaw에 따른 화면 2D 각도 변환)
     // 3D 수평 벡터 (cos, sin) -> 카메라 yaw 회전
-    const vX = Math.cos(item.currentAngle);
-    const vZ = Math.sin(item.currentAngle);
-    const cosY = Math.cos(STATE.camera.yaw), sinY = Math.sin(STATE.camera.yaw);
-    const sX = vX * cosY - vZ * sinY;
-    const sZ = vX * sinY + vZ * cosY;
-    const screenAngle = Math.atan2(sZ * Math.sin(STATE.camera.pitch), sX);
-    
-    ctx.rotate(-screenAngle);
+    // 바늘 끝점을 직접 3D 투영해 화면 각도를 구한다 (카메라 각도와 무관하게 정확)
+    const tip = project3D(item.x + 8 * Math.cos(item.currentAngle), item.y, item.z + 8 * Math.sin(item.currentAngle), cx, cy);
+    const screenAngle = Math.atan2(tip.y - proj.y, tip.x - proj.x);
+    ctx.rotate(screenAngle);
     
     // N극 빨간색 화살표 (오른쪽)
     const nLen = 14 * rScale;
@@ -1269,71 +1276,64 @@ function drawCoilArch(cx, cy) {
 // 10. 3D 오른손 법칙 오버레이 모델
 // --------------------------------------------------------------------------
 function drawRightHandModel(cx, cy) {
+  // 3D 오른손 법칙: 네 손가락 = 코일 전류 방향으로 감아쥠, 엄지 = 코일 중심을 관통하는 자기장(N극) 방향
   const alpha = STATE.handOpacity;
-  const isRev = STATE.batteryReversed;
-  
+  if (alpha <= 0.01) return;
+  const dir = STATE.batteryReversed ? -1 : 1;             // +1: 앞(+Z) → 위 → 뒤(−Z)
+  // 엄지 방향은 비오-사바르로 코일 중심의 자기장을 직접 계산해 정한다 (전원이 꺼져 있어도 원리 표시)
+  const was = STATE.batteryConnected; STATE.batteryConnected = true;
+  const bc = calculateBiotSavartField(COIL.x, COIL.zCenter);
+  STATE.batteryConnected = was;
+  const tx = bc.bx >= 0 ? 1 : -1;
+  const P = (x, y, z) => project3D(x, y, z, cx, cy);
+  const arrow = (from, to, size, color) => {
+    const a = Math.atan2(to.y - from.y, to.x - from.x);
+    ctx.save(); ctx.translate(to.x, to.y); ctx.rotate(a); ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * 0.8, -size * 0.75); ctx.lineTo(-size * 0.8, size * 0.75); ctx.closePath(); ctx.fill(); ctx.restore();
+  };
   ctx.save();
   ctx.globalAlpha = alpha;
-  
-  // 코일 정점 위치
-  const archTop = project3D(COIL.x, COIL.r * 0.75, COIL.zCenter, cx, cy);
-  const scale = archTop.scale;
-  
-  ctx.translate(archTop.x, archTop.y);
-  if (isRev) {
-    ctx.scale(-1, 1); // 극성 반전 시 손 대칭 반전
-  }
-  
-  // 1. 손바닥 실루엣
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 36 * scale, 24 * scale, -0.3, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(253, 186, 116, 0.75)"; // 따뜻한 살구색 손
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#ea580c";
-  ctx.stroke();
-  
-  // 2. 굽힌 네 손가락 (전류 방향 화살표)
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+  // 1) 네 손가락: 코일 안쪽을 따라 전류 방향으로 감아쥔 호 4개
+  const th0 = 0.22 * Math.PI, th1 = 0.78 * Math.PI;
+  let top = null;
   for (let f = 0; f < 4; f++) {
-    const fx = (-12 + f * 9) * scale;
-    const fy = (-18 - f * 2) * scale;
-    ctx.beginPath();
-    ctx.arc(fx, fy, 8 * scale, 0.2, Math.PI);
-    ctx.lineWidth = 4 * scale;
-    ctx.strokeStyle = "#c2410c";
-    ctx.stroke();
+    const fx = COIL.x - 18 + f * 12, rr = COIL.r * (0.80 - f * 0.035);
+    const pts = [];
+    for (let k = 0; k <= 24; k++) {
+      const t = dir > 0 ? th0 + (th1 - th0) * k / 24 : th1 - (th1 - th0) * k / 24;
+      pts.push(P(fx, rr * Math.sin(t), COIL.zCenter + rr * Math.cos(t)));
+    }
+    const sc = pts[12].scale;
+    ctx.beginPath(); pts.forEach((p, k) => k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    ctx.lineWidth = 11 * sc; ctx.strokeStyle = "rgba(253, 186, 116, 0.95)"; ctx.stroke();
+    ctx.lineWidth = 1.6; ctx.strokeStyle = "#c2410c"; ctx.stroke();
+    arrow(pts[21], pts[24], 8 * sc, "#c2410c");
+    if (f === 1) top = pts[12];
   }
-  
-  // 3. 곧게 뻗은 엄지손가락 (코일 관통 N극 방향, 왼쪽을 가리킴)
-  ctx.beginPath();
-  ctx.moveTo(-15 * scale, 10 * scale);
-  ctx.lineTo(-65 * scale, 5 * scale);
-  ctx.lineWidth = 14 * scale;
-  ctx.lineCap = "round";
-  ctx.strokeStyle = "rgba(253, 186, 116, 0.9)";
-  ctx.stroke();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#ea580c";
-  ctx.stroke();
-  
-  // 엄지 끝 N극 방향 화살표 및 라벨
-  ctx.fillStyle = "#ef4444";
-  ctx.beginPath();
-  ctx.moveTo(-75 * scale, 5 * scale);
-  ctx.lineTo(-62 * scale, -4 * scale);
-  ctx.lineTo(-62 * scale, 14 * scale);
-  ctx.closePath();
-  ctx.fill();
-  
-  ctx.font = "bold 13px 'Pretendard', sans-serif";
-  ctx.fillStyle = "#dc2626";
-  ctx.fillText("N극 (자기장)", -140 * scale, 9 * scale);
-  
-  // 네 손가락 위 전류 방향 라벨
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillStyle = "#c2410c";
-  ctx.fillText("전류 방향 (네 손가락)", -30 * scale, -38 * scale);
-  
+  // 2) 엄지: 코일 중심을 관통해 자기장(N극) 방향으로 곧게
+  const yT = COIL.r * 0.42;
+  const a = P(COIL.x - tx * 60, yT, COIL.zCenter), b = P(COIL.x + tx * 105, yT, COIL.zCenter);
+  const sc = (a.scale + b.scale) / 2;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+  ctx.lineWidth = 15 * sc; ctx.strokeStyle = "rgba(253, 186, 116, 0.95)"; ctx.stroke();
+  ctx.lineWidth = 2; ctx.strokeStyle = "#ea580c"; ctx.stroke();
+  const tipEnd = P(COIL.x + tx * 135, yT, COIL.zCenter);
+  ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(tipEnd.x, tipEnd.y);
+  ctx.lineWidth = 4 * sc; ctx.strokeStyle = "#dc2626"; ctx.stroke();
+  arrow(b, tipEnd, 11 * sc, "#dc2626");
+
+  // 3) 설명 글
+  ctx.globalAlpha = Math.min(1, alpha + 0.25);
+  ctx.font = "bold 13px 'Pretendard', sans-serif"; ctx.textAlign = "center";
+  const lab = (text, p, color, dy) => {
+    const w2 = ctx.measureText(text).width / 2 + 6;
+    ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.fillRect(p.x - w2, p.y + dy - 14, w2 * 2, 19);
+    ctx.fillStyle = color; ctx.fillText(text, p.x, p.y + dy);
+  };
+  lab("엄지 = N극 (코일 속 자기장)", tipEnd, "#dc2626", -16);
+  if (top) lab("네 손가락 = 전류 방향", top, "#c2410c", -18);
   ctx.restore();
 }
 
@@ -1509,5 +1509,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script src="./sounds/kjs-qr.js"></script>
+<script src="./sounds/kjs-db-config.js"></script>
+<script src="./sounds/kjs-db.js" data-type="simulation"></script>
 </body>
 </html>

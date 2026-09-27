@@ -195,6 +195,17 @@ h1{ font-size:24px; margin:14px 0 4px; }
 }
 @media (max-width:640px){ .row{ flex-direction:column; gap:4px; } .lab{ width:auto; padding-top:0; } .grid{ grid-template-columns:repeat(2,1fr); } .card .qr{ width:100px; height:100px; } }
 </style>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 <header class="unified-game-header">
@@ -204,9 +215,7 @@ h1{ font-size:24px; margin:14px 0 4px; }
   </div>
   <div class="header-actions unified-nav-actions">
     <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 화면을 새로 고침">↺ 처음 화면</button>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim" style="--c:#2563eb" title="가상실험 서랍">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game" style="--c:#7c3aed" title="수업게임 서랍">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
 <div class="wrap">
@@ -2593,7 +2602,7 @@ function qrSvg(text, cell){
 const S = { tab: "lesson", game: Object.keys(CAT.lessons)[0], grade: "중1", unit: "", labGrade: "중1", labUnit: "" };
 try { Object.assign(S, JSON.parse(localStorage.getItem("kjs-qr-state") || "{}")); } catch(e){}
 function saveS(){ try { localStorage.setItem("kjs-qr-state", JSON.stringify(S)); } catch(e){} }
-const TABS = [["lesson","🎮 수업 게임 (차시별)"],["lab","🔬 자바실험실"],["games","📦 게임 첫 화면"]];
+const TABS = [["lesson","🎮 수업 게임 (차시별)"],["lab","🔬 가상실험"],["games","📦 게임 첫 화면"]];
 function unitsOf(list, g){
   const us = []; list.forEach(x => { if (x.grade === g && x.unit && !us.includes(x.unit)) us.push(x.unit); });
   const o = ORDER[g] || []; return us.sort((a,b) => ((o.indexOf(a)+1)||99) - ((o.indexOf(b)+1)||99));
@@ -2634,9 +2643,9 @@ function entries(){
   }
   if (S.tab === "lab") {
     return CAT.labs.filter(x => x.grade === S.labGrade && (!S.labUnit || x.unit === S.labUnit))
-      .map(x => ({ file: x.file, q: "", game: "자바실험실", title: (x.ic ? x.ic + " " : "") + x.title, sub: x.grade + " · " + x.unit, kind: "lesson", group: x.unit }));
+      .map(x => ({ file: x.file, q: "", game: "가상실험", title: (x.ic ? x.ic + " " : "") + x.title, sub: x.grade + " · " + x.unit, kind: "lesson", group: x.unit }));
   }
-  const hubs = [["통합_과학수업_서랍.html","📚 과학수업 통합 서랍"],["45분_모듈러_수업서랍.html","⚡ 45분 모듈러 수업 서랍"],["시작하기_수업게임서랍.html","🎮 수업 게임 서랍"],["자바실험실_서랍.html","🔬 자바실험실 서랍"]];
+  const hubs = [["통합_과학수업_서랍.html","📚 과학수업 통합 서랍"],["45분_모듈러_수업서랍.html","⚡ 45분 모듈러 수업 서랍"],["시작하기_수업게임서랍.html","🎮 수업 게임 서랍"],["자바실험실_서랍.html","🔬 가상실험 서랍"]];
   return hubs.map(([f,t]) => ({ file: f, q: "", game: "서랍", title: t, sub: "메인 메뉴", kind: "unit", group: "서랍" }))
     .concat(CAT.games.map(g => ({ file: g.file, q: "", game: "수업 게임", title: g.ic + " " + g.nm, sub: "게임 첫 화면(학생이 직접 차시 선택)", kind: "lesson", group: "수업 게임" })));
 }

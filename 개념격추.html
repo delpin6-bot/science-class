@@ -73,7 +73,7 @@
     opacity:.5;
   }
   .bubble{
-    position:absolute; transform:translate(-50%,0); max-width:180px;
+    position:absolute; transform:translate(-50%,0); width:max-content; max-width:min(180px, 46%);
     padding:8px 14px; border-radius:20px; font-size:13.5px; font-weight:600;
     text-align:center; line-height:1.35; box-shadow:2px 2px 0 rgba(33,48,31,.25);
     border:1.5px solid var(--ink); background:var(--membrane-soft); color:var(--membrane);
@@ -143,6 +143,22 @@
   .combo-stat .n{ color:#e8590c; }
   .combo-stat.hidden{ display:none; }
   .chobtn{ white-space:nowrap; }
+  /* 터치 용어 패드 — 떨어지는 개념의 정답 용어 버튼을 눌러 격추 */
+  .answer-row{ align-items:stretch; position:sticky; bottom:0; z-index:6; padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(to top, rgba(246,242,231,.98) 82%, rgba(246,242,231,0)); }
+  .answer-row input[type=text], .answer-row #fireBtn{ display:none; }
+  .term-pad{ flex:1; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+  .term-btn{ min-height:58px; border-radius:14px; border:2px solid #cbd5e1; background:#fff; color:#0f172a;
+    font:800 clamp(16px,2vw,22px)/1.2 inherit; padding:8px 10px; cursor:pointer; touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent; word-break:keep-all; transition:transform .08s, background .15s, border-color .15s; position:relative; }
+  .term-btn:active{ transform:scale(.96); }
+  .term-btn .k{ position:absolute; left:8px; top:6px; font-size:11px; font-weight:800; color:#94a3b8; }
+  .term-btn.hit{ background:#dcfce7; border-color:#22c55e; }
+  .term-btn.miss{ background:#fee2e2; border-color:#ef4444; animation: shake .28s ease; }
+  .term-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .term-pad.locked .term-btn{ opacity:.45; pointer-events:none; }
+  .answer-row .chobtn{ min-width:0; align-self:stretch; }
+  @media (max-width:560px){ .term-pad{ grid-template-columns:repeat(2, minmax(0,1fr)); } .term-btn{ min-height:52px; } .term-btn .k{ display:none; } }
   .chohint{ min-height:20px; text-align:center; font-size:14px; font-weight:800; color:#b45309; margin-top:6px; }
   .bubble .cho{ display:block; margin-top:3px; font-size:15px; letter-spacing:3px; color:#b45309; font-weight:900; }
   .over-screen{ overflow-y:auto; }
@@ -614,6 +630,17 @@ header.unified-game-header .game-title {
   },true);
 }catch(e){}})();
 </script>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -621,7 +648,7 @@ header.unified-game-header .game-title {
     <div class="title-block">
       <span class="badge">중1~중3 과학 · 단원별 개념</span>
       <h1>과학 퍼즐 - 개념 격추</h1>
-      <p>설명이 담긴 방울이 바닥에 닿기 전에 알맞은 용어를 입력해 격추하세요.</p>
+      <p>설명이 담긴 방울이 바닥에 닿기 전에 알맞은 용어 버튼을 눌러 격추하세요.</p>
     </div>
     <div class="stats">
       <div class="stat"><div class="n" id="levelDisplay">1</div><div class="l">레벨</div></div>
@@ -631,9 +658,7 @@ header.unified-game-header .game-title {
     </div>
   <div class="header-actions unified-nav-actions">
     <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim" style="--c:#2563eb" title="가상실험 서랍">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game on" style="--c:#7c3aed" title="수업게임 서랍" aria-current="page">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
   </header>
@@ -661,7 +686,7 @@ header.unified-game-header .game-title {
     <div class="start-screen" id="startScreen">
       <span class="badge">시작 전 안내</span>
       <h2>화면 위에서 설명이 떨어집니다</h2>
-      <p>바닥에 닿기 전에, 아래 입력창에 알맞은 용어를 입력하고 Enter를 누르세요.<br>
+      <p>바닥에 닿기 전에, 아래 용어 버튼 중 알맞은 것을 터치하세요. (PC는 숫자 키 1~6)<br>
       틀려도 생명은 줄지 않지만, 설명이 바닥에 닿으면 생명이 하나 줄어듭니다. 생명이 0이 되면 게임이 끝나요.</p>
       <button class="primary" id="startBtn">게임 시작</button>
     </div>
@@ -676,12 +701,13 @@ header.unified-game-header .game-title {
     </div>
   </div>
 
+  <div class="chohint" id="choLine"></div>
   <div class="answer-row">
-    <input type="text" id="answerInput" placeholder="정답 용어를 입력하고 Enter" autocomplete="off" disabled />
-    <button class="primary" id="fireBtn" disabled>격추</button>
+    <input type="text" id="answerInput" autocomplete="off" disabled hidden aria-hidden="true" />
+    <button class="primary" id="fireBtn" disabled hidden aria-hidden="true">격추</button>
+    <div class="term-pad" id="termPad" role="group" aria-label="정답 용어 버튼"></div>
     <button class="ghost chobtn" id="choBtn" type="button" title="가장 아래 방울의 초성 보기">💡 초성</button>
   </div>
-  <div class="chohint" id="choLine"></div>
 </div>
 
 <script>
@@ -740,8 +766,9 @@ header.unified-game-header .game-title {
   function lengthRate(lv){ return LEN_RATE[lv] || 1; }
   function applyBoardLength(){
     const want = BASE_H * lengthRate(level);
-    const boardTop = board.getBoundingClientRect().top + window.scrollY;
-    const avail = Math.max(BASE_H, window.innerHeight - boardTop - 84);   // 점수판·입력창이 한 화면에 보이도록
+    // 판 + 아래 고정 버튼 패드가 한 화면에 들어오도록 (판 위쪽을 화면 맨 위에 맞춰 시작하므로)
+    const padH = (document.querySelector('.answer-row') || {}).offsetHeight || 140;
+    const avail = Math.max(240, window.innerHeight - padH - 56);   // 판 + 초성 줄 + 패드
     boardH = Math.round(Math.min(want, avail));
     board.style.height = boardH + 'px';
     // 화면이 작아 보드를 다 못 키워도 떨어지는 시간은 배율만큼 길어지도록 맞춘다
@@ -763,11 +790,14 @@ header.unified-game-header .game-title {
     const el = document.createElement('div');
     el.className = 'bubble' + (bubbleSeq % 2 ? ' alt' : '');
     el.textContent = desc;
-    const leftPct = 10 + Math.random()*80;
+    // 방울이 판 가장자리에서 좁아지지 않도록, 방울 반폭만큼 안쪽에서만 생성
+    const bw = board.clientWidth || 600, halfPct = Math.min(24, (Math.min(180, bw * 0.46) / 2 + 8) / bw * 100);
+    const leftPct = halfPct + Math.random() * (100 - 2 * halfPct);
     el.style.left = leftPct + '%';
     el.style.top = '-10%';
     board.appendChild(el);
     active.push({ id: bubbleSeq++, el, desc, answer, top: -10, baseSpeed: cfg.speed, speed: cfg.speed / lengthRate(level) });
+    refreshPad();
   }
 
   function updateHUD(){
@@ -780,6 +810,47 @@ header.unified-game-header .game-title {
     else cs.classList.add('hidden');
   }
 
+  // ── 터치 용어 패드 ──
+  // 떨어지는 방울의 정답은 항상 패드에 있고, 나머지 칸은 같은 문제 세트의 다른 용어(헷갈리는 보기).
+  // 버튼 자리는 고정: 새 정답이 필요할 때 '지금 필요 없는 칸' 하나만 바뀐다(누르려는 순간 움직이지 않게).
+  const termPad = document.getElementById('termPad');
+  let padTerms = [];
+  function allTerms(){ return [...new Set(questions.map(q => q[1]))]; }
+  function padSize(){ return Math.max(3, Math.min(6, allTerms().length)); }
+  function refreshPad(reset){
+    const n = padSize();
+    if(reset || padTerms.length !== n) padTerms = new Array(n).fill(null);
+    const need = [...new Set(active.map(b => b.answer))];
+    const pinned = new Set(need);
+    for(const a of need){
+      if(padTerms.includes(a)) continue;
+      let slot = padTerms.findIndex(t => t === null);
+      if(slot < 0){ const free = padTerms.map((t,i)=>i).filter(i => !pinned.has(padTerms[i])); slot = free[Math.floor(Math.random()*free.length)]; }
+      if(slot !== undefined && slot >= 0) padTerms[slot] = a;
+    }
+    const others = allTerms().filter(t => !padTerms.includes(t)).sort(() => Math.random() - 0.5);
+    padTerms = padTerms.map(t => t === null ? (others.shift() ?? null) : t);
+    drawPad();
+  }
+  const escT = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  function drawPad(){
+    termPad.innerHTML = padTerms.map((t,i) => t === null ? '' :
+      `<button type="button" class="term-btn" data-t="${escT(t)}"><span class="k">${i+1}</span>${escT(t)}</button>`).join('');
+  }
+  function flashTerm(t, cls){
+    const b = [...termPad.querySelectorAll('.term-btn')].find(x => x.dataset.t === t);
+    if(b){ b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); }
+  }
+  termPad.addEventListener('pointerdown', e => {
+    const b = e.target.closest('.term-btn'); if(!b || !running || paused || termPad.classList.contains('locked')) return;
+    e.preventDefault(); tryFire(b.dataset.t);
+  });
+  document.addEventListener('keydown', e => {                       // 교사 PC: 숫자 1~6
+    if(!running || paused || /INPUT|TEXTAREA/.test((e.target||{}).tagName||'')) return;
+    const i = parseInt(e.key, 10) - 1;
+    if(i >= 0 && i < padTerms.length && padTerms[i] && !termPad.classList.contains('locked')){ e.preventDefault(); tryFire(padTerms[i]); }
+  });
+
   function removeBubble(b, cls){
     if(cls){
       b.el.classList.add(cls);
@@ -788,6 +859,7 @@ header.unified-game-header .game-title {
       b.el.remove();
     }
     active = active.filter(x => x.id !== b.id);
+    refreshPad();
   }
 
   function showCho(b, fromButton){
@@ -802,8 +874,8 @@ header.unified-game-header .game-title {
     showCho([...active].sort((a,b) => b.top - a.top)[0], true);
   });
   const FIRE_COOLDOWN2 = 260;
-  function tryFire(){
-    const raw = answerInput.value.trim();
+  function tryFire(term){
+    const raw = (typeof term === 'string' ? term : answerInput.value).trim();
     if(!raw) return;
     const nowT = performance.now();
     if(nowT - lastFire < FIRE_COOLDOWN2) return;
@@ -831,6 +903,7 @@ header.unified-game-header .game-title {
       removeBubble(target, 'pop');
       updateHUD();
       answerInput.value = '';
+      flashTerm(raw, 'hit');
     } else {
       combo = 0;
       const penalty = 8 + level * 2;
@@ -841,7 +914,8 @@ header.unified-game-header .game-title {
         showCho(low, false);
       }
       answerInput.disabled = true; fireBtn.disabled = true;
-      setTimeout(() => { if(running){ answerInput.disabled = false; fireBtn.disabled = false; answerInput.select(); answerInput.focus(); } }, 900);
+      flashTerm(raw, 'miss'); termPad.classList.add('locked');        // 오답 후 0.9초 잠금(마구 누르기 방지)
+      setTimeout(() => { termPad.classList.remove('locked'); if(running){ answerInput.disabled = false; fireBtn.disabled = false; } }, 900);
       window.KJS && KJS.no({ msg: '오답! 초성 힌트를 보고 다시 도전 (-' + penalty + ')' });
       answerInput.classList.remove('shake');
       void answerInput.offsetWidth;
@@ -901,9 +975,20 @@ header.unified-game-header .game-title {
     answerInput.disabled = false;
     fireBtn.disabled = false;
     answerInput.value = '';
-    answerInput.focus();
+    termPad.classList.remove('locked');
+    refreshPad(true);
     applyBoardLength();
     setTimeout(applyBoardLength, 60);
+    // 버튼 패드 아래쪽을 화면 바닥에 맞춰 스크롤 → 판 전체가 패드 바로 위에 한눈에 보임
+    // (차시 메뉴가 0.3초 뒤 메뉴 위치로 스크롤하므로 그 뒤에 실행)
+    setTimeout(() => {
+      if(!running) return;
+      applyBoardLength();
+      // 패드는 화면 바닥에 고정(sticky)이라 위치를 재면 이미 바닥에 붙어 있음 → 판 아래쪽 + 패드 높이로 계산
+      const padH = (document.querySelector('.answer-row') || {}).offsetHeight || 140;
+      const boardBottom = board.getBoundingClientRect().bottom + window.scrollY;
+      window.scrollTo({ top: Math.max(0, boardBottom + padH + 40 - window.innerHeight), behavior: 'smooth' });
+    }, 550);
     startSpawnLoop();
     rafId = requestAnimationFrame(tick);
   }
@@ -914,6 +999,7 @@ header.unified-game-header .game-title {
     if(rafId) cancelAnimationFrame(rafId);
     answerInput.disabled = true;
     fireBtn.disabled = true;
+    termPad.innerHTML = '';
     document.getElementById('overTitle').textContent = '게임 종료';
     document.getElementById('finalScore').textContent = score;
     const acc = tries ? Math.round(hits / tries * 100) : 0;
@@ -1051,7 +1137,7 @@ header.unified-game-header .game-title {
   answerInput.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter') tryFire();
   });
-  fireBtn.addEventListener('click', tryFire);
+  fireBtn.addEventListener('click', () => tryFire());
 
   document.addEventListener('visibilitychange', ()=>{
     paused = document.hidden;
@@ -1076,5 +1162,7 @@ document.getElementById('kjsHome').addEventListener('click', function(){
 <script src="./sounds/kjs-scoreboard.js"></script>
 <script src="./sounds/kjs-insight.js"></script>
 <script src="./sounds/kjs-qr.js"></script>
+<script src="./sounds/kjs-db-config.js"></script>
+<script src="./sounds/kjs-db.js" data-type="game"></script>
 </body>
 </html>

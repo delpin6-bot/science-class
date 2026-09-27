@@ -474,6 +474,17 @@ header.unified-game-header .game-title {
   },true);
 }catch(e){}})();
 </script>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 
@@ -489,9 +500,7 @@ header.unified-game-header .game-title {
     <a href="./전류_도체_부도체_오프라인_수업활동지.html" class="btn-top" target="_blank">
       <span>📄 탐구 활동지</span>
     </a>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim on" style="--c:#2563eb" title="가상실험 서랍" aria-current="page">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game" style="--c:#7c3aed" title="수업게임 서랍">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
 
@@ -887,11 +896,13 @@ function updatePhysics() {
     el.vx += (Math.random() - 0.5) * 0.6;
     el.vy += (Math.random() - 0.5) * 0.6;
 
-    // 전류 흐름: 배터리 (-)극이 우측에 있고 회로상 전자는 반시계 또는 시계방향
-    // 도선 왼쪽 투시창에서는 아래에서 위(↑)로 전자가 이동
+    // 전자는 (−)극 → (+)극으로 이동: 전지 왼쪽이 (+)극이므로 왼쪽 도선(투시창)에서는 위 → 아래(↓)
+    // (전류의 방향은 이와 반대인 +극 → −극)
     if (isClosed) {
-      el.vy -= driftSpeed * 0.25;
+      el.vy += driftSpeed * 0.25;
     }
+    // 원자와의 충돌로 속도가 계속 커지지 않음 → 전압에 비례하는 일정한 유동 속도로 수렴
+    el.vx *= 0.85; el.vy *= 0.85;
 
     el.x += el.vx * 0.6;
     el.y += el.vy * 0.6;
@@ -912,10 +923,11 @@ function updatePhysics() {
     el.vx += (Math.random() - 0.5) * 0.7;
     el.vy += (Math.random() - 0.5) * 0.7;
 
-    // 틈새에 장착되어 회로가 연결되면 위에서 아래(↓)로 전자가 이동
+    // 틈새에 장착되어 회로가 연결되면 전지 (−)극 쪽인 아래에서 위(↑)로 전자가 이동
     if (isClosed && SAMPLES.conductor.x === CIRCUIT.gapX) {
-      el.vy += driftSpeed * 0.25;
+      el.vy -= driftSpeed * 0.25;
     }
+    el.vx *= 0.85; el.vy *= 0.85;   // 충돌에 의한 감속 (속도 폭주 방지)
 
     el.rx += el.vx * 0.7;
     el.ry += el.vy * 0.7;
@@ -968,7 +980,7 @@ function drawCircuitBase() {
   ctx.beginPath();
   ctx.moveTo(CIRCUIT.gapX + CIRCUIT.gapW / 2, CIRCUIT.gapY2);
   ctx.lineTo(CIRCUIT.gapX + CIRCUIT.gapW / 2, 480);
-  ctx.lineTo(580, 480);
+  ctx.lineTo(400 + batteryCount * 61 - 6 - 8, 480);   // 전지 개수에 맞춰 (−)극 끝까지 연결
   ctx.stroke();
 
   // 틈새 단자 소켓 표시 (연결부)
@@ -1090,6 +1102,10 @@ function drawBatteries(startX, centerY) {
 
   for (let b = 0; b < batteryCount; b++) {
     const cx = startX + b * (cellW + 6);
+    if (b > 0) {                                   // 앞 전지 (−)극과 다음 전지 (+)극을 잇는 금속 연결부
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillRect(cx - 7, centerY - 10, 8, 20);
+    }
     const cy = centerY - cellH / 2;
 
     // 배터리 몸체 (파란 원통)
@@ -1206,7 +1222,13 @@ function drawSampleCard(s, drawParticlesFunc, bgColor, borderColor, label) {
   // 라벨 텍스트
   ctx.fillStyle = borderColor;
   ctx.font = "bold 18px Pretendard, sans-serif";
-  ctx.fillText(label, s.x + s.w + 14, s.y + s.h * 0.52);
+  const lw = ctx.measureText(label).width;
+  if (s.x + s.w + 14 + lw > canvas.width - 6) {          // 오른쪽 끝에서 잘리면 막대 아래 가운데에
+    ctx.textAlign = "center";
+    ctx.fillText(label, s.x + s.w / 2, s.y + s.h + 28);
+  } else {
+    ctx.fillText(label, s.x + s.w + 14, s.y + s.h * 0.52);
+  }
 
   ctx.restore();
 }
@@ -1270,5 +1292,7 @@ updateHUD();
 animate();
 </script>
 <script src="./sounds/kjs-qr.js"></script>
+<script src="./sounds/kjs-db-config.js"></script>
+<script src="./sounds/kjs-db.js" data-type="simulation"></script>
 </body>
 </html>

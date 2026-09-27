@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>빛의 삼원색 합성 (Color Addition) - 자바실험실</title>
+  <title>빛의 삼원색 합성 (Color Addition) - 가상실험실</title>
   <style>
     :root {
       --bg-page: #f8fafc;
@@ -541,6 +541,17 @@ header.unified-game-header .game-title {
   },true);
 }catch(e){}})();
 </script>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 
@@ -553,9 +564,7 @@ header.unified-game-header .game-title {
     </div>
   <div class="header-actions unified-nav-actions">
     <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim on" style="--c:#2563eb" title="가상실험 서랍" aria-current="page">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game" style="--c:#7c3aed" title="수업게임 서랍">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
 
@@ -862,7 +871,10 @@ header.unified-game-header .game-title {
   }
 
   function drawOverlapLabels() {
-    // 세 원의 중심 중간점들에 겹침 명칭 가이드
+    // 두 원 중간점을 세 원 무게중심에서 바깥쪽으로 밀어, 이름표끼리 겹치지 않게 한다
+    const CX = (spotR.x + spotG.x + spotB.x) / 3, CY = (spotR.y + spotG.y + spotB.y) / 3;
+    const out = (mx, my) => { let dx = mx - CX, dy = my - CY, d = Math.hypot(dx, dy); if (d < 1) { dx = 0; dy = -1; d = 1; }
+                              return { x: mx + dx / d * 30, y: my + dy / d * 30 }; };
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -871,19 +883,19 @@ header.unified-game-header .game-title {
     if (valR > 100 && valG > 100) {
       const midRGx = (spotR.x + spotG.x) / 2;
       const midRGy = (spotR.y + spotG.y) / 2;
-      drawBadge(midRGx, midRGy - 6, "노랑 (Yellow)");
+      const pRG = out(midRGx, midRGy); drawBadge(pRG.x, pRG.y, "노랑 (Yellow)");
     }
     // G + B 겹침 (Cyan)
     if (valG > 100 && valB > 100) {
       const midGBx = (spotG.x + spotB.x) / 2;
       const midGBy = (spotG.y + spotB.y) / 2;
-      drawBadge(midGBx, midGBy + 6, "청록 (Cyan)");
+      const pGB = out(midGBx, midGBy); drawBadge(pGB.x, pGB.y, "청록 (Cyan)");
     }
     // R + B 겹침 (Magenta)
     if (valR > 100 && valB > 100) {
       const midRBx = (spotR.x + spotB.x) / 2;
       const midRBy = (spotR.y + spotB.y) / 2;
-      drawBadge(midRBx, midRBy - 6, "자홍 (Magenta)");
+      const pRB = out(midRBx, midRBy); drawBadge(pRB.x, pRB.y, "자홍 (Magenta)");
     }
     // R + G + B 중앙 (White)
     if (valR > 150 && valG > 150 && valB > 150) {
@@ -1277,5 +1289,7 @@ header.unified-game-header .game-title {
 </script>
 
 <script src="./sounds/kjs-qr.js"></script>
+<script src="./sounds/kjs-db-config.js"></script>
+<script src="./sounds/kjs-db.js" data-type="simulation"></script>
 </body>
 </html>

@@ -584,6 +584,17 @@ header.unified-game-header .game-title {
   },true);
 }catch(e){}})();
 </script>
+<style id="kjs-seg-style">
+/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
+.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
+.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
+  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
+.kjs-seg a:hover{background:#fff}
+.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
+@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
+:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
+@media print{.kjs-seg{display:none!important}}
+</style>
 </head>
 <body>
 
@@ -591,15 +602,13 @@ header.unified-game-header .game-title {
   <!-- 상단 헤더 -->
   <header>
     <div class="title-group">
-      <h1>이온 모형 화이트보드 <span class="badge">자바실험실 에디션</span></h1>
+      <h1>이온 모형 화이트보드 <span class="badge">가상실험실 에디션</span></h1>
       <p>양이온(+)의 돌기와 음이온(-)의 홈을 퍼즐처럼 조립하여 전기적 중성과 앙금 생성 반응을 확인하세요.</p>
     </div>
   <div class="header-actions unified-nav-actions">
     <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 실험의 처음 화면으로">↺ 처음으로</button>
     <button class="btn-help" id="btnHelpToggle">원리 설명 보기 ▾</button>
-    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
-    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
-    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
+    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim on" style="--c:#2563eb" title="가상실험 서랍" aria-current="page">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game" style="--c:#7c3aed" title="수업게임 서랍">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
 
@@ -610,7 +619,7 @@ header.unified-game-header .game-title {
       <div class="theory-card">
         <b>1. 전하의 총합 = 0 (전기적 중성)</b>
         양이온의 (+) 전하와 음이온의 (-) 전하가 결합하여 물질을 이룰 때, 전체 전하의 합은 반드시 <b>0(중성)</b>이 되어야 합니다.
-        $$(\text{양이온 전하} \times m) + (\text{음이온 전하} \times n) = 0$$
+        $(양이온 전하 × m) + (음이온 전하 × n) = 0$
       </div>
       <div class="theory-card">
         <b>2. 퍼즐 돌기(+)와 홈(-)</b>
@@ -1182,6 +1191,19 @@ document.getElementById('kjsHome').addEventListener('click', function(){
   // ==========================================
   // 9. 팔레트 버튼 생성
   // ==========================================
+
+  // 새 이온을 겹치지 않는 빈 자리에 놓기 (양이온은 왼쪽, 음이온은 오른쪽부터)
+  function freeSpot(isCation){
+    const W = Math.max(400, width), H = Math.max(300, canvasContainer.clientHeight || 420);
+    const cols = [], rows = [];
+    for (let x = 30; x <= W - 130; x += 104) cols.push(x);
+    for (let y = 60; y <= H - 110; y += 84) rows.push(y);
+    if (!isCation) cols.reverse();
+    for (const x of cols) for (const y of rows) {
+      if (ionPieces.every(p => Math.abs(p.x - x) > 100 || Math.abs(p.y - y) > 80)) return { x, y };
+    }
+    return { x: (isCation ? 60 : W - 200) + Math.random() * 100, y: 80 + Math.random() * 140 };
+  }
   const catPalette = document.getElementById('cationPalette');
   Object.keys(CATION_DEFS).forEach(k => {
     const d = CATION_DEFS[k];
@@ -1189,9 +1211,8 @@ document.getElementById('kjsHome').addEventListener('click', function(){
     btn.className = 'ion-chip cation';
     btn.innerHTML = `<span>${d.sym}</span><span style="font-size:0.72rem; color:#64748b;">${d.name}</span>`;
     btn.onclick = () => {
-      const rx = 60 + Math.random() * 120;
-      const ry = 80 + Math.random() * 140;
-      ionPieces.push(new IonPiece(k, true, rx, ry));
+      const sp = freeSpot(true);
+      ionPieces.push(new IonPiece(k, true, sp.x, sp.y));
       renderIons();
       updateChemicalAnalysis();
     };
@@ -1205,9 +1226,8 @@ document.getElementById('kjsHome').addEventListener('click', function(){
     btn.className = 'ion-chip anion';
     btn.innerHTML = `<span>${d.sym}</span><span style="font-size:0.72rem; color:#64748b;">${d.name}</span>`;
     btn.onclick = () => {
-      const rx = width - 260 + Math.random() * 100;
-      const ry = 80 + Math.random() * 140;
-      ionPieces.push(new IonPiece(k, false, rx, ry));
+      const sp = freeSpot(false);
+      ionPieces.push(new IonPiece(k, false, sp.x, sp.y));
       renderIons();
       updateChemicalAnalysis();
     };
@@ -1297,5 +1317,7 @@ document.getElementById('kjsHome').addEventListener('click', function(){
 </script>
 
 <script src="./sounds/kjs-qr.js"></script>
+<script src="./sounds/kjs-db-config.js"></script>
+<script src="./sounds/kjs-db.js" data-type="simulation"></script>
 </body>
 </html>
