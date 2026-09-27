@@ -489,6 +489,11 @@ header.unified-game-header .game-title {
 :is(html,body).qr-focus-mode .kjs-seg{display:none!important}
 @media print{.kjs-seg{display:none!important}}
 </style>
+<style id="qr-answerkey-lock">
+/* QR로 접속한 학생 화면에서는 정답지 모드를 숨긴다 (교사 PC에서는 그대로 보임) */
+:is(html,body).qr-focus-mode #answerKeyLabel{display:none!important}
+:is(html,body).qr-focus-mode .cell.answer-highlight{background:inherit!important;color:inherit!important;box-shadow:none!important;outline:none!important}
+</style>
 </head><body>
 <header class="unified-game-header">
   <div class="header-brand">
@@ -750,7 +755,7 @@ header.unified-game-header .game-title {
 
     <section class="card">
       <div class="toolbar no-print">
-        <label><input type="checkbox" id="answerKeyToggle"> 🔑 정답지 모드 (모든 단어 표시 — 교사용 인쇄에 사용)</label>
+        <label id="answerKeyLabel"><input type="checkbox" id="answerKeyToggle" autocomplete="off"> 🔑 정답지 모드 (모든 단어 표시 — 교사용 인쇄에 사용)</label>
         <button class="primary" id="printBtn">🖨️ 인쇄하기 (1p 퍼즐 + 2p 내용정리)</button>
       </div>
       <div class="board">
@@ -1205,7 +1210,16 @@ return i=this.parent.children.indexOf(this),removed=this.parent.children.splice(
     if(foundWords.size === WORDS.length){ finishGame(); }
   }
 
+  // QR로 들어온 학생 화면인지 (head 의 집중 모드 스크립트가 먼저 표시해 둠)
+  function qrStudentMode(){
+    const p = new URLSearchParams(location.search);
+    return document.documentElement.classList.contains('qr-focus-mode') || p.get('qr') === '1' || p.get('mode') === 'focus' || p.has('q');
+  }
   function setAnswerKeyMode(show){
+    if(qrStudentMode()){                                        // 학생 화면: 정답지 모드 사용 불가
+      show = false;
+      const t = document.getElementById('answerKeyToggle'); if(t){ t.checked = false; t.disabled = true; }
+    }
     document.querySelectorAll('.cell.answer-highlight').forEach(el=>el.classList.remove('answer-highlight'));
     if(show){
       Object.values(placements).forEach(cells=>{
@@ -1222,7 +1236,7 @@ return i=this.parent.children.indexOf(this),removed=this.parent.children.splice(
     foundWords = new Set();
     score = 0;
     isDragging = false;
-    answerKeyOn = document.getElementById('answerKeyToggle').checked;
+    answerKeyOn = !qrStudentMode() && document.getElementById('answerKeyToggle').checked;
     setAnswerKeyMode(answerKeyOn);
     document.getElementById('overlay').classList.remove('show');
     document.getElementById('timeDisplay').textContent = '00:00';
