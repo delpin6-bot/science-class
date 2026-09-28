@@ -688,9 +688,10 @@ header.unified-game-header .game-title {
         <span class="setting-desc">혼자 연습(AI 대전) vs 친구와 1PC 대전</span>
       </div>
       <select id="cfgGameMode" style="background:#0f172a; color:#fff; border:1px solid #475569; padding:5px 8px; border-radius:6px; font-weight:700;" onchange="applySettings()">
-        <option value="solo">🧑‍🎓 혼자 연습 (AI 3명 대결)</option>
-        <option value="multi2">👥 친구와 2인 대전 (A / L 키)</option>
-        <option value="multi4">👥 친구와 4인 대전 (A / L / Z / M 키)</option>
+        <option value="solo">🤖 혼자 연습 (나 + AI 3명)</option>
+        <option value="multi2">👥 2인 대전 · 모두 사람 (A / L 키)</option>
+        <option value="multi3">👥 3인 대전 · 모두 사람 (A / L / Z 키)</option>
+              <option value="multi4">👥 4인 대전 · 모두 사람 (A / L / Z / M 키)</option>
       </select>
     </div>
 
@@ -978,8 +979,7 @@ function initNewGame() {
   clearTimeout(aiTimeoutId);
   clearInterval(autoTimer);
 
-  if (gameMode === 'multi2') numPlayers = 2;
-  else numPlayers = 4;
+  numPlayers = (gameMode === 'solo') ? 4 : (parseInt(gameMode.replace('multi', ''), 10) || 4);   // 2·3·4인 모두 사람
 
   const fullDeck = buildDeck();
   players = [];
@@ -1007,9 +1007,9 @@ function initNewGame() {
   document.getElementById('key-hint-1').textContent = (gameMode === 'solo') ? '' : 'BELL: L';
   document.getElementById('key-hint-1').style.display = (gameMode === 'solo') ? 'none' : 'inline-block';
   document.getElementById('key-hint-2').textContent = 'BELL: Z';
-  document.getElementById('key-hint-2').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+  document.getElementById('key-hint-2').style.display = (gameMode !== 'solo' && numPlayers >= 3) ? 'inline-block' : 'none';
   document.getElementById('key-hint-3').textContent = 'BELL: M';
-  document.getElementById('key-hint-3').style.display = (gameMode === 'multi4') ? 'inline-block' : 'none';
+  document.getElementById('key-hint-3').style.display = (gameMode !== 'solo' && numPlayers >= 4) ? 'inline-block' : 'none';
 
   renderAllStations();
   updatePotCounter();
@@ -1327,5 +1327,92 @@ initNewGame();
 <script src="./sounds/kjs-db-config.js"></script>
 <script src="./sounds/kjs-db.js" data-type="game"></script>
 <script src="./sounds/kjs-topbar.js"></script>
+<style id="halli-people-style">
+.p-bell{display:none;margin-left:6px;border:0;border-radius:999px;padding:8px 14px;font:900 15px/1 inherit;background:linear-gradient(180deg,#fde047,#f59e0b);color:#451a03;
+  box-shadow:0 3px 0 #92400e;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.p-bell:active{transform:translateY(2px);box-shadow:0 1px 0 #92400e}
+body.halli-people .p-bell{display:inline-flex;align-items:center;gap:4px}
+.halli-chooser{position:fixed;inset:0;z-index:9990;background:rgba(2,6,23,.78);display:grid;place-items:center;padding:16px}
+.halli-chooser .box{background:#fff;color:#0f172a;border-radius:18px;padding:22px;width:min(560px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.halli-chooser h2{margin:0 0 4px;font-size:22px}.halli-chooser p{margin:0 0 16px;color:#64748b;font-size:14px}
+.halli-chooser .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.halli-chooser button{border:2px solid #e2e8f0;border-radius:14px;background:#f8fafc;padding:14px 10px;font:800 16px/1.3 inherit;cursor:pointer;color:#0f172a}
+.halli-chooser button b{display:block;font-size:26px;margin-bottom:4px}.halli-chooser button small{display:block;color:#64748b;font-weight:700;font-size:12px;margin-top:3px}
+.halli-chooser button:hover{border-color:#f59e0b;background:#fffbeb}
+.halli-chooser button.solo{grid-column:1 / -1}
+</style>
+<script id="halli-people">
+/* 사람 대전(2~4인): 모두 사람이 직접 플레이. AI 는 '혼자 연습'에서만. */
+(function(){
+  const HUMAN = m => /^multi\d$/.test(m);
+  const KEYS = ['A','L','Z','M'];
+  const origName = window.getPlayerName;
+  window.getPlayerName = function(i){ return HUMAN(gameMode) ? `${i + 1}번 학생` : origName(i); };
+
+  function decorate(){
+    const people = HUMAN(gameMode);
+    document.body.classList.toggle('halli-people', people);
+    for(let i = 0; i < 4; i++){
+      const info = document.getElementById('info-' + i); if(!info) continue;
+      const nm = info.querySelector('.player-name'), av = info.querySelector('.player-avatar');
+      if(nm) nm.textContent = getPlayerName(i);
+      if(av) av.textContent = people ? ['🧑‍🎓','👩‍🎓','🧑‍🔬','👨‍🎓'][i] : (i === 0 ? '🧑‍🎓' : '🤖');
+      let bell = info.querySelector('.p-bell');
+      if(!bell){
+        bell = document.createElement('button'); bell.type = 'button'; bell.className = 'p-bell';
+        bell.addEventListener('pointerdown', e => { e.preventDefault(); if(i < numPlayers) onBellPressed(i); });
+        info.appendChild(bell);
+      }
+      bell.innerHTML = `🔔 벨 <small style="opacity:.7">${KEYS[i]}</small>`;
+      const hint = document.getElementById('key-hint-' + i);
+      if(hint && people){ hint.style.display = 'none'; }
+    }
+  }
+  const origInit = window.initNewGame;
+  window.initNewGame = function(){ const r = origInit.apply(this, arguments); decorate(); return r; };
+
+  // 사람 대전: 자기 차례일 때 자기 덱을 눌러 넘김
+  const origPlay = window.playTurn;
+  window.playTurn = function(idx = null){
+    if(HUMAN(gameMode) && idx !== null && idx !== currentTurnIdx){
+      showToast(`지금은 [${getPlayerName(currentTurnIdx)}] 차례예요. 자기 차례에 자기 덱을 눌러 주세요.`, true); return;
+    }
+    return origPlay.call(this, idx);
+  };
+  // 사람 대전: 가운데 벨은 누가 쳤는지 알 수 없으므로 각자 자리의 벨로
+  const cb = document.getElementById('centralBellBtn');
+  if(cb){ cb.removeAttribute('onclick'); cb.addEventListener('click', () => {
+    if(HUMAN(gameMode)) showToast('사람 대전에서는 각자 자리의 🔔 벨(또는 A·L·Z·M 키)을 누르세요!', true);
+    else onBellPressed('human');
+  }); }
+
+  // 인원 선택 화면
+  function choose(mode){
+    const sel = document.getElementById('cfgGameMode'); sel.value = mode;
+    try{ localStorage.setItem('halli-mode', mode); }catch(e){}
+    document.querySelector('.halli-chooser')?.remove();
+    applySettings();
+  }
+  function openChooser(){
+    if(document.querySelector('.halli-chooser')) return;
+    const ov = document.createElement('div'); ov.className = 'halli-chooser';
+    ov.innerHTML = `<div class="box"><h2>👥 몇 명이 함께 할까요?</h2><p>2~4인은 <b>모두 사람</b>이 직접 합니다. 각자 자리의 🔔 벨을 누르거나 키보드(A·L·Z·M)를 쓰세요.</p>
+      <div class="opts">
+        <button data-m="multi2"><b>👥</b>2인<small>모두 사람</small></button>
+        <button data-m="multi3"><b>👥</b>3인<small>모두 사람</small></button>
+        <button data-m="multi4"><b>👥</b>4인<small>모두 사람</small></button>
+        <button data-m="solo"><b>🤖</b>혼자 연습<small>나 + AI 3명</small></button>
+      </div></div>`;
+    ov.querySelectorAll('button[data-m]').forEach(b => b.onclick = () => choose(b.dataset.m));
+    document.body.appendChild(ov);
+  }
+  window.openHalliChooser = openChooser;
+  // 메뉴에 '인원 선택' 버튼
+  const nav = document.querySelector('.nav-controls');
+  if(nav){ const b = document.createElement('button'); b.className = 'btn-nav'; b.textContent = '👥 인원 선택'; b.onclick = openChooser; nav.insertBefore(b, nav.children[1] || null); }
+  decorate();
+  openChooser();
+})();
+</script>
 </body>
 </html>
