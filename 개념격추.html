@@ -69,8 +69,8 @@
   }
   #board::after{
     content:""; position:absolute; left:0; right:0; bottom:38px; height:2px;
-    background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 18px);
-    opacity:.5;
+    background: repeating-linear-gradient(90deg, var(--error) 0 12px, transparent 12px 20px);
+    opacity:.75;
   }
   .bubble{
     position:absolute; transform:translate(-50%,0); width:max-content; max-width:min(180px, 46%);
@@ -144,21 +144,47 @@
   .combo-stat.hidden{ display:none; }
   .chobtn{ white-space:nowrap; }
   /* 터치 용어 패드 — 떨어지는 개념의 정답 용어 버튼을 눌러 격추 */
-  .answer-row{ align-items:stretch; position:sticky; bottom:0; z-index:6; padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));
-    background:linear-gradient(to top, rgba(246,242,231,.98) 82%, rgba(246,242,231,0)); }
-  .answer-row input[type=text], .answer-row #fireBtn{ display:none; }
-  .term-pad{ flex:1; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
-  .term-btn{ min-height:58px; border-radius:14px; border:2px solid #cbd5e1; background:#fff; color:#0f172a;
-    font:800 clamp(16px,2vw,22px)/1.2 inherit; padding:8px 10px; cursor:pointer; touch-action:manipulation;
-    -webkit-tap-highlight-color:transparent; word-break:keep-all; transition:transform .08s, background .15s, border-color .15s; position:relative; }
-  .term-btn:active{ transform:scale(.96); }
+  /* ── 하단 조작 영역(터치 격추 패드 / 키보드 입력) — 화면 아래에 고정 ── */
+  .answer-row{ display:block; position:sticky; bottom:0; z-index:6; margin-top:12px; padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(to top, rgba(246,242,231,.98) 86%, rgba(246,242,231,0)); }
+  .touch-deck-container{ background:var(--card); border:2.5px solid var(--ink); border-radius:14px; padding:10px 14px 12px; box-shadow:5px 5px 0 var(--ink); }
+  .touch-deck-header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;
+    padding-bottom:8px; border-bottom:1.5px dashed var(--paper-line); }
+  .touch-deck-title{ font-size:14px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .touch-deck-title .pill{ background:var(--membrane-soft); color:var(--membrane); font-size:11.5px; padding:2px 8px; border-radius:12px; }
+  .term-pad{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; }
+  @media (min-width:900px){ .term-pad{ grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:12px; } }
+  .kbd-row{ display:flex; gap:10px; align-items:stretch; background:var(--card); border:2.5px solid var(--ink); border-radius:14px; padding:10px 12px; box-shadow:5px 5px 0 var(--ink); }
+  .kbd-row input[type=text]{ flex:1; min-width:0; font-family:inherit; font-size:18px; font-weight:700; padding:12px 16px; border:2px solid var(--ink); border-radius:8px; background:#fff; color:var(--ink); }
+  .kbd-row input[type=text].shake{ animation: shake .28s ease; border-color:var(--error); }
+  .kbd-row button{ min-width:88px; }
+  .mode-switch-bar{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 12px; padding:8px 14px;
+    background:var(--card); border:1.5px solid var(--ink); border-radius:10px; box-shadow:2px 2px 0 var(--ink); }
+  .mode-switch-group{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .mode-label{ font-size:13px; font-weight:800; color:var(--ink-soft); margin-right:4px; }
+  .mode-btn{ font-size:13px; font-weight:700; padding:6px 12px; border-radius:20px; border:1.5px solid var(--ink); background:#fff; color:var(--ink); }
+  .mode-btn[aria-pressed="true"]{ background:var(--ink); color:#fff; box-shadow:0 2px 5px rgba(0,0,0,.15); }
+  .quick-ctrls{ display:flex; gap:6px; align-items:center; margin-left:auto; flex-wrap:wrap; }
+  .btn-sm{ font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:6px; }
+  .badge.touch{ background:var(--membrane); margin-left:4px; }
+  .danger-line-label{ position:absolute; right:12px; bottom:16px; font-size:11.5px; font-weight:800; color:var(--error); letter-spacing:.5px; pointer-events:none; z-index:2; }
+  .laser-beam{ position:absolute; width:4px; background:linear-gradient(180deg,#38bdf8,#2563eb); border-radius:999px; transform-origin:bottom center;
+    pointer-events:none; z-index:25; box-shadow:0 0 10px #38bdf8, 0 0 20px #2563eb; animation: laserShoot .24s ease-out forwards; }
+  @keyframes laserShoot{ 0%{ opacity:1; } 100%{ opacity:0; } }
+  .bubble{ cursor:pointer; }
+  .bubble.focused{ border-color:var(--highlight); box-shadow:0 0 0 3px var(--highlight-soft), 3px 3px 0 var(--ink); z-index:3; }
+  .term-btn{ min-height:58px; border-radius:12px; border:2.5px solid var(--ink); background:#fff; color:var(--ink);
+    font:800 clamp(16px,2.1vw,20px)/1.25 inherit; padding:10px 12px; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 0 var(--ink);
+    -webkit-tap-highlight-color:transparent; word-break:keep-all; transition:transform .08s, box-shadow .08s, background .12s; position:relative; }
+  .term-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--ink); background:#f8fafc; }
   .term-btn .k{ position:absolute; left:8px; top:6px; font-size:11px; font-weight:800; color:#94a3b8; }
-  .term-btn.hit{ background:#dcfce7; border-color:#22c55e; }
-  .term-btn.miss{ background:#fee2e2; border-color:#ef4444; animation: shake .28s ease; }
+  .term-btn.hit{ animation: cardHit .35s ease forwards; }
+  @keyframes cardHit{ 0%{ background:#dcfce7; border-color:#16a34a; color:#15803d; } 50%{ transform:scale(1.06) translateY(-4px); background:#86efac; border-color:#15803d; color:#14532d; } 100%{ transform:none; } }
+  .term-btn.miss{ background:#fee2e2; border-color:#b8432a; color:#b8432a; animation: shake .32s ease; }
   .term-btn:disabled{ opacity:.45; cursor:not-allowed; }
   .term-pad.locked .term-btn{ opacity:.45; pointer-events:none; }
-  .answer-row .chobtn{ min-width:0; align-self:stretch; }
-  @media (max-width:560px){ .term-pad{ grid-template-columns:repeat(2, minmax(0,1fr)); } .term-btn{ min-height:52px; } .term-btn .k{ display:none; } }
+  @media (max-width:560px){ .term-pad{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; } .term-btn{ min-height:50px; } .term-btn .k{ display:none; }
+    .mode-btn .long{ display:none; } .touch-deck-title .pill{ display:none; } }
   .chohint{ min-height:20px; text-align:center; font-size:14px; font-weight:800; color:#b45309; margin-top:6px; }
   .bubble .cho{ display:block; margin-top:3px; font-size:15px; letter-spacing:3px; color:#b45309; font-weight:900; }
   .over-screen{ overflow-y:auto; }
@@ -646,9 +672,9 @@ header.unified-game-header .game-title {
 <div class="wrap">
   <header>
     <div class="title-block">
-      <span class="badge">중1~중3 과학 · 단원별 개념</span>
+      <span class="badge">중1~중3 과학 · 단원별 개념</span><span class="badge touch">🖐️ 전자칠판 · 터치 지원</span>
       <h1>과학 퍼즐 - 개념 격추</h1>
-      <p>설명이 담긴 방울이 바닥에 닿기 전에 알맞은 용어 버튼을 눌러 격추하세요.</p>
+      <p>설명이 담긴 방울이 바닥에 닿기 전에 아래 <strong>알맞은 개념 카드를 터치</strong>해 격추하세요.</p>
     </div>
     <div class="stats">
       <div class="stat"><div class="n" id="levelDisplay">1</div><div class="l">레벨</div></div>
@@ -658,10 +684,22 @@ header.unified-game-header .game-title {
     </div>
   <div class="header-actions unified-nav-actions">
     <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
+    <button type="button" id="btnFullscreen" class="btn-top btn-unified-nav btn-theory" title="전자칠판 전체화면 전환">⛶ 전체화면</button>
     <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim" style="--c:#2563eb" title="가상실험 서랍">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game on" style="--c:#7c3aed" title="수업게임 서랍" aria-current="page">🎮<span class="t"> 수업게임</span></a></nav>
   </div>
 </header>
-  </header>
+
+  <div class="mode-switch-bar" id="modeBar">
+    <div class="mode-switch-group" role="group" aria-label="입력 방식">
+      <span class="mode-label">입력 방식</span>
+      <button type="button" class="mode-btn" id="btnModeTouch" aria-pressed="true">🖐️ 터치 카드<span class="long"> (전자칠판·태블릿)</span></button>
+      <button type="button" class="mode-btn" id="btnModeKeyboard" aria-pressed="false">⌨️ 키보드 타이핑</button>
+    </div>
+    <div class="quick-ctrls">
+      <button type="button" class="btn-sm" id="btnPickUnit">📂 단원 변경</button>
+      <button type="button" class="btn-sm" id="btnToggleEditor" aria-expanded="false">✏️ 문제 편집</button>
+    </div>
+  </div>
 
   <div class="picker" id="picker">
     <h2>학년 · 단원 · 차시 고르기</h2>
@@ -671,7 +709,7 @@ header.unified-game-header .game-title {
     <div id="pickbar" class="hidden"></div>
   </div>
 
-  <div class="panel" id="editorPanel">
+  <div class="panel hidden" id="editorPanel">
     <h2>문제 편집 (설명 → 정답)</h2>
     <div class="sub">한 줄에 하나씩, <b>설명|정답</b> 형식으로 입력하세요. 최소 3개, 최대 30개. (예: 동공 크기 조절|중간뇌)</div>
     <textarea id="qInput" rows="6"></textarea>
@@ -683,10 +721,11 @@ header.unified-game-header .game-title {
   </div>
 
   <div id="board">
+    <div class="danger-line-label">▼ 위험선 (닿으면 생명 −1)</div>
     <div class="start-screen" id="startScreen">
       <span class="badge">시작 전 안내</span>
       <h2>화면 위에서 설명이 떨어집니다</h2>
-      <p>바닥에 닿기 전에, 아래 용어 버튼 중 알맞은 것을 터치하세요. (PC는 숫자 키 1~6)<br>
+      <p>붉은 위험선에 닿기 전에, <strong>아래 알맞은 개념 카드를 터치</strong>해 격추하세요. (키보드 타이핑 모드·숫자 키도 가능)<br>
       틀려도 생명은 줄지 않지만, 설명이 바닥에 닿으면 생명이 하나 줄어듭니다. 생명이 0이 되면 게임이 끝나요.</p>
       <button class="primary" id="startBtn">게임 시작</button>
     </div>
@@ -702,11 +741,19 @@ header.unified-game-header .game-title {
   </div>
 
   <div class="chohint" id="choLine"></div>
-  <div class="answer-row">
-    <input type="text" id="answerInput" autocomplete="off" disabled hidden aria-hidden="true" />
-    <button class="primary" id="fireBtn" disabled hidden aria-hidden="true">격추</button>
-    <div class="term-pad" id="termPad" role="group" aria-label="정답 용어 버튼"></div>
-    <button class="ghost chobtn" id="choBtn" type="button" title="가장 아래 방울의 초성 보기">💡 초성</button>
+  <div class="answer-row" id="controlDock">
+    <div class="touch-deck-container" id="touchDeckWrap">
+      <div class="touch-deck-header">
+        <div class="touch-deck-title"><span>🎯 터치 격추 패드</span><span class="pill" id="touchDeckSub">개념 카드를 탭하여 발사</span></div>
+        <button class="ghost chobtn btn-sm" id="choBtn" type="button" title="가장 아래 방울의 초성 보기">💡 초성 힌트</button>
+      </div>
+      <div class="term-pad" id="termPad" role="group" aria-label="개념 카드"></div>
+    </div>
+    <div class="kbd-row hidden" id="keyboardRow">
+      <input type="text" id="answerInput" placeholder="정답 용어를 입력하고 Enter" autocomplete="off" disabled />
+      <button class="primary" id="fireBtn" disabled>격추</button>
+      <button class="ghost chobtn btn-sm" id="choBtn2" type="button" title="가장 아래 방울의 초성 보기">💡 초성</button>
+    </div>
   </div>
 </div>
 
@@ -816,9 +863,17 @@ header.unified-game-header .game-title {
   const termPad = document.getElementById('termPad');
   let padTerms = [];
   function allTerms(){ return [...new Set(questions.map(q => q[1]))]; }
-  function padSize(){ return Math.max(3, Math.min(6, allTerms().length)); }
+  const FULL_DECK_MAX = 12;
+  function padSize(){ const n = allTerms().length; return n <= FULL_DECK_MAX ? n : 8; }
   function refreshPad(reset){
     const n = padSize();
+    // 개념이 12개 이하: 차시 개념 카드 전부를 고정 자리에 (위치를 외워 빠르게 누를 수 있게)
+    if(n === allTerms().length){
+      if(reset || padTerms.length !== n || padTerms.some(t => t === null)){
+        padTerms = allTerms().slice().sort(() => Math.random() - 0.5);
+      }
+      drawPad(); return;
+    }
     if(reset || padTerms.length !== n) padTerms = new Array(n).fill(null);
     const need = [...new Set(active.map(b => b.answer))];
     const pinned = new Set(need);
@@ -837,6 +892,21 @@ header.unified-game-header .game-title {
     termPad.innerHTML = padTerms.map((t,i) => t === null ? '' :
       `<button type="button" class="term-btn" data-t="${escT(t)}"><span class="k">${i+1}</span>${escT(t)}</button>`).join('');
   }
+  function fireLaser(target, term){
+    try{
+      const br = board.getBoundingClientRect(), tr = target.el.getBoundingClientRect();
+      const card = [...termPad.querySelectorAll('.term-btn')].find(x => x.dataset.t === term);
+      const cr = card && card.offsetParent ? card.getBoundingClientRect() : null;
+      const ox = Math.max(8, Math.min(br.width - 8, cr ? cr.left + cr.width / 2 - br.left : br.width / 2));
+      const oy = br.height;                                           // 판 바닥에서 발사
+      const tx = tr.left + tr.width / 2 - br.left, ty = tr.top + tr.height / 2 - br.top;
+      const len = Math.hypot(tx - ox, ty - oy), ang = Math.atan2(tx - ox, oy - ty);
+      const L = document.createElement('div'); L.className = 'laser-beam';
+      L.style.left = (ox - 2) + 'px'; L.style.top = (oy - len) + 'px'; L.style.height = len + 'px';
+      L.style.transform = `rotate(${ang}rad)`;
+      board.appendChild(L); setTimeout(() => L.remove(), 260);
+    }catch(e){}
+  }
   function flashTerm(t, cls){
     const b = [...termPad.querySelectorAll('.term-btn')].find(x => x.dataset.t === t);
     if(b){ b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); }
@@ -846,9 +916,50 @@ header.unified-game-header .game-title {
     e.preventDefault(); tryFire(b.dataset.t);
   });
   document.addEventListener('keydown', e => {                       // 교사 PC: 숫자 1~6
-    if(!running || paused || /INPUT|TEXTAREA/.test((e.target||{}).tagName||'')) return;
+    if(!running || paused || inputMode !== 'touch' || /INPUT|TEXTAREA/.test((e.target||{}).tagName||'')) return;
     const i = parseInt(e.key, 10) - 1;
     if(i >= 0 && i < padTerms.length && padTerms[i] && !termPad.classList.contains('locked')){ e.preventDefault(); tryFire(padTerms[i]); }
+  });
+
+  // ── 입력 방식 (터치 카드 / 키보드 타이핑) ──
+  let inputMode = 'touch';
+  try { inputMode = localStorage.getItem('kjs-shoot-input') === 'keyboard' ? 'keyboard' : 'touch'; } catch(e){}
+  function setInputMode(m){
+    inputMode = m === 'keyboard' ? 'keyboard' : 'touch';
+    try { localStorage.setItem('kjs-shoot-input', inputMode); } catch(e){}
+    document.getElementById('touchDeckWrap').classList.toggle('hidden', inputMode !== 'touch');
+    document.getElementById('keyboardRow').classList.toggle('hidden', inputMode !== 'keyboard');
+    document.getElementById('btnModeTouch').setAttribute('aria-pressed', String(inputMode === 'touch'));
+    document.getElementById('btnModeKeyboard').setAttribute('aria-pressed', String(inputMode === 'keyboard'));
+    if(inputMode === 'keyboard' && running){ answerInput.disabled = false; fireBtn.disabled = false; answerInput.focus(); }
+    if(running) setTimeout(applyBoardLength, 30);
+  }
+  document.getElementById('btnModeTouch').addEventListener('click', () => setInputMode('touch'));
+  document.getElementById('btnModeKeyboard').addEventListener('click', () => setInputMode('keyboard'));
+  document.getElementById('choBtn2').addEventListener('click', () => document.getElementById('choBtn').click());
+  document.getElementById('btnFullscreen').addEventListener('click', () => {
+    const d = document, el = d.documentElement;
+    if(!(d.fullscreenElement || d.webkitFullscreenElement)) (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el);
+    else (d.exitFullscreen || d.webkitExitFullscreen || function(){}).call(d);
+  });
+  document.getElementById('btnPickUnit').addEventListener('click', () => {
+    const pk = document.getElementById('picker'); pk.classList.remove('hidden');
+    pk.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  document.getElementById('btnToggleEditor').addEventListener('click', () => {
+    const open = editorPanel.classList.toggle('hidden') === false;
+    document.getElementById('btnToggleEditor').setAttribute('aria-expanded', String(open));
+    if(open){
+      const qi = document.getElementById('qInput');
+      if(!qi.value.trim()) qi.value = questions.map(q => q.join('|')).join('\n');
+      editorPanel.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  });
+  // 방울을 누르면 강조 (어느 방울을 노릴지 표시)
+  board.addEventListener('pointerdown', e => {
+    const bb = e.target.closest('.bubble'); if(!bb) return;
+    board.querySelectorAll('.bubble.focused').forEach(x => x !== bb && x.classList.remove('focused'));
+    bb.classList.toggle('focused');
   });
 
   function removeBubble(b, cls){
@@ -900,6 +1011,7 @@ header.unified-game-header .game-title {
         level++;
         applyBoardLength();
       }
+      fireLaser(target, raw);
       removeBubble(target, 'pop');
       updateHUD();
       answerInput.value = '';
@@ -977,6 +1089,7 @@ header.unified-game-header .game-title {
     answerInput.value = '';
     termPad.classList.remove('locked');
     refreshPad(true);
+    if(inputMode === 'keyboard') setTimeout(() => answerInput.focus(), 80);
     applyBoardLength();
     setTimeout(applyBoardLength, 60);
     // 버튼 패드 아래쪽을 화면 바닥에 맞춰 스크롤 → 판 전체가 패드 바로 위에 한눈에 보임
@@ -1107,7 +1220,6 @@ header.unified-game-header .game-title {
   document.getElementById('startBtn').addEventListener('click', startGame);
   document.getElementById('retryBtn').addEventListener('click', ()=>{
     overScreen.classList.add('hidden');
-    editorPanel.classList.remove('hidden');
     startScreen.classList.remove('hidden');
   });
 
@@ -1131,13 +1243,13 @@ header.unified-game-header .game-title {
     document.getElementById('qMsg').textContent = '';
     startScreen.classList.remove('hidden');
     overScreen.classList.add('hidden');
-    editorPanel.classList.remove('hidden');
   });
 
   answerInput.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter') tryFire();
   });
   fireBtn.addEventListener('click', () => tryFire());
+  setInputMode(inputMode);
 
   document.addEventListener('visibilitychange', ()=>{
     paused = document.hidden;
