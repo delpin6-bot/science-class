@@ -1486,26 +1486,31 @@ function toggleFav(id, event) {
 }
 
 /* 필터 핸들러 */
+/* 활성 표시: 전역 event 대신 버튼의 onclick 값으로 찾아 켠다 (코드에서 호출해도 안전) */
+function markActive(sel, call) {
+  document.querySelectorAll(sel).forEach(b => {
+    const on = (b.getAttribute("onclick") || "") === call;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on));
+  });
+}
+
 function setPrimaryFilter(filter) {
   selectedPrimary = filter;
   selectedUnit = "ALL"; // 학년 변경 시 단원 리셋
-  document.querySelectorAll(".primary-nav-btn").forEach(b => b.classList.remove("active"));
-  event.currentTarget.classList.add("active");
+  markActive(".primary-nav-btn", "setPrimaryFilter('" + filter + "')");
   renderUnitChips();
   render();
 }
 
 function setStageFilter(stage) {
   selectedStage = stage;
-  document.querySelectorAll(".stage-chip").forEach(b => b.classList.remove("active"));
-  event.currentTarget.classList.add("active");
+  markActive(".stage-chip", "setStageFilter('" + stage + "')");
   render();
 }
 
 function setUnitFilter(unit) {
   selectedUnit = unit;
-  document.querySelectorAll(".unit-chip").forEach(b => b.classList.remove("active"));
-  event.currentTarget.classList.add("active");
+  renderUnitChips();
   render();
 }
 
@@ -1697,6 +1702,7 @@ render();
 window.DH_CONFIG = {
   hub:"lesson", grid:"#lessonGrid", search:"#keywordSearch", placeholder:"차시·개념·키워드 검색",
   chips:[{label:"전체",value:"ALL"},{label:"중1",value:"중1"},{label:"중2",value:"중2"},{label:"중3",value:"중3"},{label:"★ 내 서랍",value:"FAV",fav:true}],
+chipCount:function(v){ var e = document.getElementById({ALL:"countAll","중1":"countJ1","중2":"countJ2","중3":"countJ3",FAV:"countFav"}[v]); return e ? e.textContent : null; },
   chipState:function(){ return selectedPrimary; },
   chipClick:function(v){ DH_CONFIG._clickOld('button[onclick="setPrimaryFilter(\''+v+'\')"]'); },
   selects:[
@@ -1839,7 +1845,7 @@ window.DH_CONFIG = {
     C.chips.forEach(function(c){
       var b = document.createElement("button"); b.type = "button";
       b.className = "dh-chip" + (c.fav ? " fav" : "") + (cur === c.value ? " on" : "");
-      b.textContent = c.label; b.setAttribute("aria-pressed", String(cur === c.value));
+      var n = C.chipCount ? C.chipCount(c.value) : null; b.textContent = c.label + (n == null || n === "" ? "" : " " + n); b.setAttribute("aria-pressed", String(cur === c.value));
       b.onclick = function(){ C.chipClick(c.value); };
       chipsBox.appendChild(b);
     });

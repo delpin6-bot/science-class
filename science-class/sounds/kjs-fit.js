@@ -199,6 +199,7 @@
       apply(w, lo); return true;
     }
     function solve() {
+      if (document.documentElement.hasAttribute("data-kf-off")) { apply(0, 1); memo.sig = ""; return; }   // 게임이 직접 화면에 맞추는 중
       document.documentElement.classList.toggle("kf-short", vp().h < 500);
       var A = avail();
       var minS = A.short ? MIN_SCALE_SHORT : A.small ? MIN_SCALE_SMALL : MIN_SCALE;

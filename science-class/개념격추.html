@@ -188,6 +188,53 @@
   .chohint{ min-height:20px; text-align:center; font-size:14px; font-weight:800; color:#b45309; margin-top:6px; }
   .bubble .cho{ display:block; margin-top:3px; font-size:15px; letter-spacing:3px; color:#b45309; font-weight:900; }
   .over-screen{ overflow-y:auto; }
+  /* ===== v2: 개념 도감(마스터) · 재도전 완충 · 가로 화면 2단 배치 ===== */
+  .stat.master-stat .n{ color:#16a34a; font-size:20px; }
+  .term-btn .pips{ position:absolute; right:8px; top:6px; font-size:10px; letter-spacing:1px; color:#94a3b8; font-weight:800; }
+  .term-btn.mastered{ background:#ecfdf5; border-color:#16a34a; color:#166534; box-shadow:0 4px 0 #16a34a; }
+  .term-btn.mastered .pips{ color:#16a34a; font-size:12px; }
+  .term-btn.ruledout{ opacity:.25; pointer-events:none; text-decoration:line-through; }
+  .bubble.thinking{ border-color:#2563eb; box-shadow:0 0 0 3px #bfdbfe, 0 0 18px #60a5fa; }
+  .bubble.thinking::after{ content:"⏸ 생각할 시간"; display:block; margin-top:3px; font-size:11px; font-weight:800; color:#2563eb; }
+  .bubble.retry::before{ content:"🔁 다시 도전"; display:block; margin-bottom:3px; font-size:11px; font-weight:800; color:#b45309; }
+  .goal-line{ font-size:13px; font-weight:800; color:#166534; background:#dcfce7; border:1.5px solid #16a34a; border-radius:10px; padding:6px 12px; }
+  .mastery-box{ width:min(520px,94%); margin:6px auto 0; text-align:left; background:#fffdf7; border:2px solid var(--ink); border-radius:12px; padding:10px 14px; }
+  .mastery-box .mb-h{ font-weight:800; font-size:15px; margin-bottom:6px; }
+  .mastery-box .mb-sub{ font-size:12px; font-weight:800; color:var(--ink-soft); margin:8px 0 4px; }
+  .mastery-box .mb-item{ display:flex; gap:8px; align-items:baseline; padding:5px 8px; border-radius:8px; background:#fff7ed; border:1px solid #fed7aa; margin-bottom:4px; font-size:13px; }
+  .mastery-box .mb-item b{ color:#c2410c; white-space:nowrap; }
+  .mastery-box .mb-item span{ color:var(--ink-soft); }
+  .mastery-box .mb-chips{ display:flex; flex-wrap:wrap; gap:5px; }
+  .mastery-box .mb-chips span{ background:#dcfce7; color:#166534; border-radius:999px; padding:2px 10px; font-size:12.5px; font-weight:700; }
+  .over-screen .over-btns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+  .play-area{ display:block; }
+  body.playing{ padding-bottom:12px; }
+  body.playing .title-block .badge, body.playing .title-block p, body.playing .picker{ display:none; }
+  body.playing header{ margin-bottom:8px; padding-bottom:8px; }
+  @media (max-height:620px){ .touch-deck-title .pill{ display:none; } .play-area .term-btn{ min-height:38px !important; } .touch-deck-header{ margin-bottom:6px; padding-bottom:6px; } .term-pad{ gap:6px !important; } }
+  @media (max-width:600px){
+    body.playing .mode-switch-bar, body.playing .title-block, body.playing .kjs-seg{ display:none; }
+    body.playing .unified-nav-actions, body.playing .kjs-topbar{ flex-wrap:nowrap !important; overflow-x:auto; gap:5px !important; justify-content:flex-start; }
+    body.playing .unified-nav-actions > *, body.playing .kjs-topbar button{ flex:none; padding:4px 8px !important; font-size:12px !important; white-space:nowrap; }
+    body.playing header{ gap:6px; margin-bottom:6px; }
+    body.playing .stats{ gap:5px; width:100%; justify-content:space-between; }
+    body.playing .stat{ flex:1; min-width:0; padding:3px 6px; box-shadow:2px 2px 0 var(--ink); }
+    body.playing .stat .n{ font-size:18px; } body.playing .stat .l{ font-size:10px; }
+    .term-pad{ grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:6px !important; }
+    .term-btn{ font-size:15px !important; min-height:44px !important; padding:6px 4px !important; }
+    .term-btn .pips{ right:5px; top:3px; }
+    .touch-deck-container{ padding:8px 10px 10px; }
+    .touch-deck-header{ margin-bottom:6px; padding-bottom:6px; }
+  }
+  @media (min-width:640px) and (min-aspect-ratio:13/10){
+    .wrap{ max-width:min(1560px,98vw); }
+    .play-area{ display:grid; grid-template-columns:minmax(0,1fr) clamp(280px,31vw,440px); gap:14px; align-items:start; }
+    .play-area .answer-row{ position:static; margin-top:0; padding:0; background:none; }
+    .play-area .term-pad{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .play-area .term-btn{ min-height:clamp(46px,7.5vh,72px); }
+    .play-area .kbd-row{ flex-wrap:wrap; }
+  }
+
 </style>
 <script id="kjs-menu-lib">
 /* 수업 게임 서랍 · 공통 메뉴 (학년 → 대단원 → 중단원·차시, 검색)
@@ -680,6 +727,7 @@ header.unified-game-header .game-title {
       <div class="stat"><div class="n" id="levelDisplay">1</div><div class="l">레벨</div></div>
       <div class="stat"><div class="n" id="scoreDisplay">0</div><div class="l">점수</div></div>
       <div class="stat combo-stat hidden" id="comboStat"><div class="n" id="comboDisplay">0</div><div class="l">연속</div></div>
+      <div class="stat master-stat" title="개념 카드를 모두 마스터하면 승리!"><div class="n" id="masterDisplay">0/0</div><div class="l">📖 마스터</div></div>
       <div class="stat"><div class="n hearts" id="livesDisplay">♥♥♥</div><div class="l">생명</div></div>
     </div>
   <div class="header-actions unified-nav-actions">
@@ -720,13 +768,13 @@ header.unified-game-header .game-title {
     </div>
   </div>
 
+  <div class="play-area"><div class="play-main">
   <div id="board">
     <div class="danger-line-label">▼ 위험선 (닿으면 생명 −1)</div>
     <div class="start-screen" id="startScreen">
       <span class="badge">시작 전 안내</span>
-      <h2>화면 위에서 설명이 떨어집니다</h2>
-      <p>붉은 위험선에 닿기 전에, <strong>아래 알맞은 개념 카드를 터치</strong>해 격추하세요. (키보드 타이핑 모드·숫자 키도 가능)<br>
-      틀려도 생명은 줄지 않지만, 설명이 바닥에 닿으면 생명이 하나 줄어듭니다. 생명이 0이 되면 게임이 끝나요.</p>
+      <h2>개념 카드를 모두 마스터하라!</h2>
+      <p>떨어지는 설명에 알맞은 <strong>개념 카드를 터치</strong>해 격추하세요. 카드마다 <strong>맞히면 ●가 채워지고</strong>, 모든 카드를 마스터하면 승리 🏆<br>틀리면 방울이 잠깐 멈추고 초성 힌트가 나와요. 놓친 개념은 <strong>힌트와 함께 다시 등장</strong>합니다. (숫자 키·키보드 타이핑도 가능)</p>
       <button class="primary" id="startBtn">게임 시작</button>
     </div>
     <div class="over-screen hidden" id="overScreen">
@@ -734,13 +782,15 @@ header.unified-game-header .game-title {
       <h2 id="overTitle">게임 종료</h2>
       <div class="score-final" id="finalScore">0</div>
       <p id="overStats"></p>
+      <div id="masteryBox" class="mastery-box hidden"></div>
       <div id="insightBoxShoot" style="max-width:360px;margin:0 auto;"></div>
       <div id="scoreBoxShoot" style="max-width:340px;margin:0 auto;"></div>
-      <button class="primary" id="retryBtn">다시 도전하기</button>
+      <div class="over-btns"><button class="primary hidden" id="reviewBtn">🔁 못 외운 개념만 다시 도전</button><button class="primary" id="retryBtn">다시 도전하기</button></div>
     </div>
   </div>
 
   <div class="chohint" id="choLine"></div>
+  </div>
   <div class="answer-row" id="controlDock">
     <div class="touch-deck-container" id="touchDeckWrap">
       <div class="touch-deck-header">
@@ -754,6 +804,7 @@ header.unified-game-header .game-title {
       <button class="primary" id="fireBtn" disabled>격추</button>
       <button class="ghost chobtn btn-sm" id="choBtn2" type="button" title="가장 아래 방울의 초성 보기">💡 초성</button>
     </div>
+  </div>
   </div>
 </div>
 
@@ -780,6 +831,10 @@ header.unified-game-header .game-title {
   let curGrade2 = '', curUnit2 = '', curLesson2 = '';
   let spawnTimer = null, lastTick = null, rafId = null;
   let bubbleSeq = 0;
+  document.documentElement.setAttribute('data-kf-off', '1');   // 이 게임은 판 크기를 직접 화면에 맞춘다(전체 축소 없음)
+  let mastery = {}, retryQ = [], ruled = new Set(), winTimer = null;
+  const NEED = () => allTerms().length <= 12 ? 2 : 1;          // 개념이 많은 종합 모드는 1번만 맞히면 마스터
+  const mCount = t => mastery[t] || 0, isMaster = t => mCount(t) >= NEED();
 
   const board = document.getElementById('board');
   const startScreen = document.getElementById('startScreen');
@@ -789,7 +844,7 @@ header.unified-game-header .game-title {
   const editorPanel = document.getElementById('editorPanel');
 
   function shuffledPool(){
-    const arr = [...questions];
+    const arr = questions.filter(q => !isMaster(q[1]));
     for(let i=arr.length-1;i>0;i--){
       const j = Math.floor(Math.random()*(i+1));
       [arr[i],arr[j]] = [arr[j],arr[i]];
@@ -798,7 +853,12 @@ header.unified-game-header .game-title {
   }
 
   function nextQuestion(){
+    // 놓친 개념은 방울 2개 뒤에 초성 힌트와 함께 한 번 더 (인출 연습)
+    retryQ.forEach(x => x.wait--);
+    const ri = retryQ.findIndex(x => x.wait <= 0 && !active.some(b => b.answer === x.answer) && !isMaster(x.answer));
+    if(ri >= 0){ const x = retryQ.splice(ri, 1)[0]; return { desc: x.desc, answer: x.answer, retry: true }; }
     if(pool.length === 0) pool = shuffledPool();
+    if(pool.length === 0) return null;
     const inUse = new Set(active.map(b=>b.answer));
     let idx = pool.findIndex(q => !inUse.has(q[1]));
     if(idx === -1) idx = 0;
@@ -811,17 +871,30 @@ header.unified-game-header .game-title {
   const LEN_RATE = {1: 2, 2: 1.7, 3: 1.4};
   let boardH = BASE_H;
   function lengthRate(lv){ return LEN_RATE[lv] || 1; }
+  const LAND_MQ = window.matchMedia('(min-width:640px) and (min-aspect-ratio:13/10)');
+  function isLand(){ return LAND_MQ.matches; }
+  function playTop(){ return document.querySelector('.play-main').getBoundingClientRect().top + window.scrollY; }
   function applyBoardLength(){
-    const want = BASE_H * lengthRate(level);
-    // 판 + 아래 고정 버튼 패드가 한 화면에 들어오도록 (판 위쪽을 화면 맨 위에 맞춰 시작하므로)
-    const padH = (document.querySelector('.answer-row') || {}).offsetHeight || 140;
-    const avail = Math.max(240, window.innerHeight - padH - 56);   // 판 + 초성 줄 + 패드
-    boardH = Math.round(Math.min(want, avail));
+    // 판이 화면 높이에 딱 맞도록 계산: 가로 화면은 개념 카드가 오른쪽, 세로 화면은 개념 카드가 아래(고정)
+    const land = isLand(), compact = land && window.innerHeight < 620;      // 휴대폰 가로: 머리글을 밀어 올려 판을 키움
+    const top = compact ? 6 : playTop();
+    const dockH = (document.getElementById('controlDock') || {}).offsetHeight || 140;
+    let avail, base = BASE_H;
+    if(land){
+      avail = window.innerHeight - top - 26 - 12 - 2;
+      base = Math.max(BASE_H, Math.round(avail * 0.6));
+    } else {
+      avail = window.innerHeight - top - 26 - 12 - dockH - 12 - 6;
+    }
+    avail = Math.max(200, avail);
+    boardH = Math.round(Math.min(base * lengthRate(level), avail));
     board.style.height = boardH + 'px';
-    // 화면이 작아 보드를 다 못 키워도 떨어지는 시간은 배율만큼 길어지도록 맞춘다
+    // 화면이 작아 판을 다 못 키워도 떨어지는 시간은 배율만큼 길어지도록 맞춘다
     active.forEach(b => { b.speed = b.baseSpeed / lengthRate(level); });
   }
-  window.addEventListener('resize', () => { if(running) applyBoardLength(); });
+  window.addEventListener('resize', () => { applyBoardLength(); });
+  window.addEventListener('orientationchange', () => setTimeout(applyBoardLength, 300));
+  applyBoardLength();
 
   function levelConfig(lv){
     const speed = Math.min(30, 8 + (lv-1)*1.6);        // % of board height per second
@@ -833,9 +906,10 @@ header.unified-game-header .game-title {
   function spawnBubble(){
     const cfg = levelConfig(level);
     if(active.length >= cfg.maxConcurrent) return;
-    const { desc, answer } = nextQuestion();
+    const nq = nextQuestion(); if(!nq) return;
+    const { desc, answer } = nq;
     const el = document.createElement('div');
-    el.className = 'bubble' + (bubbleSeq % 2 ? ' alt' : '');
+    el.className = 'bubble' + (bubbleSeq % 2 ? ' alt' : '') + (nq.retry ? ' retry' : '');
     el.textContent = desc;
     // 방울이 판 가장자리에서 좁아지지 않도록, 방울 반폭만큼 안쪽에서만 생성
     const bw = board.clientWidth || 600, halfPct = Math.min(24, (Math.min(180, bw * 0.46) / 2 + 8) / bw * 100);
@@ -843,8 +917,10 @@ header.unified-game-header .game-title {
     el.style.left = leftPct + '%';
     el.style.top = '-10%';
     board.appendChild(el);
-    active.push({ id: bubbleSeq++, el, desc, answer, top: -10, baseSpeed: cfg.speed, speed: cfg.speed / lengthRate(level) });
+    const nb = { id: bubbleSeq++, el, desc, answer, top: -10, baseSpeed: cfg.speed, speed: cfg.speed / lengthRate(level), retry: !!nq.retry, wrong: 0, slowUntil: 0 };
+    active.push(nb);
     refreshPad();
+    if(nb.retry) showCho(nb, false);
   }
 
   function updateHUD(){
@@ -852,6 +928,7 @@ header.unified-game-header .game-title {
     document.getElementById('levelDisplay').textContent = level;
     document.getElementById('livesDisplay').innerHTML =
       '♥'.repeat(lives) + '<span class="lost">' + '♥'.repeat(Math.max(0,3-lives)) + '</span>';
+    const tl = allTerms(); document.getElementById('masterDisplay').textContent = tl.filter(isMaster).length + '/' + tl.length;
     const cs = document.getElementById('comboStat');
     if(combo >= 2){ cs.classList.remove('hidden'); document.getElementById('comboDisplay').textContent = combo; }
     else cs.classList.add('hidden');
@@ -889,8 +966,13 @@ header.unified-game-header .game-title {
   }
   const escT = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   function drawPad(){
-    termPad.innerHTML = padTerms.map((t,i) => t === null ? '' :
-      `<button type="button" class="term-btn" data-t="${escT(t)}"><span class="k">${i+1}</span>${escT(t)}</button>`).join('');
+    const need = NEED();
+    termPad.innerHTML = padTerms.map((t,i) => {
+      if(t === null) return '';
+      const m = isMaster(t), c = Math.min(mCount(t), need);
+      const pips = m ? '✓' : '●'.repeat(c) + '○'.repeat(need - c);
+      return `<button type="button" class="term-btn${m ? ' mastered' : ''}${ruled.has(t) ? ' ruledout' : ''}" data-t="${escT(t)}"><span class="k">${i+1}</span><span class="pips">${pips}</span>${escT(t)}</button>`;
+    }).join('');
   }
   function fireLaser(target, term){
     try{
@@ -906,6 +988,14 @@ header.unified-game-header .game-title {
       L.style.transform = `rotate(${ang}rad)`;
       board.appendChild(L); setTimeout(() => L.remove(), 260);
     }catch(e){}
+  }
+  function ruleOut(low){                       // 같은 방울을 2번 틀리면 보기 절반을 흐리게 (50:50 힌트)
+    if(padTerms.length < 5) return;
+    const needed = new Set(active.map(b => b.answer));
+    const c = padTerms.filter(t => t && !needed.has(t) && !ruled.has(t)).sort(() => Math.random() - 0.5);
+    c.slice(0, Math.floor(c.length / 2)).forEach(t => ruled.add(t));
+    drawPad();
+    document.getElementById('choLine').textContent = '💡 보기를 절반으로 줄여 줬어요! 초성: ' + (window.KJSInsight ? KJSInsight.chosung(low.answer) : '');
   }
   function flashTerm(t, cls){
     const b = [...termPad.querySelectorAll('.term-btn')].find(x => x.dataset.t === t);
@@ -970,6 +1060,7 @@ header.unified-game-header .game-title {
       b.el.remove();
     }
     active = active.filter(x => x.id !== b.id);
+    ruled.clear();
     refreshPad();
   }
 
@@ -1005,6 +1096,9 @@ header.unified-game-header .game-title {
       const base = 10 * level, comboBonus = Math.min(30, (combo - 1) * 4);
       score += base + comboBonus;
       window.KJS && KJS.ok(comboBonus >= 12 ? { msg: combo + '연속 명중! 🔥 +' + (base + comboBonus) } : undefined);
+      mastery[target.answer] = mCount(target.answer) + 1;
+      if(isMaster(target.answer)) window.KJS && KJS.ok({ msg: '✨ ' + target.answer + ' 마스터!' });
+      else if(target.retry) window.KJS && KJS.ok({ msg: '다시 도전 성공! 💪' });
       hitsThisLevel++;
       if(hitsThisLevel >= 5){
         hitsThisLevel = 0;
@@ -1016,19 +1110,23 @@ header.unified-game-header .game-title {
       updateHUD();
       answerInput.value = '';
       flashTerm(raw, 'hit');
+      if(allTerms().every(isMaster)){ running = false; clearTimeout(winTimer); winTimer = setTimeout(() => endGame(true), 700); }
     } else {
       combo = 0;
-      const penalty = 8 + level * 2;
+      const penalty = 4 + level;
       score = Math.max(0, score - penalty);
       const low = [...active].sort((a,b) => b.top - a.top)[0];
       if(low){
         window.KJSInsight && KJSInsight.miss(low.answer, low.desc, raw);
         showCho(low, false);
+        low.wrong++; low.slowUntil = performance.now() + 2500;        // 재도전 완충: 방울이 잠깐 느려짐
+        low.el.classList.add('thinking'); setTimeout(() => low.el.classList.remove('thinking'), 2500);
+        if(low.wrong >= 2) ruleOut(low);
       }
       answerInput.disabled = true; fireBtn.disabled = true;
       flashTerm(raw, 'miss'); termPad.classList.add('locked');        // 오답 후 0.9초 잠금(마구 누르기 방지)
       setTimeout(() => { termPad.classList.remove('locked'); if(running){ answerInput.disabled = false; fireBtn.disabled = false; } }, 900);
-      window.KJS && KJS.no({ msg: '오답! 초성 힌트를 보고 다시 도전 (-' + penalty + ')' });
+      window.KJS && KJS.no({ msg: '앗! 방울이 잠깐 멈췄어요 — 초성을 보고 다시 도전 (-' + penalty + ')' });
       answerInput.classList.remove('shake');
       void answerInput.offsetWidth;
       answerInput.classList.add('shake');
@@ -1043,10 +1141,12 @@ header.unified-game-header .game-title {
     lastTick = ts;
 
     for(const b of [...active]){
-      b.top += b.speed * dt;
+      b.top += b.speed * dt * (ts < b.slowUntil ? 0.3 : 1);
       b.el.style.top = b.top + '%';
       if(b.top >= 90){
         removeBubble(b, 'dropped'); window.KJSInsight && KJSInsight.miss(b.answer, b.desc, '놓침');
+        mastery[b.answer] = Math.max(0, mCount(b.answer) - 1);
+        if(!retryQ.some(x => x.answer === b.answer)) retryQ.push({ desc: b.desc, answer: b.answer, wait: 2 });
         window.KJS&&KJS.no({msg:'놓친 개념: ' + b.answer + ' 💪'});
         lives--; combo = 0;
         updateHUD();
@@ -1070,10 +1170,13 @@ header.unified-game-header .game-title {
     loop();
   }
 
-  function startGame(){
+  function startGame(keep){
+    document.body.classList.add('playing');
     active.forEach(b => b.el.remove());
-    active = [];
+    active = []; retryQ = []; ruled.clear(); clearTimeout(winTimer);
+    if(keep !== true) mastery = {};
     pool = shuffledPool();
+    document.getElementById('masteryBox').classList.add('hidden');
     lives = 3; score = 0; level = 1; hitsThisLevel = 0; bubbleSeq = 0; combo = 0; tries = 0; hits = 0; lastFire = 0;
     document.getElementById('scoreBoxShoot') && (document.getElementById('scoreBoxShoot').innerHTML = '');
     document.getElementById('insightBoxShoot').innerHTML = ''; document.getElementById('choLine').textContent = '';
@@ -1097,10 +1200,7 @@ header.unified-game-header .game-title {
     setTimeout(() => {
       if(!running) return;
       applyBoardLength();
-      // 패드는 화면 바닥에 고정(sticky)이라 위치를 재면 이미 바닥에 붙어 있음 → 판 아래쪽 + 패드 높이로 계산
-      const padH = (document.querySelector('.answer-row') || {}).offsetHeight || 140;
-      const boardBottom = board.getBoundingClientRect().bottom + window.scrollY;
-      window.scrollTo({ top: Math.max(0, boardBottom + padH + 40 - window.innerHeight), behavior: 'smooth' });
+      window.scrollTo({ top: (isLand() && window.innerHeight < 620) ? Math.max(0, playTop() - 6) : 0, behavior: 'smooth' });
     }, 550);
     startSpawnLoop();
     rafId = requestAnimationFrame(tick);
@@ -1108,15 +1208,19 @@ header.unified-game-header .game-title {
 
   function endGame(cleared){
     running = false;
+    document.body.classList.remove('playing');
     clearInterval(spawnTimer);
     if(rafId) cancelAnimationFrame(rafId);
     answerInput.disabled = true;
     fireBtn.disabled = true;
     termPad.innerHTML = '';
-    document.getElementById('overTitle').textContent = '게임 종료';
+    clearTimeout(winTimer);
+    document.getElementById('overTitle').textContent = cleared ? '🏆 모든 개념 마스터!' : '게임 종료 — 개념 도감을 확인해요';
+    renderMastery();
+    if(cleared) window.KJS && KJS.win && KJS.win({ toast: false });
     document.getElementById('finalScore').textContent = score;
     const acc = tries ? Math.round(hits / tries * 100) : 0;
-    document.getElementById('overStats').textContent = `도달 레벨 ${level} · 점수 ${score}점 · 정확도 ${acc}%`;
+    document.getElementById('overStats').textContent = `마스터 ${allTerms().filter(isMaster).length}/${allTerms().length} · 도달 레벨 ${level} · 점수 ${score}점 · 정확도 ${acc}%`;
     overScreen.classList.remove('hidden');
     window.KJSInsight && KJSInsight.report(document.getElementById('insightBoxShoot'));
     const box = document.getElementById('scoreBoxShoot');
@@ -1126,6 +1230,16 @@ header.unified-game-header .game-title {
     });
   }
 
+  function renderMastery(){                    // 디브리핑: 마스터한 개념 / 다시 볼 개념(설명 포함)
+    const box = document.getElementById('masteryBox'), terms = allTerms();
+    const done = terms.filter(isMaster), todo = terms.filter(t => !isMaster(t));
+    const descOf = t => (questions.find(q => q[1] === t) || [])[0] || '';
+    box.innerHTML = '<div class="mb-h">📖 개념 도감 <b>' + done.length + '/' + terms.length + '</b></div>' +
+      (todo.length ? '<div class="mb-sub">다시 볼 개념</div>' + todo.map(t => '<div class="mb-item"><b>' + escT(t) + '</b><span>' + escT(descOf(t)) + '</span></div>').join('') : '<div class="mb-sub">전부 마스터했어요! 👏</div>') +
+      (done.length ? '<div class="mb-sub">마스터한 개념</div><div class="mb-chips">' + done.map(t => '<span>✓ ' + escT(t) + '</span>').join('') + '</div>' : '');
+    box.classList.remove('hidden');
+    document.getElementById('reviewBtn').classList.toggle('hidden', !todo.length);
+  }
   function parseQuestionsInput(text){
     const lines = text.split('\n').map(s=>s.trim()).filter(Boolean);
     const valid = []; const rejected = [];
@@ -1217,7 +1331,8 @@ header.unified-game-header .game-title {
 
   renderPicker();
 
-  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('startBtn').addEventListener('click', () => startGame());
+  document.getElementById('reviewBtn').addEventListener('click', () => { overScreen.classList.add('hidden'); startGame(true); });
   document.getElementById('retryBtn').addEventListener('click', ()=>{
     overScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');

@@ -1410,17 +1410,27 @@ const DATA = [
    카테고리 네비게이션 목록 (스크린샷 일치)
    ========================================================================== */
 const CATEGORIES = [
-  { name: "전체", key: "ALL" },
-  { name: "전기와 자기", key: "전기와 자기" },
-  { name: "힘과 운동", key: "힘과 운동" },
-  { name: "일과 에너지", key: "일과 에너지" },
-  { name: "원자", key: "원자" },
-  { name: "화학", key: "화학" },
-  { name: "지구", key: "지구" },
-  { name: "생명", key: "생명" },
-  { name: "테크", key: "테크" },
-  { name: "기타", key: "기타" }
+  { name: "전체 분야", key: "ALL", cats: [] },
+  { name: "⚡ 전기와 자기", key: "전기와 자기", cats: ["전기와 자기"] },
+  { name: "🌱 생명과학", key: "생명과학", cats: ["생명"] },
+  { name: "🚗 힘과 운동", key: "힘과 운동", cats: ["힘과 운동"] },
+  { name: "💡 일과 에너지", key: "일과 에너지", cats: ["일과 에너지"] },
+  { name: "🧪 원자·화학", key: "원자·화학", cats: ["원자", "화학"] },
+  { name: "🌍 지구과학", key: "지구과학", cats: ["지구"] },
+  { name: "💻 테크·기타", key: "테크·기타", cats: ["테크", "기타"] }
 ];
+// 자료의 세부 분류(cat)가 선택한 분야 묶음에 속하는지
+function catMatch(item, key) {
+  if (key === "ALL") return true;
+  const c = CATEGORIES.find(x => x.key === key);
+  return !!c && c.cats.includes(item.cat);
+}
+// 선택한 학년(전학년 자료는 모든 학년에 포함)
+function gradeOk(item) {
+  if (selectedGrade === "FAV") return !!favs[item.id];
+  if (selectedGrade === "ALL") return true;
+  return item.grade === selectedGrade || item.grade === "전학년";
+}
 
 /* 상태 관리 */
 let selectedCategory = "ALL";
@@ -1470,17 +1480,23 @@ function setCategory(cat) {
   render();
 }
 
+/* 활성 표시: 전역 event 대신 버튼의 onclick 값으로 찾아 켠다 (코드에서 호출해도 안전) */
+function markActive(sel, call) {
+  document.querySelectorAll(sel).forEach(b => {
+    const on = (b.getAttribute("onclick") || "") === call;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on));
+  });
+}
+
 function setGradeFilter(gr) {
   selectedGrade = gr;
-  document.querySelectorAll("#gradeChips .chip").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
+  markActive("#gradeChips .chip", "setGradeFilter('" + gr + "')");
   render();
 }
 
 function setTypeFilter(tp) {
   selectedType = tp;
-  document.querySelectorAll("#typeChips .chip").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
+  markActive("#typeChips .chip", "setTypeFilter('" + tp + "')");
   render();
 }
 
@@ -1508,7 +1524,7 @@ function renderNav() {
     if (c.key === "ALL") {
       count = DATA.length;
     } else {
-      count = DATA.filter(d => d.cat === c.key).length;
+      count = DATA.filter(d => catMatch(d, c.key)).length;
     }
 
     btn.innerHTML = `${c.name} <span class="cat-count">${count}</span>`;
@@ -1525,7 +1541,7 @@ function render() {
 
   const filtered = DATA.filter(item => {
     // 1. 카테고리 필터
-    if (selectedCategory !== "ALL" && item.cat !== selectedCategory) return false;
+    if (!catMatch(item, selectedCategory)) return false;
 
     // 2. 학년 필터
     if (selectedGrade === "FAV") {
@@ -1623,11 +1639,16 @@ render();
 window.DH_CONFIG = {
   hub:"lab", grid:"#simGrid", search:"#searchInput", placeholder:"실험·개념·키워드 검색",
   chips:[{label:"전체",value:"ALL"},{label:"중1",value:"중1"},{label:"중2",value:"중2"},{label:"중3",value:"중3"},{label:"★ 내 서랍",value:"FAV",fav:true}],
+  chipCount:function(v){
+    if (v === "ALL") return DATA.length;
+    if (v === "FAV") return Object.keys(favs).length;
+    return DATA.filter(function(d){ return d.grade === v || d.grade === "전학년"; }).length;
+  },
   chipState:function(){ return selectedGrade; },
   chipClick:function(v){ DH_CONFIG._clickOld('button[onclick="setGradeFilter(\''+v+'\')"]'); },
   selects:[
     { label:"분야", value:function(){ return selectedCategory; },
-      options:function(){ return CATEGORIES.map(function(c){ return [c.key, c.key==="ALL" ? "전체 분야" : c.name]; }); },
+      options:function(){ return CATEGORIES.map(function(c){ return [c.key, c.name + (c.key==="ALL" ? "" : " (" + DATA.filter(function(d){ return gradeOk(d) && catMatch(d, c.key); }).length + ")")]; }); },
       onChange:function(v){ setCategory(v); } },
     { label:"유형", value:function(){ return selectedType; },
       options:function(){ return [].slice.call(document.querySelectorAll('button[onclick^="setTypeFilter"]')).map(function(b){
@@ -1766,7 +1787,7 @@ window.DH_CONFIG = {
     C.chips.forEach(function(c){
       var b = document.createElement("button"); b.type = "button";
       b.className = "dh-chip" + (c.fav ? " fav" : "") + (cur === c.value ? " on" : "");
-      b.textContent = c.label; b.setAttribute("aria-pressed", String(cur === c.value));
+      var n = C.chipCount ? C.chipCount(c.value) : null; b.textContent = c.label + (n == null || n === "" ? "" : " " + n); b.setAttribute("aria-pressed", String(cur === c.value));
       b.onclick = function(){ C.chipClick(c.value); };
       chipsBox.appendChild(b);
     });
