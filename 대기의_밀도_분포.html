@@ -246,6 +246,18 @@
       color: #ffffff;
     }
 
+    /* 교재 연계 확장 기능 */
+    .legend-overlay { position: absolute; top: 20px; left: 100px; background: rgba(255,255,255,0.9); padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.74rem; display: none; flex-direction: column; gap: 3px; z-index: 5; pointer-events: none; }
+    .legend-overlay.active { display: flex; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .color-box { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+    .feature-toggles { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
+    .feature-toggles .ft-lbl { font-size: 0.8rem; font-weight: 700; color: #475569; }
+    .toggle-btn { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; transition: all 0.2s; }
+    .toggle-btn.active-comp { background: #fef08a; border-color: #eab308; color: #854d0e; }
+    .toggle-btn.active-sunset { background: #fed7aa; border-color: #f97316; color: #9a3412; }
+    .toggle-btn.active-pollut { background: #e2e8f0; border-color: #64748b; color: #1e293b; }
+    @media (max-width: 800px) { .legend-overlay { position: static; margin-top: 8px; flex-direction: row; flex-wrap: wrap; gap: 4px 12px; width: 100%; } .legend-overlay strong { flex-basis: 100%; } }
     .action-row {
       display: flex;
       justify-content: space-between;
@@ -495,9 +507,12 @@ header.unified-game-header .game-title {
         <ul>
           <li><strong>중력이 클 때 (목성 등):</strong> 강한 중력으로 인해 기체 분자들이 지표면 부근 얇은 층에 극도로 밀집합니다.</li>
           <li><strong>중력이 작을 때 (달, 화성):</strong> 공기를 붙잡는 힘이 약해 대기가 높은 고도까지 완만하게 퍼집니다.</li>
-          <li><strong>무중력 상태 ($g = 0$):</strong> 중력이 없어 분자들이 높이에 관계없이 균일하게 퍼집니다.</li>
+          <li><strong>무중력 상태 (g = 0):</strong> 중력이 없어 분자들이 높이에 관계없이 균일하게 퍼집니다.</li>
         </ul>
       </li>
+      <li><strong>대기의 조성:</strong> 건조한 공기는 질소(N₂) 약 78%, 산소(O₂) 약 21%, 아르곤(Ar) 약 1% 등으로 이루어져 있습니다. 성분비 버튼으로 분자를 색으로 구분해 볼 수 있습니다.</li>
+      <li><strong>노을이 붉은 까닭:</strong> 파장이 짧은 푸른빛은 공기 분자에 잘 산란되고, 파장이 긴 붉은빛은 산란이 적어 멀리까지 도달합니다. 해가 낮게 뜨면 빛이 통과하는 공기층이 두꺼워져 붉은빛만 눈에 들어옵니다.</li>
+      <li><strong>오염 물질:</strong> 미세먼지 같은 입자는 공기 분자보다 무거워 지표면 가까이에 모여 있는 경향이 있습니다.</li>
     </ul>
   </div>
 
@@ -528,6 +543,13 @@ header.unified-game-header .game-title {
   <!-- 시뮬레이션 캔버스 카드 (첨부 이미지 레이아웃 완벽 일치) -->
   <div class="canvas-card">
     <canvas id="densityCanvas"></canvas>
+    <div class="legend-overlay" id="legendBox">
+      <strong>대기 조성 비율</strong>
+      <div class="legend-item"><span class="color-box" style="background:#fbbf24;"></span>질소 (N₂) 78.08%</div>
+      <div class="legend-item"><span class="color-box" style="background:#ef4444;"></span>산소 (O₂) 20.95%</div>
+      <div class="legend-item"><span class="color-box" style="background:#78350f;"></span>아르곤 (Ar) 등 0.97%</div>
+      <div class="legend-item" id="legendDust" style="display:none;"><span class="color-box" style="background:#334155;"></span>오염 물질 / 미세먼지</div>
+    </div>
   </div>
 
   <!-- 조작 컨트롤 패널 -->
@@ -552,6 +574,13 @@ header.unified-game-header .game-title {
       </div>
     </div>
 
+    <div class="feature-toggles">
+      <span class="ft-lbl">교재 연계 기능:</span>
+      <button class="toggle-btn" id="btnComposition" aria-pressed="false">🎈 실제 기체 성분비 적용</button>
+      <button class="toggle-btn" id="btnSunset" aria-pressed="false">🌅 붉은색 노을 (빛의 산란)</button>
+      <button class="toggle-btn" id="btnPollution" aria-pressed="false">🏭 대기 오염 물질 추가</button>
+    </div>
+
     <div class="action-row">
       <div style="display:flex; gap:12px; align-items:center;">
         <span style="font-size:0.8rem; color:#64748b; font-weight:600;">기체 분자 수: <b id="valCount" style="color:#0f172a;">450개</b></span>
@@ -572,6 +601,7 @@ header.unified-game-header .game-title {
   let particleCount = 450;
   let isRunning = true;
   let planetName = '지구 (Earth)';
+  let useComposition = false, useSunset = false, usePollution = false;   // 교재 연계 확장 기능
 
   // 물리 시뮬레이션 파라미터
   let particles = [];
@@ -583,6 +613,11 @@ header.unified-game-header .game-title {
   let dpr = window.devicePixelRatio || 1;
   let width = 0;
   let height = 480;
+  const narrow = () => width < 700;
+  const labW = () => narrow() ? Math.max(118, Math.round(width * 0.36)) : 280;   // 오른쪽 눈금 글자 영역
+  const fsc = () => narrow() ? 0.58 : 1;                                             // 글자 배율
+  const colL = () => narrow() ? 52 : 80;                                              // 대기 기둥 왼쪽
+  const colR = () => width - labW() - 20;                                            // 대기 기둥 오른쪽
 
   // DOM 요소
   const dispG = document.getElementById('dispG');
@@ -638,16 +673,21 @@ header.unified-game-header .game-title {
 
   // --- 공기 분자 입자 클래스 ---
   class AirMolecule {
-    constructor() {
-      this.r = 2.4;
+    constructor(isPollutant = false) {
+      this.isPollutant = isPollutant;
+      this.r = isPollutant ? 3.5 : 2.4;          // 오염 물질은 분자보다 크게
+      if (isPollutant) this.type = 'Dust';
+      else { const q = Math.random(); this.type = q < 0.7808 ? 'N2' : (q < 0.9903 ? 'O2' : 'Ar'); }   // 실제 조성비
       this.reset(true);
     }
 
     reset(initial = false) {
-      this.x = 80 + Math.random() * (width - 320); // 대기 기둥 내부
+      this.x = colL() + 5 + Math.random() * Math.max(20, colR() - colL() - 10); // 대기 기둥 내부
       const groundY = getGroundHeight(this.x, width, height);
 
-      if (initial) {
+      if (initial && this.isPollutant) {
+        this.y = groundY - Math.random() * 40;    // 오염 물질은 지표면 가까이에서 시작
+      } else if (initial) {
         // 볼츠만 분포 초기 높이 샘플링
         const u = Math.random();
         const effectiveH = gravity > 0.1 ? (height * 0.28) / (gravity / 9.8) : height * 0.8;
@@ -658,7 +698,7 @@ header.unified-game-header .game-title {
       }
 
       // 열운동 속도 (Maxwell-Boltzmann 유사)
-      const spd = 50 + Math.random() * 60;
+      const spd = (this.isPollutant ? 20 : 50) + Math.random() * (this.isPollutant ? 20 : 60);   // 오염 물질은 무거워 느리다
       const ang = Math.random() * Math.PI * 2;
       this.vx = Math.cos(ang) * spd;
       this.vy = Math.sin(ang) * spd;
@@ -667,14 +707,14 @@ header.unified-game-header .game-title {
     update(dt) {
       // 중력 가속도 반영 (v_y += g * dt)
       // 픽셀 스케일 가속도
-      const accelPx = gravity * 14.0;
+      const accelPx = gravity * 14.0 * (this.isPollutant ? 1.5 : 1.0);   // 오염 물질은 더 세게 가라앉는다
       this.vy += accelPx * dt;
 
       this.x += this.vx * dt;
       this.y += this.vy * dt;
 
-      const columnLeft = 85;
-      const columnRight = width - 300;
+      const columnLeft = colL() + 5;
+      const columnRight = colR();
 
       // 좌우 경계: 자연스러운 반사 또는 회귀
       if (this.x < columnLeft) {
@@ -704,7 +744,9 @@ header.unified-game-header .game-title {
     draw(ctx) {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = '#4f6ef7';
+      if (useComposition || this.isPollutant) {
+        ctx.fillStyle = this.type === 'N2' ? '#fbbf24' : this.type === 'O2' ? '#ef4444' : this.type === 'Ar' ? '#78350f' : '#334155';
+      } else ctx.fillStyle = '#4f6ef7';
       ctx.fill();
     }
   }
@@ -712,8 +754,9 @@ header.unified-game-header .game-title {
   function initParticles() {
     particles = [];
     for (let i = 0; i < particleCount; i++) {
-      particles.push(new AirMolecule());
+      particles.push(new AirMolecule(false));
     }
+    if (usePollution) for (let i = 0; i < 70; i++) particles.push(new AirMolecule(true));
   }
 
   // --- 물리량 계산 ---
@@ -758,8 +801,8 @@ header.unified-game-header .game-title {
     // ----------------------------------------------------
     // 1. 좌측 밀도 그라데이션 수직 바 (이미지와 완전 동일)
     // ----------------------------------------------------
-    const barW = 70;
-    const barX = 14;
+    const barW = narrow() ? 34 : 70;
+    const barX = narrow() ? 8 : 14;
 
     ctx.save();
     // 중력에 따라 압축되는 파란색 그라데이션
@@ -768,17 +811,25 @@ header.unified-game-header .game-title {
     const gRatio = Math.max(0.01, gravity / 9.8);
     const midStop = Math.min(0.9, 0.35 / gRatio);
 
-    grad.addColorStop(0, '#0000ff');
-    grad.addColorStop(Math.min(0.4, 0.15 / gRatio), 'rgba(0, 0, 255, 0.85)');
-    grad.addColorStop(midStop, 'rgba(0, 50, 255, 0.4)');
-    grad.addColorStop(Math.min(1.0, midStop * 2), 'rgba(150, 180, 255, 0.15)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    if (useSunset) {          // 붉은 노을: 지표면 쪽은 붉은/주황, 위쪽은 푸른빛
+      grad.addColorStop(0, '#ea580c');
+      grad.addColorStop(Math.min(0.4, 0.15 / gRatio), 'rgba(245, 158, 11, 0.85)');
+      grad.addColorStop(midStop, 'rgba(99, 102, 241, 0.5)');
+      grad.addColorStop(Math.min(1.0, midStop * 2), 'rgba(129, 140, 248, 0.2)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    } else {
+      grad.addColorStop(0, '#0000ff');
+      grad.addColorStop(Math.min(0.4, 0.15 / gRatio), 'rgba(0, 0, 255, 0.85)');
+      grad.addColorStop(midStop, 'rgba(0, 50, 255, 0.4)');
+      grad.addColorStop(Math.min(1.0, midStop * 2), 'rgba(150, 180, 255, 0.15)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    }
 
     ctx.fillStyle = grad;
     ctx.fillRect(barX, topAltitudeY, barW, colH);
 
     // 하단 지표면 경계선
-    ctx.fillStyle = '#0000ff';
+    ctx.fillStyle = useSunset ? '#9a3412' : '#0000ff';
     ctx.fillRect(barX, seaLevelY, barW, 4);
     ctx.restore();
 
@@ -787,20 +838,20 @@ header.unified-game-header .game-title {
     // ----------------------------------------------------
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(80, seaLevelY);
+    ctx.moveTo(colL(), seaLevelY);
 
-    for (let x = 80; x <= width - 290; x += 4) {
+    for (let x = colL(); x <= colR() + 10; x += 4) {
       const gy = getGroundHeight(x, width, height);
       ctx.lineTo(x, gy);
     }
-    ctx.lineTo(width - 290, seaLevelY);
+    ctx.lineTo(colR() + 10, seaLevelY);
     ctx.closePath();
 
     // 지형 녹색 그라데이션 채우기 (이미지와 동일한 올리브그린 톤)
     const groundGrad = ctx.createLinearGradient(0, seaLevelY - 60, 0, seaLevelY);
-    groundGrad.addColorStop(0, '#658043');
-    groundGrad.addColorStop(0.5, '#4a6b2f');
-    groundGrad.addColorStop(1, '#2c471c');
+    groundGrad.addColorStop(0, useSunset ? '#451a03' : '#658043');
+    groundGrad.addColorStop(0.5, useSunset ? '#2a1a0c' : '#4a6b2f');
+    groundGrad.addColorStop(1, useSunset ? '#1c1917' : '#2c471c');
     ctx.fillStyle = groundGrad;
     ctx.fill();
 
@@ -818,14 +869,21 @@ header.unified-game-header .game-title {
     // ----------------------------------------------------
     // 4. 우측 텍스트 라벨 & 화살표 (첨부 이미지 텍스트 일치)
     // ----------------------------------------------------
-    const labelX = width - 280;
+    const labelX = width - labW();
 
     // 헤더 타이틀
     ctx.fillStyle = '#475569';
-    ctx.font = '22px sans-serif';
+    ctx.font = `bold ${Math.round(16 * Math.max(fsc(), 0.75))}px sans-serif`;
     ctx.textAlign = 'left';
-    ctx.fillText('해면기준 상대 공기 밀도', labelX, 58);
-    ctx.fillText('(대략적인 값)', labelX, 88);
+    ctx.fillText(narrow() ? '상대 공기 밀도' : '해면기준 상대 공기 밀도', labelX, 18);
+    ctx.font = `${Math.round(14 * Math.max(fsc(), 0.75))}px sans-serif`;
+    ctx.fillText('(대략적인 값)', labelX, 37);
+    if (useSunset) {
+      ctx.fillStyle = '#ea580c'; ctx.font = `${Math.round(13 * Math.max(fsc(), 0.8))}px sans-serif`;
+      if (narrow()) { ctx.fillText('※ 노을: 푸른빛 산란,', labelX, 100); ctx.fillText('붉은빛이 도달', labelX, 114); }
+      else { ctx.fillText('※ 붉은 노을: 짧은 파장(푸른빛)은 산란되고', labelX, 108); ctx.fillText('   긴 파장(붉은·주황빛)이 눈에 도달', labelX, 126); }
+      ctx.fillStyle = '#475569';
+    }
 
     // 고도별 Y 좌표 (0km ~ 40km 선형 매핑)
     const y40 = seaLevelY - colH * (40 / 40); // 40km (top)
@@ -848,22 +906,22 @@ header.unified-game-header .game-title {
     const pct10 = getDensityPct(10);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = '26px sans-serif';
+    ctx.font = `${Math.round(22 * fsc())}px sans-serif`;
 
     // 40km 라벨
-    ctx.fillText(`← ${pct40.toFixed(2)}% (40km)`, labelX, y40 + 20);
+    ctx.fillText(`← ${pct40.toFixed(narrow() ? 1 : 2)}% (40km)`, labelX, y40 + 20);
 
     // 30km 라벨
-    ctx.fillText(`← ${pct30.toFixed(2)}% (30km)`, labelX, y30 + 16);
+    ctx.fillText(`← ${pct30.toFixed(narrow() ? 1 : 2)}% (30km)`, labelX, y30 + 16);
 
     // 20km 라벨
-    ctx.fillText(`← ${pct20.toFixed(2)}% (20km)`, labelX, y20 + 10);
+    ctx.fillText(`← ${pct20.toFixed(narrow() ? 1 : 2)}% (20km)`, labelX, y20 + 10);
 
     // 10km 라벨
-    ctx.fillText(`← ${pct10.toFixed(2)}% (10km)`, labelX, y10 + 6);
+    ctx.fillText(`← ${pct10.toFixed(narrow() ? 1 : 2)}% (10km)`, labelX, y10 + 6);
 
     // 해수면 (Sea level)
-    ctx.fillText('↙ 100% (Sea level)', labelX, y0 - 4);
+    ctx.fillText(narrow() ? '↙ 100% (해면)' : '↙ 100% (Sea level)', labelX, y0 - 4);
 
     // ----------------------------------------------------
     // 5. 하단 중앙 텍스트: "중력가속도 = 9.8 m/s²" (이미지 하단)
@@ -871,7 +929,7 @@ header.unified-game-header .game-title {
     ctx.fillStyle = '#0f172a';
     ctx.font = '16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`중력가속도 = ${gravity.toFixed(1)} m/s²`, width / 2 - 60, height - 8);
+    ctx.fillText(`중력가속도 = ${gravity.toFixed(1)} m/s²`, (colL() + colR()) / 2, height - 8);
   }
 
   // --- 메인 애니메이션 루프 ---
@@ -927,9 +985,23 @@ header.unified-game-header .game-title {
     presetChips.forEach(c => {
       c.classList.toggle('active', c.dataset.g === '9.8');
     });
+    useComposition = useSunset = usePollution = false; syncFeatures();
     updateCalculations();
     initParticles();
   });
+
+  const legBox = document.getElementById('legendBox'), legDust = document.getElementById('legendDust');
+  const btnComp = document.getElementById('btnComposition'), btnSun = document.getElementById('btnSunset'), btnPol = document.getElementById('btnPollution');
+  function syncFeatures() {
+    btnComp.classList.toggle('active-comp', useComposition); btnComp.setAttribute('aria-pressed', useComposition);
+    btnSun.classList.toggle('active-sunset', useSunset);     btnSun.setAttribute('aria-pressed', useSunset);
+    btnPol.classList.toggle('active-pollut', usePollution);  btnPol.setAttribute('aria-pressed', usePollution);
+    legBox.classList.toggle('active', useComposition || usePollution);
+    legDust.style.display = usePollution ? 'flex' : 'none';
+  }
+  btnComp.addEventListener('click', () => { useComposition = !useComposition; syncFeatures(); });
+  btnSun.addEventListener('click', () => { useSunset = !useSunset; syncFeatures(); });
+  btnPol.addEventListener('click', () => { usePollution = !usePollution; syncFeatures(); initParticles(); });
 
   btnHelpToggle.addEventListener('click', () => {
     theoryBox.classList.toggle('active');
