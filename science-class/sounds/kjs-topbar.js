@@ -15,10 +15,20 @@
     P + ">.kjs-seg{grid-column:2;grid-row:1;justify-self:center;margin:0!important}",
     P + ">.kjs-top-r{grid-column:3;grid-row:1;justify-self:end;min-width:0;display:flex!important;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin:0!important;width:auto!important;flex:none!important}",
     P + ".kjs-toprow{width:100%;margin:0 0 10px;box-sizing:border-box;flex:0 0 100%;order:-1;grid-column:1 / -1}",
+    P + " .kjs-brand{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:11px;padding:4px 12px 4px 6px;color:#334155;font-weight:800;box-shadow:0 1px 2px rgba(15,23,42,.06)}",
+    P + " .kjs-brand i{font-style:normal;font-size:12px;font-weight:800;color:#475569;background:#f1f5f9;border-radius:8px;padding:3px 9px;white-space:nowrap;flex:none}",
+    P + " .kjs-brand b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
+    /* 폰(아이폰 등): 서랍 이동 탭 → 버튼 줄 → 제목 순으로 가운데 정렬, 화면 밖으로 밀려나지 않게 */
     "@media (max-width:760px){",
-    "  " + P + "{grid-template-columns:minmax(0,1fr) auto!important}",
-    "  " + P + ">.kjs-top-r{grid-column:2}",
-    "  " + P + ">.kjs-seg{grid-column:1 / -1;grid-row:2}",
+    "  " + P + "{grid-template-columns:minmax(0,1fr)!important;justify-items:center;row-gap:6px!important;padding-left:10px!important;padding-right:10px!important}",
+    "  " + P + ".kjs-toprow{width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;flex:0 0 100%!important}",
+    "  " + P + ">.kjs-seg{grid-column:1!important;grid-row:1!important;justify-self:center}",
+    "  " + P + ">.kjs-top-r{grid-column:1!important;grid-row:2!important;justify-self:center!important;justify-content:center!important;gap:6px!important;max-width:100%}",
+    "  " + P + ">.kjs-top-r>*{padding:4px 9px!important;font-size:12.5px!important;min-height:30px;height:auto!important;white-space:nowrap}",
+    "  " + P + ">.kjs-top-l{grid-column:1!important;grid-row:3!important;justify-self:start;max-width:100%}",
+    "  " + P + ">.kjs-top-l.kjs-l-brand{display:none!important}",
+    "  html body .kjs-seg a:not(.on) .t{display:none!important}",
+    "  html body .kjs-seg a.on .t{display:inline!important}",
     "}",
     "@media print{.kjs-toprow{display:none!important}}"
   ].join("\n");
@@ -74,6 +84,18 @@
         var ql = parseFloat(hcs.paddingLeft) || 0, qr = parseFloat(hcs.paddingRight) || 0;
         if (Math.abs(ql - qr) > 4) { var q = Math.min(ql, qr); hdr.style.paddingLeft = q + "px"; hdr.style.paddingRight = q + "px"; }
       }
+    }
+    // 왼쪽 칸이 비어 있으면 [서랍 이름 + 게임 이름] 표시를 넣어 서랍 머리글처럼 좌·중·우 균형을 맞춘다
+    var L = document.querySelector(".kjs-topbar > .kjs-top-l");
+    if (L && !L.textContent.trim() && !L.querySelector("img,svg,canvas,input,select")) {
+      var on = seg.querySelector("a.on"), hub = on ? on.textContent.replace(/^[^가-힣A-Za-z0-9]+/, "").trim() : "";
+      var h1 = document.querySelector("h1"), ttl = h1 ? h1.textContent.trim().replace(/\s+/g, " ") : "";
+      if (!ttl || ttl.length > 22) ttl = document.title.split(/\s*[·|–—(]\s*/)[0].trim();
+      if (ttl.length > 22) ttl = ttl.slice(0, 22) + "…";
+      var br = document.createElement("span"); br.className = "kjs-brand";
+      if (hub) { var bi = document.createElement("i"); bi.textContent = hub; br.appendChild(bi); }
+      var bb = document.createElement("b"); bb.textContent = ttl; br.appendChild(bb);
+      L.appendChild(br); L.classList.add("kjs-l-brand");
     }
     // 새 줄(맨 위 메뉴 줄)은 좁은 게임 틀 안에 있어도 서랍 머리글처럼 화면 전체 폭을 쓴다
     var topRow = document.querySelector(".kjs-toprow");
