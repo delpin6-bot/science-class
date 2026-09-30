@@ -8,6 +8,7 @@
   if (window.__kjsTopbar) return; window.__kjsTopbar = 1;
 
   // 페이지 자체 스타일(예: header.unified-game-header{display:flex})보다 우선하도록 선택자 우선순위를 높인다
+  var MAXW = 1240;   // 서랍 머리글과 같은 최대 폭: 큰 화면에서 메뉴가 화면 양 끝으로 벌어지지 않게 가운데로 모은다
   var P = "html body .kjs-topbar.kjs-topbar";
   var CSS = [
     P + "{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;column-gap:14px;row-gap:8px;flex-wrap:nowrap}",
@@ -97,18 +98,35 @@
       var bb = document.createElement("b"); bb.textContent = ttl; br.appendChild(bb);
       L.appendChild(br); L.classList.add("kjs-l-brand");
     }
+    // 화면 전체 폭 머리글은 배경은 그대로 두고, 안쪽 내용만 가운데 MAXW 폭으로 모은다
+    var barEl = document.querySelector(".kjs-topbar:not(.kjs-toprow)");
+    if (barEl) {
+      var bs = getComputedStyle(barEl), bl = Math.max(parseFloat(bs.paddingLeft) || 0, 12), br = Math.max(parseFloat(bs.paddingRight) || 0, 12);
+      var half = "calc((100% - " + MAXW + "px) / 2)";
+      barEl.style.setProperty("padding-left", "max(" + bl + "px, " + half + ")", "important");
+      barEl.style.setProperty("padding-right", "max(" + br + "px, " + half + ")", "important");
+    }
     // 새 줄(맨 위 메뉴 줄)은 좁은 게임 틀 안에 있어도 서랍 머리글처럼 화면 전체 폭을 쓴다
     var topRow = document.querySelector(".kjs-toprow");
     if (topRow && hdr !== document.body) {
       var fit = function () {
-        topRow.style.width = ""; topRow.style.marginLeft = ""; topRow.style.flex = "";
+        topRow.style.width = ""; topRow.style.marginLeft = ""; topRow.style.flex = ""; topRow.style.zoom = "";
+        var stg = topRow.closest(".kf-stage"), z = stg ? (parseFloat(stg.style.zoom) || 1) : 1;   // 게임 화면 자동 맞춤(zoom) 안에 있으면 그 배율을 상쇄
         var pr = topRow.parentElement.getBoundingClientRect(), vw = document.documentElement.clientWidth;
         if (Math.abs((pr.left + pr.right) / 2 - vw / 2) > 6) return;          // 틀이 가운데에 있을 때만
-        var left = topRow.getBoundingClientRect().left, side = Math.min(20, left);
+        var left = topRow.getBoundingClientRect().left, side = Math.min(20, Math.max(left, 0));
+        var w = Math.min(vw - 2 * side, MAXW);
         topRow.style.flex = "0 0 auto";
-        topRow.style.width = (vw - 2 * side) + "px";
-        topRow.style.marginLeft = (side - left) + "px";
+        if (z !== 1) topRow.style.zoom = String(1 / z);
+        topRow.style.width = w + "px";
+        topRow.style.marginLeft = ((vw - w) / 2 - left) + "px";
       };
+      // 화면 맞춤 스크립트(kjs-fit.js)가 나중에 만드는 틀(.kf-stage)의 배율이 바뀔 때마다 다시 맞춘다
+      var watched = null, watch = function () {
+        var st = topRow.closest(".kf-stage");
+        if (st && st !== watched && window.MutationObserver) { watched = st; new MutationObserver(function () { fit(); }).observe(st, { attributes: true, attributeFilter: ["style"] }); fit(); }
+      };
+      [200, 600, 1200, 2500].forEach(function (ms) { setTimeout(function () { watch(); fit(); }, ms); });
       fit(); window.addEventListener("resize", fit);
     }
     // 고정(fixed) 머리글은 높이가 바뀌면 본문을 가릴 수 있으므로 본문 여백을 맞춘다
