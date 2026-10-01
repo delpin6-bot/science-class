@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>대포 게임 · 확장 가상실험실 (바람·환경 변수)</title>
+<style>
+:root{--bg:#0a1020;--hud:#0d1730;--pn:#152036;--pn2:#1d2b47;--ln:#2d3f63;--tx:#eef3ff;--mut:#9fb0d0;--or:#ff9f1c;--gr:#7ddc4f;--ye:#ffd34d;--rd:#ff5d5d;--bl:#59b8ff;--fs:clamp(11px,min(1.1vw,2.3vh),19px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#app{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100vh;height:100dvh}
+.hidden{display:none!important}
+/* HUD */
+#hud{display:flex;align-items:center;gap:.7em;padding:.35em .7em;background:var(--hud);border-bottom:1px solid var(--ln);min-height:48px}
+#hud h1{font-size:1.25em;font-weight:900;white-space:nowrap;letter-spacing:-.3px}
+#tabs{display:flex;gap:.4em;flex:1;min-width:0;overflow-x:auto}
+.tab{padding:.55em .95em;min-height:44px;border-radius:.65em;background:#1b2845;border:1px solid var(--ln);font-weight:800;white-space:nowrap;color:#c8d5f3}
+.tab.on{background:var(--or);color:#1a1200;border-color:var(--or)}
+#badges{display:flex;gap:.4em;align-items:center}
+.badge{display:flex;align-items:center;gap:.4em;padding:.3em .7em;border-radius:.6em;background:#14213d;border:1px solid var(--ln);font-weight:800;white-space:nowrap;min-height:36px}
+.badge b{color:var(--ye)}
+#pinw g{transform-origin:0 0;animation:spin 2s linear infinite;animation-play-state:paused}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ibtn{min-height:44px;padding:.4em .8em;border-radius:.65em;background:#1b2845;border:1px solid var(--ln);font-weight:800;white-space:nowrap}
+.ibtn:active{background:#2a3d66}
+#brand{font-size:.78em;color:var(--mut);white-space:nowrap}
+/* MAIN */
+#main{display:grid;grid-template-columns:minmax(0,1fr) clamp(270px,29vw,390px);gap:.6em;padding:.6em;min-height:0}
+#stageWrap{display:flex;flex-direction:column;gap:.5em;min-height:0;min-width:0}
+#stage{position:relative;flex:1;min-height:0;border-radius:.8em;overflow:hidden;border:2px solid #2f5a8f;background:#6ec1ff}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#stageTitle{position:absolute;left:.8em;top:.6em;pointer-events:none;max-width:60%;text-shadow:0 1px 3px rgba(255,255,255,.6)}
+#stageTitle b{display:block;font-size:1.05em;color:#10304f}
+#stageTitle span{font-size:.85em;color:#1c4a78;font-weight:700}
+.dark #stageTitle b{color:#fff;text-shadow:0 1px 3px #000}.dark #stageTitle span{color:#cfe0ff;text-shadow:0 1px 3px #000}
+#rightOv{position:absolute;right:.6em;top:.6em;display:flex;flex-direction:column;gap:.5em;align-items:flex-end;pointer-events:none}
+#miniWrap{width:clamp(150px,24%,230px);background:rgba(10,20,40,.88);border:1px solid #3a5185;border-radius:.6em;padding:.3em .45em}
+#miniWrap .mh{display:flex;justify-content:space-between;font-size:.78em;color:#cfe0ff;font-weight:800}
+#miniWrap .mh i{font-style:normal;color:var(--ye)}
+#mini{width:100%;height:clamp(54px,8vw,90px);display:block}
+#clockWrap{display:flex;align-items:center;gap:.5em;background:rgba(10,20,40,.9);border:1px solid #3a5185;border-radius:.6em;padding:.35em .55em;pointer-events:auto}
+#clockSvg{width:clamp(46px,6vw,72px);height:clamp(46px,6vw,72px)}
+#clockWrap .ct{font-size:.78em;color:#cfe0ff;font-weight:800}
+#clkTxt{display:block;font-size:1.25em;color:var(--ye)}
+#clockWrap button{margin-top:.2em;padding:.3em .6em;min-height:32px;border-radius:.5em;background:#27406e;font-weight:800;font-size:.85em}
+#clockWrap button+button{margin-left:.25em}
+#msgBox{background:#111b30;border:1px solid var(--ln);border-radius:.8em;padding:.55em .9em;min-height:4.2em}
+#msg1{font-size:1.25em;font-weight:900;color:var(--gr)}
+#msg2{font-size:.95em;color:#c9d6f2;margin-top:.2em;line-height:1.35}
+/* result popup (stage) */
+#resultPop{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(88%,430px);background:#101a2e;border:3px solid var(--gr);border-radius:1em;padding:1em 1.2em;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#resultPop .ph{display:flex;justify-content:space-between;font-weight:900;font-size:1.15em;margin-bottom:.5em}
+#resultPop .ph em{font-style:normal;color:var(--gr)}
+#resultPop .pr{display:flex;gap:1em;align-items:center}
+#resultPop .pl{flex:1}
+#resultPop .pl div{display:flex;justify-content:space-between;padding:.2em 0;color:#cfd9f2}
+#resultPop .pl b{color:#fff}
+#resultPop .sc{text-align:center}
+#resultPop .sc strong{display:block;font-size:2.4em;color:var(--gr);line-height:1}
+#resultPop .sc small{color:var(--mut)}
+#resultPop .hintline{margin-top:.6em;font-size:.9em;color:var(--ye);line-height:1.35}
+.bigbtn{display:block;width:100%;min-height:52px;border-radius:.7em;background:var(--gr);color:#102000;font-weight:900;font-size:1.1em;margin-top:.7em}
+.bigbtn:disabled{background:#33405c;color:#7f8fb0}
+#toast{position:absolute;left:50%;bottom:1em;transform:translateX(-50%);background:rgba(10,16,30,.95);border:1px solid var(--or);color:#fff;padding:.6em 1em;border-radius:.7em;font-weight:800;pointer-events:none;opacity:0;transition:opacity .25s;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+/* PANEL */
+#panel{display:flex;flex-direction:column;gap:.45em;min-height:0;overflow-y:auto;background:var(--pn);border:1px solid var(--ln);border-radius:.8em;padding:.55em}
+.sec{display:flex;flex-direction:column;gap:.45em}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:.45em}
+.segb{min-height:48px;border-radius:.65em;background:#22324f;font-weight:900;border:1px solid var(--ln)}
+.segb.on{background:var(--or);color:#1a1200;border-color:var(--or)}
+.box{background:#101a2e;border:1px solid var(--ln);border-radius:.6em;padding:.4em .7em}
+.box .row{display:flex;justify-content:space-between;padding:.12em 0;color:#c9d6f2}
+.box .row b{color:#fff}
+.box .row.chg{color:var(--or)}.box .row.chg b{color:var(--or)}
+.stat{background:var(--gr);color:#0e2000;border-radius:.6em;padding:.55em .8em;font-weight:900;display:flex;justify-content:space-between}
+.ctl{display:flex;flex-direction:column;gap:.25em}
+.ctl.dim .btns,.ctl.dim input{opacity:.5}
+.ctl .lbl{display:flex;justify-content:space-between;align-items:baseline;color:var(--or);font-weight:800}
+.ctl.f .lbl{color:#dbe6ff}
+.ctl .lbl b{font-size:1.6em;color:#fff;line-height:1}
+.btns{display:grid;gap:3px}
+.btns button{min-height:36px;border-radius:.45em;background:#23324f;color:#b6c4e2;font-weight:800;border:1px solid #31456e;font-size:.92em}
+.btns button.on{background:var(--or);color:#1a1200;border-color:var(--or)}
+input[type=range]{width:100%;height:30px;accent-color:var(--or)}
+#fireBtn{min-height:60px;border-radius:.8em;background:var(--or);color:#1a1200;font-weight:900;font-size:1.35em;letter-spacing:.15em}
+#fireBtn:disabled{background:#2a3858;color:#8294b8;letter-spacing:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.45em}
+.two button{min-height:44px;border-radius:.6em;background:#22324f;border:1px solid var(--ln);font-weight:800}
+.two button:active{background:#2f4676}
+#tblWrap{flex:1;min-height:90px;overflow-y:auto;background:#101a2e;border:1px solid var(--ln);border-radius:.6em}
+table{width:100%;border-collapse:collapse;font-size:.92em}
+th{position:sticky;top:0;background:#1a2745;color:#aab9d8;font-weight:700;padding:.35em .3em;text-align:center}
+td{padding:.3em .3em;text-align:center;border-top:1px solid #1d2b47}
+td.dist{color:var(--ye);font-weight:900}td.tm{color:var(--bl);font-weight:900}
+tr.best td{background:rgba(255,211,77,.13)}
+tr.turn td{background:#244a3a;color:#cfe}
+.chk{display:flex;align-items:center;gap:.5em;min-height:40px;background:#101a2e;border:1px solid var(--ln);border-radius:.6em;padding:0 .7em;font-weight:800}
+.chk input{width:22px;height:22px;accent-color:var(--or)}
+/* duel */
+.pcard{background:#101a2e;border:2px solid var(--ln);border-radius:.7em;padding:.5em .65em;display:flex;flex-direction:column;gap:.25em}
+.pcard.act{border-color:var(--or);box-shadow:0 0 0 2px rgba(255,159,28,.25)}
+.pcard.p0 .pn{color:var(--bl)}.pcard.p1 .pn{color:#ff7b7b}
+.pcard .ph{display:flex;justify-content:space-between;font-weight:900}
+.hpbar{height:12px;background:#243252;border-radius:6px;overflow:hidden}.hpbar i{display:block;height:100%;background:var(--gr);transition:width .5s}
+.pcard label{display:flex;justify-content:space-between;color:#c9d6f2;font-weight:800}.pcard label b{color:#fff}
+.pcard input[type=range]{height:26px}
+.pcard .fire{min-height:48px;border-radius:.65em;background:var(--or);color:#1a1200;font-weight:900;font-size:1.1em}
+.pcard .fire:disabled{background:#2a3858;color:#8294b8}
+.pcard.inact input{opacity:.45}
+/* footer */
+#keys{display:flex;justify-content:space-between;padding:.3em .8em;font-size:.85em;color:var(--mut);background:var(--hud)}
+/* drawer & modal */
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:30}
+#dim.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(92vw,400px);background:#111c34;border-left:2px solid var(--or);transform:translateX(105%);transition:transform .28s;z-index:31;padding:.8em;overflow-y:auto;display:flex;flex-direction:column;gap:.7em}
+#drawer.on{transform:none}
+#drawer .dh{display:flex;justify-content:space-between;align-items:center;font-size:1.25em;font-weight:900}
+.x{min-width:44px;min-height:44px;border-radius:.6em;background:#27406e;font-weight:900}
+#drawer section{background:#0e182c;border:1px solid var(--ln);border-radius:.7em;padding:.6em .75em;display:flex;flex-direction:column;gap:.35em}
+#drawer h3{font-size:1em;color:var(--or)}
+.wv{display:flex;justify-content:space-between;align-items:center;color:#aab9d8}.wv b{font-size:1.6em;color:#fff}
+.radios{display:grid;grid-template-columns:1fr 1fr;gap:.35em}
+.radios button{min-height:44px;border-radius:.55em;background:#23324f;border:1px solid #31456e;font-weight:800}
+.radios button.on{background:var(--or);color:#1a1200;border-color:var(--or)}
+.note{font-size:.88em;color:var(--ye);background:#2a2410;border-radius:.6em;padding:.4em .6em;line-height:1.35}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:40;padding:.8em}
+#modal.on{display:flex}
+.mbox{background:#121d36;border:2px solid var(--or);border-radius:1em;width:min(96vw,560px);max-height:94vh;display:flex;flex-direction:column;overflow:hidden}
+#modal.wide .mbox{width:min(96vw,860px)}
+.mh2{display:flex;justify-content:space-between;align-items:center;padding:.6em .8em;background:#1a2745;font-weight:900;font-size:1.15em}
+#mBody{padding:.8em;overflow-y:auto;line-height:1.5}
+#mBody h4{color:var(--or);margin:.5em 0 .2em}
+#mBody li{margin-left:1.2em;margin-bottom:.15em}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:.4em;max-width:300px;margin:.6em auto}
+.keypad button{min-height:56px;border-radius:.6em;background:#23324f;font-size:1.4em;font-weight:900;border:1px solid #31456e}
+.pwdots{text-align:center;font-size:2em;letter-spacing:.4em;min-height:1.5em;color:var(--ye)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.gtabs{display:flex;gap:.35em;flex-wrap:wrap;margin-bottom:.5em}
+.gtabs button{padding:.45em .8em;min-height:40px;border-radius:.55em;background:#23324f;font-weight:800}
+.gtabs button.on{background:var(--or);color:#1a1200}
+#gcv{width:100%;aspect-ratio:16/9;background:#0c1426;border-radius:.6em;display:block}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.2em .8em}
+.pm{display:flex;align-items:center;gap:.3em}.pm button{min-width:36px;min-height:34px;border-radius:.5em;background:#2a3d66;font-weight:900;font-size:1.15em}.pm b{min-width:2.7em;text-align:center}
+@media (max-width:1280px){#brand{display:none}}
+@media (max-width:1120px){#hud h1{display:none}.tab{padding:.5em .6em}}
+@media (max-height:660px){
+  #hud{min-height:42px}.tab,.ibtn{min-height:38px}
+  .btns button{min-height:30px}.segb{min-height:38px}#fireBtn{min-height:48px}.two button{min-height:38px}.chk{min-height:34px}
+  #tblWrap{min-height:56px}.box{padding:.25em .6em}.stat{padding:.35em .7em}.pcard .fire{min-height:40px}.pcard input[type=range]{height:20px}
+  #panel,.sec,#stageWrap{gap:.3em}#msgBox{min-height:3.6em;padding:.4em .8em}#main{padding:.4em;gap:.4em}
+}
+@media (max-aspect-ratio:1/1){
+  #main{grid-template-columns:1fr;grid-template-rows:minmax(0,50%) minmax(0,1fr)}
+  #hud h1,#brand{display:none}
+  #badges .badge small{display:none}
+  #keys{display:none}
+}
+@media (max-height:520px){#msBox2{display:none}}
+body.flying .lock{pointer-events:none;opacity:.6}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <h1>💥 대포 게임 실험실</h1>
+    <nav id="tabs" class="lock">
+      <button class="tab on" data-mode="basic">기본 탐구 모드</button>
+      <button class="tab" data-mode="env">바람/환경 탐구 모드</button>
+      <button class="tab" data-mode="mission">표적 맞히기 미션</button>
+      <button class="tab" data-mode="duel">2인 대전 모드</button>
+    </nav>
+    <div id="badges">
+      <div class="badge" id="bgWind"><svg id="pinw" viewBox="-12 -12 24 24" width="22" height="22"><g id="pinwG"><path d="M0 0L0-10Q7-9 0 0Z" fill="#7ddc4f"/><path d="M0 0L10 0Q9 7 0 0Z" fill="#59b8ff"/><path d="M0 0L0 10Q-7 9 0 0Z" fill="#ffd34d"/><path d="M0 0L-10 0Q-9-7 0 0Z" fill="#ff7b7b"/></g></svg><span id="bgWindTx"></span></div>
+      <div class="badge" id="bgGrav"></div>
+    </div>
+    <button class="ibtn" id="btnEnv">⚙️ 환경 변수 설정</button>
+    <button class="ibtn" id="btnFs" title="전체화면">⛶</button>
+    <span id="brand">중학교 과학 · CTML 인지설계 v3.0</span>
+  </header>
+
+  <main id="main">
+    <section id="stageWrap">
+      <div id="stage">
+        <canvas id="cv"></canvas>
+        <div id="stageTitle"><b id="stT"></b><span id="stS"></span></div>
+        <div id="rightOv">
+          <div id="miniWrap"><div class="mh"><span>미니맵</span><i id="miniMax"></i></div><canvas id="mini" width="230" height="90"></canvas></div>
+          <div id="clockWrap" class="hidden">
+            <svg id="clockSvg" viewBox="-50 -50 100 100"><circle r="47" fill="#f4f7ff" stroke="#8ea6d8" stroke-width="3"/><g id="clkTicks"></g><line id="clkHand" x1="0" y1="6" x2="0" y2="-38" stroke="#e5484d" stroke-width="3" stroke-linecap="round"/><circle r="4" fill="#223"/></svg>
+            <div class="ct">시계<b id="clkTxt">0.00초</b><button id="clkBtn">시작</button><button id="clkRst">0</button></div>
+          </div>
+        </div>
+        <div id="resultPop" class="hidden"></div>
+        <div id="toast"></div>
+      </div>
+      <div id="msgBox"><div id="msg1"></div><div id="msg2"></div></div>
+    </section>
+
+    <aside id="panel" class="lock">
+      <div id="pBasic" class="sec">
+        <div class="seg2"><button class="segb" id="fixAngle">각도 고정</button><button class="segb on" id="fixForce">힘 고정</button></div>
+        <div class="box"><div class="row"><span>바꾸지 않는 것</span><b id="fixedTxt"></b></div><div class="row chg"><span>바꾸는 것</span><b id="varTxt"></b></div></div>
+      </div>
+      <div id="pMission" class="sec hidden">
+        <div class="seg2"><button class="segb on" id="msPrac">미션 연습</button><button class="segb" id="msFin">최종 미션</button></div>
+        <div class="stat"><span id="msTitle">미션 수행 연습 중</span><span id="msShots"></span></div>
+        <div class="box"><div class="row"><span id="msL1">한 발 평균</span><b id="msV1">-</b></div><div class="row"><span>명중 (표적 5칸 이내)</span><b id="msV2">0 / 0발</b></div></div>
+      </div>
+
+      <div id="pCtl" class="sec">
+        <div class="ctl" id="angCtl"><div class="lbl"><span id="angLbl">각도</span><span class="pm"><button id="angM" aria-label="각도 1 줄이기">−</button><b id="angVal">45°</b><button id="angP" aria-label="각도 1 늘리기">+</button></span></div><div class="btns" id="angBtns" style="grid-template-columns:repeat(9,1fr)"></div></div>
+        <div class="ctl f" id="forCtl"><div class="lbl"><span id="forLbl">쏘는 힘</span><span class="pm"><button id="forM" aria-label="힘 1 줄이기">−</button><b id="forVal">100</b><button id="forP" aria-label="힘 1 늘리기">+</button></span></div><div class="btns" id="forBtns" style="grid-template-columns:repeat(10,1fr)"></div><input type="range" id="forRange" min="10" max="100" step="1"></div>
+        <button id="fireBtn">발 사 (Space)</button>
+      </div>
+
+      <div id="pRec" class="sec" style="flex:1;min-height:0">
+        <div class="two"><button id="btnRec">기록 보기 (0)</button><button id="btnClr">기록 지우기</button></div>
+        <div id="tblWrap"><table><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+        <label class="chk" id="fix300Wrap"><input type="checkbox" id="fix300"> 거리를 300칸으로 고정해 두고 보기</label>
+        <div class="two"><button id="btnAll">궤적 전체보기</button><button id="btnHelp">실험 안내</button></div>
+      </div>
+
+      <div id="pMsBtn" class="two hidden"><button id="btnMsRe">다시하기</button><button id="btnMsEnd">연습 끝내기</button></div>
+
+      <div id="pDuel" class="sec hidden" style="flex:1"></div>
+    </aside>
+  </main>
+
+  <footer id="keys"><span id="keyL">←→ 힘 &nbsp; ↑↓ 각도 &nbsp; Space 발사 &nbsp; ESC 창 닫기</span><span id="keyR"></span></footer>
+</div>
+
+<div id="dim"></div>
+<aside id="drawer">
+  <div class="dh"><span>⚙️ 환경 변수 설정</span><button class="x" id="drClose">✕</button></div>
+  <div class="note" id="drNote"></div>
+  <section><h3>🌬 바람 (−7 ~ +7칸)</h3>
+    <input type="range" id="wRange" min="-7" max="7" step="1" value="0">
+    <div class="wv"><span>← 역풍</span><b id="wVal">0</b><span>순풍 →</span></div>
+    <label class="chk"><input type="checkbox" id="wRand"> 무작위 바람 (쏠 때마다 바뀜)</label>
+  </section>
+  <section><h3>🪐 행성 (중력)</h3><div class="radios" id="plRad"></div></section>
+  <section><h3>💨 공기 저항</h3>
+    <label class="chk"><input type="checkbox" id="dragOn"> 공기 저항 ON</label>
+    <input type="range" id="kRange" min="1" max="15" step="1" value="5">
+    <div class="wv"><span>약함</span><span>저항 계수 k = <b id="kVal">0.005</b></span><span>강함</span></div>
+  </section>
+  <section><h3>🏗 발사대 높이 (0~50칸)</h3><input type="range" id="hRange" min="0" max="50" step="1" value="0"><div class="wv"><span></span><b id="hVal">0칸</b><span></span></div></section>
+  <section><h3>⚾ 포탄 질량</h3><div class="radios" id="msRad"></div></section>
+  <section><label class="chk"><input type="checkbox" id="sndOn" checked> 효과음</label></section>
+  <button class="ibtn" id="drReset">환경 처음 상태로</button>
+</aside>
+
+<div id="modal"><div class="mbox"><div class="mh2"><span id="mTitle"></span><button class="x" id="mClose">✕</button></div><div id="mBody"></div></div></div>
+
+<script>
+"use strict";
+(function(){
+/* ============ 기본 도구 ============ */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const rint=(a,b)=>Math.floor(rnd(a,b+1));
+const f1=v=>(Math.round(v*10)/10).toFixed(1);
+const fW=w=>w===0?'0':(w>0?'+'+w:'−'+Math.abs(w));
+
+/* ============ 물리 상수·환경 ============ */
+const G0=99.86, V0K=1.7087, WIND_A=3.5, WIND_V=5;
+const PLANETS={earth:{n:'지구',g:1.0,ic:'🌍'},moon:{n:'달',g:0.17,ic:'🌙'},mars:{n:'화성',g:0.38,ic:'🔴'},jupiter:{n:'목성',g:2.5,ic:'🟠'}};
+const MASSES={light:{n:'가벼움 (탁구공)',m:0.4,r:3.4,c:'#ffffff'},normal:{n:'보통',m:1,r:4.4,c:'#ffb703'},heavy:{n:'무거움 (쇠구슬)',m:3,r:5.6,c:'#9aa5b8'}};
+const THEME={
+  earth:{t:'#5eb8ff',b:'#e2f4ff',gt:'#5fb84a',s1:'#8a5a2e',s2:'#6b4423',stars:false},
+  moon:{t:'#03040a',b:'#1b1f33',gt:'#a8a8b0',s1:'#6e6e78',s2:'#4f4f58',stars:true},
+  mars:{t:'#b5573b',b:'#f3b78e',gt:'#c9704a',s1:'#8f4228',s2:'#6e301c',stars:false},
+  jupiter:{t:'#b88955',b:'#f2dcb4',gt:'#b98a4e',s1:'#7d5226',s2:'#5d3a19',stars:false}
+};
+
+const S={
+  mode:'basic',fixed:'force',angle:45,force:100,wind:0,
+  env:{random:false,wind:0,drag:false,k:0.005,planet:'earth',h:0,mass:'normal'},
+  fix300:false,showAll:false,flying:false,flight:null,
+  records:[],trajs:[],unlocked:false,sound:true
+};
+const M={phase:'practice',shots:[],period:10,ph:0,coolEnd:0,pending:null,finalDone:false};
+const D={hp:[100,100],turn:0,angle:[60,60],force:[80,80],terrain:null,tx:[37,213],over:false,shots:[],last:[null,null]};
+const view={L:100,Lt:100,xmin:-7,xminT:-7,s:1,W:0,H:0,gy:0,minXseen:0};
+let effects=[],modalOnClose=null;
+
+/* ============ 물리 엔진 (프레임 기반 수치 적분) ============ */
+function terrainH(T,x){
+  if(!T) return 0;
+  if(x<=0) return T[0];
+  if(x>=300) return T[300];
+  const i=Math.floor(x),f=x-i;
+  return T[i]*(1-f)+T[i+1]*f;
+}
+function makeTerrain(){
+  const T=new Float32Array(301);
+  for(let i=0;i<=300;i++){
+    const d=Math.abs(i-125);let h=0;
+    if(d<48){const c=0.5+0.5*Math.cos(Math.PI*d/48);h=88*Math.pow(c,1.15)+(2.2*Math.sin(i*0.9)+1.6*Math.sin(i*0.37+1))*c;}
+    T[i]=Math.max(0,h);
+  }
+  return T;
+}
+function carve(T,cx,cy,r){
+  for(let i=Math.max(0,Math.floor(cx-r));i<=Math.min(300,Math.ceil(cx+r));i++){
+    const dx=i-cx;if(Math.abs(dx)>r) continue;
+    const yb=cy-Math.sqrt(r*r-dx*dx);
+    if(T[i]>yb) T[i]=Math.max(0,yb);
+  }
+}
+/* p: angle,force,wind,k,g(배수),h0,m,dir,x0,terrain */
+function simulate(p){
+  const dt=1/240,th=p.angle*Math.PI/180,v0=V0K*p.force,dir=p.dir||1,m=p.m||1;
+  let x=p.x0||0,y=p.h0||0,vx=dir*v0*Math.cos(th),vy=v0*Math.sin(th),t=0;
+  const g=G0*(p.g||1),aw=p.wind*WIND_A/m,k=p.k||0,wv=p.wind*WIND_V,T=p.terrain||null;
+  const pts=[[x,y]];let maxY=y,maxX=x,minX=x,end='ground',n=0;
+  while(n<60000){
+    n++;
+    let ax=aw,ay=-g;
+    if(k){const rx=vx-wv,ry=vy,sp=Math.hypot(rx,ry);ax-=k*sp*rx/m;ay-=k*sp*ry/m;}
+    const nx=x+vx*dt+0.5*ax*dt*dt,ny=y+vy*dt+0.5*ay*dt*dt;
+    const nvx=vx+ax*dt,nvy=vy+ay*dt;
+    const hh=terrainH(T,nx);
+    if(n>2&&ny<=hh){
+      const d0=y-terrainH(T,x),d1=ny-hh;let f=d0/(d0-d1);if(!(f>=0&&f<=1)) f=1;
+      x=x+(nx-x)*f;t+=dt*f;y=terrainH(T,x);end=(T&&y>0.5)?'terrain':'ground';
+      pts.push([x,y]);break;
+    }
+    x=nx;y=ny;vx=nvx;vy=nvy;t+=dt;pts.push([x,y]);
+    if(y>maxY)maxY=y;if(x>maxX)maxX=x;if(x<minX)minX=x;
+    if(T&&(x<-80||x>380)){end='out';break;}
+    if(Math.abs(x)>30000){end='out';break;}
+  }
+  if(x>maxX)maxX=x;if(x<minX)minX=x;
+  return {pts,T:t,x,y,maxY,maxX,minX,end,dt};
+}
+function posAt(sim,te){
+  const pts=sim.pts,i=te/sim.dt,i0=Math.floor(i);
+  if(i0>=pts.length-1) return {x:pts[pts.length-1][0],y:pts[pts.length-1][1],i:pts.length-1};
+  const f=i-i0,a=pts[i0],b=pts[i0+1];
+  return {x:a[0]+(b[0]-a[0])*f,y:a[1]+(b[1]-a[1])*f,i:i0};
+}
+
+/* ============ 환경 ============ */
+function curEnv(){
+  if(S.mode==='basic') return {wind:0,k:0,planet:'earth',h:0,mass:'normal'};
+  const e=S.env;
+  return {wind:S.wind,k:e.drag?e.k:0,planet:e.planet,h:(S.mode==='duel'?0:e.h),mass:e.mass};
+}
+function envSig(r){return [r.wind,r.planet,r.h,r.k,r.mass].join('|');}
+function rollWind(){
+  if(S.mode==='mission') S.wind=rint(-5,5);
+  else if(S.mode==='duel') S.wind=rint(-6,6);
+  else if(S.mode==='env'&&S.env.random) S.wind=rint(-7,7);
+  S.env.wind=S.wind;
+}
+function windLabel(w,dir){
+  if(w===0) return '바람 없음';
+  const a=Math.abs(w),fw=(w>0?1:-1)*(dir||1)>0;
+  return (fw?'순풍 ':'역풍 ')+a+'칸 '+(w>0?'→':'←');
+}
+
+/* ============ 캔버스·뷰 ============ */
+const cv=$('#cv'),ctx=cv.getContext('2d'),mini=$('#mini'),mctx=mini.getContext('2d');
+function resize(){
+  const st=$('#stage'),dpr=Math.min(2,window.devicePixelRatio||1);
+  view.W=st.clientWidth;view.H=st.clientHeight;
+  cv.width=Math.max(1,Math.round(view.W*dpr));cv.height=Math.max(1,Math.round(view.H*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  view.gy=view.H*0.8;
+  initClouds();
+}
+const levels=[100,200,300,450,700,1000,1500,2500,4000,8000,16000];
+function minLevel(){return(S.fix300||S.mode==='mission'||S.mode==='duel')?300:100;}
+function fitLevel(maxX,maxY,minX){
+  for(const L of levels){
+    if(L<minLevel()) continue;
+    const xm=Math.min(-0.07*L,minX-0.03*L),s=view.W/(L*1.04-xm);
+    if(maxX<=L&&maxY*s<=view.gy-36) return L;
+  }
+  return levels[levels.length-1];
+}
+function resetView(){
+  view.Lt=minLevel();view.L=view.Lt;view.minXseen=0;view.xminT=-0.07*view.Lt;view.xmin=view.xminT;
+}
+function growView(maxX,maxY,minX){
+  if(S.mode==='duel') return;
+  view.minXseen=Math.min(view.minXseen,minX);
+  view.Lt=Math.max(view.Lt,fitLevel(maxX,maxY,view.minXseen));
+  view.xminT=Math.min(-0.07*view.Lt,view.minXseen-0.03*view.Lt);
+}
+function stepView(dt){
+  const a=1-Math.exp(-dt*6);
+  view.L+=(view.Lt-view.L)*a;
+  if(S.mode==='duel') view.xminT=-0.07*view.Lt;
+  else view.xminT=Math.min(-0.07*view.Lt,view.minXseen-0.03*view.Lt);
+  view.xmin+=(view.xminT-view.xmin)*a;
+  view.s=view.W/(view.L*1.04-view.xmin);
+}
+
+/* 구름·바람 파티클 */
+let clouds=[],streaks=[],stars=[];
+function initClouds(){
+  clouds=[];for(let i=0;i<6;i++)clouds.push({px:rnd(0,view.W+240),y:rnd(0.06,0.5)*view.gy,s:rnd(0.7,1.4)});
+  streaks=[];for(let i=0;i<48;i++)streaks.push({x:rnd(0,view.W),y:rnd(10,view.gy-10),l:rnd(14,40),sp:rnd(0.6,1.3)});
+  stars=[];for(let i=0;i<70;i++)stars.push({x:rnd(0,1),y:rnd(0,0.8),r:rnd(0.5,1.6)});
+}
+function updateSky(dt){
+  const w=S.mode==='basic'?0:S.wind;
+  clouds.forEach(c=>{c.px+=(5+w*9)*c.s*dt;const T=view.W+240;c.px=((c.px%T)+T)%T;});
+  const n=Math.min(streaks.length,Math.abs(w)*7);
+  for(let i=0;i<n;i++){const s=streaks[i];s.x+=Math.sign(w)*(Math.abs(w)*45+40)*s.sp*dt;if(s.x>view.W+50)s.x=-50;if(s.x<-50)s.x=view.W+50;}
+}
+
+/* ============ 그리기 ============ */
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function drawCannon(px,py,ang,dir,u,col,h){
+  ctx.save();ctx.translate(px,py);
+  if(h>0){ // 발사대 기둥
+    const hp=h*view.s;ctx.fillStyle='#8d949f';ctx.fillRect(-9*u,6*u,18*u,Math.max(0,hp-u));
+    ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;
+    for(let yy=6*u+8*u;yy<6*u+hp;yy+=8*u){ctx.beginPath();ctx.moveTo(-9*u,yy);ctx.lineTo(9*u,yy);ctx.stroke();}
+    ctx.fillStyle='#6f7783';ctx.fillRect(-12*u,2*u,24*u,5*u);
+  }
+  ctx.fillStyle='#2a2f3a';rr(ctx,-11*u,2*u,22*u,6*u,3*u);ctx.fill();
+  ctx.fillStyle=col;rr(ctx,-9*u,-4*u,18*u,8*u,3*u);ctx.fill();
+  ctx.save();ctx.scale(dir,1);ctx.rotate(-ang*Math.PI/180);
+  ctx.fillStyle='#2b3140';ctx.fillRect(-2*u,-2.6*u,19*u,5.2*u);ctx.fillStyle='#4a5266';ctx.fillRect(14*u,-3.2*u,4*u,6.4*u);
+  ctx.restore();
+  ctx.fillStyle='#1b1f29';ctx.beginPath();ctx.arc(0,0,4.2*u,0,7);ctx.fill();
+  ctx.restore();
+}
+function drawTree(x,y,u){ctx.fillStyle='#6b4a2b';ctx.fillRect(x-1.5*u,y-8*u,3*u,8*u);ctx.fillStyle='#2f9e44';ctx.beginPath();ctx.moveTo(x,y-26*u);ctx.lineTo(x+8*u,y-6*u);ctx.lineTo(x-8*u,y-6*u);ctx.fill();}
+function drawBld(x,y,u){ctx.fillStyle='#c4c9d4';ctx.fillRect(x-7*u,y-24*u,14*u,24*u);ctx.fillStyle='#7d8aa3';for(let r=0;r<4;r++)for(let c=0;c<2;c++)ctx.fillRect(x-5*u+c*6*u,y-21*u+r*5.5*u,3.5*u,3*u);}
+function niceStep(L){return L<=300?30:L<=450?50:L<=1000?100:L<=1500?200:L<=4000?500:L<=8000?1000:2000;}
+function ballPos(){const f=S.flight;if(!f) return null;return posAt(f.sim,f.te);}
+
+function draw(now){
+  const W=view.W,H=view.H;if(!W) return;
+  const env=curEnv(),th=THEME[env.planet],s=view.s,xm=view.xmin,gy=view.gy;
+  const X=x=>(x-xm)*s,Y=y=>gy-y*s,u=Math.max(0.75,H/430);
+  ctx.clearRect(0,0,W,H);
+  let g=ctx.createLinearGradient(0,0,0,gy);g.addColorStop(0,th.t);g.addColorStop(1,th.b);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(th.stars){ctx.fillStyle='#fff';stars.forEach(t=>{ctx.globalAlpha=0.5+0.5*Math.sin(now/700+t.x*40);ctx.beginPath();ctx.arc(t.x*W,t.y*gy,t.r,0,7);ctx.fill();});ctx.globalAlpha=1;}
+  // 구름
+  if(!th.stars){clouds.forEach(c=>{const x=c.px-120,y=c.y,k=c.s*u;ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();ctx.ellipse(x,y,18*k,8*k,0,0,7);ctx.ellipse(x+14*k,y+2*k,15*k,7*k,0,0,7);ctx.ellipse(x-13*k,y+3*k,13*k,6*k,0,0,7);ctx.fill();});}
+  // 바람 줄무늬
+  const w=S.mode==='basic'?0:S.wind,n=Math.min(streaks.length,Math.abs(w)*7);
+  if(n>0){ctx.strokeStyle=th.stars?'rgba(255,255,255,.35)':'rgba(255,255,255,.7)';ctx.lineWidth=1.5;for(let i=0;i<n;i++){const t=streaks[i],d=Math.sign(w)*t.l;ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.lineTo(t.x+d,t.y);ctx.stroke();}}
+  // 지면
+  g=ctx.createLinearGradient(0,gy,0,H);g.addColorStop(0,th.s1);g.addColorStop(1,th.s2);
+  ctx.fillStyle=g;ctx.fillRect(0,gy,W,H-gy);
+  ctx.fillStyle=th.gt;ctx.fillRect(0,gy-3,W,5);
+  // 2인 대전 지형
+  if(S.mode==='duel'&&D.terrain){drawDuelWorld(X,Y,u,th);}
+  // 눈금자
+  const ry=gy+(H-gy)*0.36,step=niceStep(view.L),xmax=xm+W/s;
+  ctx.strokeStyle='#fff';ctx.fillStyle='#fff';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(X(0),ry);ctx.lineTo(Math.min(W,X(Math.floor(xmax/step)*step)),ry);ctx.stroke();
+  ctx.font='700 '+Math.round(clamp(H*0.03,10,15))+'px sans-serif';ctx.textAlign='center';
+  for(let v=0;v<=xmax;v+=step){const x=X(v);ctx.beginPath();ctx.moveTo(x,ry-6);ctx.lineTo(x,ry+6);ctx.stroke();ctx.fillText(v,x,ry+Math.max(16,H*0.045));
+    for(let q=1;q<3&&view.L<=300;q++){const xx=X(v+q*step/3);ctx.beginPath();ctx.moveTo(xx,ry-3);ctx.lineTo(xx,ry+3);ctx.stroke();}}
+  ctx.textAlign='left';ctx.font='600 '+Math.round(clamp(H*0.026,9,13))+'px sans-serif';ctx.fillStyle='rgba(255,255,255,.85)';
+  if(S.mode==='basic') ctx.fillText('※ 거리 눈금자(칸). 각도 80°·힘 100 으로 쏘면 꼭 100칸을 날아간다.',8,H-6);
+  else if(S.mode!=='duel') ctx.fillText('※ 거리 눈금자(칸). 바람·중력·공기 저항이 다르면 같은 각도·힘도 결과가 달라진다.',8,H-6);
+  // 미션 표적
+  if(S.mode==='mission') drawTarget(X,Y,u,now);
+  // 이전 궤적
+  if(S.mode!=='duel'){
+    const n2=S.trajs.length;
+    S.trajs.forEach((t,i)=>{
+      const latest=i===n2-1&&!S.flight;
+      if(latest) return;
+      ctx.setLineDash([6,5]);
+      if(S.showAll){ctx.strokeStyle=t.col;ctx.lineWidth=2.2;ctx.globalAlpha=0.95;}
+      else{ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.6;ctx.globalAlpha=1;}
+      pathTraj(t.pts,X,Y,0);ctx.setLineDash([]);ctx.globalAlpha=1;
+      if(S.showAll) flag(X(t.lx),gy,t.label,u,t.col);
+    });
+    const lt=S.trajs[n2-1];
+    if(lt&&!S.flight){
+      ctx.setLineDash([7,5]);ctx.strokeStyle='#ffe066';ctx.lineWidth=2.6;pathTraj(lt.pts,X,Y,0);ctx.setLineDash([]);
+      flag(X(lt.lx),gy,lt.label,u,'#e8523f');
+      ctx.fillStyle='rgba(20,40,70,.85)';ctx.font='700 '+Math.round(clamp(H*0.028,10,14))+'px sans-serif';ctx.textAlign='center';
+      ctx.fillText('최고 '+Math.round(lt.maxY)+'칸',X(lt.px),Y(lt.maxY)-8);ctx.textAlign='left';
+    }
+  } else {
+    [0,1].forEach(i=>{const t=D.last[i];if(!t)return;ctx.setLineDash([5,5]);ctx.strokeStyle=i?'rgba(255,140,140,.6)':'rgba(130,200,255,.7)';ctx.lineWidth=1.6;pathTraj(t,X,Y,0);ctx.setLineDash([]);});
+  }
+  // 대포
+  if(S.mode==='duel'){
+    [0,1].forEach(i=>drawTank(X,Y,u,i));
+  } else {
+    drawCannon(X(0),Y(env.h)-5*u,S.angle,1,u,'#3b6ea5',env.h);
+  }
+  // 비행 중 포탄
+  const f=S.flight;
+  if(f){
+    const pos=posAt(f.sim,f.te),mi=MASSES[(f.p.massKey)||'normal'];
+    ctx.setLineDash([]);ctx.strokeStyle='rgba(255,224,102,.85)';ctx.lineWidth=2.4;
+    ctx.beginPath();const pts=f.sim.pts,st=Math.max(1,Math.floor(pos.i/160));
+    ctx.moveTo(X(pts[0][0]),Y(pts[0][1]));for(let i=st;i<=pos.i;i+=st)ctx.lineTo(X(pts[i][0]),Y(pts[i][1]));ctx.lineTo(X(pos.x),Y(pos.y));ctx.stroke();
+    const r=mi.r*u;ctx.fillStyle=mi.c;ctx.strokeStyle='#222';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(X(pos.x),Y(pos.y),r,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.beginPath();ctx.arc(X(pos.x)-r*0.3,Y(pos.y)-r*0.3,r*0.3,0,7);ctx.fill();
+  }
+  // 효과
+  effects=effects.filter(e=>now-e.t0<e.life);
+  effects.forEach(e=>{
+    const k=(now-e.t0)/e.life;
+    if(e.type==='boom'){ctx.globalAlpha=1-k;ctx.fillStyle='#ffb703';ctx.beginPath();ctx.arc(X(e.x),Y(e.y),(8+e.r*s*k),0,7);ctx.fill();ctx.fillStyle='#ff5d3a';ctx.beginPath();ctx.arc(X(e.x),Y(e.y),(5+e.r*s*k*0.6),0,7);ctx.fill();ctx.globalAlpha=1;}
+    else if(e.type==='dust'){ctx.globalAlpha=0.7*(1-k);ctx.fillStyle='#e8d9b0';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(X(e.x)+(i-2)*7*u*k*2,Y(0)-k*14*u-(i%2)*3,3*u+k*5*u,0,7);ctx.fill();}ctx.globalAlpha=1;}
+    else if(e.type==='txt'){ctx.globalAlpha=1-k;ctx.fillStyle=e.col||'#fff';ctx.font='900 '+Math.round(16*u)+'px sans-serif';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeText(e.s,X(e.x),Y(e.y)-k*30*u);ctx.fillText(e.s,X(e.x),Y(e.y)-k*30*u);ctx.textAlign='left';ctx.globalAlpha=1;}
+  });
+}
+function pathTraj(pts,X,Y,from){
+  if(!pts||!pts.length) return;
+  ctx.beginPath();ctx.moveTo(X(pts[0][0]),Y(pts[0][1]));
+  for(let i=1;i<pts.length;i++)ctx.lineTo(X(pts[i][0]),Y(pts[i][1]));
+  ctx.stroke();
+}
+function flag(sx,gy,label,u,col){
+  ctx.fillStyle='#fff';ctx.fillRect(sx-1,gy-24*u,2,24*u);
+  ctx.font='800 '+Math.round(11*u)+'px sans-serif';const tw=ctx.measureText(label).width+10;
+  ctx.fillStyle=col;rr(ctx,sx,gy-26*u,tw,15*u,3);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(label,sx+5,gy-14.5*u);
+}
+function tgtPos(sec){
+  const c=((sec/M.period)+M.ph)%1,u=c<0.5?c*2:2-2*c;
+  return 100+200*u;
+}
+function drawTarget(X,Y,u,now){
+  const gy=view.gy;
+  ctx.fillStyle='rgba(205,133,63,.7)';ctx.fillRect(X(100),gy-1,X(300)-X(100),6);
+  const tx=tgtPos(now/1000),sx=X(tx);
+  ctx.fillStyle='rgba(255,93,93,.28)';ctx.fillRect(X(tx-5),gy-34*u,X(tx+5)-X(tx-5),34*u);
+  ctx.fillStyle='#fff';ctx.fillRect(sx-1,gy-24*u,2,24*u);
+  const cy=gy-30*u;
+  [[11,'#e5484d'],[8,'#fff'],[5,'#e5484d'],[2.2,'#fff']].forEach(a=>{ctx.fillStyle=a[1];ctx.beginPath();ctx.arc(sx,cy,a[0]*u,0,7);ctx.fill();});
+  const pop=M.pending;
+  if(pop){ctx.strokeStyle='#ffd34d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(pop.lx),gy-40*u);ctx.lineTo(X(pop.lx),gy);ctx.stroke();ctx.fillStyle='#ffd34d';ctx.font='800 '+Math.round(11*u)+'px sans-serif';ctx.textAlign='center';ctx.fillText('떨어진 곳',X(pop.lx),gy+12*u+0);ctx.textAlign='left';}
+}
+function drawDuelWorld(X,Y,u,th){
+  const T=D.terrain,gy=view.gy,xm=view.xmin,xmax=xm+view.W/view.s;
+  ctx.beginPath();ctx.moveTo(X(Math.max(0,xm)),gy);
+  for(let x=Math.max(0,Math.floor(xm));x<=Math.min(300,xmax);x+=1.5)ctx.lineTo(X(x),Y(terrainH(T,x)));
+  ctx.lineTo(X(Math.min(300,xmax)),gy);ctx.closePath();
+  const g=ctx.createLinearGradient(0,Y(90),0,gy);g.addColorStop(0,'#9a6a3a');g.addColorStop(1,'#6b4423');ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='#4fae3d';ctx.lineWidth=3.5;ctx.beginPath();
+  for(let x=Math.max(0,Math.floor(xm));x<=Math.min(300,xmax);x+=1.5){const px=X(x),py=Y(terrainH(T,x));x<=0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  [[10,'t'],[60,'b'],[82,'t'],[232,'b'],[258,'t'],[285,'t']].forEach(a=>{const y=Y(terrainH(T,a[0]));a[1]==='t'?drawTree(X(a[0]),y,u):drawBld(X(a[0]),y,u);});
+}
+function drawTank(X,Y,u,i){
+  const x=D.tx[i],sx=X(x),sy=Y(terrainH(D.terrain,x)),col=i?'#c0392b':'#2f6fb5',dir=i?-1:1;
+  ctx.save();ctx.translate(sx,sy);
+  ctx.fillStyle='#222';rr(ctx,-12*u,-5*u,24*u,6*u,3*u);ctx.fill();
+  ctx.fillStyle=col;rr(ctx,-9*u,-11*u,18*u,7*u,2*u);ctx.fill();
+  ctx.beginPath();ctx.arc(0,-11*u,5*u,Math.PI,0);ctx.fill();
+  ctx.save();ctx.translate(0,-11*u);ctx.scale(dir,1);ctx.rotate(-D.angle[i]*Math.PI/180);ctx.fillStyle='#2b3140';ctx.fillRect(0,-1.8*u,15*u,3.6*u);ctx.restore();
+  if(D.turn===i&&!D.over&&!S.flying){ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.moveTo(0,-26*u);ctx.lineTo(-5*u,-33*u);ctx.lineTo(5*u,-33*u);ctx.fill();}
+  ctx.restore();
+}
+
+/* 미니맵 */
+function drawMini(){
+  const w=mini.width,h=mini.height;mctx.clearRect(0,0,w,h);
+  mctx.fillStyle='#0f1a30';mctx.fillRect(0,0,w,h);
+  const base=h-10;let xmax=100,ymax=30,traj=null,ball=null;
+  if(S.mode==='duel'){
+    xmax=300;ymax=100;
+    const sx=(w-14)/xmax,sy=(h-18)/ymax;
+    mctx.fillStyle='#3d7a30';mctx.beginPath();mctx.moveTo(6,base);
+    for(let x=0;x<=300;x+=3)mctx.lineTo(6+x*sx,base-terrainH(D.terrain,x)*sy);
+    mctx.lineTo(6+300*sx,base);mctx.fill();
+    mctx.fillStyle='#59b8ff';mctx.fillRect(6+D.tx[0]*sx-3,base-8,6,6);mctx.fillStyle='#ff7b7b';mctx.fillRect(6+D.tx[1]*sx-3,base-8,6,6);
+    const f=S.flight;if(f){const p=posAt(f.sim,f.te);mctx.strokeStyle='#ffe066';mctx.beginPath();const pts=f.sim.pts;for(let i=0;i<=p.i;i+=6){const q=pts[i];i?mctx.lineTo(6+q[0]*sx,base-q[1]*sy):mctx.moveTo(6+q[0]*sx,base-q[1]*sy);}mctx.stroke();mctx.fillStyle='#ffd34d';mctx.beginPath();mctx.arc(6+p.x*sx,base-p.y*sy,3,0,7);mctx.fill();}
+    $('#miniMax').textContent='';return;
+  }
+  const f=S.flight;
+  if(f){const p=posAt(f.sim,f.te);traj=f.sim.pts.slice(0,p.i+1);ball=p;}
+  else if(S.trajs.length){const t=S.trajs[S.trajs.length-1];traj=t.pts;}
+  let mx=0,my=0,mn=0;
+  if(traj){traj.forEach(q=>{if(q[0]>mx)mx=q[0];if(q[1]>my)my=q[1];if(q[0]<mn)mn=q[0];});}
+  xmax=Math.max(S.mode==='mission'?300:100,mx*1.08);ymax=Math.max(30,my*1.2);
+  const x0=6-mn*((w-12)/(xmax-mn)),sx=(w-12)/(xmax-mn),sy=(h-18)/ymax;
+  mctx.strokeStyle='#6dbb4f';mctx.lineWidth=2;mctx.beginPath();mctx.moveTo(0,base);mctx.lineTo(w,base);mctx.stroke();
+  if(S.mode==='mission'){const tx=tgtPos(performance.now()/1000);mctx.fillStyle='#e5484d';mctx.fillRect(x0+tx*sx-3,base-8,6,8);mctx.fillStyle='rgba(205,133,63,.6)';mctx.fillRect(x0+100*sx,base,200*sx,3);}
+  mctx.fillStyle='#59b8ff';mctx.fillRect(x0-2,base-5-curEnv().h*sy,5,5);
+  if(traj){mctx.strokeStyle='#ffe066';mctx.lineWidth=2;mctx.beginPath();const st=Math.max(1,Math.floor(traj.length/90));for(let i=0;i<traj.length;i+=st){const q=traj[i];i?mctx.lineTo(x0+q[0]*sx,base-q[1]*sy):mctx.moveTo(x0+q[0]*sx,base-q[1]*sy);}const e=traj[traj.length-1];mctx.lineTo(x0+e[0]*sx,base-e[1]*sy);mctx.stroke();}
+  if(ball){mctx.fillStyle='#ffd34d';mctx.beginPath();mctx.arc(x0+ball.x*sx,base-ball.y*sy,3.5,0,7);mctx.fill();}
+  $('#miniMax').textContent=traj?('최고 '+Math.round(my)+'칸'):'';
+}
+
+/* ============ 메시지·UI 갱신 ============ */
+function setMsg(a,b,col){const m1=$('#msg1');m1.textContent=a||'';m1.style.color=col||'';$('#msg2').textContent=b||'';}
+let toastT=0;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2600);}
+function updateBadges(){
+  const env=curEnv(),dir=(S.mode==='duel'&&D.turn===1)?-1:1;
+  $('#bgWindTx').innerHTML='<b>'+(env.wind===0?'바람 없음':windLabel(env.wind,dir))+'</b>';
+  const g=$('#pinwG');g.style.animationPlayState=env.wind===0?'paused':'running';
+  g.style.animationDuration=(env.wind===0?2:clamp(2.4/Math.abs(env.wind),0.35,2.4))+'s';
+  g.style.animationDirection=env.wind<0?'reverse':'normal';
+  const pl=PLANETS[env.planet];
+  $('#bgGrav').innerHTML=pl.ic+' '+pl.n+' <b>'+pl.g.toFixed(pl.g%1===0?1:2)+'g</b>'+(env.k?' · 💨 저항':'')+(env.h?' · 🏗 '+env.h+'칸':'');
+  $('#stage').classList.toggle('dark',env.planet==='moon');
+}
+function updateTitle(){
+  const env=curEnv();let t='',s='';
+  if(S.mode==='basic'||S.mode==='env'){
+    const fa=S.fixed==='angle';
+    t=S.mode==='basic'?(fa?'각도 '+S.angle+'° 고정 · 힘을 바꾸는 실험':'힘 '+S.force+' 고정 · 각도를 바꾸는 실험'):'환경 변인 탐구 · '+(fa?'각도 '+S.angle+'° 고정':'힘 '+S.force+' 고정');
+    s=S.mode==='basic'?'바람 없음 · 평평한 땅 · 포를 쏘는 자리가 0칸':windLabel(env.wind,1)+' · '+PLANETS[env.planet].n+' · 공기 저항 '+(env.k?'ON':'OFF')+' · 발사대 '+env.h+'칸 · '+MASSES[env.mass].n.split(' ')[0];
+  } else if(S.mode==='mission'){
+    t=M.phase==='practice'?'미션 연습 : 움직이는 표적을 맞혀라! (횟수·시간 제한 없음)':'최종 미션 : 5발로 500점에 도전!';
+    s='표적은 100~300칸 사이를 일정한 빠르기로 왕복한다. 시계로 왕복 시간을 재 보자. · '+windLabel(env.wind,1);
+  } else {
+    t='포트리스 2인 대전 · 산을 넘어 상대 대포를 맞혀라!';s='두 대포 사이 '+(D.tx[1]-D.tx[0])+'칸 · 이번 턴 '+windLabel(S.wind,D.turn?-1:1);
+  }
+  $('#stT').textContent=t;$('#stS').textContent=s;
+}
+function mkBtns(box,vals,cur,fn){
+  box.innerHTML='';vals.forEach(v=>{const b=document.createElement('button');b.textContent=v;b.dataset.v=v;b.onclick=()=>fn(v);box.appendChild(b);});
+}
+const ANG=[10,20,30,40,45,50,60,70,80],FOR=[10,20,30,40,50,60,70,80,90,100];
+function syncCtl(){
+  $('#angVal').textContent=S.angle+'°';$('#forVal').textContent=S.force;
+  $('#forRange').value=S.force;
+  $$('#angBtns button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.angle));
+  $$('#forBtns button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.force));
+  const lab=S.mode==='basic'||S.mode==='env',fa=S.fixed==='angle';
+  $('#angLbl').textContent=lab?(fa?'각도 (고정)':'각도 (바꾸며 실험)'):'각도';
+  $('#forLbl').textContent=lab?(fa?'쏘는 힘 (바꾸며 실험)':'쏘는 힘 (고정)'):'쏘는 힘';
+  $('#angCtl').classList.toggle('dim',lab&&fa);$('#forCtl').classList.toggle('dim',lab&&!fa);
+  $('#angCtl').classList.toggle('f',lab&&fa);$('#forCtl').classList.toggle('f',lab&&!fa);
+  $('#fixedTxt').textContent=fa?'각도 '+S.angle+'°':'힘 '+S.force;
+  $('#varTxt').textContent=fa?'힘 10 ~ 100':'각도 10° ~ 80°';
+  $('#fixAngle').classList.toggle('on',fa);$('#fixForce').classList.toggle('on',!fa);
+  updateTitle();
+}
+function setAngle(v){S.angle=clamp(Math.round(v),1,89);syncCtl();}
+function setForce(v){S.force=clamp(Math.round(v),10,100);syncCtl();}
+
+/* ============ 모드 전환 ============ */
+function setMode(m){
+  if(S.flying) return;
+  S.mode=m;closeResultPop();
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.mode===m));
+  const bas=m==='basic'||m==='env',mis=m==='mission',due=m==='duel';
+  $('#pBasic').classList.toggle('hidden',!bas);$('#pMission').classList.toggle('hidden',!mis);
+  $('#pCtl').classList.toggle('hidden',due);$('#pRec').classList.toggle('hidden',!bas);
+  $('#pMsBtn').classList.toggle('hidden',!mis);$('#pDuel').classList.toggle('hidden',!due);
+  $$('#pRec .two,#pRec .chk').forEach(x=>x.classList.toggle('hidden',mis));
+  $('#clockWrap').classList.toggle('hidden',!mis);
+  S.trajs=[];effects=[];
+  if(m==='mission'){S.env.random=true;newMissionTarget();M.phase='practice';M.shots=[];M.finalDone=false;M.pending=null;rollWind();}
+  else if(m==='duel'){newDuel();}
+  else if(m==='env'){if(S.env.random)rollWind();else S.wind=S.env.wind;}
+  else {S.wind=0;}
+  if(m==='basic'||m==='env'){ if(m==='env'&&!S.env.random) S.wind=S.env.wind; }
+  resetView();updateBadges();syncCtl();syncDrawer();renderRecords();renderMission();
+  if(due)renderDuel();
+  const hint={basic:['기본 탐구 모드 — 바람·공기 저항이 없는 이상적인 환경이에요.','한 가지만 바꾸고 나머지는 고정해서 쏘아 보세요. (변인 통제)'],
+    env:['바람/환경 탐구 모드 — ⚙️에서 바람·중력·공기 저항·발사대 높이·질량을 바꿀 수 있어요.','환경을 바꾸면 이전 궤적이 점선으로 남아 비교할 수 있어요.'],
+    mission:['표적 맞히기 미션 — 표적은 계속 움직이고 매 발마다 바람이 바뀌어요.','시계로 표적의 왕복 시간을 재서 속력을 계산하고, 바람의 밀림도 함께 계산해 보세요.'],
+    duel:['2인 대전 — 가운데 산을 넘겨 상대 대포를 맞히세요. P1부터 시작!','높게 쏠수록 오래 날아가서 바람 영향이 커져요.']}[m];
+  setMsg(hint[0],hint[1],'#9fe6ff');
+  $('#keyR').textContent={basic:'각도 80°·힘 100 → 100칸',env:'환경 변수는 ⚙️ 버튼에서',mission:'표적 100~300칸 왕복 · 명중 5칸 이내',duel:'턴마다 바람이 바뀐다'}[m];
+}
+
+/* ============ 발사 · 비행 ============ */
+function startFlight(p,meta){
+  p.massKey=curEnv().mass;
+  const sim=simulate(p);
+  S.flight={p,sim,meta,t0:performance.now(),te:0};S.flying=true;
+  document.body.classList.add('flying');
+  $('#fireBtn').disabled=true;$('#fireBtn').textContent='날아가는 중…';
+  $$('#pDuel .fire').forEach(b=>b.disabled=true);
+  SFX.fire();
+}
+function fire(){
+  if(S.flying||isModal()||M.pending||isDrawer()) return;
+  ensureAudio();
+  if(S.mode==='duel') return fireDuel();
+  if(S.mode==='mission'){
+    if(M.phase==='final'&&M.finalDone) return;
+    if(M.phase==='final'&&M.shots.length>=5) return;
+  }
+  const e=curEnv(),p={angle:S.angle,force:S.force,wind:e.wind,k:e.k,g:PLANETS[e.planet].g,h0:e.h,m:MASSES[e.mass].m,dir:1,x0:0,terrain:null};
+  startFlight(p,{kind:S.mode,tFire:performance.now()});
+  setMsg('날아가는 중… 0.00초','각도 '+S.angle+'° · 힘 '+S.force+' · '+windLabel(e.wind,1),'#ffe066');
+}
+function update(dt,now){
+  updateSky(dt);stepView(dt);
+  const f=S.flight;
+  if(f){
+    f.te=(now-f.t0)/1000;
+    const pos=posAt(f.sim,Math.min(f.te+0.35,f.sim.T));
+    growView(Math.max(pos.x,0),pos.y,Math.min(pos.x,0));
+    if(f.te<f.sim.T) $('#msg1').textContent='날아가는 중… '+f.te.toFixed(2)+'초';
+    else land();
+  }
+  if(S.mode==='mission'||Clk.run)updateClock(now);
+  const ft=$('#coolTxt');if(ft){const r=Math.max(0,Math.ceil((M.coolEnd-Date.now())/1000));ft.textContent=r>0?Math.floor(r/60)+':'+String(r%60).padStart(2,'0'):'지금 도전할 수 있어요!';const rb=$('#finRe');if(rb)rb.disabled=r>0;}
+}
+
+/* ============ 착지 처리 ============ */
+function samplePts(pts,st){const o=[];for(let i=0;i<pts.length;i+=st)o.push(pts[i]);o.push(pts[pts.length-1]);return o;}
+const COLS=['#ffe066','#7ddc4f','#59b8ff','#ff9f1c','#d38bff','#ff7b7b','#4fe3c2','#f783ac'];
+function land(){
+  const f=S.flight;if(!f) return;
+  const sim=f.sim,p=f.p,meta=f.meta;
+  S.flight=null;S.flying=false;document.body.classList.remove('flying');
+  $('#fireBtn').disabled=false;$('#fireBtn').textContent='발 사 (Space)';
+  growView(sim.maxX,sim.maxY,sim.minX);
+  if(S.mode==='duel') return landDuel(f);
+  effects.push({type:'dust',x:sim.x,y:0,t0:performance.now(),life:700});SFX.land();
+  let pk=0,pm=-1;sim.pts.forEach((q,i)=>{if(q[1]>pm){pm=q[1];pk=i;}});
+  const label=p.angle+'°·'+p.force;
+  S.trajs.push({pts:samplePts(sim.pts,4),lx:sim.x,px:sim.pts[pk][0],maxY:sim.maxY,label,col:COLS[S.trajs.length%COLS.length]});
+  if(S.trajs.length>12)S.trajs.shift();
+  if(meta.kind==='mission') return landMission(f);
+  const dist=Math.round(sim.x*10)/10,tm=Math.round(sim.T*100)/100;
+  S.records.push({n:S.records.length+1,force:p.force,angle:p.angle,wind:p.wind,dist,time:tm,planet:curEnv().planet,h:p.h0,k:p.k,mass:curEnv().mass});
+  // 디브리핑: 반사실 시뮬레이션
+  const base={...p,wind:0,k:0},rd=simulate({...base,k:p.k}).x,r0=simulate(base).x,rh=simulate({...base,h0:0}).x;
+  const lines=[];
+  if(p.wind!==0){const d=sim.x-rd;lines.push('바람 '+fW(p.wind)+' 때문에 포탄이 '+f1(Math.abs(d))+'칸 '+(d>0?'더 멀리 밀렸고':'뒤로 밀렸고')+', 바람이 없었다면 '+f1(rd)+'칸에 떨어졌어요.');}
+  if(p.k){const d=rd-r0;lines.push('공기 저항 때문에 '+f1(Math.abs(d))+'칸 '+(d<0?'짧아졌어요.':'변했어요.'));}
+  if(p.h0>0){lines.push('발사대 높이 '+p.h0+'칸 덕분에 낙하 시간이 늘어 '+f1(r0-rh)+'칸 더 날아갔어요.');}
+  const hint=bestHint();if(hint&&!lines.length)lines.push(hint);
+  setMsg('각도 '+p.angle+'°·힘 '+p.force+' → '+f1(dist)+'칸, '+tm.toFixed(2)+'초 걸렸다. (기록됨)',lines.join(' ')||'[기록 보기]에서 표로 확인할 수 있다.');
+  if(S.env.random&&S.mode==='env'){rollWind();updateBadges();syncDrawer();updateTitle();}
+  renderRecords();
+}
+function bestHint(){
+  const e=curEnv();
+  const same=S.records.filter(r=>r.force===S.force&&envSig(r)===envSig({wind:e.wind,planet:e.planet,h:e.h,k:e.k,mass:e.mass}));
+  const angs=new Set(same.map(r=>r.angle));
+  if(angs.size<3) return '';
+  const b=same.reduce((a,c)=>c.dist>a.dist?c:a);
+  return '힘 '+S.force+'에서 지금까지 가장 멀리 간 각도: '+b.angle+'° ('+f1(b.dist)+'칸)';
+}
+
+/* ============ 기록표 ============ */
+function renderRecords(){
+  const bas=S.mode==='basic'||S.mode==='env';
+  $('#btnRec').textContent='기록 보기 ('+S.records.length+')';
+  if(!bas) return;
+  const env=S.mode==='env';
+  $('#tHead').innerHTML='<tr><th>힘</th><th>각도</th>'+(env?'<th>바람</th>':'')+'<th>거리(칸)</th><th>시간(초)</th></tr>';
+  const e=curEnv(),sig=envSig({wind:e.wind,planet:e.planet,h:e.h,k:e.k,mass:e.mass});
+  const grp=S.records.filter(r=>r.force===S.force&&envSig(r)===sig);
+  const best=grp.length>=3?grp.reduce((a,c)=>c.dist>a.dist?c:a):null;
+  $('#tBody').innerHTML=S.records.slice(-60).map(r=>'<tr'+(r===best?' class="best"':'')+'><td>'+r.force+'</td><td>'+r.angle+'°</td>'+(env?'<td>'+fW(r.wind)+'</td>':'')+'<td class="dist">'+f1(r.dist)+'</td><td class="tm">'+r.time.toFixed(2)+'</td></tr>').join('');
+  const w=$('#tblWrap');w.scrollTop=w.scrollHeight;
+}
+
+/* ============ 표적 맞히기 미션 ============ */
+function newMissionTarget(){M.period=Math.round(rnd(8,14)*10)/10;M.ph=Math.random();}
+function landMission(f){
+  const sim=f.sim,p=f.p,landT=f.meta.tFire+sim.T*1000;
+  const tx=tgtPos(landT/1000),lx=sim.x,diff=Math.abs(tx-lx),score=Math.max(0,Math.round(100-diff)),hit=diff<=5;
+  const sh={n:M.shots.length+1,angle:p.angle,force:p.force,wind:p.wind,tx,lx,diff,score,hit,signed:lx-tx,time:sim.T};
+  M.shots.push(sh);
+  const rd=simulate({...p,wind:0}).x,wd=sim.x-rd;
+  const tipDir=lx<tx?'짧게':'멀리';
+  const tip=hit?'명중! 바람 '+fW(p.wind)+'의 밀림('+(wd>=0?'+':'−')+f1(Math.abs(wd))+'칸)까지 잘 계산했어요.':'표적보다 '+f1(diff)+'칸 '+tipDir+' 떨어졌어요. '+(p.wind!==0?'바람이 포탄을 '+f1(Math.abs(wd))+'칸 '+(wd>0?'앞으로':'뒤로')+' 밀었어요. ':'')+(lx<tx?'힘을 조금 올리거나 표적이 갈 위치를 더 앞서 겨냥해 보세요.':'힘을 조금 줄이거나 표적이 갈 위치를 다시 예측해 보세요.');
+  SFX[hit?'hit':'miss']();
+  effects.push({type:'txt',x:lx,y:30,t0:performance.now(),life:1200,s:hit?'명중! '+score+'점':f1(diff)+'칸 차이',col:hit?'#7ddc4f':'#ffd34d'});
+  if(M.phase==='practice'){
+    M.pending=sh;setMsg('연습 '+sh.n+'번째 결과 : 표적과 '+f1(diff)+'칸 차이 → '+score+'점'+(hit?' (명중!)':''),'[확인]을 누르면 다음 포탄을 쏠 수 있다.',hit?'#7ddc4f':'#ffd34d');
+    showResultPop(sh,tip);
+  } else {
+    setMsg('최종 '+sh.n+'번째 : 차이 '+f1(diff)+'칸 → '+score+'점'+(hit?' (명중!)':''),sh.n<5?'바람이 바뀌었어요. 다음 포탄을 쏴 보세요.':'5발 사격 끝! 결과 창을 확인하세요.',hit?'#7ddc4f':'#ffd34d');
+    rollWind();updateBadges();
+    if(sh.n>=5){M.finalDone=true;M.coolEnd=Date.now()+60000;setTimeout(showFinalResult,900);}
+  }
+  renderMission();updateTitle();
+}
+function showResultPop(sh,tip){
+  const e=$('#resultPop');
+  e.innerHTML='<div class="ph"><span>연습 '+sh.n+'번째 포탄</span><em>'+(sh.hit?'명중!':'아쉬워요')+'</em></div><div class="pr"><div class="pl"><div>표적 위치<b>'+f1(sh.tx)+'칸</b></div><div>떨어진 곳<b>'+f1(sh.lx)+'칸</b></div><div>차이<b style="color:#ffd34d">'+f1(sh.diff)+'칸</b></div></div><div class="sc"><strong>'+sh.score+'점</strong><small>100점 만점</small></div></div><div class="hintline">'+tip+'</div><button class="bigbtn" id="popOk">확인 (Space)</button>';
+  e.classList.remove('hidden');$('#popOk').onclick=closeResultPop;
+}
+function closeResultPop(){
+  const e=$('#resultPop');if(!e) return;
+  const was=!!M.pending;e.classList.add('hidden');M.pending=null;
+  if(was&&S.mode==='mission'){rollWind();updateBadges();updateTitle();setMsg('다음 포탄을 쏠 차례예요.','바람이 바뀌었어요: '+windLabel(S.wind,1)+' · 표적의 속력도 다시 계산해 보세요.','#9fe6ff');}
+}
+function renderMission(){
+  if(S.mode!=='mission') return;
+  const fin=M.phase==='final',sh=M.shots,hits=sh.filter(s=>s.hit).length,avg=sh.length?sh.reduce((a,c)=>a+c.score,0)/sh.length:0;
+  $('#msPrac').classList.toggle('on',!fin);$('#msFin').classList.toggle('on',fin);
+  $('#msTitle').textContent=fin?'최종 미션 수행 중':'미션 수행 연습 중';
+  $('#msShots').textContent=fin?'쏜 포탄 '+sh.length+'/5발':'쏜 포탄 '+sh.length+'발';
+  $('#msL1').textContent=fin?'총점 (500점 만점)':'한 발 평균';
+  $('#msV1').textContent=sh.length?(fin?sh.reduce((a,c)=>a+c.score,0)+'점':f1(avg)+'점'):'-';
+  $('#msV2').textContent=hits+' / '+sh.length+'발';
+  $('#btnMsEnd').textContent=fin?'연습으로':'연습 끝내기';
+  $('#btnMsRe').textContent=fin?'다시 도전':'다시하기';
+  $('#tHead').innerHTML='<tr><th>번호</th><th>각도·힘</th><th>차이(칸)</th><th>점수</th></tr>';
+  let h=sh.map(s=>'<tr><td>'+s.n+'</td><td>'+s.angle+'°·'+s.force+'</td><td>'+f1(s.diff)+'</td><td class="dist" style="color:'+(s.hit?'#7ddc4f':'#ffd34d')+'">'+s.score+'점</td></tr>').join('');
+  if(!(fin&&sh.length>=5))h+='<tr class="turn"><td>'+(sh.length+1)+'</td><td colspan="3">쏠 차례</td></tr>';
+  $('#tBody').innerHTML=h;
+  $('#pRec').classList.remove('hidden');
+  $('#pRec').querySelectorAll('.two,.chk').forEach(x=>x.classList.add('hidden'));
+  const w=$('#tblWrap');w.scrollTop=w.scrollHeight;
+}
+function startFinal(){
+  if(M.coolEnd>Date.now()&&M.finalDone){showFinalResult();return;}
+  M.phase='final';M.shots=[];M.finalDone=false;M.pending=null;newMissionTarget();rollWind();
+  closeResultPop();updateBadges();updateTitle();renderMission();
+  setMsg('최종 미션 시작! 5발로 500점에 도전하세요.','연습에서 잰 표적의 왕복 시간과 바람을 모두 계산해 보세요.','#ffd34d');
+}
+function startPractice(){M.phase='practice';M.shots=[];M.finalDone=false;M.pending=null;closeResultPop();rollWind();updateBadges();updateTitle();renderMission();setMsg('미션 연습 — 횟수·시간 제한 없이 연습하세요.','','#9fe6ff');}
+function showFinalResult(){
+  const sh=M.shots,tot=sh.reduce((a,c)=>a+c.score,0),hits=sh.filter(s=>s.hit).length;
+  const avgS=sh.reduce((a,c)=>a+c.signed,0)/(sh.length||1);
+  let ana;
+  if(Math.abs(avgS)<=5) ana='평균 오차가 '+f1(Math.abs(avgS))+'칸으로 아주 정확해요! 표적 속력과 바람을 모두 잘 계산했어요.';
+  else ana='평균적으로 표적보다 '+f1(Math.abs(avgS))+'칸 '+(avgS<0?'짧게':'멀리')+' 떨어졌어요. '+(avgS<0?'표적이 움직이는 방향을 더 앞서 겨냥하거나 힘을 올려 보세요.':'힘을 줄이거나 바람(순풍)의 밀림을 더 크게 계산해 보세요.');
+  const spd=400/M.period;
+  openModal('최종 미션 결과','<div style="text-align:center;font-size:2.4em;font-weight:900;color:#7ddc4f">'+tot+'점 <small style="font-size:.45em;color:#9fb0d0">/ 500점</small></div><div style="text-align:center;margin:.3em 0">명중 '+hits+' / '+sh.length+'발 (표적 5칸 이내)</div><table><thead><tr><th>번호</th><th>각도·힘</th><th>바람</th><th>표적</th><th>떨어진 곳</th><th>점수</th></tr></thead><tbody>'+sh.map(s=>'<tr><td>'+s.n+'</td><td>'+s.angle+'°·'+s.force+'</td><td>'+fW(s.wind)+'</td><td>'+f1(s.tx)+'</td><td>'+f1(s.lx)+'</td><td class="dist">'+s.score+'</td></tr>').join('')+'</tbody></table><div class="note" style="margin-top:.6em">🔎 오차 분석 : '+ana+'<br>표적 왕복 시간은 <b>'+M.period.toFixed(1)+'초</b>, 속력은 400 ÷ '+M.period.toFixed(1)+' ≈ <b>'+f1(spd)+'칸/초</b> 였어요.</div><div style="text-align:center;margin-top:.7em;color:#9fb0d0">다음 최종 도전까지 <b id="coolTxt" style="color:#ffd34d;font-size:1.3em"></b></div><button class="bigbtn" id="finRe" disabled>다시 도전 (최종 미션)</button><button class="two" style="display:block;width:100%;min-height:46px;margin-top:.4em;border-radius:.6em;background:#22324f;font-weight:800" id="finPr">연습으로 돌아가기</button>',{wide:true});
+  $('#finRe').onclick=()=>{closeModal();startFinal();};
+  $('#finPr').onclick=()=>{closeModal();startPractice();};
+}
+
+/* 스톱워치 */
+const Clk={run:false,t0:0,acc:0};
+function updateClock(now){
+  const sec=(Clk.acc+(Clk.run?now-Clk.t0:0))/1000;
+  $('#clkTxt').textContent=sec.toFixed(2)+'초';
+  $('#clkHand').setAttribute('transform','rotate('+((sec%60)*6)+')');
+}
+function initClock(){
+  let h='';for(let i=0;i<60;i++){const a=i*6*Math.PI/180,r1=i%5?43:39,r2=45;h+='<line x1="'+Math.sin(a)*r1+'" y1="'+-Math.cos(a)*r1+'" x2="'+Math.sin(a)*r2+'" y2="'+-Math.cos(a)*r2+'" stroke="#556" stroke-width="'+(i%5?1:2)+'"/>';}
+  $('#clkTicks').innerHTML=h;
+  $('#clkBtn').onclick=()=>{const n=performance.now();if(Clk.run){Clk.acc+=n-Clk.t0;Clk.run=false;$('#clkBtn').textContent='시작';}else{Clk.t0=n;Clk.run=true;$('#clkBtn').textContent='멈춤';}updateClock(n);};
+  $('#clkRst').onclick=()=>{Clk.run=false;Clk.acc=0;$('#clkBtn').textContent='시작';updateClock(performance.now());};
+}
+
+/* ============ 2인 대전 ============ */
+function newDuel(){
+  D.hp=[100,100];D.turn=rint(0,1)?1:0;D.angle=[60,60];D.force=[80,80];D.terrain=makeTerrain();D.over=false;D.shots=[];D.last=[null,null];
+  S.wind=rint(-6,6);
+}
+function buildDuelPanel(){
+  const p=$('#pDuel');let h='';
+  [0,1].forEach(i=>{h+='<div class="pcard p'+i+'" id="card'+i+'"><div class="ph"><b class="pn">P'+(i+1)+' '+(i?'(오른쪽)':'(왼쪽)')+'</b><span id="tn'+i+'" style="color:#ff9f1c"></span><b id="hp'+i+'">체력 100</b></div><div class="hpbar"><i id="hb'+i+'" style="width:100%"></i></div><label>각도 <b id="dA'+i+'"></b></label><input type="range" id="dAr'+i+'" min="1" max="89"><label>힘 <b id="dF'+i+'"></b></label><input type="range" id="dFr'+i+'" min="10" max="100"><button class="fire" id="dFire'+i+'">P'+(i+1)+' 발사</button><div id="dLast'+i+'" style="font-size:.85em;color:#9fb0d0">지난 포탄 : 아직 없음</div></div>';});
+  h+='<div class="two"><button id="dNew">새 게임</button><button id="dHow">게임 방법</button></div>';
+  p.innerHTML=h;
+  [0,1].forEach(i=>{
+    $('#dAr'+i).oninput=e=>{if(D.turn===i&&!S.flying){D.angle[i]=+e.target.value;renderDuel();}else renderDuel();};
+    $('#dFr'+i).oninput=e=>{if(D.turn===i&&!S.flying){D.force[i]=+e.target.value;renderDuel();}else renderDuel();};
+    $('#dFire'+i).onclick=()=>{if(D.turn===i)fire();};
+  });
+  $('#dNew').onclick=()=>{if(S.flying)return;newDuel();resetView();effects=[];updateBadges();updateTitle();renderDuel();setMsg('새 게임! P'+(D.turn+1)+'부터 시작합니다.','가운데 산을 넘길 각도와 힘을 정해 보세요.','#9fe6ff');};
+  $('#dHow').onclick=()=>openModal('2인 대전 게임 방법',helpDuel());
+}
+function renderDuel(){
+  if(S.mode!=='duel') return;
+  [0,1].forEach(i=>{
+    $('#dA'+i).textContent=D.angle[i]+'°';$('#dF'+i).textContent=D.force[i];
+    $('#dAr'+i).value=D.angle[i];$('#dFr'+i).value=D.force[i];
+    $('#hp'+i).textContent='체력 '+Math.max(0,D.hp[i]);$('#hb'+i).style.width=Math.max(0,D.hp[i])+'%';
+    const act=D.turn===i&&!D.over;
+    $('#card'+i).classList.toggle('act',act);$('#card'+i).classList.toggle('inact',!act);
+    $('#tn'+i).textContent=act?'◀ 차례':'';
+    $('#dFire'+i).disabled=!act||S.flying;
+    $('#dAr'+i).disabled=!act||S.flying;$('#dFr'+i).disabled=!act||S.flying;
+  });
+  updateTitle();updateBadges();
+}
+function fireDuel(){
+  if(D.over) return;
+  const i=D.turn,dir=i?-1:1,e=curEnv(),ty=terrainH(D.terrain,D.tx[i]);
+  const p={angle:D.angle[i],force:D.force[i],wind:S.wind,k:e.k,g:PLANETS[e.planet].g,h0:ty+4,m:MASSES[e.mass].m,dir,x0:D.tx[i],terrain:D.terrain};
+  startFlight(p,{kind:'duel',i});renderDuel();
+  setMsg('P'+(i+1)+' 발사! 각도 '+p.angle+'° · 힘 '+p.force,windLabel(S.wind,dir),'#ffe066');
+}
+function landDuel(f){
+  const sim=f.sim,p=f.p,i=f.meta.i,T=D.terrain;
+  D.last[i]=samplePts(sim.pts,6);
+  const nw=simulate({...p,wind:0}),shift=sim.x-nw.x;
+  D.shots.push({who:i,angle:p.angle,force:p.force,wind:p.wind,time:sim.T,shift:Math.abs(shift)});
+  let msg='',col='#ffd34d';
+  if(sim.end==='out'){msg='포탄이 화면 밖으로 날아갔어요!';SFX.miss();}
+  else{
+    SFX.boom();effects.push({type:'boom',x:sim.x,y:sim.y,r:18,t0:performance.now(),life:650});
+    carve(T,sim.x,sim.y,9);
+    const hits=[];
+    [0,1].forEach(j=>{
+      const tyy=terrainH(T,D.tx[j])+3,d=Math.hypot(sim.x-D.tx[j],sim.y-tyy);
+      if(d<14){const dmg=Math.max(5,Math.round(45*(1-d/14)));D.hp[j]-=dmg;hits.push({j,dmg});effects.push({type:'txt',x:D.tx[j],y:tyy+18,t0:performance.now(),life:1200,s:'-'+dmg,col:'#ff5d5d'});}
+    });
+    if(hits.length){msg=hits.map(h=>'P'+(h.j+1)+' 대포에 '+h.dmg+' 피해!').join(' ');col='#7ddc4f';SFX.hit();}
+    else msg=sim.end==='terrain'?'산에 부딪혔어요! 더 높이 쏴야 해요.':'빗나갔어요. 낙하 지점과 상대의 거리 차이를 보고 조정해 보세요.';
+  }
+  const info=(p.wind!==0?'바람 '+fW(p.wind)+'로 포탄이 '+f1(Math.abs(shift))+'칸 '+(shift>0?'오른쪽':'왼쪽')+'으로 밀렸어요. ':'')+'(체공 '+sim.T.toFixed(2)+'초)';
+  $('#dLast'+i).textContent='지난 포탄 : '+f1(Math.abs(sim.x-D.tx[i]))+'칸 · '+sim.T.toFixed(1)+'초';
+  setMsg(msg,info,col);
+  if(D.hp[0]<=0||D.hp[1]<=0){D.over=true;renderDuel();setTimeout(duelOver,1100);return;}
+  D.turn=1-i;S.wind=rint(-6,6);S.env.wind=S.wind;
+  renderDuel();
+}
+function duelOver(){
+  const w=D.hp[0]<=0&&D.hp[1]<=0?-1:(D.hp[0]<=0?1:0);
+  const hi=D.shots.filter(s=>s.angle>=60),lo=D.shots.filter(s=>s.angle<60),av=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  let deb='';
+  if(hi.length&&lo.length) deb='고각(60° 이상) 포탄은 평균 '+av(hi.map(s=>s.time)).toFixed(1)+'초 날아가 바람에 평균 '+f1(av(hi.map(s=>s.shift)))+'칸 밀렸고, 저각(60° 미만)은 '+av(lo.map(s=>s.time)).toFixed(1)+'초 날아가 '+f1(av(lo.map(s=>s.shift)))+'칸 밀렸어요. → 체공 시간이 길수록 바람의 영향이 커져요.';
+  else deb='체공 시간이 길수록 바람이 포탄을 오래 밀어서 더 많이 벗어나요. 산을 넘기려고 높이 쏠수록 바람의 영향이 커지는 것이 이 게임의 물리적 딜레마예요.';
+  openModal('🏆 게임 종료',(w<0?'<h3 style="text-align:center">서로 쓰러졌어요! 무승부</h3>':'<h3 style="text-align:center;color:#ff9f1c;font-size:1.6em">P'+(w+1)+' 승리!</h3>')+'<div class="note">🔎 디브리핑 : '+deb+'</div><table style="margin-top:.6em"><thead><tr><th>#</th><th>발사자</th><th>각도</th><th>힘</th><th>바람</th><th>체공(초)</th><th>바람 밀림(칸)</th></tr></thead><tbody>'+D.shots.map((s,k)=>'<tr><td>'+(k+1)+'</td><td>P'+(s.who+1)+'</td><td>'+s.angle+'°</td><td>'+s.force+'</td><td>'+fW(s.wind)+'</td><td>'+s.time.toFixed(2)+'</td><td class="dist">'+f1(s.shift)+'</td></tr>').join('')+'</tbody></table><button class="bigbtn" id="dAgain">새 게임</button>',{wide:true});
+  $('#dAgain').onclick=()=>{closeModal();$('#dNew').click();};
+}
+
+/* ============ 드로어(환경 변수) ============ */
+function isDrawer(){return $('#drawer').classList.contains('on');}
+function openDrawer(){
+  if(S.flying) return;
+  if(S.mode==='basic'){toast('기본 탐구 모드는 바람·공기 저항이 없는 이상적 환경이에요. [바람/환경 탐구 모드]로 바꿔 보세요.');return;}
+  $('#drawer').classList.add('on');$('#dim').classList.add('on');syncDrawer();
+}
+function closeDrawer(){$('#drawer').classList.remove('on');$('#dim').classList.remove('on');}
+function syncDrawer(){
+  const e=S.env,du=S.mode==='duel',mi=S.mode==='mission';
+  $('#wRange').value=S.wind;$('#wVal').textContent=fW(S.wind);
+  const auto=du||(mi&&e.random)||e.random;
+  $('#wRange').disabled=auto;$('#wRand').checked=du||e.random;$('#wRand').disabled=du;
+  $('#hRange').value=e.h;$('#hRange').disabled=du;$('#hVal').textContent=e.h+'칸';
+  $('#dragOn').checked=e.drag;$('#kRange').value=Math.round(e.k*1000);$('#kRange').disabled=!e.drag;$('#kVal').textContent=e.k.toFixed(3);
+  $$('#plRad button').forEach(b=>b.classList.toggle('on',b.dataset.v===e.planet));
+  $$('#msRad button').forEach(b=>b.classList.toggle('on',b.dataset.v===e.mass));
+  $('#sndOn').checked=S.sound;
+  $('#drNote').textContent=du?'2인 대전: 바람은 턴마다 자동으로 바뀌고 발사대 높이는 0칸이에요.':mi?'표적 미션: 바람은 쏠 때마다 바뀌어요. (무작위 바람을 끄면 슬라이더로 고정할 수 있어요.)':'한 번에 한 가지씩 바꿔 가며 쏘면 변인 통제 실험이 돼요. 이전 궤적은 점선으로 남아요.';
+}
+function envChanged(){updateBadges();updateTitle();syncDrawer();resetView();if(!S.flying)renderRecords();}
+function initDrawer(){
+  $('#plRad').innerHTML=Object.keys(PLANETS).map(k=>'<button data-v="'+k+'">'+PLANETS[k].ic+' '+PLANETS[k].n+' ('+PLANETS[k].g+'g)</button>').join('');
+  $('#msRad').innerHTML=Object.keys(MASSES).map(k=>'<button data-v="'+k+'">'+MASSES[k].n+'</button>').join('');
+  $('#msRad').style.gridTemplateColumns='1fr';
+  $('#btnEnv').onclick=openDrawer;$('#drClose').onclick=closeDrawer;$('#dim').onclick=closeDrawer;
+  $('#wRange').oninput=e=>{S.wind=+e.target.value;S.env.wind=S.wind;$('#wVal').textContent=fW(S.wind);updateBadges();updateTitle();};
+  $('#wRand').onchange=e=>{S.env.random=e.target.checked;if(S.env.random)rollWind();envChanged();};
+  $$('#plRad button').forEach(b=>b.onclick=()=>{S.env.planet=b.dataset.v;S.trajs=[];envChanged();});
+  $$('#msRad button').forEach(b=>b.onclick=()=>{S.env.mass=b.dataset.v;envChanged();});
+  $('#dragOn').onchange=e=>{S.env.drag=e.target.checked;envChanged();};
+  $('#kRange').oninput=e=>{S.env.k=+e.target.value/1000;envChanged();};
+  $('#hRange').oninput=e=>{S.env.h=+e.target.value;envChanged();};
+  $('#sndOn').onchange=e=>{S.sound=e.target.checked;};
+  $('#drReset').onclick=()=>{S.env={random:false,wind:0,drag:false,k:0.005,planet:'earth',h:0,mass:'normal'};S.wind=0;if(S.mode==='mission'||S.mode==='duel'){S.env.random=true;rollWind();}S.trajs=[];envChanged();};
+}
+
+/* ============ 모달 · 기록 · 그래프 ============ */
+function isModal(){return $('#modal').classList.contains('on');}
+function openModal(title,html,o){o=o||{};$('#mTitle').textContent=title;$('#mBody').innerHTML=html;$('#modal').classList.add('on');$('#modal').classList.toggle('wide',!!o.wide);modalOnClose=o.onClose||null;}
+function closeModal(){$('#modal').classList.remove('on');const f=modalOnClose;modalOnClose=null;if(f)f();}
+function helpBasic(){return '<h4>🎯 이 실험에서 알아낼 것</h4><ul><li>쏘는 힘과 각도에 따라 포탄이 날아가는 거리가 어떻게 달라질까?</li><li>바람·공기 저항·중력·발사대 높이·질량은 궤적을 어떻게 바꿀까?</li></ul><h4>🧪 변인 통제</h4><ul><li><b>각도 고정</b> : 각도는 그대로 두고 힘만 바꿔서 쏜다.</li><li><b>힘 고정</b> : 힘은 그대로 두고 각도만 바꿔서 쏜다.</li><li>한 번에 <b>한 가지 변인만</b> 바꿔야 원인을 알 수 있어요.</li></ul><h4>🔎 발견해 보세요</h4><ul><li>무풍·평지에서 가장 멀리 가는 각도는? (힘 고정)</li><li>발사대를 높이면 가장 멀리 가는 각도가 45°보다 커질까, 작아질까?</li><li>바람이 센 날, 높이 쏘면 왜 더 많이 밀릴까?</li></ul><h4>⌨️ 단축키</h4><ul><li>←→ 힘 · ↑↓ 각도 · Space 발사 · ESC 창 닫기</li><li>기록 보기의 비밀번호는 선생님께 문의하세요.</li></ul>';}
+function helpDuel(){return '<ul><li>P1(왼쪽)과 P2(오른쪽)가 번갈아 한 발씩 쏴요. 체력은 100.</li><li>가운데 높은 산 때문에 낮게 쏘면 산에 맞아요. 높이 쏘아 올려야 해요.</li><li>매 턴 바람이 바뀌어요. 높이 쏠수록 오래 날아가서 바람에 더 많이 밀려요.</li><li>포탄이 상대 대포 가까이 떨어질수록 큰 피해! 땅에는 구덩이가 파여요.</li><li>↑↓ 각도, ←→ 힘, Space 발사 (자기 차례에만).</li></ul>';}
+function lockModal(next){
+  let pw='';
+  openModal('🔒 기록 보기 (선생님용)','<div style="text-align:center">비밀번호 4자리를 입력하세요</div><div class="pwdots" id="pwd"></div><div class="keypad" id="kp"></div><div id="pwErr" style="text-align:center;color:#ff7b7b;min-height:1.4em;font-weight:800"></div>');
+  const kp=$('#kp');
+  ['1','2','3','4','5','6','7','8','9','지움','0','확인'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{
+    if(k==='지움') pw=pw.slice(0,-1);else if(k==='확인'){chk();return;}else if(pw.length<4) pw+=k;
+    $('#pwd').textContent='●'.repeat(pw.length);if(pw.length===4)chk();};kp.appendChild(b);});
+  function chk(){
+    if(pw==='1004'){S.unlocked=true;closeModal();next();}
+    else{pw='';$('#pwd').textContent='';$('#pwErr').textContent='비밀번호가 달라요. 다시 입력하세요.';const m=$('.mbox');m.classList.remove('shake');void m.offsetWidth;m.classList.add('shake');}
+  }
+}
+function openRecords(){
+  if(!S.unlocked){lockModal(openRecords);return;}
+  const tabs=[['t','기록표'],['f','힘 → 거리'],['ff','힘×힘 → 거리'],['w','바람 → 거리'],['a','각도 → 거리']];
+  openModal('📊 기록 보기','<div class="gtabs">'+tabs.map((t,i)=>'<button data-g="'+t[0]+'" class="'+(i?'':'on')+'">'+t[1]+'</button>').join('')+'</div><div id="gBody"></div>',{wide:true,onClose:()=>{S.unlocked=false;}});
+  const show=g=>{
+    $$('.gtabs button').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+    const body=$('#gBody');
+    if(g==='t'){
+      body.innerHTML=S.records.length?'<table><thead><tr><th>#</th><th>힘</th><th>각도</th><th>바람</th><th>거리(칸)</th><th>시간(초)</th><th>환경</th></tr></thead><tbody>'+S.records.map(r=>'<tr><td>'+r.n+'</td><td>'+r.force+'</td><td>'+r.angle+'°</td><td>'+fW(r.wind)+'</td><td class="dist">'+f1(r.dist)+'</td><td class="tm">'+r.time.toFixed(2)+'</td><td style="font-size:.8em;color:#9fb0d0">'+PLANETS[r.planet].n+' · 높이 '+r.h+(r.k?' · 저항 '+r.k.toFixed(3):'')+' · '+MASSES[r.mass].n.split(' ')[0]+'</td></tr>').join('')+'</tbody></table>':'<div style="text-align:center;color:#9fb0d0;padding:2em">아직 기록이 없어요.</div>';
+    } else {body.innerHTML='<canvas id="gcv" width="800" height="450"></canvas>';drawGraph($('#gcv'),g);}
+  };
+  $$('.gtabs button').forEach(b=>b.onclick=()=>show(b.dataset.g));show('t');
+}
+function drawGraph(c,type){
+  const g=c.getContext('2d'),W=c.width,H=c.height;
+  const cfg={
+    f:{x:r=>r.force,y:r=>r.dist,gk:r=>'각도 '+r.angle+'°'+(r.wind?' · 바람 '+fW(r.wind):''),xl:'쏘는 힘',yl:'거리(칸)'},
+    ff:{x:r=>r.force*r.force,y:r=>r.dist,gk:r=>'각도 '+r.angle+'°'+(r.wind?' · 바람 '+fW(r.wind):''),xl:'힘 × 힘',yl:'거리(칸)'},
+    w:{x:r=>r.wind,y:r=>r.dist,gk:r=>'각도 '+r.angle+'° · 힘 '+r.force,xl:'바람 (칸)',yl:'거리(칸)'},
+    a:{x:r=>r.angle,y:r=>r.dist,gk:r=>'힘 '+r.force+(r.wind?' · 바람 '+fW(r.wind):''),xl:'각도 (°)',yl:'거리(칸)'}
+  }[type];
+  g.fillStyle='#0c1426';g.fillRect(0,0,W,H);
+  const groups={};S.records.forEach(r=>{const k=cfg.gk(r);(groups[k]=groups[k]||[]).push([cfg.x(r),cfg.y(r)]);});
+  const keys=Object.keys(groups);
+  if(!keys.length){g.fillStyle='#9fb0d0';g.font='24px sans-serif';g.textAlign='center';g.fillText('그래프로 그릴 기록이 없어요.',W/2,H/2);return;}
+  let xs=[],ys=[];keys.forEach(k=>groups[k].forEach(p=>{xs.push(p[0]);ys.push(p[1]);}));
+  let x0=Math.min(0,...xs),x1=Math.max(...xs),y0=Math.min(0,...ys),y1=Math.max(...ys);
+  if(type==='w'){x0=-7;x1=7;}if(type==='a'){x0=0;x1=90;}
+  if(x1===x0)x1=x0+1;if(y1===y0)y1=y0+1;
+  const nice=(a,b)=>{const r=b-a,m=Math.pow(10,Math.floor(Math.log10(r))),f=r/m,s=(f<=1.5?0.2:f<=3?0.5:f<=7?1:2)*m;return s;};
+  const sx=nice(x0,x1),sy=nice(y0,y1);x1=Math.ceil(x1/sx)*sx;y1=Math.ceil(y1/sy)*sy;x0=Math.floor(x0/sx)*sx;y0=Math.floor(y0/sy)*sy;
+  const L=70,R=20,T=40,B=60,pw=W-L-R,ph=H-T-B,X=v=>L+(v-x0)/(x1-x0)*pw,Y=v=>T+ph-(v-y0)/(y1-y0)*ph;
+  g.strokeStyle='#26365a';g.fillStyle='#9fb0d0';g.font='16px sans-serif';g.lineWidth=1;
+  g.textAlign='center';for(let v=x0;v<=x1+1e-9;v+=sx){g.beginPath();g.moveTo(X(v),T);g.lineTo(X(v),T+ph);g.stroke();g.fillText(+v.toFixed(2),X(v),T+ph+22);}
+  g.textAlign='right';for(let v=y0;v<=y1+1e-9;v+=sy){g.beginPath();g.moveTo(L,Y(v));g.lineTo(L+pw,Y(v));g.stroke();g.fillText(+v.toFixed(2),L-8,Y(v)+5);}
+  g.strokeStyle='#8ea6d8';g.lineWidth=2;g.beginPath();g.moveTo(L,T);g.lineTo(L,T+ph);g.lineTo(L+pw,T+ph);g.stroke();
+  g.fillStyle='#fff';g.font='bold 18px sans-serif';g.textAlign='center';g.fillText(cfg.xl,L+pw/2,H-12);
+  g.save();g.translate(18,T+ph/2);g.rotate(-Math.PI/2);g.fillText(cfg.yl,0,0);g.restore();
+  keys.forEach((k,i)=>{
+    const col=COLS[i%COLS.length],pts=groups[k].slice().sort((a,b)=>a[0]-b[0]);
+    g.strokeStyle=col;g.fillStyle=col;g.lineWidth=2.5;g.beginPath();pts.forEach((p,j)=>j?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();
+    pts.forEach(p=>{g.beginPath();g.arc(X(p[0]),Y(p[1]),5,0,7);g.fill();});
+    g.font='bold 15px sans-serif';g.textAlign='left';g.fillRect(L+10,T+8+i*20,12,12);g.fillStyle='#fff';g.fillText(k,L+28,T+19+i*20);
+  });
+}
+
+/* ============ 입력 · 이벤트 ============ */
+function toggleFs(){
+  const d=document,el=d.documentElement;
+  try{if(!d.fullscreenElement&&!d.webkitFullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}else{(d.exitFullscreen||d.webkitExitFullscreen).call(d);}}catch(e){toast('이 브라우저는 전체화면을 지원하지 않아요.');}
+}
+function clearAll(){
+  if(S.flying) return;
+  S.records=[];S.trajs=[];effects=[];resetView();renderRecords();setMsg('기록과 궤적을 모두 지웠어요.','새로운 실험을 시작해 보세요.','#9fe6ff');
+}
+function init(){
+  mkBtns($('#angBtns'),ANG,S.angle,v=>setAngle(v));mkBtns($('#forBtns'),FOR,S.force,v=>setForce(v));
+  $('#forRange').oninput=e=>setForce(+e.target.value);$('#angM').onclick=()=>setAngle(S.angle-1);$('#angP').onclick=()=>setAngle(S.angle+1);$('#forM').onclick=()=>setForce(S.force-1);$('#forP').onclick=()=>setForce(S.force+1);
+  $('#fireBtn').onclick=fire;
+  $$('.tab').forEach(t=>t.onclick=()=>setMode(t.dataset.mode));
+  $('#fixAngle').onclick=()=>{S.fixed='angle';syncCtl();renderRecords();};
+  $('#fixForce').onclick=()=>{S.fixed='force';syncCtl();renderRecords();};
+  $('#btnRec').onclick=()=>{if(!S.flying)openRecords();};
+  $('#btnClr').onclick=clearAll;
+  $('#fix300').onchange=e=>{S.fix300=e.target.checked;view.Lt=Math.max(view.Lt,minLevel());if(!S.fix300){view.Lt=minLevel();S.trajs.forEach(t=>growView(t.lx,t.maxY,0));}};
+  $('#btnAll').onclick=()=>{S.showAll=!S.showAll;$('#btnAll').style.background=S.showAll?'#ff9f1c':'';$('#btnAll').style.color=S.showAll?'#1a1200':'';toast(S.showAll?'모든 궤적을 색깔별로 보여 줘요.':'이전 궤적을 점선으로 보여 줘요.');};
+  $('#btnHelp').onclick=()=>openModal('🧪 실험 안내',helpBasic());
+  $('#btnFs').onclick=toggleFs;$('#mClose').onclick=closeModal;
+  $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+  $('#msPrac').onclick=()=>{if(!S.flying)startPractice();};
+  $('#msFin').onclick=()=>{if(!S.flying)startFinal();};
+  $('#btnMsRe').onclick=()=>{if(S.flying)return;M.phase==='final'?startFinal():startPractice();};
+  $('#btnMsEnd').onclick=()=>{if(S.flying)return;M.phase==='final'?startPractice():(M.shots.length?showPracticeSummary():toast('아직 쏜 포탄이 없어요.'));};
+  initDrawer();initClock();buildDuelPanel();
+  document.addEventListener('keydown',onKey);
+  new ResizeObserver(resize).observe($('#stage'));
+  window.addEventListener('resize',resize);
+}
+function showPracticeSummary(){
+  const sh=M.shots,hits=sh.filter(s=>s.hit).length,avg=sh.reduce((a,c)=>a+c.score,0)/sh.length;
+  openModal('연습 끝!','<div style="text-align:center;font-size:1.3em">'+sh.length+'발 중 <b style="color:#7ddc4f">'+hits+'발 명중</b> · 평균 <b style="color:#ffd34d">'+f1(avg)+'점</b></div><div class="note" style="margin-top:.6em">표적의 왕복 시간을 시계로 재서 속력(400 ÷ 왕복 시간)을 구하고, 바람이 밀어 내는 거리까지 계산하면 더 정확히 맞힐 수 있어요.</div><button class="bigbtn" id="goFin">최종 미션 도전!</button>');
+  $('#goFin').onclick=()=>{closeModal();startFinal();};
+}
+function onKey(e){
+  const k=e.key;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Escape'].indexOf(k)<0) return;
+  e.preventDefault();
+  if(document.activeElement&&document.activeElement.blur&&document.activeElement!==document.body)document.activeElement.blur();
+  if(k==='Escape'){if(isModal())closeModal();else if(isDrawer())closeDrawer();return;}
+  if(isModal()||isDrawer()) return;
+  if(k===' '){if(M.pending&&S.mode==='mission'){closeResultPop();return;}fire();return;}
+  if(S.flying) return;
+  const st=e.shiftKey?10:1;
+  if(S.mode==='duel'){
+    if(D.over) return;const i=D.turn;
+    if(k==='ArrowUp')D.angle[i]=clamp(D.angle[i]+1,1,89);if(k==='ArrowDown')D.angle[i]=clamp(D.angle[i]-1,1,89);
+    if(k==='ArrowRight')D.force[i]=clamp(D.force[i]+st,10,100);if(k==='ArrowLeft')D.force[i]=clamp(D.force[i]-st,10,100);
+    renderDuel();return;
+  }
+  if(k==='ArrowUp')setAngle(S.angle+1);if(k==='ArrowDown')setAngle(S.angle-1);
+  if(k==='ArrowRight')setForce(S.force+st);if(k==='ArrowLeft')setForce(S.force-st);
+}
+
+/* 소리 */
+let AC=null;
+function ensureAudio(){if(!S.sound)return;try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+function tone(fq,d,ty,vol,sl){if(!S.sound||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty||'sine';o.frequency.setValueAtTime(fq,t);if(sl)o.frequency.exponentialRampToValueAtTime(Math.max(30,sl),t+d);g.gain.setValueAtTime(vol||0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(t+d);}catch(e){}}
+const SFX={fire:()=>tone(220,0.25,'sawtooth',0.15,60),land:()=>tone(90,0.3,'sine',0.22,40),boom:()=>tone(140,0.5,'sawtooth',0.22,35),hit:()=>{tone(660,0.15,'triangle',0.18);setTimeout(()=>tone(990,0.2,'triangle',0.18),120);},miss:()=>tone(200,0.25,'square',0.08,120)};
+
+/* ============ 시작 ============ */
+let lastT=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+  try{update(dt,now);draw(now);drawMini();}catch(err){console.error(err);}
+  requestAnimationFrame(frame);
+}
+init();resize();resetView();setMode('basic');
+updateBadges();syncCtl();renderRecords();
+window.__cannon={simulate,S,M,D,view,setMode,fire,land,update,draw,drawMini,tgtPos};
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
