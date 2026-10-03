@@ -711,6 +711,7 @@ a { text-decoration: none; color: inherit; }
     <div class="header-utils">
       <a href="./통합_과학수업_서랍.html" class="btn-guide-modal" title="과학수업 통합 서랍"><span>📚 통합과학</span></a>
       <a href="./시작하기_수업게임서랍.html" class="btn-guide-modal" title="수업 게임 서랍"><span>🎮 수업게임</span></a>
+      <button class="btn-guide-modal" id="btnBoard" title="실험을 전체화면 전자칠판 보기로 열기"><span>🖥 전자칠판 모드 : 켬</span></button>
       <button class="btn-guide-modal" id="btnQR" title="학생 접속 QR코드 만들기"><span>📱 QR</span></button>
     </div>
   </div>
@@ -747,7 +748,7 @@ a { text-decoration: none; color: inherit; }
     <h3 id="resultTitle">가상실험 카드</h3>
     <div class="results-tools">
       <button class="btn-mini" id="btnFold" title="단원 묶음 모두 접기/펼치기">▾ 모두 접기</button>
-      <div style="font-size:12.5px; color:var(--muted);">💡 <b>찾는 방법:</b> 학년 → 단원 → 차시 순으로 눌러 보세요.</div>
+      <div style="font-size:12.5px; color:var(--muted);">💡 <b>찾는 방법:</b> 학년 → 단원 → 차시 순으로 눌러 보세요. · 🖥 <b>전자칠판 모드</b>를 켜면 실험이 전체화면으로 열려요.</div>
     </div>
   </div>
 
@@ -3707,6 +3708,21 @@ const DATA = [
     keywords: ["항상성", "혈당량", "인슐린", "글루카곤", "체온조절", "간뇌", "땀", "기화열", "항이뇨호르몬", "뇌하수체", "콩팥", "재흡수", "당뇨"]
   },
   {
+    id: "earth-parallax",
+    cat: "지구",
+    catKey: "earth",
+    grade: "중3",
+    unit: "별과 우주",
+    lesson: "별까지의 거리와 연주 시차",
+    seq: 1,
+    title: "별의 연주 시차 (지구의 공전과 별까지의 거리)",
+    file: "연주시차.html",
+    type: "SIM",
+    icon: "🔭",
+    desc: "두 눈의 시차 체험에서 시작해 지구가 6개월 간격으로 공전할 때 가까운 별과 먼 별의 위치 변화(연주 시차)를 교과서 그림 Ⅷ-2처럼 비교하고, 연주 시차를 재어 d = 1/p 로 별까지의 거리를 구해 봅니다.",
+    keywords: ["시차", "연주시차", "공전", "파섹", "광년", "별까지의거리", "천구", "d=1/p", "별의특성"]
+  },
+  {
     id: "bio-4",
     cat: "생명",
     catKey: "bio",
@@ -4033,6 +4049,19 @@ function renderHier() {
 }
 
 /* ---------- 4. 목록 ---------- */
+/* 전자칠판 모드 : 가상실험을 전체화면 실행기(전자칠판_실행기.html)로 열기 */
+const LS_BOARD = "labBoardMode";
+let boardMode = true;
+try { boardMode = localStorage.getItem(LS_BOARD) !== "off"; } catch(e) {}
+function openHref(d) {
+  if (boardMode && d.type === "SIM") return "./전자칠판_실행기.html?f=" + encodeURIComponent(d.file) + "&t=" + encodeURIComponent(d.title);
+  return "./" + d.file;
+}
+function syncBoardBtn() {
+  const b = $id("btnBoard"); b.classList.toggle("on", boardMode);
+  b.querySelector("span").textContent = "🖥 전자칠판 모드 : " + (boardMode ? "켬" : "끔");
+  b.style.background = boardMode ? "#0a0e17" : ""; b.style.color = boardMode ? "#fff" : ""; b.style.borderColor = boardMode ? "#38bdf8" : "";
+}
 function openLabel(d) { return d.type === "GAME" ? "게임 시작" : d.type === "WS" ? "활동지 열기" : "실험 열기"; }
 function filteredItems() {
   const q = query.trim().toLowerCase();
@@ -4061,7 +4090,7 @@ function cardHTML(d) {
     </div>
     <div class="card-tools-matrix">
       <div class="action-btn-row">
-        <a href="./${d.file}" class="btn-action btn-sim" target="_blank"><span>🔬 ${openLabel(d)}</span></a>
+        <a href="${openHref(d)}" class="btn-action btn-sim" target="_blank"><span>🔬 ${openLabel(d)}</span></a>
         ${ws}
         <button class="btn-action btn-qr" data-file="${esc(d.file)}" data-t="${esc(d.title)}" title="이 자료의 학생용 QR코드"><span>📱 QR</span></button>
       </div>
@@ -4075,7 +4104,7 @@ function rowHTML(d) {
     <div class="ri-main"><div class="ri-title" title="${esc(d.title)}">${d.title}</div><div class="ri-sub">${d.grade} · ${d.unit} · ${d.lesson}</div></div>
     <div class="ri-btns">
       <button class="btn-star ${fav ? "active" : ""}" onclick="toggleFav('${d.id}', event)" title="즐겨찾기">★</button>
-      <a href="./${d.file}" class="btn-action btn-sim" target="_blank"><span>🔬 열기</span></a>
+      <a href="${openHref(d)}" class="btn-action btn-sim" target="_blank"><span>🔬 열기</span></a>
       ${ws}
       <button class="btn-action btn-qr" data-file="${esc(d.file)}" data-t="${esc(d.title)}" title="QR"><span>📱</span></button>
     </div>`;
@@ -4130,7 +4159,7 @@ $id("keywordSearch").addEventListener("input", e => { query = e.target.value; if
 $id("btnRandom").onclick = () => {
   const pool = filteredItems().filter(d => d.type === "SIM");
   const pick = pool[Math.floor(Math.random() * pool.length)];
-  if (pick) window.open("./" + pick.file, "_blank");
+  if (pick) window.open(openHref(pick), "_blank");
 };
 
 /* ==========================================================================
@@ -4196,7 +4225,49 @@ $id("qrPng").addEventListener("click", () => {
 $id("qrPrint").addEventListener("click", () => window.print());
 document.addEventListener("keydown", e => { if (e.key === "Escape") $id("ovQR").classList.remove("on"); });
 
+$id("btnBoard").onclick = () => { boardMode = !boardMode; try { localStorage.setItem(LS_BOARD, boardMode ? "on" : "off"); } catch(e) {} syncBoardBtn(); render(); };
+syncBoardBtn();
 render();
+</script>
+<script id="qrbigScript">
+/* 전자칠판용 QR 크게 보기 (오프라인 · 외부 의존 없음) */
+(function(){
+  var NAVY='#0a0e17';
+  function openBig(cv){
+    if(document.getElementById('qbOv'))return;
+    var t=(document.getElementById('qrTitle')||{}).textContent||document.title||'학생 접속 QR코드';
+    var cap=((document.getElementById('qrCap')||{}).textContent)||((document.getElementById('qrUrl')||{}).value)||'';
+    var ov=document.createElement('div');ov.id='qbOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:'+NAVY+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:2vh 3vw;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none';
+    var h=document.createElement('div');h.textContent='📱 휴대폰 카메라로 QR을 찍어 보세요';h.style.cssText='font-size:clamp(24px,3.4vh,44px);font-weight:900;text-align:center';
+    var s=document.createElement('div');s.textContent=t;s.style.cssText='font-size:clamp(20px,2.6vh,34px);font-weight:800;color:#7dd3fc;text-align:center;max-width:90vw';
+    var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;padding:clamp(18px,3vh,36px);box-shadow:0 0 0 6px #1e3a8a,0 20px 60px rgba(0,0,0,.6)';
+    var im=new Image();im.src=cv.toDataURL('image/png');im.alt='QR 코드';im.style.cssText='display:block;width:min(64vh,76vw);height:min(64vh,76vw);image-rendering:pixelated';box.appendChild(im);
+    var c=document.createElement('div');c.textContent=cap;c.style.cssText='font-size:clamp(18px,2.2vh,26px);color:#9fb2d0;font-weight:700;text-align:center;max-width:92vw;word-break:break-all';
+    var k=document.createElement('div');k.textContent='화면을 누르거나 Esc 키를 누르면 닫혀요';k.style.cssText='font-size:clamp(18px,2.2vh,24px);color:#fde68a;font-weight:800';
+    [h,s,box,c,k].forEach(function(e){if(e!==c||cap)ov.appendChild(e);});
+    document.body.appendChild(ov);
+    var usedFs=false;
+    try{var r=ov.requestFullscreen||ov.webkitRequestFullscreen;if(r&&!document.fullscreenElement&&!document.webkitFullscreenElement){var p=r.call(ov);usedFs=true;if(p&&p.catch)p.catch(function(){});}}catch(e){}
+    function close(){document.removeEventListener('keydown',key,true);if(ov.parentNode)ov.parentNode.removeChild(ov);
+      try{if(usedFs&&(document.fullscreenElement||document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+    function key(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    ov.addEventListener('click',close);document.addEventListener('keydown',key,true);
+    document.addEventListener('fullscreenchange',function f(){if(!document.fullscreenElement&&usedFs){document.removeEventListener('fullscreenchange',f);if(document.getElementById('qbOv'))close();}});
+  }
+  function attach(cv){
+    if(cv.__qb)return;cv.__qb=1;
+    var b=document.createElement('button');b.type='button';b.id=(cv.id||'qr')+'Big';b.textContent='⛶ 크게 보기 (전자칠판)';
+    b.style.cssText='display:block;margin:10px auto 0;min-height:52px;padding:0 20px;border-radius:14px;border:2px solid #38bdf8;background:'+NAVY+';color:#fff;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation';
+    b.onclick=function(e){e.stopPropagation();openBig(cv);};
+    cv.insertAdjacentElement('afterend',b);cv.style.cursor='zoom-in';cv.title='눌러서 크게 보기';
+    cv.addEventListener('click',function(e){e.stopPropagation();openBig(cv);});
+  }
+  function scan(){var all=document.querySelectorAll('canvas');for(var i=0;i<all.length;i++){if(/qr/i.test(all[i].id))attach(all[i]);}}
+  scan();document.addEventListener('DOMContentLoaded',scan);
+  try{new MutationObserver(function(){scan();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.__qrBig=openBig;
+})();
 </script>
 </body>
 </html>

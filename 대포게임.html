@@ -3438,5 +3438,45 @@ window.__cannon={openQr,drawQr,simulate,S,M,D,view,setMode,fire,land,update,draw
 requestAnimationFrame(frame);
 })();
 </script>
+<script id="qrbigScript">
+/* 전자칠판용 QR 크게 보기 (오프라인 · 외부 의존 없음) */
+(function(){
+  var NAVY='#0a0e17';
+  function openBig(cv){
+    if(document.getElementById('qbOv'))return;
+    var t=(document.getElementById('qrTitle')||{}).textContent||document.title||'학생 접속 QR코드';
+    var cap=((document.getElementById('qrCap')||{}).textContent)||((document.getElementById('qrUrl')||{}).value)||'';
+    var ov=document.createElement('div');ov.id='qbOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:'+NAVY+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:2vh 3vw;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none';
+    var h=document.createElement('div');h.textContent='📱 휴대폰 카메라로 QR을 찍어 보세요';h.style.cssText='font-size:clamp(24px,3.4vh,44px);font-weight:900;text-align:center';
+    var s=document.createElement('div');s.textContent=t;s.style.cssText='font-size:clamp(20px,2.6vh,34px);font-weight:800;color:#7dd3fc;text-align:center;max-width:90vw';
+    var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;padding:clamp(18px,3vh,36px);box-shadow:0 0 0 6px #1e3a8a,0 20px 60px rgba(0,0,0,.6)';
+    var im=new Image();im.src=cv.toDataURL('image/png');im.alt='QR 코드';im.style.cssText='display:block;width:min(64vh,76vw);height:min(64vh,76vw);image-rendering:pixelated';box.appendChild(im);
+    var c=document.createElement('div');c.textContent=cap;c.style.cssText='font-size:clamp(18px,2.2vh,26px);color:#9fb2d0;font-weight:700;text-align:center;max-width:92vw;word-break:break-all';
+    var k=document.createElement('div');k.textContent='화면을 누르거나 Esc 키를 누르면 닫혀요';k.style.cssText='font-size:clamp(18px,2.2vh,24px);color:#fde68a;font-weight:800';
+    [h,s,box,c,k].forEach(function(e){if(e!==c||cap)ov.appendChild(e);});
+    document.body.appendChild(ov);
+    var usedFs=false;
+    try{var r=ov.requestFullscreen||ov.webkitRequestFullscreen;if(r&&!document.fullscreenElement&&!document.webkitFullscreenElement){var p=r.call(ov);usedFs=true;if(p&&p.catch)p.catch(function(){});}}catch(e){}
+    function close(){document.removeEventListener('keydown',key,true);if(ov.parentNode)ov.parentNode.removeChild(ov);
+      try{if(usedFs&&(document.fullscreenElement||document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+    function key(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    ov.addEventListener('click',close);document.addEventListener('keydown',key,true);
+    document.addEventListener('fullscreenchange',function f(){if(!document.fullscreenElement&&usedFs){document.removeEventListener('fullscreenchange',f);if(document.getElementById('qbOv'))close();}});
+  }
+  function attach(cv){
+    if(cv.__qb)return;cv.__qb=1;
+    var b=document.createElement('button');b.type='button';b.id=(cv.id||'qr')+'Big';b.textContent='⛶ 크게 보기 (전자칠판)';
+    b.style.cssText='display:block;margin:10px auto 0;min-height:52px;padding:0 20px;border-radius:14px;border:2px solid #38bdf8;background:'+NAVY+';color:#fff;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation';
+    b.onclick=function(e){e.stopPropagation();openBig(cv);};
+    cv.insertAdjacentElement('afterend',b);cv.style.cursor='zoom-in';cv.title='눌러서 크게 보기';
+    cv.addEventListener('click',function(e){e.stopPropagation();openBig(cv);});
+  }
+  function scan(){var all=document.querySelectorAll('canvas');for(var i=0;i<all.length;i++){if(/qr/i.test(all[i].id))attach(all[i]);}}
+  scan();document.addEventListener('DOMContentLoaded',scan);
+  try{new MutationObserver(function(){scan();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.__qrBig=openBig;
+})();
+</script>
 </body>
 </html>
