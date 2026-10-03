@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>전자기력 가상실험실 · 전기 그네 & 전동기 (중2 전기와 자기)</title>
+<style>
+:root{--F:#ef4444;--B:#16a34a;--I:#0f172a;--ink:#0f172a;--mut:#475569;--line:#cbd5e1;--bg:#f1f5f9;--pri:#2563eb}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+body{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.top{flex:none;display:flex;align-items:center;gap:12px;padding:6px 14px;background:#0f172a;color:#fff;flex-wrap:wrap}
+.top h1{margin:0;font-size:clamp(15px,1.7vw,26px);font-weight:900;flex:1;min-width:220px}
+.top h1 small{display:block;font-size:.6em;font-weight:600;color:#93c5fd}
+.tabs{display:flex;gap:8px}
+.tab,.nav{min-height:54px;padding:0 clamp(12px,1.6vw,26px);border-radius:14px;border:2px solid #334155;background:#1e293b;color:#cbd5e1;font:800 clamp(14px,1.5vw,22px) inherit;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.tab.on{background:#2563eb;border-color:#60a5fa;color:#fff}
+.wrap{flex:1;min-height:0;display:flex}
+#stage{flex:0 0 65%;min-width:0;position:relative;background:#fff;border-right:3px solid var(--line)}
+#cv{width:100%;height:100%;display:block;touch-action:none}
+#panel{flex:1;min-width:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.card h3{margin:0 0 8px;font-size:clamp(14px,1.4vw,20px);color:var(--mut);font-weight:800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{min-height:54px;border-radius:14px;border:2px solid var(--line);background:#fff;color:var(--ink);font:800 clamp(14px,1.45vw,22px)/1.2 inherit;font-family:inherit;cursor:pointer;padding:6px 10px}
+.btn:active{background:#e2e8f0}
+.btn.on{background:#dbeafe;border-color:var(--pri);color:#1e3a8a}
+.sw{width:100%;min-height:68px;font-size:clamp(18px,2vw,30px);border-radius:18px;border:3px solid #64748b;background:#e2e8f0;color:#334155}
+.sw.on{background:#16a34a;border-color:#166534;color:#fff;box-shadow:0 0 18px #4ade80}
+.row{display:flex;align-items:center;gap:10px}
+.row label{font-weight:700;font-size:clamp(13px,1.3vw,19px)}
+input[type=range]{width:100%;height:44px;accent-color:var(--pri)}
+input[type=checkbox]{width:28px;height:28px;accent-color:var(--pri)}
+.chk{display:flex;align-items:center;gap:10px;min-height:48px;font-weight:700;font-size:clamp(14px,1.4vw,21px)}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hud div{background:#f8fafc;border-radius:12px;padding:6px 10px;border:1px solid var(--line)}
+.hud small{display:block;color:var(--mut);font-weight:700;font-size:clamp(11px,1.05vw,15px)}
+.hud b{font-size:clamp(16px,1.8vw,28px)}
+.hud .wide{grid-column:1/3}
+.f{color:var(--F)}.bb{color:var(--B)}.ii{color:var(--I)}
+#msg{font-size:clamp(15px,1.6vw,24px);font-weight:800;line-height:1.45;background:#fef9c3;border:2px solid #facc15;border-radius:14px;padding:10px 12px;word-break:keep-all}
+.calc{font-size:clamp(13px,1.3vw,19px);font-weight:700;line-height:1.5;word-break:keep-all}
+.hide{display:none!important}
+.foot{font-size:11px;color:#94a3b8;text-align:center}
+@media (max-aspect-ratio:1/1){.wrap{flex-direction:column}#stage{flex:0 0 50%;border-right:0;border-bottom:3px solid var(--line)}}
+</style></head>
+<body>
+<div class="top">
+  <h1>⚡ 전자기력 가상실험실<small>중2 전기와 자기 · 전기 그네 탐구 &amp; 전동기 원리 (교과서 266~268쪽)</small></h1>
+  <div class="tabs"><button class="tab on" id="tab1">① 전기 그네</button><button class="tab" id="tab2">② 전동기(모터)</button></div>
+  <a class="nav" href="./자바실험실_서랍.html">🔬 실험실 서랍</a>
+  <button class="nav" id="fs">⛶ 전체화면</button>
+</div>
+<div class="wrap">
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="panel">
+    <!-- ===== 모듈 1 패널 ===== -->
+    <div id="p1" style="display:contents">
+      <div class="card"><h3>🎛 원터치 실험 조건</h3>
+        <div class="grid2">
+          <button class="btn" data-pre="1">1. 기본<br><small>전류 앞쪽 · 위 N</small></button>
+          <button class="btn" data-pre="2">2. 전류 반대</button>
+          <button class="btn" data-pre="3">3. 자석 반대</button>
+          <button class="btn" data-pre="4">4. 둘 다 반대</button>
+        </div></div>
+      <div class="card"><h3>🔌 직류 전원 장치</h3>
+        <button class="btn sw" id="swBtn">⏻ 스위치 OFF</button>
+        <div class="grid2" style="margin-top:8px">
+          <button class="btn" id="polBtn">🔄 전류 방향 반전</button>
+          <button class="btn" id="flipBtn">🧲 자석 뒤집기</button>
+        </div>
+        <div style="margin-top:6px"><div class="row"><label for="cur">전류 세기</label><b id="curV" style="font-size:22px">2 A</b></div>
+          <input type="range" id="cur" min="1" max="5" step="1" value="2"></div>
+        <label class="chk"><input type="checkbox" id="push"> 누르는 동안만 전류 흐르기 (푸시 버튼)</label>
+      </div>
+      <div class="card"><h3>📏 실시간 계측</h3>
+        <div class="hud">
+          <div><small>전류 세기 · 방향</small><b class="ii" id="hCur">-</b></div>
+          <div><small>자기장 방향 B</small><b class="bb" id="hB">-</b></div>
+          <div><small>전자기력 방향 F</small><b class="f" id="hF">-</b></div>
+          <div><small>그네 기울기 θ</small><b id="hTh">-</b></div>
+          <div class="wide"><small>전자기력 F = B × I × L</small><span class="calc" id="hCalc">-</span></div>
+          <div class="wide"><small>평형 조건 tanθ = F / mg  (m = 35 g)</small><span class="calc" id="hTan">-</span></div>
+        </div></div>
+      <div class="card"><h3>👁 시각화 보조</h3>
+        <label class="chk"><input type="checkbox" id="ckHand" checked> 오른손 손바닥 법칙 보기</label>
+        <label class="chk"><input type="checkbox" id="ckField" checked> 자기력선 표시</label></div>
+      <div id="msg">스위치를 켜고 전기 그네가 어느 쪽으로 움직이는지 관찰해 보세요.</div>
+    </div>
+    <!-- ===== 모듈 2 패널 ===== -->
+    <div id="p2" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card"><h3>⚙️ 전동기 조작</h3>
+        <button class="btn sw" id="motBtn">▶ 모터 회전 시작</button>
+        <div style="margin-top:6px"><div class="row"><label for="spd">회전 속도</label><b id="spdV" style="font-size:22px">0.8 회/초</b></div>
+          <input type="range" id="spd" min="2" max="20" step="1" value="8"></div>
+        <label class="chk"><input type="checkbox" id="ckFor" checked> 전류 · 힘 화살표 보기</label>
+        <div class="calc" style="color:#475569">💡 모터가 멈춰 있을 때 코일을 손가락으로 직접 돌려 볼 수 있어요.</div>
+      </div>
+      <div class="card"><h3>📏 실시간 계측</h3>
+        <div class="hud">
+          <div><small>코일 각도</small><b id="mAng">-</b></div>
+          <div><small>회전 속도 · 방향</small><b id="mW">-</b></div>
+          <div><small>왼쪽 도선</small><b>전류 ⊗(유입) · <span class="f">힘 ↑</span></b></div>
+          <div><small>오른쪽 도선</small><b>전류 ⊙(유출) · <span class="f">힘 ↓</span></b></div>
+          <div class="wide"><small>정류자</small><span class="calc" id="mCom">-</span></div>
+        </div></div>
+      <div id="msg2" class="" style="font-size:clamp(15px,1.6vw,24px);font-weight:800;line-height:1.5;background:#fef9c3;border:2px solid #facc15;border-radius:14px;padding:10px 12px;word-break:keep-all">
+        ① 코일의 두 도선에는 <span class="f">크기가 같고 방향이 반대인 힘(짝힘)</span>이 작용해요.<br>
+        ② 그래서 코일이 <b>시계 방향</b>으로 회전해요.<br>
+        ③ 코일이 수직이 되는 순간 정류자가 전류 방향을 바꿔 <b>계속 같은 방향</b>으로 돌아요.<br>
+        ④ 전기 에너지 → 운동 에너지: 전기 자전거는 페달을 밟지 않아도 바퀴가 돌아가요!</div>
+      </div>
+    </div>
+    <div class="foot">중학교 과학 · CTML 인지설계 v3.0 · 힘 <b style="color:#ef4444">■</b> 자기장 <b style="color:#16a34a">■</b> 전류 <b>■</b></div>
+  </div>
+</div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d');
+const W=1000,H=700,COL={F:'#ef4444',B:'#16a34a',I:'#0f172a'};
+let sc=1,ox=0,oy=0,dpr=1,mode=1;
+function fit(){const r=cv.parentElement.getBoundingClientRect();dpr=window.devicePixelRatio||1;cv.width=Math.max(2,r.width*dpr);cv.height=Math.max(2,r.height*dpr);sc=Math.min(r.width/W,r.height/H);ox=(r.width-W*sc)/2;oy=(r.height-H*sc)/2}
+addEventListener('resize',fit);
+/* ---------- 상태 ---------- */
+const BT=0.40,LL=0.10,MASS=0.035,G=9.8,K=BT*LL/(MASS*G);   // tanθ = K·I
+const P={on:false,push:false,Idir:1,sT:1,s:1,I:2,hand:true,field:true,phi:0,v:0};
+const M={run:false,spd:.8,alpha:0.6,w:0,wheel:0,showF:true,drag:false,off:0,flash:0};
+const fsign=()=>-P.Idir*P.sT;           // +1: 안쪽(오른쪽) / -1: 바깥쪽(왼쪽)   F = I × B
+const thEq=()=>Math.atan(K*P.I);
+/* ---------- 그리기 도우미 ---------- */
+function arrow(x1,y1,x2,y2,col,w,h){w=w||6;h=h||16;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.lineCap='round';const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2-Math.cos(a)*h*.6,y2-Math.sin(a)*h*.6);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.4)*h,y2-Math.sin(a-.4)*h);ctx.lineTo(x2-Math.cos(a+.4)*h,y2-Math.sin(a+.4)*h);ctx.closePath();ctx.fill()}
+function sym(x,y,r,out,fill){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=fill||'#fff';ctx.fill();ctx.strokeStyle=COL.I;ctx.lineWidth=3;ctx.stroke();ctx.fillStyle=COL.I;if(out){ctx.beginPath();ctx.arc(x,y,r*.38,0,7);ctx.fill()}else{const d=r*.6;ctx.beginPath();ctx.moveTo(x-d,y-d);ctx.lineTo(x+d,y+d);ctx.moveTo(x+d,y-d);ctx.lineTo(x-d,y+d);ctx.stroke()}}
+function txt(s,x,y,sz,col,al,wt){ctx.font=(wt||800)+' '+sz+'px "Malgun Gothic","Noto Sans KR",sans-serif';ctx.fillStyle=col;ctx.textAlign=al||'left';ctx.textBaseline='middle';ctx.fillText(s,x,y)}
+function rr(x,y,w,h,r,fill,stroke,lw){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||3;ctx.stroke()}}
+function line(x1,y1,x2,y2,col,w){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+
+/* ================= 모듈 1 : 전기 그네 ================= */
+const PIV={x:450,y:60},LEN=350;
+function drawHand(cx,cy,bDown,fdir,iOut){
+  ctx.save();ctx.globalAlpha=.6;
+  const f0=bDown?cy+35:cy-35,fd=bDown?1:-1;
+  for(let i=0;i<4;i++){const x=cx-21+i*14;rr(x-6,Math.min(f0,f0+fd*64),12,64,6,'#fde0c4','#b45309',2)}
+  rr(cx-30,cy-35,60,70,14,'#fde0c4','#b45309',3);
+  sym(cx-fdir*48,cy,13,iOut,'#fff7ed');
+  ctx.restore();
+  arrow(cx+fdir*34,cy,cx+fdir*(34+80),cy,COL.F,8,22);
+}
+function drawM1(){
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#e2e8f0';ctx.fillRect(0,585,W,115);
+  // 지지대
+  rr(765,50,22,535,4,'#94a3b8');rr(290,50,495,20,4,'#94a3b8');
+  rr(540,520,170,65,4,'#94a3b8');
+  // 자석 (클릭하면 뒤집힘)
+  ctx.save();ctx.translate(0,410);ctx.scale(1,P.s);ctx.translate(0,-410);
+  rr(400,300,300,45,0,'#ef4444');rr(400,475,300,45,0,'#2563eb');rr(660,300,50,220,0,'#64748b');
+  ctx.restore();
+  const ay=Math.abs(P.s);ctx.globalAlpha=ay;
+  txt('N',432,410-88*P.s,38,'#fff','center',900);txt('S',432,410+87*P.s,38,'#fff','center',900);ctx.globalAlpha=1;
+  txt("👆 자석을 눌러 뒤집어 보세요",555,282,17,'#64748b','center',700);
+  // 자기력선
+  if(P.field&&ay>.3){const dn=P.s>0;for(let x=450;x<=640;x+=38){const y1=dn?352:468,y2=dn?468:352;arrow(x,y1,x,y2,COL.B,3,12)}txt('B',670,410,26,COL.B,'center',900)}
+  // 바닥 표시
+  txt('◀ 바깥쪽(앞)',150,632,24,'#475569','left',800);txt('안쪽(뒤) ▶',840,632,24,'#475569','right',800);
+  // 그네
+  const wx=PIV.x+LEN*Math.sin(P.phi),wy=PIV.y+LEN*Math.cos(P.phi);
+  ctx.setLineDash([8,8]);line(PIV.x,PIV.y,PIV.x,PIV.y+LEN+30,'#94a3b8',2);ctx.setLineDash([]);
+  line(PIV.x,PIV.y,wx,wy,'#334155',5);
+  ctx.beginPath();ctx.arc(PIV.x,PIV.y,9,0,7);ctx.fillStyle='#334155';ctx.fill();
+  // 기울기 각도 호
+  const dth=Math.abs(P.phi)*180/Math.PI;
+  if(dth>1.2){ctx.strokeStyle='#7c3aed';ctx.lineWidth=4;ctx.beginPath();const a1=Math.PI/2-P.phi,a2=Math.PI/2;ctx.arc(PIV.x,PIV.y,130,Math.min(a1,a2),Math.max(a1,a2));ctx.stroke();txt('θ='+dth.toFixed(1)+'°',PIV.x+(P.phi>0?-8:8),PIV.y+168,24,'#7c3aed',P.phi>0?'right':'left',900)}
+  if(P.hand)drawHand(wx,wy,P.sT>0,fsign(),P.Idir<0);
+  ctx.beginPath();ctx.arc(wx,wy,15,0,7);ctx.fillStyle='#f59e0b';ctx.fill();ctx.strokeStyle='#92400e';ctx.lineWidth=3;ctx.stroke();
+  if(P.on)sym(wx,wy,12,P.Idir<0,'#fde68a');
+  // 힘 화살표
+  if(P.on){const L=50+P.I*20,d=fsign();arrow(wx+d*20,wy,wx+d*(20+L),wy,COL.F,9,26);txt('F',wx+d*(20+L/2),wy-26,28,COL.F,'center',900)}
+  // 오른손 법칙
+  if(P.hand){
+    rr(14,12,262,128,12,'rgba(255,255,255,.92)','#cbd5e1',2);
+    txt('✋ 오른손 손바닥 법칙',26,32,19,'#0f172a','left',900);
+    ctx.fillStyle=COL.B;ctx.fillRect(26,52,16,12);txt('네 손가락 = B (자기장)',50,58,17,COL.B,'left',800);
+    ctx.fillStyle=COL.I;ctx.fillRect(26,80,16,12);txt('엄지 = I (전류 ⊗/⊙)',50,86,17,COL.I,'left',800);
+    ctx.fillStyle=COL.F;ctx.fillRect(26,108,16,12);txt('손바닥 = F (미는 힘)',50,114,17,COL.F,'left',800);
+  }
+  // 전원 장치
+  rr(30,395,235,165,14,'#334155','#0f172a',3);
+  txt('직류 전원 장치',147,415,18,'#e2e8f0','center',800);
+  rr(48,432,120,52,8,'#052e16','#14532d',2);txt((P.on?P.I.toFixed(1):'0.0')+' A',108,459,32,P.on?'#4ade80':'#166534','center',900);
+  ctx.beginPath();ctx.arc(205,458,15,0,7);ctx.fillStyle=P.on?'#4ade80':'#7f1d1d';ctx.fill();ctx.strokeStyle='#0f172a';ctx.lineWidth=3;ctx.stroke();
+  rr(48,502,170,34,17,'#1e293b','#64748b',2);txt('+',64,519,22,'#fca5a5','center',900);txt('−',202,519,22,'#93c5fd','center',900);
+  ctx.beginPath();ctx.arc(P.Idir>0?80:186,519,13,0,7);ctx.fillStyle='#fbbf24';ctx.fill();
+  txt(P.Idir>0?'전류: 앞쪽 ⊗':'전류: 뒤쪽 ⊙',133,548,15,'#e2e8f0','center',700);
+  // 전선
+  ctx.strokeStyle='#64748b';ctx.lineWidth=3;ctx.setLineDash([2,6]);ctx.beginPath();ctx.moveTo(265,470);ctx.bezierCurveTo(330,380,360,200,PIV.x-6,62);ctx.stroke();ctx.setLineDash([]);
+}
+
+/* ================= 모듈 2 : 전동기 ================= */
+const C2={x:470,y:250,r:105,dx:70,dy:-42};
+function block(x,y,w,h,col,dark,lab){
+  const dx=C2.dx*.5,dy=C2.dy*.5;
+  ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx,y+dy);ctx.lineTo(x+w+dx,y+dy);ctx.lineTo(x+w,y);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+w,y);ctx.lineTo(x+w+dx,y+dy);ctx.lineTo(x+w+dx,y+h+dy);ctx.lineTo(x+w,y+h);ctx.fill();
+  rr(x,y,w,h,0,col);txt(lab,x+w/2,y+h/2,64,'#fff','center',900)}
+function drawM2(){
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#eaf3ff';ctx.fillRect(0,505,W,195);
+  const cx=C2.x,cy=C2.y,r=C2.r,Lz=C2.dx,a=M.alpha;
+  const pf=(x,y)=>[cx+x,cy-y],pb=(x,y)=>[cx+x+C2.dx,cy-y+C2.dy];
+  // 자석 (왼쪽 S, 오른쪽 N → B는 왼쪽 방향)
+  block(cx-340,cy-140,150,280,'#2563eb','#1e40af','S');block(cx+190,cy-140,150,280,'#ef4444','#b91c1c','N');
+  for(const yy of [-95,-48,0,48,95]){arrow(cx+180,cy+yy,cx-170,cy+yy,'rgba(22,163,74,.55)',3,12)}
+  txt('B (N→S)',cx-95,cy-118,22,COL.B,'center',900);
+  // 배터리 & 브러시 배선
+  const by=440;
+  line(cx-62,cy,cx-62,by,'#94a3b8',3);line(cx+62,cy,cx+62,by,'#94a3b8',3);line(cx-62,by,cx-34,by,'#94a3b8',3);line(cx+62,by,cx+34,by,'#94a3b8',3);
+  line(cx-34,by-18,cx-34,by+18,'#0f172a',6);line(cx-14,by-10,cx-14,by+10,'#0f172a',6);line(cx+14,by-18,cx+14,by+18,'#0f172a',6);line(cx+34,by-10,cx+34,by+10,'#0f172a',6);
+  txt('+',cx-48,by-26,22,'#dc2626','center',900);txt('−',cx+48,by-26,22,'#2563eb','center',900);txt('직류 전원',cx,by+34,17,'#475569','center',800);
+  rr(cx-84,cy-8,22,16,3,'#64748b');rr(cx+62,cy-8,22,16,3,'#64748b');
+  // 코일
+  const A=[r*Math.cos(a),r*Math.sin(a)],B=[-A[0],-A[1]];
+  const col='#b45309';
+  ctx.strokeStyle='#92400e';ctx.lineWidth=7;ctx.lineCap='round';
+  let q1=pb(...A),q2=pb(...B),f1=pf(...A),f2=pf(...B);
+  line(q1[0],q1[1],q2[0],q2[1],col,8);
+  line(f1[0],f1[1],q1[0],q1[1],col,9);line(f2[0],f2[1],q2[0],q2[1],col,9);
+  // 축
+  const ax0=pf(0,0),ax1=pb(0,0);line(ax0[0],ax0[1],ax1[0],ax1[1],'#cbd5e1',4);
+  // 정류자 (반원 2개)
+  const ring=(a0,a1,c)=>{ctx.strokeStyle=c;ctx.lineWidth=13;ctx.lineCap='butt';ctx.beginPath();for(let i=0;i<=16;i++){const t=a0+(a1-a0)*i/16,p=pf(26*Math.cos(t),26*Math.sin(t));i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])}ctx.stroke()};
+  ring(a-Math.PI/2+.14,a+Math.PI/2-.14,'#f59e0b');ring(a+Math.PI/2+.14,a+Math.PI*1.5-.14,'#d97706');
+  const c1=pf(26*Math.cos(a),26*Math.sin(a)),c2=pf(-26*Math.cos(a),-26*Math.sin(a));
+  line(f1[0],f1[1],c1[0],c1[1],col,6);line(f2[0],f2[1],c2[0],c2[1],col,6);
+  ctx.beginPath();ctx.arc(ax0[0],ax0[1],6,0,7);ctx.fillStyle='#475569';ctx.fill();
+  // 전류·힘
+  if(M.showF){
+    for(const w of [A,B]){const right=w[0]>=0,m=[cx+w[0]+C2.dx/2,cy-w[1]+C2.dy/2];
+      arrow(m[0],m[1]+(right?12:-12),m[0],m[1]+(right?92:-92),COL.F,8,22);
+      sym(m[0],m[1],14,right,'#fff');
+      txt('F',m[0]+(right?-24:-24),m[1]+(right?72:-72),26,COL.F,'center',900)}
+    txt('전류 유입 ⊗',cx-r-60,cy+150,18,COL.I,'center',800);txt('전류 유출 ⊙',cx+r+60,cy+150,18,COL.I,'center',800);
+  }
+  // 회전 방향 화살표
+  if(M.w>.05||M.run){const mx=cx+C2.dx/2,my=cy+C2.dy/2,R=175;ctx.strokeStyle='#7c3aed';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.arc(mx,my,R,Math.PI*1.15,Math.PI*1.85);ctx.stroke();
+    const t=Math.PI*1.85,px=mx+R*Math.cos(t),py=my+R*Math.sin(t),tx=-Math.sin(t),ty=Math.cos(t);arrow(px-tx*12,py-ty*12,px+tx*16,py+ty*16,'#7c3aed',6,22);
+    txt('시계 방향 회전',mx,my-R-18,22,'#7c3aed','center',900)}
+  if(M.flash>0){txt('⚡ 정류자: 전류 방향 반전!',cx,cy+150,24,'#d97706','center',900)}
+  // ---- 하단 : 자전거 · 드론 ----
+  txt('모터가 돌면  ▶  바퀴 · 프로펠러가 돌아가요',500,519,22,'#1e3a8a','center',900);
+  // 자전거
+  const R0=[150,625],F0=[390,625],rad=55;
+  const wheel=(c)=>{ctx.beginPath();ctx.arc(c[0],c[1],rad,0,7);ctx.strokeStyle='#0f172a';ctx.lineWidth=7;ctx.stroke();ctx.lineWidth=2;ctx.strokeStyle='#64748b';for(let i=0;i<8;i++){const t=M.wheel+i*Math.PI/4;line(c[0],c[1],c[0]+rad*Math.cos(t),c[1]+rad*Math.sin(t),'#64748b',2)}};
+  wheel(R0);wheel(F0);
+  const BB=[255,625],S=[228,565],Hh=[352,568];
+  const fr='#2563eb';line(R0[0],R0[1],BB[0],BB[1],fr,6);line(BB[0],BB[1],S[0],S[1],fr,6);line(S[0],S[1],R0[0],R0[1],fr,6);line(BB[0],BB[1],Hh[0],Hh[1],fr,6);line(S[0],S[1],Hh[0],Hh[1],fr,6);line(Hh[0],Hh[1],F0[0],F0[1],fr,6);line(Hh[0],Hh[1],Hh[0]+6,540,fr,6);line(Hh[0]-4,538,Hh[0]+26,538,'#0f172a',7);line(S[0]-14,555,S[0]+14,555,'#0f172a',8);
+  rr(R0[0]-15,R0[1]-12,30,24,6,'#f59e0b','#92400e',2);txt('M',R0[0],R0[1],18,'#fff','center',900);
+  rr(BB[0]-34,BB[1]-34,34,16,3,'#16a34a');
+  txt('🚲 전기 자전거 — 페달을 밟지 않아도 바퀴가 돌아요',270,692,17,'#1e3a8a','center',800);
+  // 드론
+  const D=[750,615];
+  rr(D[0]-42,D[1]-10,84,26,8,'#334155');
+  for(const sx of [-1,1]){line(D[0]+sx*42,D[1],D[0]+sx*118,D[1]-20,'#475569',6);
+    const px=D[0]+sx*118,py=D[1]-24;rr(px-5,py,10,18,3,'#334155');
+    const t=M.wheel*3+(sx>0?0:1);ctx.globalAlpha=Math.min(.35,M.w*.2);ctx.beginPath();ctx.ellipse(px,py,42,9,0,0,7);ctx.fillStyle='#38bdf8';ctx.fill();ctx.globalAlpha=1;
+    const bl=40*Math.cos(t);line(px-bl,py,px+bl,py,'#0f172a',6)}
+  line(D[0]-30,D[1]+16,D[0]-40,D[1]+34,'#475569',4);line(D[0]+30,D[1]+16,D[0]+40,D[1]+34,'#475569',4);
+  txt('🚁 드론 — 모터가 프로펠러를 돌려요',750,692,17,'#1e3a8a','center',800);
+}
+
+/* ---------- 갱신 ---------- */
+function step(dt){
+  // 전기 그네
+  const w0=5.5,z=.32,tg=P.on?fsign()*thEq():0;
+  const n=Math.ceil(dt/.008),h=dt/n;
+  for(let i=0;i<n;i++){const a=-w0*w0*(P.phi-tg)-2*z*w0*P.v;P.v+=a*h;P.phi+=P.v*h}
+  P.s+=(P.sT-P.s)*Math.min(1,dt*7);if(Math.abs(P.sT-P.s)<.003)P.s=P.sT;
+  // 모터
+  const mt=M.run?M.spd:0;M.w+=(mt-M.w)*Math.min(1,dt*2.5);if(!M.run&&M.w<.01)M.w=0;
+  if(!M.drag){M.alpha-=M.w*2*Math.PI*dt}
+  M.wheel+=M.w*2*Math.PI*dt*.6;
+  const cs=Math.abs(Math.cos(M.alpha));M.flash=(M.w>.05&&cs<.18)?.25:Math.max(0,M.flash-dt);
+}
+const $id=id=>document.getElementById(id);
+function hud(){
+  if(mode===1){
+    const t=thEq()*180/Math.PI,ff=BT*P.I*LL;
+    $id('hCur').textContent=P.on?P.I.toFixed(1)+' A '+(P.Idir>0?'(앞쪽 ⊗)':'(뒤쪽 ⊙)'):'0 A (OFF)';
+    $id('hB').textContent=P.sT>0?'아래쪽 ↓':'위쪽 ↑';
+    $id('hF').textContent=P.on?(fsign()<0?'바깥쪽 (앞)':'안쪽 (뒤)'):'없음';
+    $id('hTh').textContent=Math.abs(P.phi*180/Math.PI).toFixed(1)+'°';
+    $id('hCalc').textContent=P.on?`${BT.toFixed(2)} T × ${P.I.toFixed(1)} A × ${LL.toFixed(2)} m = ${ff.toFixed(3)} N`:'스위치 OFF → F = 0';
+    $id('hTan').textContent=P.on?`tanθ = ${ff.toFixed(3)} ÷ ${(MASS*G).toFixed(3)} = ${(K*P.I).toFixed(3)} → θ ≈ ${t.toFixed(1)}°  (1 A의 ${P.I}배)`:'-';
+    document.querySelectorAll('[data-pre]').forEach(b=>{const p=+b.dataset.pre,i=(p==2||p==4)?-1:1,s=(p==3||p==4)?-1:1;b.classList.toggle('on',P.Idir===i&&P.sT===s)});
+    const sb=$id('swBtn');sb.classList.toggle('on',P.on);sb.textContent=P.on?'⏻ 스위치 ON':'⏻ 스위치 OFF';
+    let m;
+    if(!P.on)m='스위치를 켜고 전기 그네가 어느 쪽으로 움직이는지 관찰해 보세요.';
+    else{const o=fsign()<0;
+      if(P.Idir===1&&P.sT===1)m='과정 1 · 전기 그네가 자석 바깥쪽(앞)으로 밀려나요. 전류 세기를 올려 과정 4도 해 보세요!';
+      else if(P.Idir===-1&&P.sT===1)m='과정 2 · 전류가 반대 → 전기 그네가 자석 안쪽(뒤)으로 끌려 들어가요.';
+      else if(P.Idir===1&&P.sT===-1)m='과정 3 · 자석이 반대 → 전기 그네가 자석 안쪽(뒤)으로 끌려 들어가요.';
+      else m='심화 · 전류와 자석을 모두 반대로 → 힘의 방향이 원래대로! 다시 바깥쪽으로 밀려나요.'}
+    $id('msg').textContent=m;
+  }else{
+    $id('mAng').textContent=(((-M.alpha*180/Math.PI)%360+360)%360).toFixed(0)+'°';
+    $id('mW').textContent=M.w>.02?M.w.toFixed(1)+' 회/초 · 시계 ↻':'정지';
+    $id('mCom').textContent=M.flash>0?'⚡ 코일이 수직 → 전류 방향 반전 중!':'코일이 수직이 되는 순간 전류 방향을 바꿔 줍니다.';
+    $id('motBtn').classList.toggle('on',M.run);$id('motBtn').textContent=M.run?'⏸ 모터 정지':'▶ 모터 회전 시작';
+  }
+}
+let last=0;
+function frame(t){
+  const dt=Math.min(.05,(t-last)/1000||0.016);last=t;step(dt);
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.setTransform(dpr*sc,0,0,dpr*sc,dpr*ox,dpr*oy);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
+  mode===1?drawM1():drawM2();ctx.restore();hud();requestAnimationFrame(frame)}
+/* ---------- 입력 ---------- */
+function setMode(m){mode=m;$('#tab1').classList.toggle('on',m===1);$('#tab2').classList.toggle('on',m===2);$('#p1').style.display=m===1?'contents':'none';$('#p2').style.display=m===2?'block':'none'}
+$('#tab1').onclick=()=>setMode(1);$('#tab2').onclick=()=>setMode(2);
+document.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const p=+b.dataset.pre;P.Idir=(p==2||p==4)?-1:1;P.sT=(p==3||p==4)?-1:1;P.on=true});
+const sw=$id('swBtn');
+sw.onclick=()=>{if(!P.push)P.on=!P.on};
+sw.onpointerdown=e=>{if(P.push){P.on=true;sw.setPointerCapture(e.pointerId)}};
+const rel=()=>{if(P.push)P.on=false};sw.onpointerup=rel;sw.onpointercancel=rel;
+$id('push').onchange=e=>{P.push=e.target.checked;P.on=false};
+$id('polBtn').onclick=()=>{P.Idir*=-1};
+$id('flipBtn').onclick=()=>{P.sT*=-1};
+$id('cur').oninput=e=>{P.I=+e.target.value;$id('curV').textContent=P.I+' A'};
+$id('ckHand').onchange=e=>P.hand=e.target.checked;$id('ckField').onchange=e=>P.field=e.target.checked;
+$id('motBtn').onclick=()=>{M.run=!M.run};
+$id('spd').oninput=e=>{M.spd=+e.target.value/10;$id('spdV').textContent=M.spd.toFixed(1)+' 회/초'};
+$id('ckFor').onchange=e=>M.showF=e.target.checked;
+$id('fs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+function lp(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left-ox)/sc,(e.clientY-r.top-oy)/sc]}
+cv.addEventListener('pointerdown',e=>{const[x,y]=lp(e);
+  if(mode===1){if(x>395&&x<715&&y>295&&y<525)P.sT*=-1}
+  else if(!M.run){M.drag=true;cv.setPointerCapture(e.pointerId);M.off=M.alpha-Math.atan2(-(y-C2.y),x-C2.x)}});
+cv.addEventListener('pointermove',e=>{if(M.drag){const[x,y]=lp(e);M.alpha=Math.atan2(-(y-C2.y),x-C2.x)+M.off}});
+const up=()=>{M.drag=false};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+fit();requestAnimationFrame(frame);
+/* 테스트용 노출 */
+window.__lab={P,M,step,setMode,fsign,thEq};
+</script>
+</body></html>
