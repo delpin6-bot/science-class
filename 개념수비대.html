@@ -107,12 +107,6 @@
   .over-screen .stats span{ font-size:11.5px; color:#9fb0cf; }
   .over-screen .rowbtn{ display:flex; gap:8px; }
   .over-screen .secondary{ background:transparent; border:1.5px solid #ffffff55; color:#fff; padding:12px 20px; border-radius:8px; font-weight:700; }
-  .thint{ display:block; font-size:12.5px; color:#ffe7a3; margin-top:3px; min-height:0; }
-  .enemy.glow{ box-shadow:0 0 0 3px #ffe08a, 0 0 18px 6px #ffd16688 !important; animation:glowpulse .8s infinite alternate; }
-  @keyframes glowpulse{ from{ filter:brightness(1);} to{ filter:brightness(1.35);} }
-  .reload{ position:absolute; left:50%; bottom:46px; transform:translateX(-50%); background:#1f2937ee; color:#fde68a; font-weight:800;
-    font-size:13px; padding:7px 14px; border-radius:999px; z-index:4; pointer-events:none; white-space:nowrap; }
-  .over-screen{ overflow-y:auto; justify-content:flex-start !important; padding-top:26px !important; }
   .hidden{ display:none !important; }
   @media (max-width:640px){ header{ padding-right:52px; } #board{ height:420px; } }
 </style>
@@ -245,68 +239,6 @@ header.unified-game-header .game-title {
   color: #0f172a !important;
 }
 </style>
-<style id="kjs-mobile-fix">@media (max-width:760px){
-  html,body{overflow-x:clip}
-  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
-  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
-  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
-  .unit-chips-row{flex-wrap:wrap!important}
-  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
-  .control-grid,.puzzle-container{min-width:0!important}
-}</style>
-<style id="qr-focus-style">
-:is(html,body).qr-focus-mode :is(.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,header.header:not(:has(.unified-nav-actions)),nav.primary-nav-bar,nav.category-nav-bar,.flow-selector-card,.filter-search-row,.extra-tools-card,#btnHub,.dh-foot .r a,#kjsBgm,#kjsSfx,.kjs-qr-btn){display:none!important}
-:is(html,body).qr-focus-mode .unified-nav-actions :is(a[href*="서랍"],.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod){display:none!important}
-:is(html,body).qr-focus-mode .btn-unified-nav:not(#kjsHome):not(#snResetBtn):not(.btn-ws){display:none!important}
-:is(html,body).qr-focus-mode :is(.nav-btn[onclick*="rule"],.nav-btn[onclick*="guide"],#btnTeacherMode,.ws-answer-key){display:none!important}
-:is(html,body).qr-focus-mode .sim-nav-inner{grid-template-columns:1fr auto!important}
-:is(html,body).qr-lesson-lock :is(.km-nav,.km-search,.km-g,.km-u,.km-j,.km-grid,.picker,#libCard,#picker,#pickHost,#navBar){display:none!important}
-.qr-focus-badge{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;font:800 12.5px/1 -apple-system,"Malgun Gothic",sans-serif;white-space:nowrap}
-.qr-focus-badge.float{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:99990}
-.qr-reset{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font:700 13px/1 -apple-system,"Malgun Gothic",sans-serif;cursor:pointer}
-.qr-lesson-label{margin-left:8px;font-size:.85em;font-weight:800;color:#b45309;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw}
-</style>
-<script id="qr-focus-js">
-(function(){try{
-  var p=new URLSearchParams(location.search), on=p.get("qr")==="1"||p.get("mode")==="focus"||p.has("q"), lock=p.has("q");
-  if(!on) return;
-  var add=function(el){ if(!el) return; el.classList.add("qr-focus-mode"); if(lock) el.classList.add("qr-lesson-lock"); };
-  add(document.documentElement);
-  function ui(){
-    add(document.body);
-    var nav=document.querySelector(".unified-nav-actions")||document.querySelector(".m-right");
-    var b=document.createElement("span"); b.className="qr-focus-badge"; b.textContent="📱 학생 집중 모드";
-    if(nav) nav.insertBefore(b, nav.firstChild); else { b.className+=" float"; document.body.appendChild(b); }
-    var home=document.getElementById("kjsHome");
-    if(home) home.textContent="↺ 다시하기";
-    else if(nav){ var r=document.createElement("button"); r.type="button"; r.className="qr-reset"; r.textContent="↺ 다시하기";
-      r.onclick=function(){ if(confirm("처음부터 다시 할까요?")) location.reload(); }; nav.appendChild(r); }
-    var tries=0, t=setInterval(function(){                      /* 단원·차시명 표시 */
-      var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
-      if(c&&c.title){ b.textContent="📱 "+[c.unit,c.title].filter(Boolean).join(" · "); b.title="학생 집중 모드"; clearInterval(t); }
-      else if(++tries>20) clearInterval(t);
-    },300);
-  }
-  if(document.body) ui(); else document.addEventListener("DOMContentLoaded",ui);
-  document.addEventListener("click",function(e){                /* 집중 모드 유지 */
-    var a=e.target.closest&&e.target.closest("a[href]"); if(!a) return;
-    var u; try{ u=new URL(a.getAttribute("href"),location.href); }catch(_){ return; }
-    if(u.origin!==location.origin||!/\.html$/.test(u.pathname)) return;
-    if(u.searchParams.get("qr")!=="1"){ u.searchParams.set("qr","1"); a.setAttribute("href",u.pathname.split("/").pop()+u.search+u.hash); }
-  },true);
-}catch(e){}})();
-</script>
-<style id="kjs-seg-style">
-/* 서랍 전환 탭 — 4대 서랍 머리글과 같은 모양 */
-.kjs-seg{display:inline-flex;align-items:center;gap:2px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:11px;padding:3px;flex:none}
-.kjs-seg a{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;text-decoration:none!important;color:#334155!important;
-  font:800 12.5px/1 -apple-system,"Pretendard","Malgun Gothic","맑은 고딕",sans-serif;white-space:nowrap;background:transparent;border:0;box-shadow:none}
-.kjs-seg a:hover{background:#fff}
-.kjs-seg a.on{background:var(--c);color:#fff!important;box-shadow:0 1px 4px rgba(15,23,42,.18)}
-@media (max-width:760px){.kjs-seg a .t{display:none}.kjs-seg a{padding:0 8px}}
-:is(html,body).qr-focus-mode .kjs-seg{display:none!important}
-@media print{.kjs-seg{display:none!important}}
-</style>
 </head>
 <body>
 <div class="wrap">
@@ -323,10 +255,11 @@ header.unified-game-header .game-title {
     </div>
   <div class="header-actions unified-nav-actions">
     <button type="button" id="kjsHome" class="btn-top btn-unified-nav btn-theory" title="이 게임의 처음 화면으로">↺ 처음 화면</button>
-    <nav class="kjs-seg" aria-label="서랍 이동"><a href="./통합_과학수업_서랍.html" class="btn-hub-main" style="--c:#4f46e5" title="과학수업 서랍">📚<span class="t"> 과학수업</span></a><a href="./45분_모듈러_수업서랍.html" class="btn-hub-mod" style="--c:#059669" title="45분 모듈러 서랍">⚡<span class="t"> 45분 모듈러</span></a><a href="./자바실험실_서랍.html" class="btn-hub-sim" style="--c:#2563eb" title="가상실험 서랍">🔬<span class="t"> 가상실험</span></a><a href="./시작하기_수업게임서랍.html" class="btn-hub-game on" style="--c:#7c3aed" title="수업게임 서랍" aria-current="page">🎮<span class="t"> 수업게임</span></a></nav>
+    <a href="./통합_과학수업_서랍.html" class="btn-top btn-unified-nav btn-hub-main" title="과학수업 통합 서랍(메인 메뉴) 바로가기"><span>📚 통합과학</span></a>
+    <a href="./자바실험실_서랍.html" class="btn-top btn-unified-nav btn-hub-sim" title="자바실험실 가상실험실 서랍 바로가기"><span>🔬 자바실험</span></a>
+    <a href="./시작하기_수업게임서랍.html" class="btn-top btn-unified-nav btn-hub-game" title="수업 게임 서랍 바로가기"><span>🎮 수업게임</span></a>
   </div>
 </header>
-  </header>
 
   <section class="picker" id="picker">
     <span class="badge">학년 · 단원 · 차시 고르기</span>
@@ -336,13 +269,12 @@ header.unified-game-header .game-title {
   <section id="stage" class="hidden">
     <div class="topbar">
       <button class="backbtn" id="backBtn">◀ 그만하기</button>
-      <div class="target"><span class="lab">🎯 지금 요격할 개념</span><b id="targetTerm">—</b><span class="thint" id="targetHint"></span></div>
+      <div class="target"><span class="lab">🎯 지금 요격할 개념</span><b id="targetTerm">—</b></div>
       <div class="wavepill" id="wavePill">WAVE 1</div>
     </div>
     <div id="board">
       <div class="danger-line" id="dangerLine"></div>
       <div class="waveflash" id="waveFlash"></div>
-      <div class="reload hidden" id="reloadBox">🔄 재장전 중… 설명을 다시 읽어 보세요</div>
       <div id="turret">
         <svg viewBox="0 0 44 30"><path d="M14 30 L14 16 Q22 4 30 16 L30 30 Z" fill="#3a4a63"/>
           <rect x="19" y="2" width="6" height="16" rx="2" fill="#7d8db0"/>
@@ -369,14 +301,12 @@ header.unified-game-header .game-title {
           <button class="primary" id="retryBtn">다시 도전</button>
           <button class="secondary" id="otherBtn">다른 차시 고르기</button>
         </div>
-        <div id="insightBox" style="width:100%; max-width:340px;"></div>
         <div id="scoreBox" style="width:100%; max-width:320px;"></div>
       </div>
     </div>
     <div class="ctrlrow">
       <span class="hint" id="hintText">적을 클릭해서 요격하세요 · ← → 이동 · Space 발사</span>
       <div class="tools">
-        <button class="toolbtn" id="hintBtn">💡 힌트</button>
         <button class="toolbtn" id="pauseBtn">⏸ 일시정지</button>
       </div>
     </div>
@@ -415,7 +345,6 @@ header.unified-game-header .game-title {
     ".km-row[hidden]{display:none!important}",
     ".km-lab{flex:none;width:58px;padding-top:7px;font-size:12.5px;font-weight:800;color:#6b7672}",
     ".km-chips{display:flex;gap:6px;flex-wrap:wrap}",
-    ".km-row>.km-scroll,.km-row>.km-chips{min-width:0;flex:1 1 auto}",
     ".km-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}",
     ".km-chip{flex:none;border:1px solid #dfe3de;background:#fff;color:#1b2b2a;border-radius:9px;padding:7px 13px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}",
     ".km-chip.g[aria-pressed=true]{background:#1b2b2a;color:#fff;border-color:#1b2b2a}",
@@ -459,14 +388,6 @@ header.unified-game-header .game-title {
     return esc(t.slice(0, i)) + '<span class="km-hit">' + esc(t.slice(i, i + q.length)) + "</span>" + esc(t.slice(i + q.length));
   }
 
-  /* 차시 고유 코드: 학년|단원|제목 → 짧은 영문 코드 (QR 주소용, 파일이 바뀌어도 제목이 같으면 그대로) */
-  function hcode(str){
-    var h = 2166136261;
-    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-    return h.toString(36);
-  }
-  function itemKey(x){ return [x.grade || "", x.unit || "", x.mid || "", x.title || ""].join("|"); }
-
   function init(o){
     if (!document.getElementById("km-style")) { var st = el("style"); st.id = "km-style"; st.textContent = CSS; document.head.appendChild(st); }
     var items = o.items || [];
@@ -477,8 +398,6 @@ header.unified-game-header .game-title {
       x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|"));
       x.th = nrm([x.unit, x.mid, x.title].join("|"));
     });
-    items.forEach(function(x){ x.q = hcode(itemKey(x)); });
-    window.KJSMenu._items = items.map(function(x){ return { q: x.q, grade: x.grade, unit: x.unit || "", mid: x.mid || "", title: x.title, kind: x.kind || "lesson" }; });
     var LS = "km-" + (o.key || location.pathname);
     var st = { g: grades[0], u: 0, q: "", sel: null };
     try { var sv = JSON.parse(localStorage.getItem(LS) || "{}"); if (grades.indexOf(sv.g) >= 0) st.g = sv.g; if (sv.u >= 0) st.u = sv.u; } catch(e) {}
@@ -506,7 +425,6 @@ header.unified-game-header .game-title {
     function setLegacy(show){ var t = (!show && o.legacyCss) ? o.legacyCss + "{display:none!important}" : ""; if (legacyStyle.textContent !== t) legacyStyle.textContent = t; }
 
     function pick(x){
-      window.KJSMenu._current = { q: x.q, grade: x.grade, unit: x.unit || "", title: x.title };
       if (o.mode === "select") {
         st.sel = x; if (o.onPick) o.onPick(x);
         selBox.hidden = false; selBox.querySelector("b").textContent = x.grade + " · " + (x.unit ? x.unit + " · " : "") + x.title;
@@ -642,31 +560,10 @@ header.unified-game-header .game-title {
       }).observe(o.observe, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
     }
     render(); sync();
-    /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
-    try {
-      var qp = new URLSearchParams(location.search).get("q");
-      var target = qp && items.filter(function(x){ return x.q === qp; })[0];
-      if (target) {
-        st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
-        render(); sync();
-        setTimeout(function(){
-          pick(target);
-          var qrMode = new URLSearchParams(location.search).get("qr") === "1";
-          if (o.mode === "select" && qrMode && o.onStart) { setTimeout(function(){ o.onStart(target); }, 250); return; }
-          if (o.mode === "select") {
-            selBox.hidden = false;
-            selBox.style.boxShadow = "0 0 0 3px #f59e0b";
-            var note = selBox.querySelector(".km-qr-note");
-            if (!note) { note = el("span", "km-qr-note", "📱 선생님이 고른 차시예요. 아래 설정을 확인하고 시작하세요."); note.style.cssText = "flex-basis:100%;font-size:12.5px;color:#92400e"; selBox.appendChild(note); }
-            root.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 350);
-      }
-    } catch(e) {}
     return { refresh: function(newItems){ if (newItems) { items = newItems; items.forEach(function(x){ x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|")); x.th = nrm([x.unit, x.mid, x.title].join("|")); }); } render(); sync(); },
              root: root, select: function(x){ st.sel = x; paintSel(); } };
   }
-  window.KJSMenu = { init: init, hcode: hcode };
+  window.KJSMenu = { init: init };
 })();
 
 </script>
@@ -747,16 +644,11 @@ function startMission(pairs, label, meta){
     hits: 0, shots: 0, combo: 0, bestCombo: 0, lastFire: 0, enemies: [], dirX: 1, offX: 0, offY: 0, target: null,
     running: false, paused: false, last: 0
   };
-  $("scoreBox").innerHTML = ""; $("insightBox").innerHTML = "";
+  $("scoreBox").innerHTML = "";
   $("hudComboBox").classList.add("hidden");
-  window.KJSInsight && KJSInsight.begin({ game: "invaders", gameName: "개념 수비대", unit: (G.meta||{}).unit, lesson: (G.meta||{}).lesson });
   $("stage").classList.remove("hidden");
   applyBoardLength();
   $("startScreen").classList.remove("hidden");
-  (function(){ let mn = document.getElementById("missionName");
-    if(!mn){ mn = document.createElement("p"); mn.id = "missionName"; mn.style.cssText = "margin:0 0 10px;font-weight:800;color:#fde68a;font-size:14px";
-      const h = $("startScreen").querySelector("h2"); h.parentNode.insertBefore(mn, h.nextSibling); }
-    const m = G.meta || {}; mn.textContent = m.lesson ? "📘 " + (m.grade||"") + " " + (m.unit||"") + " · " + m.lesson : ""; })();
   $("overScreen").classList.add("hidden");
   $("backBtn").onclick = quitToMenu;
   updateHud();
@@ -810,6 +702,7 @@ function spawnWave(){
     return en;
   });
   layoutEnemies();
+  moveTurretTo(w / 2, false);   // 웨이브마다 포탑은 항상 가운데에서 시작 (정답 위치와 무관)
   pickTarget(true);
   flashWave();
   $("wavePill").textContent = "WAVE " + G.level;
@@ -832,12 +725,9 @@ function pickTarget(silent){
   const alive = G.enemies.filter(e => e.alive);
   if(!alive.length) return;
   G.target = alive[Math.floor(Math.random() * alive.length)];
-  G.tMiss = 0; G.hintShown = false;
-  G.enemies.forEach(e => e.el.classList.remove("glow"));
-  $("targetHint").textContent = "";
   $("targetTerm").textContent = G.target.term;
   if(!silent){ const t = $("targetTerm").parentElement; t.style.transform = "scale(1.08)"; setTimeout(() => t.style.transform = "", 140); }
-  moveTurretTo(G.target.x + G.ew / 2, false);
+  // ※ 포탑을 정답 적 아래로 자동 이동시키지 않는다. (포탑 위치가 정답을 알려 주는 오류 수정)
 }
 function moveTurretTo(x, animate){
   const tEl = $("turret"), { w } = boardSize();
@@ -864,7 +754,6 @@ function fireAt(en){
   if(!G || !G.running || G.paused || !en.alive) return;
   const nowT = performance.now();
   if(nowT - G.lastFire < FIRE_COOLDOWN) return;
-  if(nowT < (G.reloadUntil || 0)) return;
   G.lastFire = nowT;
   G.shots++;
   const bx = G.turretX, by = boardSize().h - 30;
@@ -877,7 +766,6 @@ function fireAt(en){
       en.alive = false; en.el.classList.add("pop");
       setTimeout(() => en.el.remove(), 360);
       G.hits++; G.combo++; G.bestCombo = Math.max(G.bestCombo, G.combo);
-      window.KJSInsight && KJSInsight.hit(en.term, en.desc);
       const base = 10 * G.level;
       const comboBonus = Math.min(30, (G.combo - 1) * 4); // 연속 정답일수록 보너스, 상한 있음
       G.score += base + comboBonus;
@@ -890,17 +778,7 @@ function fireAt(en){
       G.combo = 0;
       const penalty = 8 + G.level * 2; // 레벨이 높을수록 오답 손해가 커져 마구잡이 클릭을 억제
       G.score = Math.max(0, G.score - penalty);
-      const tg = G.target;
-      window.KJSInsight && tg && KJSInsight.miss(tg.term, tg.desc, en.term);
-      G.tMiss = (G.tMiss || 0) + 1;
-      G.reloadUntil = performance.now() + 1200;
-      $("reloadBox").classList.remove("hidden");
-      setTimeout(() => $("reloadBox").classList.add("hidden"), 1200);
-      if(tg){
-        if(G.tMiss === 1) showHint(false);
-        else { showHint(false); tg.el.classList.add("glow"); $("targetHint").textContent = "💡 빛나는 적이 정답이에요!"; }
-      }
-      window.KJS && KJS.no({ msg: "‘" + en.term + "’의 설명이에요. 다시 찾아봐요 🔍 (-" + penalty + ")" });
+      window.KJS && KJS.no({ msg: "그 적이 아니에요! 다시 찾아봐요 🔍 (-" + penalty + ")" });
       updateHud();
     }
   }, 130);
@@ -909,16 +787,6 @@ function waveClear(){
   G.level++;
   setTimeout(() => { if(G && G.running) spawnWave(); }, 900);
 }
-
-function showHint(fromButton){
-  if(!G || !G.target) return;
-  const d = G.target.desc;
-  $("targetHint").textContent = "💡 힌트: ‘" + d.slice(0, Math.min(10, Math.ceil(d.length / 2))) + "…’ 로 시작하는 적";
-  if(fromButton && !G.hintShown){ window.KJSInsight && KJSInsight.hint(G.target.term, G.target.desc); }
-  G.hintShown = true;
-}
-$("hintBtn").onclick = () => { if(G && G.running && !G.paused) showHint(true); };
-
 function breach(en){
   if(!G || !G.running) return;
   const x = en.x + G.ew / 2;
@@ -927,8 +795,7 @@ function breach(en){
   en.alive = false; en.el.remove();
   G.lives--; G.combo = 0; updateHud();
   $("board").classList.remove("shake"); void $("board").offsetWidth; $("board").classList.add("shake");
-  window.KJSInsight && KJSInsight.miss(en.term, en.desc, "놓침");
-  window.KJS && KJS.no({ msg: "놓친 적: " + en.term + " 💥" });
+  window.KJS && KJS.no({ msg: "본진이 뚫렸어요! 💥" });
   if(G.target === en){
     const remain = G.enemies.some(e => e.alive);
     if(remain) pickTarget(false);
@@ -1000,7 +867,6 @@ function gameOver(){
   $("statAcc").textContent = acc + "%";
   $("overScreen").classList.remove("hidden");
   const meta = G.meta || {};
-  window.KJSInsight && KJSInsight.report($("insightBox"));
   window.KJSScore && KJSScore.finishIndividual({
     game: "invaders", unit: meta.unit, lesson: meta.lesson,
     score: G.score, accuracy: acc, minAcc: 50,
@@ -1025,14 +891,6 @@ document.getElementById('kjsHome').addEventListener('click', function(){
 });
 </script>
 <script src="./sounds/kjs-sound.js"></script>
-<script src="./sounds/kjs-lessons.js"></script>
-<script src="./sounds/kjs-chain.js"></script>
 <script src="./sounds/kjs-scoreboard.js"></script>
-<script src="./sounds/kjs-insight.js"></script>
-<script src="./sounds/kjs-qr.js"></script>
-<script src="./sounds/kjs-db-config.js"></script>
-<script src="./sounds/kjs-db.js" data-type="game"></script>
-<script src="./sounds/kjs-topbar.js"></script>
-<script src="./sounds/kjs-fit.js"></script>
 </body>
 </html>
