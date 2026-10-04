@@ -605,57 +605,6 @@ header.unified-game-header {
   .quiz-options { grid-template-columns: 1fr; }
 }
 </style>
-<style id="kjs-mobile-fix">@media (max-width:760px){
-  html,body{overflow-x:clip}
-  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
-  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
-  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
-  .unit-chips-row{flex-wrap:wrap!important}
-  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
-  .control-grid,.puzzle-container{min-width:0!important}
-}</style>
-<style id="qr-focus-style">
-:is(html,body).qr-focus-mode :is(.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,header.header:not(:has(.unified-nav-actions)),nav.primary-nav-bar,nav.category-nav-bar,.flow-selector-card,.filter-search-row,.extra-tools-card,#btnHub,.dh-foot .r a,#kjsBgm,#kjsSfx,.kjs-qr-btn){display:none!important}
-:is(html,body).qr-focus-mode .unified-nav-actions :is(a[href*="서랍"],.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod){display:none!important}
-:is(html,body).qr-focus-mode .btn-unified-nav:not(#kjsHome):not(#snResetBtn):not(.btn-ws){display:none!important}
-:is(html,body).qr-focus-mode :is(.nav-btn[onclick*="rule"],.nav-btn[onclick*="guide"],#btnTeacherMode,.ws-answer-key){display:none!important}
-:is(html,body).qr-focus-mode .sim-nav-inner{grid-template-columns:1fr auto!important}
-:is(html,body).qr-lesson-lock :is(.km-nav,.km-search,.km-g,.km-u,.km-j,.km-grid,.picker,#libCard,#picker,#pickHost,#navBar){display:none!important}
-.qr-focus-badge{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;font:800 12.5px/1 -apple-system,"Malgun Gothic",sans-serif;white-space:nowrap}
-.qr-focus-badge.float{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:99990}
-.qr-reset{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font:700 13px/1 -apple-system,"Malgun Gothic",sans-serif;cursor:pointer}
-.qr-lesson-label{margin-left:8px;font-size:.85em;font-weight:800;color:#b45309;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw}
-</style>
-<script id="qr-focus-js">
-(function(){try{
-  var p=new URLSearchParams(location.search), on=p.get("qr")==="1"||p.get("mode")==="focus"||p.has("q"), lock=p.has("q");
-  if(!on) return;
-  var add=function(el){ if(!el) return; el.classList.add("qr-focus-mode"); if(lock) el.classList.add("qr-lesson-lock"); };
-  add(document.documentElement);
-  function ui(){
-    add(document.body);
-    var nav=document.querySelector(".unified-nav-actions")||document.querySelector(".m-right");
-    var b=document.createElement("span"); b.className="qr-focus-badge"; b.textContent="📱 학생 집중 모드";
-    if(nav) nav.insertBefore(b, nav.firstChild); else { b.className+=" float"; document.body.appendChild(b); }
-    var home=document.getElementById("kjsHome");
-    if(home) home.textContent="↺ 다시하기";
-    else if(nav){ var r=document.createElement("button"); r.type="button"; r.className="qr-reset"; r.textContent="↺ 다시하기";
-      r.onclick=function(){ if(confirm("처음부터 다시 할까요?")) location.reload(); }; nav.appendChild(r); }
-    var tries=0, t=setInterval(function(){                      /* 단원·차시명 표시 */
-      var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
-      if(c&&c.title){ b.textContent="📱 "+[c.unit,c.title].filter(Boolean).join(" · "); b.title="학생 집중 모드"; clearInterval(t); }
-      else if(++tries>20) clearInterval(t);
-    },300);
-  }
-  if(document.body) ui(); else document.addEventListener("DOMContentLoaded",ui);
-  document.addEventListener("click",function(e){                /* 집중 모드 유지 */
-    var a=e.target.closest&&e.target.closest("a[href]"); if(!a) return;
-    var u; try{ u=new URL(a.getAttribute("href"),location.href); }catch(_){ return; }
-    if(u.origin!==location.origin||!/\.html$/.test(u.pathname)) return;
-    if(u.searchParams.get("qr")!=="1"){ u.searchParams.set("qr","1"); a.setAttribute("href",u.pathname.split("/").pop()+u.search+u.hash); }
-  },true);
-}catch(e){}})();
-</script>
 </head>
 <body>
 
@@ -846,7 +795,7 @@ const TILES = [
   { id: 0, type: "start", name: "태초마을", icon: "🏁", cat: "corner", desc: "오박사 연구소 출발점! 한 바퀴 돌 때마다 탐구비 3,000pt 획득" },
   { id: 1, type: "prop", name: "파이리의 열 연구소", icon: "🔥", cat: "phy", price: 1000, toll: [300, 700, 1500], unit: "열과 에너지",
     q: "열이 물질을 통하지 않고 전자기파 형태로 직접 전달되는 방식을 무엇이라 할까요?",
-    opts: ["전도", "대류", "팽창", "복사"], ans: 3, exp: "열의 직접 이동 현상은 '복사'입니다. (예: 햇빛, 난로의 열기)" },
+    opts: ["전도", "대류", "복사", "팽창"], ans: 2, exp: "열의 직접 이동 현상은 '복사'입니다. (예: 햇빛, 난로의 열기)" },
   { id: 2, type: "prop", name: "피카츄의 발전소", icon: "⚡", cat: "phy", price: 1200, toll: [350, 800, 1800], unit: "전기와 자기",
     q: "전압(V), 전류(I), 저항(R) 사이의 관계를 나타낸 '옴의 법칙'으로 옳은 것은?",
     opts: ["V = I × R", "I = V × R", "R = V × I", "V = I ÷ R"], ans: 0, exp: "옴의 법칙은 전압 = 전류 × 저항 (V = I × R) 입니다." },
@@ -862,17 +811,17 @@ const TILES = [
   // 7~11: 좌측 변 (화학/물질/원소)
   { id: 7, type: "prop", name: "꼬부기의 상태 분수", icon: "💧", cat: "che", price: 1800, toll: [500, 1200, 2600], unit: "물질의 상태변화",
     q: "고체가 액체를 거치지 않고 곧바로 기체로 변하는 상태 변화의 이름은?",
-    opts: ["융해", "기화", "응고", "승화(고→기)"], ans: 3, exp: "고체가 곧바로 기체로 변하거나 기체가 고체로 변하는 것은 모두 '승화'입니다." },
+    opts: ["융해", "기화", "승화(고→기)", "응고"], ans: 2, exp: "고체가 곧바로 기체로 변하거나 기체가 고체로 변하는 것은 모두 '승화'입니다." },
   { id: 8, type: "prop", name: "어니부기의 기체 랩", icon: "🎈", cat: "che", price: 2000, toll: [550, 1350, 2900], unit: "기체의 성질",
     q: "온도가 일정할 때, 기체의 압력이 커지면 기체의 부피는 어떻게 될까요?",
-    opts: ["줄어든다(보일 법칙)", "커진다", "변함없다", "사라진다"], ans: 0, exp: "보일 법칙에 의해 온도가 일정할 때 압력과 부피는 반비례합니다." },
+    opts: ["커진다", "줄어든다(보일 법칙)", "변함없다", "사라진다"], ans: 1, exp: "보일 법칙에 의해 온도가 일정할 때 압력과 부피는 반비례합니다." },
   { id: 9, type: "chance", name: "신비한 포켓몬 알", icon: "❓", cat: "chance", desc: "찬스 카드를 뽑습니다!" },
   { id: 10, type: "prop", name: "거북왕의 원소 타워", icon: "🧪", cat: "che", price: 2200, toll: [600, 1500, 3200], unit: "물질의 구성",
     q: "물질을 이루는 기본 성분으로 더 이상 분해되지 않는 순물질의 기본 요소를 무엇이라 할까요?",
-    opts: ["혼합물", "분자", "원소", "이온"], ans: 2, exp: "더 이상 다른 물질로 분해되지 않는 물질의 기본 성분은 '원소'입니다." },
+    opts: ["원소", "분자", "혼합물", "이온"], ans: 0, exp: "더 이상 다른 물질로 분해되지 않는 물질의 기본 성분은 '원소'입니다." },
   { id: 11, type: "prop", name: "마그마번의 반응로", icon: "💥", cat: "che", price: 2400, toll: [650, 1650, 3500], unit: "화학 반응의 규칙",
     q: "화학 반응이 일어날 때 반응 전 물질의 총질량과 반응 후 생성 물질의 총질량은 같다. 이 법칙은?",
-    opts: ["일정 성분비 법칙", "질량 보존 법칙", "기체 반응 법칙", "아보가드로 법칙"], ans: 1, exp: "반응 전후 원자의 종류와 개수가 변하지 않으므로 '질량 보존 법칙'이 성립합니다." },
+    opts: ["질량 보존 법칙", "일정 성분비 법칙", "기체 반응 법칙", "아보가드로 법칙"], ans: 0, exp: "반응 전후 원자의 종류와 개수가 변하지 않으므로 '질량 보존 법칙'이 성립합니다." },
 
   // 12: 상단 좌측 모서리 (포켓몬 센터)
   { id: 12, type: "corner", name: "포켓몬 센터", icon: "🏥", cat: "corner", desc: "지친 포켓몬을 치료하고 모인 환경 후원금 전액을 수령합니다!" },
@@ -880,17 +829,17 @@ const TILES = [
   // 13~17: 상단 변 (생명과학/광합성/유전)
   { id: 13, type: "prop", name: "이상해씨의 온실", icon: "🌱", cat: "bio", price: 2600, toll: [700, 1800, 3800], unit: "식물과 에너지",
     q: "식물이 빛, 물, 이산화 탄소를 이용하여 포도당과 산소를 만드는 작용은?",
-    opts: ["호흡", "소화", "증산 작용", "광합성"], ans: 3, exp: "엽록체에서 빛에너지를 흡수하여 양분을 만드는 과정은 '광합성'입니다." },
+    opts: ["호흡", "광합성", "증산 작용", "소화"], ans: 1, exp: "엽록체에서 빛에너지를 흡수하여 양분을 만드는 과정은 '광합성'입니다." },
   { id: 14, type: "prop", name: "이상해풀의 순환계", icon: "🫀", cat: "bio", price: 2800, toll: [750, 1950, 4200], unit: "동물과 에너지",
     q: "사람의 심장에서 온몸으로 산소가 풍부한 동맥혈을 뿜어내는 가장 두꺼운 근육벽을 가진 방은?",
-    opts: ["좌심실", "우심실", "좌심방", "우심방"], ans: 0, exp: "온몸으로 높은 압력의 피를 보내야 하므로 '좌심실' 벽이 가장 두껍습니다." },
+    opts: ["우심방", "우심실", "좌심방", "좌심실"], ans: 3, exp: "온몸으로 높은 압력의 피를 보내야 하므로 '좌심실' 벽이 가장 두껍습니다." },
   { id: 15, type: "chance", name: "로켓단 비밀기지", icon: "❓", cat: "chance", desc: "로켓단의 특별 찬스 카드 발동!" },
   { id: 16, type: "prop", name: "이상해꽃의 신경 센터", icon: "🧠", cat: "bio", price: 3000, toll: [800, 2100, 4500], unit: "자극과 반응",
     q: "신경계를 구성하는 구조적·기능적 기본 단위 세포를 무엇이라고 부를까요?",
-    opts: ["적혈구", "호르몬", "뉴런", "상피세포"], ans: 2, exp: "신경계를 이루는 신경세포의 이름은 '뉴런'입니다." },
+    opts: ["적혈구", "뉴런", "호르몬", "상피세포"], ans: 1, exp: "신경계를 이루는 신경세포의 이름은 '뉴런'입니다." },
   { id: 17, type: "prop", name: "뮤츠의 유전 연구소", icon: "🧬", cat: "bio", price: 3200, toll: [850, 2300, 5000], unit: "생식과 유전",
     q: "둥근 완두(Rr)끼리 자가 수분하여 얻은 자손(F2)에서 둥근 것과 주름진 것의 표현형 분리비는?",
-    opts: ["1 : 1", "3 : 1", "2 : 1", "9 : 3 : 3 : 1"], ans: 1, exp: "잡종 1대(Rr) 자가 수분 시 표현형 분리비는 우성:열성 = 3 : 1 입니다." },
+    opts: ["1 : 1", "2 : 1", "3 : 1", "9 : 3 : 3 : 1"], ans: 2, exp: "잡종 1대(Rr) 자가 수분 시 표현형 분리비는 우성:열성 = 3 : 1 입니다." },
 
   // 18: 상단 우측 모서리 (공중날기 워프 게이트)
   { id: 18, type: "corner", name: "공중날기 워프", icon: "🚀", cat: "corner", desc: "전설의 비행 포켓몬을 타고 다음 턴 원하는 칸으로 즉시 이동!" },
@@ -898,17 +847,17 @@ const TILES = [
   // 19~23: 우측 변 (지구과학/판구조/우주)
   { id: 19, type: "prop", name: "롱스톤의 판구조 동굴", icon: "🌋", cat: "ear", price: 3400, toll: [900, 2450, 5400], unit: "지권의 변화",
     q: "지구 내부 층상 구조 중 부피를 가장 많이 차지하며 고체 상태인 층은?",
-    opts: ["지각", "내핵", "외핵", "맨틀"], ans: 3, exp: "지구 전체 부피의 약 80%를 차지하는 층은 '맨틀'입니다." },
+    opts: ["지각", "맨틀", "외핵", "내핵"], ans: 1, exp: "지구 전체 부피의 약 80%를 차지하는 층은 '맨틀'입니다." },
   { id: 20, type: "prop", name: "구구의 기상 관측 타워", icon: "🌪️", cat: "ear", price: 3600, toll: [950, 2600, 5800], unit: "기권과 날씨",
     q: "대기권 중 수증기가 존재하여 비, 눈 등 기상 현상이 일어나는 층은?",
-    opts: ["중간권", "성층권", "대류권", "열권"], ans: 2, exp: "기상 현상은 수증기와 대류가 모두 존재하는 '대류권'에서만 일어납니다." },
+    opts: ["대류권", "성층권", "중간권", "열권"], ans: 0, exp: "기상 현상은 수증기와 대류가 모두 존재하는 '대류권'에서만 일어납니다." },
   { id: 21, type: "chance", name: "전설의 포켓몬 출현", icon: "❓", cat: "chance", desc: "신비로운 찬스 카드를 획득합니다!" },
   { id: 22, type: "prop", name: "루나톤의 달 천문대", icon: "🪐", cat: "ear", price: 3800, toll: [1000, 2800, 6200], unit: "태양계와 달",
     q: "달이 태양과 지구 사이에 위치하여 태양을 완전히 가리는 현상은?",
-    opts: ["일식", "월식", "조석", "황도 12궁"], ans: 0, exp: "달이 태양을 가리는 현상은 '일식'입니다." },
+    opts: ["월식", "일식", "조석", "황도 12궁"], ans: 1, exp: "달이 태양을 가리는 현상은 '일식'입니다." },
   { id: 23, type: "prop", name: "레쿠쟈의 성간 우주", icon: "🌌", cat: "ear", price: 4000, toll: [1100, 3000, 7000], unit: "별과 우주",
     q: "별의 밝기 등급에서 숫자가 5등급 작아질수록 실제 밝기는 몇 배 밝아질까요?",
-    opts: ["5배", "100배", "50배", "10배"], ans: 1, exp: "1등급 차이는 약 2.5배이며, 5등급 차이는 정확히 100배 밝기 차이입니다." }
+    opts: ["5배", "10배", "50배", "100배"], ans: 3, exp: "1등급 차이는 약 2.5배이며, 5등급 차이는 정확히 100배 밝기 차이입니다." }
 ];
 
 // 보드판 그리드 배치 인덱스 (외곽 둘레 매핑)
@@ -1383,7 +1332,7 @@ const game = {
   },
 
   endGame() {
-    if (window.KJS) { if (sfx.enabled !== false) KJS.win({ toast:false }); } else sfx.fanfare();
+    sfx.fanfare();
     const ranked = [...TEAMS].sort((a, b) => {
       const valA = a.pts + a.bases * 2000;
       const valB = b.pts + b.bases * 2000;
@@ -1469,22 +1418,27 @@ window.addEventListener("DOMContentLoaded", () => {
   game.init();
 });
 </script>
-<script src="./sounds/kjs-sound.js"></script>
-<script id="kjs-sound-bridge">
+<script id="kjsImmersive">
+/* 몰입 모드(게임 화면 확대) — ⛶ 버튼을 누르면 전자칠판 실행기에서 이 게임을 전체화면·확대로 열어요 */
 (function(){
-  var T={toast:false};
-  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
-  function wrap(o, m, kind){
-    if(!o || typeof o[m]!=="function") return;
-    var orig=o[m];
-    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
-  }
-  if(typeof sfx!=="undefined"){ wrap(sfx,"correct","ok"); wrap(sfx,"wrong","no"); }
+  try{
+    var imm=/[?&]imm=1(&|$)/.test(location.search);
+    var st=document.createElement('style');
+    st.textContent='#kjsImmBtn{position:fixed;right:14px;bottom:14px;z-index:2147482000;min-height:56px;padding:0 20px;border-radius:16px;border:2px solid #38bdf8;background:rgba(10,14,23,.92);color:#fff;font:800 18px/1 -apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic",sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 20px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none}'
+      +'#kjsImmBtn:active{transform:scale(.96)}@media print{#kjsImmBtn{display:none!important}}'
+      +'html.kjs-imm a[href*="서랍"],html.kjs-imm a.btn-unified-nav,html.kjs-imm .unified-nav-actions a,html.kjs-imm #kjsImmBtn{display:none!important}';
+    (document.head||document.documentElement).appendChild(st);
+    if(imm){document.documentElement.classList.add('kjs-imm');return;}
+    if(window.top!==window)return;
+    var b=document.createElement('button');b.id='kjsImmBtn';b.type='button';b.textContent='⛶ 몰입 모드';b.title='게임 화면을 전체화면으로 크게 열기';
+    b.onclick=function(){
+      var f=location.pathname.split('/').pop()||'';try{f=decodeURIComponent(f);}catch(e){}
+      var t=(document.title||f).slice(0,40);
+      location.href='./전자칠판_실행기.html?f='+encodeURIComponent(f)+'&imm=1&t='+encodeURIComponent(t);
+    };
+    (document.body||document.documentElement).appendChild(b);
+  }catch(e){}
 })();
 </script>
-<script src="./sounds/kjs-qr.js"></script>
-<script src="./sounds/kjs-db-config.js"></script>
-<script src="./sounds/kjs-db.js" data-type="game"></script>
-<script src="./sounds/kjs-marble-fit.js"></script>
 </body>
 </html>

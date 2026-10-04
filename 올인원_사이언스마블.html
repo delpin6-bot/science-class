@@ -909,57 +909,6 @@ header.unified-game-header {
   .quiz-options { grid-template-columns: 1fr; }
 }
 </style>
-<style id="kjs-mobile-fix">@media (max-width:760px){
-  html,body{overflow-x:clip}
-  table{display:block!important;max-width:calc(100vw - 28px)!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
-  .km-row>.km-scroll,.km-row>.km-chips{align-self:stretch!important;max-width:calc(100vw - 48px)!important}
-  .navrow>*{max-width:calc(100vw - 36px)!important;align-self:stretch}
-  .unit-chips-row{flex-wrap:wrap!important}
-  .card-box,.panel-card{max-width:calc(100vw - 24px)!important;min-width:0!important}
-  .control-grid,.puzzle-container{min-width:0!important}
-}</style>
-<style id="qr-focus-style">
-:is(html,body).qr-focus-mode :is(.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,header.header:not(:has(.unified-nav-actions)),nav.primary-nav-bar,nav.category-nav-bar,.flow-selector-card,.filter-search-row,.extra-tools-card,#btnHub,.dh-foot .r a,#kjsBgm,#kjsSfx,.kjs-qr-btn){display:none!important}
-:is(html,body).qr-focus-mode .unified-nav-actions :is(a[href*="서랍"],.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod){display:none!important}
-:is(html,body).qr-focus-mode .btn-unified-nav:not(#kjsHome):not(#snResetBtn):not(.btn-ws){display:none!important}
-:is(html,body).qr-focus-mode :is(.nav-btn[onclick*="rule"],.nav-btn[onclick*="guide"],#btnTeacherMode,.ws-answer-key){display:none!important}
-:is(html,body).qr-focus-mode .sim-nav-inner{grid-template-columns:1fr auto!important}
-:is(html,body).qr-lesson-lock :is(.km-nav,.km-search,.km-g,.km-u,.km-j,.km-grid,.picker,#libCard,#picker,#pickHost,#navBar){display:none!important}
-.qr-focus-badge{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;font:800 12.5px/1 -apple-system,"Malgun Gothic",sans-serif;white-space:nowrap}
-.qr-focus-badge.float{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:99990}
-.qr-reset{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font:700 13px/1 -apple-system,"Malgun Gothic",sans-serif;cursor:pointer}
-.qr-lesson-label{margin-left:8px;font-size:.85em;font-weight:800;color:#b45309;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw}
-</style>
-<script id="qr-focus-js">
-(function(){try{
-  var p=new URLSearchParams(location.search), on=p.get("qr")==="1"||p.get("mode")==="focus"||p.has("q"), lock=p.has("q");
-  if(!on) return;
-  var add=function(el){ if(!el) return; el.classList.add("qr-focus-mode"); if(lock) el.classList.add("qr-lesson-lock"); };
-  add(document.documentElement);
-  function ui(){
-    add(document.body);
-    var nav=document.querySelector(".unified-nav-actions")||document.querySelector(".m-right");
-    var b=document.createElement("span"); b.className="qr-focus-badge"; b.textContent="📱 학생 집중 모드";
-    if(nav) nav.insertBefore(b, nav.firstChild); else { b.className+=" float"; document.body.appendChild(b); }
-    var home=document.getElementById("kjsHome");
-    if(home) home.textContent="↺ 다시하기";
-    else if(nav){ var r=document.createElement("button"); r.type="button"; r.className="qr-reset"; r.textContent="↺ 다시하기";
-      r.onclick=function(){ if(confirm("처음부터 다시 할까요?")) location.reload(); }; nav.appendChild(r); }
-    var tries=0, t=setInterval(function(){                      /* 단원·차시명 표시 */
-      var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
-      if(c&&c.title){ b.textContent="📱 "+[c.unit,c.title].filter(Boolean).join(" · "); b.title="학생 집중 모드"; clearInterval(t); }
-      else if(++tries>20) clearInterval(t);
-    },300);
-  }
-  if(document.body) ui(); else document.addEventListener("DOMContentLoaded",ui);
-  document.addEventListener("click",function(e){                /* 집중 모드 유지 */
-    var a=e.target.closest&&e.target.closest("a[href]"); if(!a) return;
-    var u; try{ u=new URL(a.getAttribute("href"),location.href); }catch(_){ return; }
-    if(u.origin!==location.origin||!/\.html$/.test(u.pathname)) return;
-    if(u.searchParams.get("qr")!=="1"){ u.searchParams.set("qr","1"); a.setAttribute("href",u.pathname.split("/").pop()+u.search+u.hash); }
-  },true);
-}catch(e){}})();
-</script>
 </head>
 <body>
 
@@ -970,6 +919,7 @@ header.unified-game-header {
     <h1 class="game-title">올인원 사이언스 마블</h1>
   </div>
   <div class="unified-nav-actions">
+    <button type="button" class="btn-unified-nav" id="btnPlayerSettings" onclick="game.openPlayerModal()" style="background:rgba(245, 158, 11, 0.2); border-color:#f59e0b; color:#fbbf24;">👥 참가자·모둠 설정</button>
     <button type="button" class="btn-unified-nav" id="btnPlayerSettings" onclick="game.openPlayerModal()" style="background:rgba(245, 158, 11, 0.2); border-color:#f59e0b; color:#fbbf24;">👥 참가자·모둠 설정</button>
     <button type="button" class="btn-unified-nav" id="btnRestart">🔄 새 게임</button>
     <button type="button" class="btn-unified-nav" id="btnSound">🔊 효과음 On</button>
@@ -1356,40 +1306,40 @@ const CURRICULUM_MAP = {
 // 대표적 핵심 단원 4개 상세 퀴즈 데이터셋 + 일반 단원 자동 생성 템플릿
 const DETAILED_UNITS = {
   "중3_생식과 유전": [
-    { name: "염색체 유전체 센터", icon: "🧬", unit: "염색체", q: "사람의 정상 체세포 1개에 들어 있는 염색체의 총 개수는?", opts: ["46개", "23개", "92개", "48개"], ans: 0, exp: "사람 체세포에는 상염색체 44개와 성염색체 2개로 총 46개의 염색체가 있습니다.", price: 1000 },
+    { name: "염색체 유전체 센터", icon: "🧬", unit: "염색체", q: "사람의 정상 체세포 1개에 들어 있는 염색체의 총 개수는?", opts: ["23개", "46개", "92개", "48개"], ans: 1, exp: "사람 체세포에는 상염색체 44개와 성염색체 2개로 총 46개의 염색체가 있습니다.", price: 1000 },
     { name: "체세포 분열 경기장", icon: "✂️", unit: "세포분열", q: "체세포 분열 결과 생기는 딸세포의 염색체 수 변화는?", opts: ["절반으로 감소", "모세포와 동일 유지(2n→2n)", "2배로 증가", "4배로 증가"], ans: 1, exp: "체세포 분열은 몸의 성장과 재생을 위해 염색체 수가 그대로 복제 유지됩니다.", price: 1200 },
-    { name: "감수분열 생식 랩", icon: "🥚", unit: "생식세포", q: "정자와 난자를 형성할 때 염색체 수가 절반으로 반감되는 분열은?", opts: ["체세포 분열", "출아법", "감수 분열", "이분법"], ans: 2, exp: "감수 분열(생식세포 분열)은 연속 2회 분열로 염색체 수가 2n에서 n으로 반감됩니다.", price: 1400 },
-    { name: "수정과 발생관", icon: "👶", unit: "발생", q: "정자와 난자가 결합한 수정란이 세포분열을 거치며 개체로 자라는 과정은?", opts: ["배설", "노화", "분화", "발생"], ans: 3, exp: "수정란이 완전한 개체로 자라나는 전 과정을 발생이라고 합니다.", price: 1600 },
-    { name: "멘델의 완두 밭", icon: "🌱", unit: "우열의 원리", q: "순종 둥근 완두(RR)와 주름진 완두(rr) 교배 시 잡종 1대(F1)의 표현형은?", opts: ["100% 주름진 완두", "100% 둥근 완두", "둥근 것 3 : 주름진 것 1", "1 : 1"], ans: 1, exp: "우열의 원리에 의해 대립형질 중 우성인 둥근 완두만 100% 발현됩니다.", price: 1800 },
+    { name: "감수분열 생식 랩", icon: "🥚", unit: "생식세포", q: "정자와 난자를 형성할 때 염색체 수가 절반으로 반감되는 분열은?", opts: ["체세포 분열", "감수 분열", "출아법", "이분법"], ans: 1, exp: "감수 분열(생식세포 분열)은 연속 2회 분열로 염색체 수가 2n에서 n으로 반감됩니다.", price: 1400 },
+    { name: "수정과 발생관", icon: "👶", unit: "발생", q: "정자와 난자가 결합한 수정란이 세포분열을 거치며 개체로 자라는 과정은?", opts: ["발생", "노화", "분화", "배설"], ans: 0, exp: "수정란이 완전한 개체로 자라나는 전 과정을 발생이라고 합니다.", price: 1600 },
+    { name: "멘델의 완두 밭", icon: "🌱", unit: "우열의 원리", q: "순종 둥근 완두(RR)와 주름진 완두(rr) 교배 시 잡종 1대(F1)의 표현형은?", opts: ["100% 둥근 완두", "100% 주름진 완두", "둥근 것 3 : 주름진 것 1", "1 : 1"], ans: 0, exp: "우열의 원리에 의해 대립형질 중 우성인 둥근 완두만 100% 발현됩니다.", price: 1800 },
     { name: "분리의 법칙 시험장", icon: "🌾", unit: "분리의 법칙", q: "잡종 1대(Rr) 자가 수분 시 잡종 2대(F2)의 둥근 완두와 주름진 완두 표현형 비는?", opts: ["3 : 1", "1 : 1", "9 : 3 : 3 : 1", "모두 둥근 완두"], ans: 0, exp: "대립유전자가 생식세포 형성 시 분리되어 들어가므로 표현형비 3 : 1이 나타납니다.", price: 2000 },
-    { name: "독립의 법칙 천문대", icon: "🟡", unit: "독립의 법칙", q: "모양과 색깔 두 쌍의 대립형질이 서로 영향을 주지 않고 독립적으로 유전되는 법칙은?", opts: ["우열의 원리", "분리의 법칙", "독립의 법칙", "하디 법칙"], ans: 2, exp: "두 쌍 이상의 대립형질이 서로 간섭 없이 독립적으로 유전되는 원리입니다.", price: 2200 },
-    { name: "퍼넷 사각형 시뮬레이터", icon: "🔲", unit: "자가수분 비", q: "YyRr 자가수분 시 자손에서 [둥글고 노란 완두]가 나타날 이론적 확률은?", opts: ["4분의 1", "16분의 3", "16분의 1", "16분의 9 (9/16)"], ans: 3, exp: "두 쌍 잡종 자가수분 시 표현형 분리비는 9 : 3 : 3 : 1 입니다.", price: 2400 },
-    { name: "사람의 유전 가계도 룸", icon: "👨‍👩‍👧", unit: "가계도", q: "사람의 유전 연구가 완두콩에 비해 어려운 까닭으로 알맞지 않은 것은?", opts: ["염색체 수가 너무 적어서", "자손 수가 적다", "자유로운 교배 실험 불가", "한 세대가 너무 길다"], ans: 0, exp: "사람은 세대가 길고 자손이 적으며 환경 영향을 많이 받아 교배 실험이 불가능합니다.", price: 2600 },
-    { name: "ABO식 혈액형 클리닉", icon: "🩸", unit: "복대립 유전", q: "ABO식 혈액형에서 대립유전자 A와 B 사이의 우열 관계는?", opts: ["둘 다 O에 열성", "A가 B에 완전 우성", "B가 A에 완전 우성", "A와 B는 우열이 없다 (공동우성)"], ans: 3, exp: "A와 B는 서로 우열이 없어 함께 있으면 AB형으로 동등 발현됩니다.", price: 2800 },
-    { name: "적록 색맹 분석소", icon: "👁️", unit: "반성 유전", q: "적록 색맹 유전자가 X 염색체에 열성으로 존재하여 남성에게 더 흔한 유전은?", opts: ["다인자 유전", "상염색체 유전", "반성 유전", "모계 유전"], ans: 2, exp: "형질 유전자가 성염색체(X)에 있어 성별에 따라 빈도가 다른 유전을 반성 유전이라 합니다.", price: 3000 },
-    { name: "미맹 테스터 랩", icon: "👅", unit: "상염색체 유전", q: "PTC 미맹처럼 성별에 따른 발현 빈도 차이가 없는 유전은?", opts: ["반성 유전", "상염색체 유전", "한성 유전", "미토콘드리아 유전"], ans: 1, exp: "유전자가 상염색체에 존재하면 남녀 성별에 따른 차이가 없습니다.", price: 3200 },
-    { name: "쌍둥이 유전 연구소", icon: "👯", unit: "환경과 유전", q: "유전자 구성이 100% 일치하여 유전과 환경의 영향을 비교하기 가장 좋은 대상은?", opts: ["사촌 형제", "2란성 쌍둥이", "1란성 쌍둥이", "동일 연령 친구"], ans: 2, exp: "1란성 쌍둥이는 1개의 수정란에서 유래하여 유전자가 완전히 동일합니다.", price: 3400 },
-    { name: "DNA 이중나선 타워", icon: "🧬", unit: "DNA 구조", q: "생명체의 유전 정보를 저장하는 유전물질의 본체 분자는?", opts: ["지방", "녹말", "포도당", "DNA"], ans: 3, exp: "DNA는 염기 서열을 통해 단백질 합성 및 유전 정보를 저장합니다.", price: 3600 },
+    { name: "독립의 법칙 천문대", icon: "🟡", unit: "독립의 법칙", q: "모양과 색깔 두 쌍의 대립형질이 서로 영향을 주지 않고 독립적으로 유전되는 법칙은?", opts: ["독립의 법칙", "분리의 법칙", "우열의 원리", "하디 법칙"], ans: 0, exp: "두 쌍 이상의 대립형질이 서로 간섭 없이 독립적으로 유전되는 원리입니다.", price: 2200 },
+    { name: "퍼넷 사각형 시뮬레이터", icon: "🔲", unit: "자가수분 비", q: "YyRr 자가수분 시 자손에서 [둥글고 노란 완두]가 나타날 이론적 확률은?", opts: ["16분의 9 (9/16)", "16분의 3", "16분의 1", "4분의 1"], ans: 0, exp: "두 쌍 잡종 자가수분 시 표현형 분리비는 9 : 3 : 3 : 1 입니다.", price: 2400 },
+    { name: "사람의 유전 가계도 룸", icon: "👨‍👩‍👧", unit: "가계도", q: "사람의 유전 연구가 완두콩에 비해 어려운 까닭으로 알맞지 않은 것은?", opts: ["한 세대가 너무 길다", "자손 수가 적다", "자유로운 교배 실험 불가", "염색체 수가 너무 적어서"], ans: 3, exp: "사람은 세대가 길고 자손이 적으며 환경 영향을 많이 받아 교배 실험이 불가능합니다.", price: 2600 },
+    { name: "ABO식 혈액형 클리닉", icon: "🩸", unit: "복대립 유전", q: "ABO식 혈액형에서 대립유전자 A와 B 사이의 우열 관계는?", opts: ["A와 B는 우열이 없다 (공동우성)", "A가 B에 완전 우성", "B가 A에 완전 우성", "둘 다 O에 열성"], ans: 0, exp: "A와 B는 서로 우열이 없어 함께 있으면 AB형으로 동등 발현됩니다.", price: 2800 },
+    { name: "적록 색맹 분석소", icon: "👁️", unit: "반성 유전", q: "적록 색맹 유전자가 X 염색체에 열성으로 존재하여 남성에게 더 흔한 유전은?", opts: ["반성 유전", "상염색체 유전", "다인자 유전", "모계 유전"], ans: 0, exp: "형질 유전자가 성염색체(X)에 있어 성별에 따라 빈도가 다른 유전을 반성 유전이라 합니다.", price: 3000 },
+    { name: "미맹 테스터 랩", icon: "👅", unit: "상염색체 유전", q: "PTC 미맹처럼 성별에 따른 발현 빈도 차이가 없는 유전은?", opts: ["상염색체 유전", "반성 유전", "한성 유전", "미토콘드리아 유전"], ans: 0, exp: "유전자가 상염색체에 존재하면 남녀 성별에 따른 차이가 없습니다.", price: 3200 },
+    { name: "쌍둥이 유전 연구소", icon: "👯", unit: "환경과 유전", q: "유전자 구성이 100% 일치하여 유전과 환경의 영향을 비교하기 가장 좋은 대상은?", opts: ["1란성 쌍둥이", "2란성 쌍둥이", "사촌 형제", "동일 연령 친구"], ans: 0, exp: "1란성 쌍둥이는 1개의 수정란에서 유래하여 유전자가 완전히 동일합니다.", price: 3400 },
+    { name: "DNA 이중나선 타워", icon: "🧬", unit: "DNA 구조", q: "생명체의 유전 정보를 저장하는 유전물질의 본체 분자는?", opts: ["DNA", "녹말", "포도당", "지방"], ans: 0, exp: "DNA는 염기 서열을 통해 단백질 합성 및 유전 정보를 저장합니다.", price: 3600 },
     { name: "돌연변이 진단 센터", icon: "🏥", unit: "유전병", q: "다운 증후군처럼 염색체 수나 구조의 이상으로 나타나는 질환은?", opts: ["유전 질환", "감염성 질환", "퇴행성 질환", "생활습관병"], ans: 0, exp: "유전물질의 변화나 이상에 의해 나타나는 질환을 유전병이라고 부릅니다.", price: 3800 },
-    { name: "생명공학 미래 돔", icon: "🌐", unit: "유전자 기술", q: "유용한 유전자를 잘라내어 대장균 등에 삽입해 인슐린 등을 만드는 기술은?", opts: ["단순 발효", "유전자 재조합 기술", "원심 분리", "자연 교배"], ans: 1, exp: "유용한 유전자를 플라스미드 등에 삽입하여 대량 생산하는 기술입니다.", price: 4000 }
+    { name: "생명공학 미래 돔", icon: "🌐", unit: "유전자 기술", q: "유용한 유전자를 잘라내어 대장균 등에 삽입해 인슐린 등을 만드는 기술은?", opts: ["유전자 재조합 기술", "단순 발효", "원심 분리", "자연 교배"], ans: 0, exp: "유용한 유전자를 플라스미드 등에 삽입하여 대량 생산하는 기술입니다.", price: 4000 }
   ],
   "중2_전기와 자기": [
-    { name: "마찰전기 실험실", icon: "⚡", unit: "정전기", q: "서로 다른 물체를 마찰시킬 때 전기가 발생하는 까닭은?", opts: ["원자핵 이동", "중성자 결합", "양성자 생성", "전자 이동"], ans: 3, exp: "이동하기 쉬운 전자가 한 물체에서 다른 물체로 이동하기 때문입니다.", price: 1000 },
-    { name: "정전기 유도 시험장", icon: "🎈", unit: "정전기 유도", q: "금속 막대에 (-)대전체를 가까이할 때 가까운 쪽 끝에 유도되는 전하는?", opts: ["(-) 전하", "(+) 전하", "중성", "자력"], ans: 1, exp: "자유전자가 척력으로 밀려나므로 가까운 쪽은 (+)전하를 띱니다.", price: 1200 },
+    { name: "마찰전기 실험실", icon: "⚡", unit: "정전기", q: "서로 다른 물체를 마찰시킬 때 전기가 발생하는 까닭은?", opts: ["원자핵 이동", "전자 이동", "양성자 생성", "중성자 결합"], ans: 1, exp: "이동하기 쉬운 전자가 한 물체에서 다른 물체로 이동하기 때문입니다.", price: 1000 },
+    { name: "정전기 유도 시험장", icon: "🎈", unit: "정전기 유도", q: "금속 막대에 (-)대전체를 가까이할 때 가까운 쪽 끝에 유도되는 전하는?", opts: ["(+) 전하", "(-) 전하", "중성", "자력"], ans: 0, exp: "자유전자가 척력으로 밀려나므로 가까운 쪽은 (+)전하를 띱니다.", price: 1200 },
     { name: "검전기 정밀 랩", icon: "🔍", unit: "검전기", q: "검전기 금속판에 대전체를 대면 금속박이 벌어지는 이유는?", opts: ["금속박 전하의 척력", "금속판의 중력", "공기 대류", "온도 상승"], ans: 0, exp: "양쪽 금속박이 같은 종류의 전하를 띠어 서로 밀어내기 때문입니다.", price: 1400 },
-    { name: "접지와 전하 이동", icon: "🔌", unit: "접지", q: "대전된 검전기 금속판에 손가락을 대면(접지) 금속박은 어떻게 될까요?", opts: ["더 벌어진다", "변함없다", "오므라든다", "진동한다"], ans: 2, exp: "전자가 손가락을 통해 빠져나가거나 들어와 중성이 되므로 오므라듭니다.", price: 1600 },
-    { name: "전하의 흐름 (전류)", icon: "🌊", unit: "전류 방향", q: "전기 회로에서 전류의 방향과 전자의 실제 이동 방향은?", opts: ["둘 다 (-)→(+)", "전류: (-)→(+), 전자: (+)→(-)", "둘 다 (+)→(-)", "전류: (+)→(-), 전자: (-)→(+)"], ans: 3, exp: "전류는 (+)에서 (-), 실제 전자는 (-)에서 (+)로 이동합니다.", price: 1800 },
-    { name: "전압계와 전류계", icon: "📏", unit: "계측기 연결", q: "전류계와 전압계의 올바른 연결 방법은?", opts: ["전류계-병렬, 전압계-직렬", "전류계-직렬, 전압계-병렬", "둘 다 직렬", "둘 다 병렬"], ans: 1, exp: "전류계는 직렬, 전압계는 병렬로 연결합니다.", price: 2000 },
-    { name: "옴(Ohm)의 법칙 본부", icon: "📐", unit: "옴의 법칙", q: "저항 5 Ω에 10 V 전압을 걸었을 때 흐르는 전류는?", opts: ["0.5 A", "15 A", "2 A", "50 A"], ans: 2, exp: "옴의 법칙 I = V / R = 10 / 5 = 2 A 입니다.", price: 2200 },
-    { name: "옴 그래프 랩", icon: "📈", unit: "V-I 그래프", q: "전압(V)-전류(I) 그래프에서 직선의 기울기가 뜻하는 것은?", opts: ["저항의 역수 (1/R)", "저항 (R)", "전력 (P)", "전하량 (Q)"], ans: 0, exp: "기울기는 I/V 이므로 저항의 역수(1/R)입니다.", price: 2400 },
-    { name: "저항의 직렬연결 단지", icon: "🔗", unit: "직렬연결", q: "3 Ω과 6 Ω 저항을 직렬 연결할 때 전체 합성 저항은?", opts: ["2 Ω", "9 Ω", "4.5 Ω", "18 Ω"], ans: 1, exp: "직렬 합성 저항은 R = 3 + 6 = 9 Ω 입니다.", price: 2600 },
-    { name: "저항의 병렬연결 단지", icon: "🔀", unit: "병렬연결", q: "6 Ω 저항 2개를 병렬 연결했을 때 전체 합성 저항은?", opts: ["3 Ω", "1 Ω", "6 Ω", "12 Ω"], ans: 0, exp: "1/R = 1/6 + 1/6 = 2/6 ➔ R = 3 Ω 입니다.", price: 2800 },
-    { name: "가정용 배선 센터", icon: "🏠", unit: "가정용 배선", q: "가전제품들을 모두 병렬로 연결하는 까닭은?", opts: ["전체 저항 증가", "전력 소비 무한대", "모두 220V 전압 걸리고 독립 사용 가능", "전선 절약"], ans: 2, exp: "병렬연결 시 동일 전압이 걸리고 각각 개별 스위치 작동이 가능합니다.", price: 3000 },
+    { name: "접지와 전하 이동", icon: "🔌", unit: "접지", q: "대전된 검전기 금속판에 손가락을 대면(접지) 금속박은 어떻게 될까요?", opts: ["더 벌어진다", "오므라든다", "변함없다", "진동한다"], ans: 1, exp: "전자가 손가락을 통해 빠져나가거나 들어와 중성이 되므로 오므라듭니다.", price: 1600 },
+    { name: "전하의 흐름 (전류)", icon: "🌊", unit: "전류 방향", q: "전기 회로에서 전류의 방향과 전자의 실제 이동 방향은?", opts: ["전류: (+)→(-), 전자: (-)→(+)", "전류: (-)→(+), 전자: (+)→(-)", "둘 다 (+)→(-)", "둘 다 (-)→(+)"], ans: 0, exp: "전류는 (+)에서 (-), 실제 전자는 (-)에서 (+)로 이동합니다.", price: 1800 },
+    { name: "전압계와 전류계", icon: "📏", unit: "계측기 연결", q: "전류계와 전압계의 올바른 연결 방법은?", opts: ["전류계-직렬, 전압계-병렬", "전류계-병렬, 전압계-직렬", "둘 다 직렬", "둘 다 병렬"], ans: 0, exp: "전류계는 직렬, 전압계는 병렬로 연결합니다.", price: 2000 },
+    { name: "옴(Ohm)의 법칙 본부", icon: "📐", unit: "옴의 법칙", q: "저항 5 Ω에 10 V 전압을 걸었을 때 흐르는 전류는?", opts: ["0.5 A", "2 A", "15 A", "50 A"], ans: 1, exp: "옴의 법칙 I = V / R = 10 / 5 = 2 A 입니다.", price: 2200 },
+    { name: "옴 그래프 랩", icon: "📈", unit: "V-I 그래프", q: "전압(V)-전류(I) 그래프에서 직선의 기울기가 뜻하는 것은?", opts: ["저항 (R)", "저항의 역수 (1/R)", "전력 (P)", "전하량 (Q)"], ans: 1, exp: "기울기는 I/V 이므로 저항의 역수(1/R)입니다.", price: 2400 },
+    { name: "저항의 직렬연결 단지", icon: "🔗", unit: "직렬연결", q: "3 Ω과 6 Ω 저항을 직렬 연결할 때 전체 합성 저항은?", opts: ["2 Ω", "4.5 Ω", "9 Ω", "18 Ω"], ans: 2, exp: "직렬 합성 저항은 R = 3 + 6 = 9 Ω 입니다.", price: 2600 },
+    { name: "저항의 병렬연결 단지", icon: "🔀", unit: "병렬연결", q: "6 Ω 저항 2개를 병렬 연결했을 때 전체 합성 저항은?", opts: ["1 Ω", "3 Ω", "6 Ω", "12 Ω"], ans: 1, exp: "1/R = 1/6 + 1/6 = 2/6 ➔ R = 3 Ω 입니다.", price: 2800 },
+    { name: "가정용 배선 센터", icon: "🏠", unit: "가정용 배선", q: "가전제품들을 모두 병렬로 연결하는 까닭은?", opts: ["모두 220V 전압 걸리고 독립 사용 가능", "전력 소비 무한대", "전체 저항 증가", "전선 절약"], ans: 0, exp: "병렬연결 시 동일 전압이 걸리고 각각 개별 스위치 작동이 가능합니다.", price: 3000 },
     { name: "저항의 결정 요인", icon: "💡", unit: "저항 요인", q: "도선의 전기 저항을 가장 작게 만드는 조건은?", opts: ["길고 좁다", "길고 넓다", "짧고 좁다", "짧고 넓다"], ans: 3, exp: "저항은 길이에 비례하고 단면적에 반비례하므로 짧고 굵을수록 작습니다.", price: 3200 },
     { name: "자석과 자기력선", icon: "🧭", unit: "자기장", q: "나침반 N극이 가리키는 방향은 자기장의 어느 방향일까요?", opts: ["자석의 N극", "자기장의 방향(N에서 나와 S로)", "자석의 중심", "지구의 남극"], ans: 1, exp: "자기장의 방향은 나침반 바늘의 N극이 가리키는 방향입니다.", price: 3400 },
-    { name: "직선 도선 오른손 법칙", icon: "〰️", unit: "앙페르 법칙", q: "직선 도선 자기장 탐색 시 오른손 엄지손가락이 가리키는 것은?", opts: ["자기장 방향", "전자 이동 방향", "전자기력 방향", "전류 방향"], ans: 3, exp: "엄지가 전류 방향, 네 손가락이 감아쥐는 방향이 자기장 방향입니다.", price: 3600 },
-    { name: "원형 코일과 전자석", icon: "🌀", unit: "전자석", q: "전자석의 세기를 더 강하게 만드는 방법이 아닌 것은?", opts: ["코일 감은 수 증가", "전류 세기 증가", "전류 방향을 1초마다 반전", "내부 연철심 삽입"], ans: 2, exp: "전류 방향 반전은 극성만 바꿀 뿐 세기와는 무관합니다.", price: 3800 },
-    { name: "전동기(모터) 팩토리", icon: "⚙️", unit: "전자기력", q: "자기장 속 도선이 받는 전자기력이 최대가 되는 각도는?", opts: ["수직일 때 (90도)", "30도", "자기장과 전류가 나란할 때 (0도)", "반대 방향일 때 (180도)"], ans: 0, exp: "자기장과 전류의 방향이 직교(90도)할 때 가장 큰 힘을 받습니다.", price: 4000 }
+    { name: "직선 도선 오른손 법칙", icon: "〰️", unit: "앙페르 법칙", q: "직선 도선 자기장 탐색 시 오른손 엄지손가락이 가리키는 것은?", opts: ["자기장 방향", "전류 방향", "전자기력 방향", "전자 이동 방향"], ans: 1, exp: "엄지가 전류 방향, 네 손가락이 감아쥐는 방향이 자기장 방향입니다.", price: 3600 },
+    { name: "원형 코일과 전자석", icon: "🌀", unit: "전자석", q: "전자석의 세기를 더 강하게 만드는 방법이 아닌 것은?", opts: ["코일 감은 수 증가", "전류 세기 증가", "내부 연철심 삽입", "전류 방향을 1초마다 반전"], ans: 3, exp: "전류 방향 반전은 극성만 바꿀 뿐 세기와는 무관합니다.", price: 3800 },
+    { name: "전동기(모터) 팩토리", icon: "⚙️", unit: "전자기력", q: "자기장 속 도선이 받는 전자기력이 최대가 되는 각도는?", opts: ["자기장과 전류가 나란할 때 (0도)", "30도", "수직일 때 (90도)", "반대 방향일 때 (180도)"], ans: 2, exp: "자기장과 전류의 방향이 직교(90도)할 때 가장 큰 힘을 받습니다.", price: 4000 }
   ]
 };
 
@@ -1398,9 +1348,9 @@ function generateGenericUnitTiles(unitName) {
   const icons = ["🔬", "⚗️", "🧪", "🔭", "📐", "💡", "⚡", "🌡️", "💎", "🌋", "🌪️", "🪐", "🧬", "🌿", "🐾", "🏆"];
   const subtopics = ["핵심 탐구", "원리와 법칙", "자료 해석", "실생활 응용"];
   const questions = [
-    { q: `[${unitName}] 탐구 과정에서 가설을 검증하기 위해 가장 적절한 방법은?`, opts: ["주관적 직관에 의존", "통제된 조건에서 실험 수행", "오차를 임의로 조작", "한 번의 관찰로 일반화"], ans: 1, exp: "과학 탐구는 변인을 통제하고 반복 가능한 객관적 실험을 통해 가설을 검증합니다." },
-    { q: `[${unitName}] 관련 현상에서 측정값의 정확도를 높이기 위한 방법은?`, opts: ["측정 도구를 임의로 변경", "가장 마음에 드는 값만 선택", "여러 번 측정하여 평균값 계산", "첫 번째 측정값만 사용"], ans: 2, exp: "반복 측정 후 평균을 구하면 우연 오차를 줄이고 신뢰도를 높일 수 있습니다." },
-    { q: `[${unitName}] 실험 시 실험군과 대조군을 설정하는 주된 목적은?`, opts: ["우연한 결과를 유도하기 위해", "실험 시간을 2배 늘리기 위해", "실험 기구를 다 쓰기 위해", "조작 변인의 효과를 비교 확인하기 위해"], ans: 3, exp: "대조군을 두어야 조작 변인에 따른 결과 차이를 명확히 비교할 수 있습니다." },
+    { q: `[${unitName}] 탐구 과정에서 가설을 검증하기 위해 가장 적절한 방법은?`, opts: ["통제된 조건에서 실험 수행", "주관적 직관에 의존", "오차를 임의로 조작", "한 번의 관찰로 일반화"], ans: 0, exp: "과학 탐구는 변인을 통제하고 반복 가능한 객관적 실험을 통해 가설을 검증합니다." },
+    { q: `[${unitName}] 관련 현상에서 측정값의 정확도를 높이기 위한 방법은?`, opts: ["여러 번 측정하여 평균값 계산", "가장 마음에 드는 값만 선택", "측정 도구를 임의로 변경", "첫 번째 측정값만 사용"], ans: 0, exp: "반복 측정 후 평균을 구하면 우연 오차를 줄이고 신뢰도를 높일 수 있습니다." },
+    { q: `[${unitName}] 실험 시 실험군과 대조군을 설정하는 주된 목적은?`, opts: ["조작 변인의 효과를 비교 확인하기 위해", "실험 시간을 2배 늘리기 위해", "실험 기구를 다 쓰기 위해", "우연한 결과를 유도하기 위해"], ans: 0, exp: "대조군을 두어야 조작 변인에 따른 결과 차이를 명확히 비교할 수 있습니다." },
     { q: `[${unitName}] 단원의 기본 원리가 실생활에 적용된 대표적 사례는?`, opts: ["안전 장치 및 첨단 기술 응용", "원시 채집 생활", "무동력 자연 방치", "단순 폐기물 매립"], ans: 0, exp: "과학적 원리는 생활 속 편리와 안전을 증진하는 다양한 기술로 응용됩니다." }
   ];
 
@@ -2126,8 +2076,8 @@ const game = {
       title: `🔓 오차 분석실 탈출 퀴즈!`,
       sub: `실험실 안전 및 오차 관련 질문에 올바르게 답하면 다음 턴 즉시 탈출합니다!`,
       q: "실험 도중 시험관의 액체를 가열할 때 시험관 입구가 향해야 하는 안전한 방향은?",
-      opts: ["자신의 얼굴 방향", "친구가 있는 방향", "창문 바로 앞", "사람이 없는 빈 공간"],
-      ans: 3,
+      opts: ["자신의 얼굴 방향", "친구가 있는 방향", "사람이 없는 빈 공간", "창문 바로 앞"],
+      ans: 2,
       exp: "가열 중 액체가 갑자기 튀어 화상을 입을 수 있으므로 항상 사람이 없는 쪽을 향해야 합니다.",
       team: team,
       isDouble: false
@@ -2184,7 +2134,7 @@ const game = {
   },
 
   endGame() {
-    if (window.KJS) { if (sfx.enabled !== false) KJS.win({ toast:false }); } else sfx.fanfare();
+    sfx.fanfare();
     const ranked = [...this.getActiveTeams()].sort((a, b) => {
       const valA = a.pts + a.bases * 2000;
       const valB = b.pts + b.bases * 2000;
@@ -2367,22 +2317,27 @@ window.addEventListener("DOMContentLoaded", () => {
   game.init();
 });
 </script>
-<script src="./sounds/kjs-sound.js"></script>
-<script id="kjs-sound-bridge">
+<script id="kjsImmersive">
+/* 몰입 모드(게임 화면 확대) — ⛶ 버튼을 누르면 전자칠판 실행기에서 이 게임을 전체화면·확대로 열어요 */
 (function(){
-  var T={toast:false};
-  function muted(o){ return (o && o.enabled===false) || (typeof soundEnabled!=="undefined" && !soundEnabled); }
-  function wrap(o, m, kind){
-    if(!o || typeof o[m]!=="function") return;
-    var orig=o[m];
-    o[m]=function(){ if(window.KJS){ if(!muted(o)) KJS[kind](T); return; } return orig.apply(this, arguments); };
-  }
-  if(typeof sfx!=="undefined"){ wrap(sfx,"correct","ok"); wrap(sfx,"wrong","no"); }
+  try{
+    var imm=/[?&]imm=1(&|$)/.test(location.search);
+    var st=document.createElement('style');
+    st.textContent='#kjsImmBtn{position:fixed;right:14px;bottom:14px;z-index:2147482000;min-height:56px;padding:0 20px;border-radius:16px;border:2px solid #38bdf8;background:rgba(10,14,23,.92);color:#fff;font:800 18px/1 -apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic",sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 20px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none}'
+      +'#kjsImmBtn:active{transform:scale(.96)}@media print{#kjsImmBtn{display:none!important}}'
+      +'html.kjs-imm a[href*="서랍"],html.kjs-imm a.btn-unified-nav,html.kjs-imm .unified-nav-actions a,html.kjs-imm #kjsImmBtn{display:none!important}';
+    (document.head||document.documentElement).appendChild(st);
+    if(imm){document.documentElement.classList.add('kjs-imm');return;}
+    if(window.top!==window)return;
+    var b=document.createElement('button');b.id='kjsImmBtn';b.type='button';b.textContent='⛶ 몰입 모드';b.title='게임 화면을 전체화면으로 크게 열기';
+    b.onclick=function(){
+      var f=location.pathname.split('/').pop()||'';try{f=decodeURIComponent(f);}catch(e){}
+      var t=(document.title||f).slice(0,40);
+      location.href='./전자칠판_실행기.html?f='+encodeURIComponent(f)+'&imm=1&t='+encodeURIComponent(t);
+    };
+    (document.body||document.documentElement).appendChild(b);
+  }catch(e){}
 })();
 </script>
-<script src="./sounds/kjs-qr.js"></script>
-<script src="./sounds/kjs-db-config.js"></script>
-<script src="./sounds/kjs-db.js" data-type="game"></script>
-<script src="./sounds/kjs-marble-fit.js"></script>
 </body>
 </html>
