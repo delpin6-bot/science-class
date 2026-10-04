@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>지구의 공전과 별자리 변화 가상실험실</title>
+<style>
+:root{--bg:#04070f;--card:#0c1328;--card2:#101a35;--ln:#2a3a66;--tx:#f1f5f9;--sub:#c3d0e8;--gold:#fde68a;--cy:#7dd3fc;
+  --fs:clamp(16px,1.05vw,40px);--fm:clamp(20px,1.35vw,52px);--fk:clamp(24px,1.7vw,64px);--tap:clamp(50px,3.1vw,100px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;font-size:var(--fs);-webkit-user-select:none;user-select:none;touch-action:none}
+button,a,input{font-family:inherit}button{color:inherit;cursor:pointer;border:0;background:none;font-size:inherit;touch-action:manipulation}a{color:inherit;text-decoration:none}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column}
+.hd{display:flex;align-items:center;gap:12px;padding:5px 12px;border-bottom:2px solid var(--ln);background:#060b19;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}.brand .ic{width:calc(var(--tap) - 6px);height:calc(var(--tap) - 6px);border-radius:14px;background:radial-gradient(circle at 35% 30%,#fde68a,#f59e0b 55%,#7c2d12);display:flex;align-items:center;justify-content:center;font-size:1.4em;flex:none}
+.brand h1{font-size:var(--fm);font-weight:900;line-height:1.15}.brand small{display:block;font-size:.78em;color:var(--sub);font-weight:700}
+.tb,.chip{min-height:var(--tap);min-width:var(--tap);padding:0 16px;border-radius:14px;background:var(--card);border:2px solid var(--ln);font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.tb:active,.chip:active{transform:scale(.97)}.tb.on,.chip.on{background:#16a34a;border-color:#bbf7d0}.chip.on.alt{background:#4f46e5;border-color:#a5b4fc}
+.tools{display:flex;gap:8px}
+/* 핵심 정보 카드 */
+.info{margin:6px 12px 0;background:linear-gradient(135deg,#1c1a05,#0c1328);border:2.5px solid #f59e0b;border-radius:16px;padding:6px 16px;display:flex;flex-direction:column;gap:2px;position:relative}
+.info .l1{font-size:var(--fm);font-weight:900;line-height:1.3}.info .l1 b{color:#fde047}.info .l1 em{font-style:normal;color:#fca5a5;font-size:.82em;font-weight:800}
+.info .l2{font-size:var(--fm);font-weight:900;line-height:1.3}.info .l2 b{color:#7dd3fc}
+.info .why{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:var(--tap);padding:0 14px;border-radius:14px;background:#7c3aed;border:2px solid #ddd6fe;font-weight:900;color:#fff}
+/* 듀얼 뷰 */
+.mn{flex:1;min-height:0;display:flex;gap:8px;padding:6px 12px}
+.box{position:relative;border-radius:18px;border:2px solid var(--ln);overflow:hidden;background:#050914;min-width:0;min-height:0}
+#spaceBox{flex:46}.col{flex:54;display:flex;flex-direction:column;gap:8px;min-width:0}#dayBox{flex:36}#nightBox{flex:64}
+.box canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.cap{position:absolute;left:10px;top:8px;font-weight:900;font-size:var(--fs);background:rgba(6,11,25,.84);border:1.5px solid var(--ln);border-radius:12px;padding:3px 12px;z-index:2;pointer-events:none;max-width:94%}
+.cap2{position:absolute;right:10px;bottom:8px;font-weight:800;font-size:calc(var(--fs)*.95);background:rgba(6,11,25,.86);border:1.5px solid var(--ln);border-radius:12px;padding:3px 12px;z-index:2;pointer-events:none;max-width:94%;text-align:right;line-height:1.4}
+.cap2 b{color:#fde047}
+#dragHint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(6,11,25,.9);border:2px solid #4ade80;color:#86efac;font-weight:800;border-radius:14px;padding:4px 16px;z-index:3;pointer-events:none;transition:opacity .4s}
+/* 컨트롤러 */
+.ctl{padding:6px 12px 10px;border-top:2px solid var(--ln);background:#060b19;display:flex;flex-direction:column;gap:6px}
+.r1,.r2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.big{min-height:var(--tap);padding:0 18px;border-radius:14px;border:3px solid rgba(255,255,255,.5);font-weight:900;color:#fff;background:linear-gradient(135deg,#0ea5e9,#0369a1);touch-action:manipulation}.big.pl{background:linear-gradient(135deg,#7c3aed,#4f46e5);min-width:calc(var(--tap)*2.1)}.big.or{background:linear-gradient(135deg,#f59e0b,#ea580c)}
+.sl{flex:1;min-width:260px;display:flex;flex-direction:column}
+.sl input[type=range]{width:100%;height:var(--tap);accent-color:#f59e0b;background:transparent;cursor:pointer;touch-action:pan-y}
+.sl .tk{display:flex;justify-content:space-between;color:var(--sub);font-weight:800;font-size:.85em;padding:0 4px;margin-top:-8px}
+#dnow{min-width:clamp(110px,9vw,260px);text-align:center;font-weight:900;font-size:var(--fk);color:var(--gold);line-height:1.1}#dnow small{display:block;font-size:.42em;color:var(--sub);font-weight:700}
+.sea{display:flex;gap:6px}.sea .chip{padding:0 12px}
+/* 서랍 · 모달 */
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:none}#dim.on{display:block}
+.dr{position:fixed;top:0;right:0;bottom:0;width:clamp(320px,26vw,700px);background:#0a1126;border-left:3px solid var(--ln);z-index:50;transform:translateX(105%);transition:transform .3s;padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto;touch-action:pan-y}.dr.on{transform:none}
+.dr h3{font-size:var(--fm);display:flex;justify-content:space-between;align-items:center}.dr h4{color:var(--cy);margin-bottom:6px}
+.x{min-width:var(--tap);min-height:var(--tap);border-radius:14px;background:#27406e;font-weight:900;color:#fff;flex:none}
+.row2{display:flex;gap:6px;flex-wrap:wrap}.row2 .chip{flex:1}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:60;padding:14px;touch-action:pan-y}.ov.on{display:flex}
+.pop{background:#0c1328;border:2px solid var(--ln);border-radius:22px;width:100%;max-width:560px;max-height:94vh;overflow:auto;padding:18px}
+.pop.w{max-width:min(980px,96vw)}
+.pop h2{font-size:var(--fm);color:var(--cy);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0}.mgrid .chip{padding:0 6px}
+#bmsg{font-size:var(--fm);line-height:1.6;font-weight:700;background:#101a35;border:2px solid var(--ln);border-radius:16px;padding:10px 16px;min-height:5em}
+#bmsg b{color:#fde047}#bmsg .bl{color:#7dd3fc;font-weight:900}#bmsg small{display:block;margin-top:6px;color:var(--sub);font-size:.72em;line-height:1.5}
+.qn3{background:#2a2410;border:1px solid #f59e0b;color:var(--gold);border-radius:12px;padding:10px 14px;line-height:1.5;margin-bottom:8px}
+#qrUrl{width:100%;min-height:var(--tap);border-radius:14px;border:2px solid var(--ln);background:#0b1726;color:#fff;font:inherit;padding:0 12px;margin-bottom:8px;user-select:text;-webkit-user-select:text}
+#qrCv{background:#fff;padding:12px;border-radius:12px;width:min(70vw,340px);height:auto;image-rendering:pixelated;display:block;margin:0 auto}#qrMsg{color:#fca5a5;font-weight:700;min-height:1.3em}#qrCap{font-size:.8em;color:var(--sub);word-break:break-all;text-align:center}
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);z-index:90;background:rgba(8,13,30,.97);border:2px solid var(--gold);border-radius:16px;padding:10px 24px;font-weight:800;transition:transform .3s;pointer-events:none;max-width:92%;text-align:center}#toast.on{transform:translate(-50%,0)}
+@media (max-width:1000px){.mn{flex-direction:column;overflow:auto}#spaceBox{flex:none;height:56vh}.col{flex:none;height:90vh}.info .why{position:static;transform:none;margin-top:4px}.hd .brand small{display:none}.mgrid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div class="brand"><div class="ic">♈</div><div><h1>지구의 공전과 별자리 변화</h1><small>중2 · 지구와 달의 운동 · 황도 12궁 · 한밤중 남쪽 하늘의 별자리</small></div></div>
+    <div class="tools">
+      <button class="tb" id="bFs" title="전체화면">⛶ 전체화면</button>
+      <button class="tb" id="bSet" title="설정">⚙️ 설정</button>
+    </div>
+  </header>
+  <section class="info" id="info">
+    <div class="l1" id="l1">현재 8월 1일: 태양이 있는 별자리는 <b>게자리</b> <em>(낮이라 관측 불가)</em></div>
+    <div class="l2" id="l2">한밤중 남쪽 하늘에서 보이는 대표 별자리는 <b>염소자리</b></div>
+    <button class="why" id="bWhy">🎂 생일 별자리는?</button>
+  </section>
+  <main class="mn">
+    <div class="box" id="spaceBox"><canvas id="cvS"></canvas><div class="cap" id="capS">🛰 우주 관점 : 북극 상공에서 본 지구의 공전</div><div id="dragHint">👆 지구를 끌어서 공전시켜 보세요</div></div>
+    <div class="col">
+      <div class="box" id="dayBox"><canvas id="cvD"></canvas><div class="cap" id="capD">☀️ 낮 하늘 (태양 방향 · 남쪽)</div><div class="cap2" id="cap2D"></div></div>
+      <div class="box" id="nightBox"><canvas id="cvN"></canvas><div class="cap" id="capN">🌙 한밤중 남쪽 하늘</div><div class="cap2" id="cap2N"></div></div>
+    </div>
+  </main>
+  <footer class="ctl">
+    <div class="r1">
+      <button class="big pl" id="bPlay">▶ 공전 재생</button>
+      <button class="big" id="bPrev">◀ 이전 달</button>
+      <button class="big" id="bNext">다음 달 ▶</button>
+      <div id="dnow">8월 1일<small>여름</small></div>
+      <div class="sl"><input type="range" id="sl" min="0" max="12" step="0.01" value="7" aria-label="월 슬라이더"><div class="tk"><span>1월</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6월</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12월</span></div></div>
+      <div class="sea" id="sea"><button class="chip" data-d="79">🌸 봄</button><button class="chip" data-d="171">☀️ 여름</button><button class="chip" data-d="265">🍂 가을</button><button class="chip" data-d="355">❄️ 겨울</button></div>
+    </div>
+    <div class="r2">
+      <button class="chip alt on" id="tRay">🔦 시선 광선 (태양 쪽 / 반대쪽)</button>
+      <button class="chip alt" id="tMod">🪑 교과서 탐구 모드 : 전등 · 회전의자</button>
+      <button class="chip alt on" id="tNm">🔤 황도 12궁 명칭</button>
+      <button class="chip" id="tSpd" title="재생 속도">⏩ ×1</button>
+    </div>
+  </footer>
+</div>
+<div id="dim"></div>
+<aside class="dr" id="dr">
+  <h3>⚙️ 설정 <button class="x" id="drX">✕</button></h3>
+  <section><h4>🔗 이동</h4><div class="row2"><a class="chip" href="./가상실험실_서랍.html">🔬 가상실험실</a><a class="chip" href="./통합_과학수업_서랍.html">📚 통합과학</a><a class="chip" href="./시작하기_수업게임서랍.html">🎮 수업게임</a><a class="chip" href="./동기유발_서랍.html">🚀 동기유발</a></div></section>
+  <section><h4>📱 학생 접속 QR</h4><button class="tb" id="bQR" style="width:100%">📱 QR 코드 만들기</button></section>
+  <section><h4>ℹ️ 알아 두기</h4><p style="line-height:1.6;color:var(--sub);font-weight:600">교과서는 태양이 지나는 별자리를 12개로 단순하게 나누지만, 실제로는 <b>뱀주인자리</b>도 지나가요. 또 점성술의 ‘별자리 날짜’는 오래전에 정해져서 지금 태양이 있는 별자리와 한 칸쯤 달라요(지구 자전축의 세차 운동).</p></section>
+  <section><h4>↺ 처음부터</h4><button class="tb" id="bAll" style="width:100%">날짜 · 표시 초기화</button></section>
+</aside>
+<div class="ov" id="ovB"><div class="pop w">
+  <h2><span>🎂 생일 별자리는 왜 그날 밤에 안 보일까?</span><button class="x" id="bX">✕</button></h2>
+  <div style="font-weight:800;color:var(--sub)">내 생일이 있는 달을 눌러 보세요</div>
+  <div class="mgrid" id="mg"></div>
+  <div id="bmsg">달을 누르면 설명이 나와요.</div>
+</div></div>
+<div class="ov" id="ovQ"><div class="pop">
+  <h2><span>📱 학생 접속 QR코드</span><button class="x" id="qX">✕</button></h2>
+  <div class="qn3">학생 휴대폰·태블릿 카메라로 찍으면 바로 열립니다. GitHub Pages 주소를 한 번 붙여 넣으면 이 컴퓨터에 저장돼요.</div>
+  <input id="qrUrl" type="url" placeholder="https://계정명.github.io/저장소명/지구의_공전과_별자리.html" autocomplete="off" spellcheck="false">
+  <div id="qrMsg"></div><canvas id="qrCv" width="400" height="400"></canvas><div id="qrCap"></div>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* qrcode-generator 2.0.4 (c) Kazuhiko Arase, MIT License — 오프라인 내장 */
+//---------------------------------------------------------------------
+//
+// QR Code Generator for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//  http://www.opensource.org/licenses/mit-license.php
+//
+// The word 'QR Code' is registered trademark of
+// DENSO WAVE INCORPORATED
+//  http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+
+var qrcode = function() {
+
+  //---------------------------------------------------------------------
+  // qrcode
+  //---------------------------------------------------------------------
+
+  /**
+   * qrcode
+   * @param typeNumber 1 to 40
+   * @param errorCorrectionLevel 'L','M','Q','H'
+   */
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+
+    var _this = {};
+
+    var makeImpl = function(test, maskPattern) {
+
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+
+      mapData(_dataCache, maskPattern);
+    };
+
+    var setupPositionProbePattern = function(row, col) {
+
+      for (var r = -1; r <= 7; r += 1) {
+
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+
+        for (var c = -1; c <= 7; c += 1) {
+
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    var getBestMaskPattern = function() {
+
+      var minLostPoint = 0;
+      var pattern = 0;
+
+      for (var i = 0; i < 8; i += 1) {
+
+        makeImpl(true, i);
+
+        var lostPoint = QRUtil.getLostPoint(_this);
+
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+
+      return pattern;
+    };
+
+    var setupTimingPattern = function() {
+
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+
+    var setupPositionAdjustPattern = function() {
+
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+
+      for (var i = 0; i < pos.length; i += 1) {
+
+        for (var j = 0; j < pos.length; j += 1) {
+
+          var row = pos[i];
+          var col = pos[j];
+
+          if (_modules[row][col] != null) {
+            continue;
+          }
+
+          for (var r = -2; r <= 2; r += 1) {
+
+            for (var c = -2; c <= 2; c += 1) {
+
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    var setupTypeNumber = function(test) {
+
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+
+    var setupTypeInfo = function(test, maskPattern) {
+
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+
+      // vertical
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+
+      // horizontal
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+
+      // fixed module
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+
+    var mapData = function(data, maskPattern) {
+
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+
+        if (col == 6) col -= 1;
+
+        while (true) {
+
+          for (var c = 0; c < 2; c += 1) {
+
+            if (_modules[row][col - c] == null) {
+
+              var dark = false;
+
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+
+              var mask = maskFunc(row, col - c);
+
+              if (mask) {
+                dark = !dark;
+              }
+
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+
+          row += inc;
+
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    var createBytes = function(buffer, rsBlocks) {
+
+      var offset = 0;
+
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+
+        dcdata[r] = new Array(dcCount);
+
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+
+      var data = new Array(totalCodeCount);
+      var index = 0;
+
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      return data;
+    };
+
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+
+      var buffer = qrBitBuffer();
+
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+
+      // calc num max data.
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+
+      // end code
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+
+      // padding
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+
+      // padding
+      while (true) {
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+
+      return createBytes(buffer, rsBlocks);
+    };
+
+    _this.addData = function(data, mode) {
+
+      mode = mode || 'Byte';
+
+      var newData = null;
+
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+
+        _typeNumber = typeNumber;
+      }
+
+      makeImpl(false, getBestMaskPattern() );
+    };
+
+    _this.createTableTag = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var qrHtml = '';
+
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+
+        qrHtml += '<tr>';
+
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+
+        qrHtml += '</tr>';
+      }
+
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+
+      return qrHtml;
+    };
+
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        // Called by options.
+        opts = arguments[0];
+        // overwrite cellSize and margin.
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      // Compose alt property surrogate
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+
+      // Compose title property surrogate
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+
+      return qrSvg;
+    };
+
+    _this.createDataURL = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+
+    _this.createImgTag = function(cellSize, margin, alt) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+
+      return img;
+    };
+
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r1, r2, p;
+
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+
+        ascii += '\n';
+      }
+
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r, p;
+
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          line += p ? white : black;
+        }
+
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrcode.stringToBytes
+  //---------------------------------------------------------------------
+
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+
+  //---------------------------------------------------------------------
+  // qrcode.createStringToBytes
+  //---------------------------------------------------------------------
+
+  /**
+   * @param unicodeData base64 string of byte array.
+   * [16bit Unicode],[16bit Bytes], ...
+   * @param numChars
+   */
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+
+    // create conversion map.
+
+    var unicodeMap = function() {
+
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+
+      return unicodeMap;
+    }();
+
+    var unknownChar = '?'.charCodeAt(0);
+
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              // 1byte
+              bytes.push(b);
+            } else {
+              // 2bytes
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+
+  //---------------------------------------------------------------------
+  // QRMode
+  //---------------------------------------------------------------------
+
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+
+  //---------------------------------------------------------------------
+  // QRErrorCorrectionLevel
+  //---------------------------------------------------------------------
+
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+
+  //---------------------------------------------------------------------
+  // QRMaskPattern
+  //---------------------------------------------------------------------
+
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+
+  //---------------------------------------------------------------------
+  // QRUtil
+  //---------------------------------------------------------------------
+
+  var QRUtil = function() {
+
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+
+    var _this = {};
+
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+
+    _this.getMaskFunction = function(maskPattern) {
+
+      switch (maskPattern) {
+
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+
+    _this.getLengthInBits = function(mode, type) {
+
+      if (1 <= type && type < 10) {
+
+        // 1 - 9
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 27) {
+
+        // 10 - 26
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 41) {
+
+        // 27 - 40
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else {
+        throw 'type:' + type;
+      }
+    };
+
+    _this.getLostPoint = function(qrcode) {
+
+      var moduleCount = qrcode.getModuleCount();
+
+      var lostPoint = 0;
+
+      // LEVEL1
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+
+          for (var r = -1; r <= 1; r += 1) {
+
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+
+            for (var c = -1; c <= 1; c += 1) {
+
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+
+              if (r == 0 && c == 0) {
+                continue;
+              }
+
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+
+      // LEVEL2
+
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+
+      // LEVEL3
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      // LEVEL4
+
+      var darkCount = 0;
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+
+      return lostPoint;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // QRMath
+  //---------------------------------------------------------------------
+
+  var QRMath = function() {
+
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+
+    // initialize tables
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+
+    var _this = {};
+
+    _this.glog = function(n) {
+
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+
+      return LOG_TABLE[n];
+    };
+
+    _this.gexp = function(n) {
+
+      while (n < 0) {
+        n += 255;
+      }
+
+      while (n >= 256) {
+        n -= 255;
+      }
+
+      return EXP_TABLE[n];
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrPolynomial
+  //---------------------------------------------------------------------
+
+  function qrPolynomial(num, shift) {
+
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+
+    var _this = {};
+
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+
+    _this.getLength = function() {
+      return _num.length;
+    };
+
+    _this.multiply = function(e) {
+
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+
+      return qrPolynomial(num, 0);
+    };
+
+    _this.mod = function(e) {
+
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+
+      // recursive call
+      return qrPolynomial(num, 0).mod(e);
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // QRRSBlock
+  //---------------------------------------------------------------------
+
+  var QRRSBlock = function() {
+
+    var RS_BLOCK_TABLE = [
+
+      // L
+      // M
+      // Q
+      // H
+
+      // 1
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+
+      // 2
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+
+      // 3
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+
+      // 4
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+
+      // 5
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+
+      // 6
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+
+      // 7
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+
+      // 8
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+
+      // 9
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+
+      // 10
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+
+      // 11
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+
+      // 12
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+
+      // 13
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+
+      // 14
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+
+      // 15
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+
+      // 16
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+
+      // 17
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+
+      // 18
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+
+      // 19
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+
+      // 20
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+
+      // 21
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+
+      // 22
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+
+      // 23
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+
+      // 24
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+
+      // 25
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+
+      // 26
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+
+      // 27
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+
+      // 28
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+
+      // 29
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+
+      // 30
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+
+      // 31
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+
+      // 32
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+
+      // 33
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+
+      // 34
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+
+      // 35
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+
+      // 36
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+
+      // 37
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+
+      // 38
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+
+      // 39
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+
+      // 40
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+
+    var _this = {};
+
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+
+      var length = rsBlock.length / 3;
+
+      var list = [];
+
+      for (var i = 0; i < length; i += 1) {
+
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+
+      return list;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrBitBuffer
+  //---------------------------------------------------------------------
+
+  var qrBitBuffer = function() {
+
+    var _buffer = [];
+    var _length = 0;
+
+    var _this = {};
+
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+
+    _this.putBit = function(bit) {
+
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+
+      _length += 1;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrNumber
+  //---------------------------------------------------------------------
+
+  var qrNumber = function(data) {
+
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _data;
+
+      var i = 0;
+
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrAlphaNum
+  //---------------------------------------------------------------------
+
+  var qrAlphaNum = function(data) {
+
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var s = _data;
+
+      var i = 0;
+
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+
+    var getCode = function(c) {
+
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qr8BitByte
+  //---------------------------------------------------------------------
+
+  var qr8BitByte = function(data) {
+
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrKanji
+  //---------------------------------------------------------------------
+
+  var qrKanji = function(data) {
+
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      // self test for sjis support.
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+
+    var _bytes = stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _bytes;
+
+      var i = 0;
+
+      while (i + 1 < data.length) {
+
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
+        buffer.put(c, 13);
+
+        i += 2;
+      }
+
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+
+    return _this;
+  };
+
+  //=====================================================================
+  // GIF Support etc.
+  //
+
+  //---------------------------------------------------------------------
+  // byteArrayOutputStream
+  //---------------------------------------------------------------------
+
+  var byteArrayOutputStream = function() {
+
+    var _bytes = [];
+
+    var _this = {};
+
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64EncodeOutputStream
+  //---------------------------------------------------------------------
+
+  var base64EncodeOutputStream = function() {
+
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+
+    var _this = {};
+
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+
+    var encode = function(n) {
+      if (n < 0) {
+        // error.
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+
+    _this.writeByte = function(n) {
+
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+
+    _this.flush = function() {
+
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+
+      if (_length % 3 != 0) {
+        // padding
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+
+    _this.toString = function() {
+      return _base64;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64DecodeInputStream
+  //---------------------------------------------------------------------
+
+  var base64DecodeInputStream = function(str) {
+
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+
+    var _this = {};
+
+    _this.read = function() {
+
+      while (_buflen < 8) {
+
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+
+        var c = _str.charAt(_pos);
+        _pos += 1;
+
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          // ignore if whitespace.
+          continue;
+        }
+
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // gifImage (B/W)
+  //---------------------------------------------------------------------
+
+  var gifImage = function(width, height) {
+
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+
+    var _this = {};
+
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+
+    _this.write = function(out) {
+
+      //---------------------------------
+      // GIF Signature
+
+      out.writeString('GIF87a');
+
+      //---------------------------------
+      // Screen Descriptor
+
+      out.writeShort(_width);
+      out.writeShort(_height);
+
+      out.writeByte(0x80); // 2bit
+      out.writeByte(0);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Global Color Map
+
+      // black
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+
+      // white
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+
+      //---------------------------------
+      // Image Descriptor
+
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Local Color Map
+
+      //---------------------------------
+      // Raster Data
+
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+
+      out.writeByte(lzwMinCodeSize);
+
+      var offset = 0;
+
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+
+      //---------------------------------
+      // GIF Terminator
+      out.writeString(';');
+    };
+
+    var bitOutputStream = function(out) {
+
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+
+      var _this = {};
+
+      _this.write = function(data, length) {
+
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+
+      return _this;
+    };
+
+    var getLZWRaster = function(lzwMinCodeSize) {
+
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+
+      // Setup LZWTable
+      var table = lzwTable();
+
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+
+      // clear code
+      bitOut.write(clearCode, bitLength);
+
+      var dataIndex = 0;
+
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+
+      while (dataIndex < _data.length) {
+
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+
+        if (table.contains(s + c) ) {
+
+          s = s + c;
+
+        } else {
+
+          bitOut.write(table.indexOf(s), bitLength);
+
+          if (table.size() < 0xfff) {
+
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+
+            table.add(s + c);
+          }
+
+          s = c;
+        }
+      }
+
+      bitOut.write(table.indexOf(s), bitLength);
+
+      // end code
+      bitOut.write(endCode, bitLength);
+
+      bitOut.flush();
+
+      return byteOut.toByteArray();
+    };
+
+    var lzwTable = function() {
+
+      var _map = {};
+      var _size = 0;
+
+      var _this = {};
+
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+
+      _this.size = function() {
+        return _size;
+      };
+
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+
+      return _this;
+    };
+
+    return _this;
+  };
+
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+
+    var b = byteArrayOutputStream();
+    gif.write(b);
+
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+
+    return 'data:image/gif;base64,' + base64;
+  };
+
+  //---------------------------------------------------------------------
+  // returns qrcode function.
+
+  return qrcode;
+}();
+
+// multibyte support
+!function() {
+
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+          i++;
+          // UTF-16 encodes 0x10000-0x10FFFF by
+          // subtracting 0x10000 and splitting the
+          // 20 bits of 0x0-0xFFFFF into two halves
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+
+}();
+
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+
+</script>
+<script>
+"use strict";
+(function(){
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const D2R=Math.PI/180,TAU=Math.PI*2;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const mod=(a,n)=>((a%n)+n)%n;
+const FONT='"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+const LAT=37;
+const ST={doy:222,play:false,spd:1,rays:true,model:false,names:true,drag:false};
+let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2800);}
+function rng(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+/* ---------- 달력 · 태양의 위치 (적도 좌표) ---------- */
+const MLEN=[31,28,31,30,31,30,31,31,30,31,30,31],MSTART=[0,31,59,90,120,151,181,212,243,273,304,334];
+const xOfDoy=d=>{d=mod(d,365);let m=11;for(let i=0;i<12;i++){if(d<MSTART[i]+MLEN[i]){m=i;break;}}return m+(d-MSTART[m])/MLEN[m];};
+const doyOfX=x=>{x=clamp(x,0,11.99999);const m=Math.floor(x);return MSTART[m]+(x-m)*MLEN[m];};
+function monthDay(d){const x=xOfDoy(d),m=Math.floor(x),dd=1+Math.floor((x-m)*MLEN[m]+1e-9);return{m:m+1,d:Math.min(dd,MLEN[m])};}
+const EPS=23.4393*D2R;
+function sunLambda(doy){const n=9132+doy,L=280.460+0.9856474*n,g=(357.528+0.9856003*n)*D2R;return mod(L+1.915*Math.sin(g)+0.020*Math.sin(2*g),360);}
+function eclToEq(lamDeg,betaDeg){const l=lamDeg*D2R,b=(betaDeg||0)*D2R;const x=Math.cos(b)*Math.cos(l),y=Math.cos(b)*Math.sin(l)*Math.cos(EPS)-Math.sin(b)*Math.sin(EPS),z=Math.cos(b)*Math.sin(l)*Math.sin(EPS)+Math.sin(b)*Math.cos(EPS);return{ra:mod(Math.atan2(y,x)/D2R,360)/15,dec:Math.asin(clamp(z,-1,1))/D2R};}
+const sunEq=doy=>eclToEq(sunLambda(doy),0);
+function doyOfLambda(target){let best=0,bd=1e9;for(let d=0;d<365;d+=0.5){const df=Math.abs(mod(sunLambda(d)-target+180,360)-180);if(df<bd){bd=df;best=d;}}
+  let lo=best-0.5,hi=best+0.5;for(let i=0;i<24;i++){const m=(lo+hi)/2,e=mod(sunLambda(m)-target+180,360)-180;if(e<0)lo=m;else hi=m;}return mod((lo+hi)/2,365);}
+/* ---------- 황도 12궁 별자리 : 실제 별의 적경(h)·적위(°)·등급 ---------- */
+const ZOD=[
+ {id:'aries',nm:'양자리',sym:'♈',col:'#fb923c',st:{hamal:[2.119,23.46,2.0],sheratan:[1.911,20.81,2.6],mesarthim:[1.892,19.29,3.9],c41:[2.833,27.26,3.6]},ln:[['mesarthim','sheratan'],['sheratan','hamal'],['hamal','c41']]},
+ {id:'taurus',nm:'황소자리',sym:'♉',col:'#4ade80',st:{aldebaran:[4.599,16.51,0.9],gamma:[4.330,15.63,3.6],delta:[4.382,17.54,3.8],epsilon:[4.477,19.18,3.5],theta:[4.478,15.87,3.4],zeta:[5.627,21.14,3.0],elnath:[5.438,28.61,1.7],alcyone:[3.791,24.11,2.9]},ln:[['gamma','delta'],['delta','epsilon'],['gamma','theta'],['theta','aldebaran'],['epsilon','elnath'],['aldebaran','zeta']]},
+ {id:'gemini',nm:'쌍둥이자리',sym:'♊',col:'#facc15',st:{castor:[7.577,31.89,1.6],pollux:[7.755,28.03,1.1],alhena:[6.628,16.40,1.9],tejat:[6.383,22.51,2.9],mebsuta:[6.732,25.13,3.0],wasat:[7.335,21.98,3.5]},ln:[['castor','pollux'],['castor','mebsuta'],['mebsuta','tejat'],['pollux','wasat'],['wasat','alhena']]},
+ {id:'cancer',nm:'게자리',sym:'♋',col:'#67e8f9',st:{iota:[8.778,28.76,4.0],borealis:[8.721,21.47,4.7],australis:[8.745,18.15,3.9],altarf:[8.275,9.19,3.5],acubens:[8.975,11.86,4.3]},ln:[['iota','borealis'],['borealis','australis'],['australis','altarf'],['australis','acubens']]},
+ {id:'leo',nm:'사자자리',sym:'♌',col:'#fbbf24',st:{regulus:[10.139,11.97,1.4],eta:[10.122,16.76,3.5],algieba:[10.333,19.84,2.1],adhafera:[10.278,23.42,3.4],rasalas:[9.879,26.01,3.9],zosma:[11.235,20.52,2.6],chertan:[11.237,15.43,3.3],denebola:[11.818,14.57,2.1]},ln:[['regulus','eta'],['eta','algieba'],['algieba','adhafera'],['adhafera','rasalas'],['algieba','zosma'],['zosma','denebola'],['denebola','chertan'],['chertan','regulus']]},
+ {id:'virgo',nm:'처녀자리',sym:'♍',col:'#a3e635',st:{spica:[13.420,-11.16,1.0],porrima:[12.694,-1.45,2.7],vindemiatrix:[13.036,10.96,2.8],zavijava:[11.845,1.76,3.6],heze:[13.578,-0.60,3.4],minelauva:[12.927,3.40,3.4]},ln:[['zavijava','porrima'],['porrima','minelauva'],['minelauva','vindemiatrix'],['porrima','heze'],['heze','spica']]},
+ {id:'libra',nm:'천칭자리',sym:'♎',col:'#f9a8d4',st:{zubenelgenubi:[14.848,-16.04,2.8],zubeneschamali:[15.283,-9.38,2.6],zubenelhakrabi:[15.592,-14.79,3.9],sigma:[15.068,-25.28,3.3]},ln:[['zubenelgenubi','zubeneschamali'],['zubeneschamali','zubenelhakrabi'],['zubenelhakrabi','zubenelgenubi'],['zubenelgenubi','sigma']]},
+ {id:'scorpius',nm:'전갈자리',sym:'♏',col:'#f87171',st:{acrab:[16.090,-19.81,2.6],dschubba:[16.006,-22.62,2.3],pi:[15.981,-26.11,2.9],antares:[16.490,-26.43,1.0],tau:[16.598,-28.22,2.8],epsilon:[16.836,-34.29,2.3],mu:[16.864,-38.05,3.0],zeta:[16.909,-42.36,3.6],eta:[17.203,-43.24,3.3],sargas:[17.622,-43.00,1.9],iota:[17.793,-40.13,3.0],kappa:[17.708,-39.03,2.4],lesath:[17.512,-37.30,2.7],shaula:[17.560,-37.10,1.6]},ln:[['acrab','dschubba'],['dschubba','pi'],['dschubba','antares'],['antares','tau'],['tau','epsilon'],['epsilon','mu'],['mu','zeta'],['zeta','eta'],['eta','sargas'],['sargas','iota'],['iota','kappa'],['kappa','shaula'],['shaula','lesath']]},
+ {id:'sagittarius',nm:'궁수자리',sym:'♐',col:'#c084fc',st:{kausa:[18.403,-34.38,1.8],kausm:[18.350,-29.83,2.7],kausb:[18.466,-25.42,2.8],nunki:[18.921,-26.30,2.0],ascella:[19.043,-29.88,2.6],alnasl:[18.097,-30.42,3.0],phi:[18.761,-26.99,3.2],tau:[19.116,-27.67,3.3]},ln:[['alnasl','kausm'],['kausm','kausb'],['kausb','phi'],['phi','nunki'],['nunki','tau'],['tau','ascella'],['ascella','kausa'],['kausa','alnasl'],['kausm','phi'],['kausm','ascella']]},
+ {id:'capricornus',nm:'염소자리',sym:'♑',col:'#94a3b8',st:{algedi:[20.300,-12.54,3.6],dabih:[20.350,-14.78,3.1],psi:[20.768,-25.27,4.1],omega:[20.864,-26.92,4.1],zeta:[21.445,-22.41,3.7],nashira:[21.668,-16.66,3.7],denebalgedi:[21.784,-16.13,2.9]},ln:[['algedi','dabih'],['dabih','psi'],['psi','omega'],['omega','zeta'],['zeta','nashira'],['nashira','denebalgedi'],['denebalgedi','algedi']]},
+ {id:'aquarius',nm:'물병자리',sym:'♒',col:'#38bdf8',st:{albali:[20.795,-9.50,3.8],sadalsuud:[21.526,-5.57,2.9],sadalmelik:[22.096,-0.32,3.0],gamma:[22.361,-1.39,3.8],zeta:[22.480,-0.02,3.7],eta:[22.589,-0.12,4.0],pi:[22.421,1.38,4.6],skat:[22.911,-15.82,3.3]},ln:[['albali','sadalsuud'],['sadalsuud','sadalmelik'],['sadalmelik','gamma'],['gamma','zeta'],['zeta','eta'],['zeta','pi'],['gamma','skat']]},
+ {id:'pisces',nm:'물고기자리',sym:'♓',col:'#34d399',st:{alrescha:[2.034,2.76,3.8],eta:[1.524,15.35,3.6],omicron:[1.757,9.16,4.3],gamma:[23.286,3.28,3.7],theta:[23.466,6.38,4.3],iota:[23.666,5.63,4.1],lambda:[23.703,1.78,4.5],omega:[23.988,6.86,4.0]},ln:[['gamma','theta'],['theta','iota'],['iota','lambda'],['lambda','gamma'],['iota','omega'],['omega','alrescha'],['alrescha','omicron'],['omicron','eta']]}];
+const ZM={};ZOD.forEach(z=>ZM[z.id]=z);
+const EXTRA=[['sirius','시리우스',6.752,-16.72,-1.4],['procyon','프로키온',7.655,5.22,0.4],['capella','카펠라',5.278,46.0,0.1],['betelgeuse','베텔게우스',5.919,7.41,0.5],['rigel','리겔',5.242,-8.20,0.1],['arcturus','아르크투루스',14.261,19.18,0.0],['vega','직녀성',18.616,38.78,0.0],['altair','견우성',19.846,8.87,0.8],['deneb','데네브',20.690,45.28,1.25],['fomalhaut','포말하우트',22.961,-29.62,1.2],['bellatrix','벨라트릭스',5.419,6.35,1.6],['alnilam','알닐람',5.604,-1.20,1.7]];
+const FAINT=(()=>{const R=rng(777),arr=[];for(let i=0;i<520;i++)arr.push({ra:R()*24,dec:Math.asin(R()*2-1)/D2R,mag:3.4+R()*2.2});return arr;})();
+/* 별자리 중심(적도 → 황경) */
+ZOD.forEach(z=>{let x=0,y=0,zz=0,n=0;Object.values(z.st).forEach(s=>{const a=s[0]*15*D2R,d=s[1]*D2R;x+=Math.cos(d)*Math.cos(a);y+=Math.cos(d)*Math.sin(a);zz+=Math.sin(d);n++;});
+  const ra=mod(Math.atan2(y,x),TAU),dec=Math.atan2(zz,Math.hypot(x,y));z.cra=ra/D2R/15;z.cdec=dec/D2R;z.c=[Math.cos(dec)*Math.cos(ra),Math.cos(dec)*Math.sin(ra),Math.sin(dec)];
+  const sl=Math.sin(ra)*Math.cos(EPS)+Math.tan(dec)*Math.sin(EPS);z.lam=mod(Math.atan2(sl,Math.cos(ra))/D2R,360);
+  // 그림용 평면 좌표 (하늘을 올려다본 모양 : 동쪽이 왼쪽, 북쪽이 위)
+  const c=z.c,nz=[0,0,1],e=[nz[1]*c[2]-nz[2]*c[1],nz[2]*c[0]-nz[0]*c[2],nz[0]*c[1]-nz[1]*c[0]],el=Math.hypot(...e),ee=e.map(v=>v/el);const nn=[c[1]*ee[2]-c[2]*ee[1],c[2]*ee[0]-c[0]*ee[2],c[0]*ee[1]-c[1]*ee[0]];
+  let mx=0;z.fig={};Object.keys(z.st).forEach(k=>{const s=z.st[k],a=s[0]*15*D2R,d=s[1]*D2R,v=[Math.cos(d)*Math.cos(a),Math.cos(d)*Math.sin(a),Math.sin(d)],dot=v[0]*c[0]+v[1]*c[1]+v[2]*c[2];
+    const px=(v[0]*ee[0]+v[1]*ee[1]+v[2]*ee[2])/dot,py=(v[0]*nn[0]+v[1]*nn[1]+v[2]*nn[2])/dot;z.fig[k]=[-px,py];mx=Math.max(mx,Math.abs(px),Math.abs(py));});
+  Object.keys(z.fig).forEach(k=>{z.fig[k]=[z.fig[k][0]/mx,z.fig[k][1]/mx];});});
+ZOD.sort((a,b)=>a.lam-b.lam);
+const angDiff=(a,b)=>Math.abs(mod(a-b+180,360)-180);
+const nearestZod=lam=>{let b=ZOD[0],bd=1e9;ZOD.forEach(z=>{const d=angDiff(z.lam,lam);if(d<bd){bd=d;b=z;}});return b;};
+/* 지평 좌표 (북위 37°) */
+function hor(raH,decDeg,lstH){const H=(lstH-raH)*15*D2R,L=LAT*D2R,d=decDeg*D2R;const sa=Math.sin(L)*Math.sin(d)+Math.cos(L)*Math.cos(d)*Math.cos(H);const alt=Math.asin(clamp(sa,-1,1));const x=Math.sin(d)*Math.cos(L)-Math.cos(d)*Math.sin(L)*Math.cos(H),y=-Math.cos(d)*Math.sin(H);let az=Math.atan2(y,x);if(az<0)az+=TAU;return{alt:alt,az:az};}
+const enu=(alt,az)=>[Math.sin(az)*Math.cos(alt),Math.cos(az)*Math.cos(alt),Math.sin(alt)];
+/* 현재 상태에서 파생되는 값 */
+function derive(doy){const lam=sunLambda(doy),eq=eclToEq(lam,0),sunZ=nearestZod(lam),midZ=nearestZod(lam+180);return{lam:lam,ra:eq.ra,dec:eq.dec,sunZ:sunZ,midZ:midZ,phi:mod(lam+180,360)};}
+window.__zd0={ZOD,sunLambda,derive,xOfDoy,doyOfX};
+
+/* ============================================================
+   캔버스 준비
+   ============================================================ */
+const cvS=$('#cvS'),gS=cvS.getContext('2d'),cvD=$('#cvD'),gD=cvD.getContext('2d'),cvN=$('#cvN'),gN=cvN.getContext('2d');
+const SZ={S:[400,600],D:[600,260],N:[600,380]};let DPR=1;
+function sizeAll(){DPR=Math.min(2,window.devicePixelRatio||1);
+  [['S','#spaceBox',cvS],['D','#dayBox',cvD],['N','#nightBox',cvN]].forEach(a=>{const e=$(a[1]);const w=e.clientWidth||SZ[a[0]][0],h=e.clientHeight||SZ[a[0]][1];SZ[a[0]]=[w,h];a[2].width=Math.round(w*DPR);a[2].height=Math.round(h*DPR);});}
+function txt(c,s,x,y,size,col,al,wt,stroke){c.font=(wt||800)+' '+size+'px '+FONT;c.textAlign=al||'center';c.textBaseline='middle';if(stroke){c.lineWidth=5;c.lineJoin='round';c.strokeStyle='rgba(4,7,15,.92)';c.strokeText(s,x,y);}c.fillStyle=col;c.fillText(s,x,y);}
+function arrowHead(c,x,y,ang,sz,col){c.fillStyle=col;c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.cos(ang-0.45)*sz,y-Math.sin(ang-0.45)*sz);c.lineTo(x-Math.cos(ang+0.45)*sz,y-Math.sin(ang+0.45)*sz);c.closePath();c.fill();}
+const fsz=w=>Math.round(clamp(w*0.03,13,30));
+/* 별자리 그림 (평면) */
+function drawFig(c,z,x,y,half,col,alpha,lw,dots,glow){
+  c.save();c.globalAlpha=alpha;c.strokeStyle=col;c.lineWidth=lw;c.lineCap='round';c.beginPath();
+  z.ln.forEach(l=>{const a=z.fig[l[0]],b=z.fig[l[1]];c.moveTo(x+a[0]*half,y-a[1]*half);c.lineTo(x+b[0]*half,y-b[1]*half);});c.stroke();
+  if(dots){Object.keys(z.fig).forEach(k=>{const p=z.fig[k],m=z.st[k][2],r=Math.max(1.8,(5-m)*0.9+0.8)*(half/40>1?Math.min(1.8,half/40):1);c.fillStyle=glow?'#fff':col;c.beginPath();c.arc(x+p[0]*half,y-p[1]*half,r,0,7);c.fill();});}
+  c.restore();}
+/* ============================================================
+   좌측 : 우주 뷰
+   ============================================================ */
+function spaceGeom(){const w=SZ.S[0],h=SZ.S[1],cx=w/2,cy=h*0.5,Rv=Math.min(w,h)/2*0.985;return{w:w,h:h,cx:cx,cy:cy,Rv:Rv,ro:Rv*0.44,r1:Rv*0.655,r2:Rv*0.985};}
+function earthPos(g,phiDeg){const a=phiDeg*D2R;return{x:g.cx+g.ro*Math.cos(a),y:g.cy-g.ro*Math.sin(a)};}
+function polar(g,r,lamDeg){const a=lamDeg*D2R;return[g.cx+r*Math.cos(a),g.cy-r*Math.sin(a)];}
+function wedge(c,x,y,ang,len,half,fill,line,lw){const a1=ang-half,a2=ang+half;c.fillStyle=fill;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a1)*len,y+Math.sin(a1)*len);c.arc(x,y,len,a1,a2);c.closePath();c.fill();c.strokeStyle=line;c.lineWidth=lw;c.lineCap='round';c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(ang)*len,y+Math.sin(ang)*len);c.stroke();}
+function drawSpace(){
+  const c=gS,g=spaceGeom(),F=fsz(g.w),dv=derive(ST.doy);c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,g.w,g.h);
+  const bgc=c.createRadialGradient(g.cx,g.cy,0,g.cx,g.cy,g.Rv*1.1);bgc.addColorStop(0,ST.model?'#2a2a2e':'#0a1330');bgc.addColorStop(1,ST.model?'#141416':'#03060e');c.fillStyle=bgc;c.fillRect(0,0,g.w,g.h);
+  // 황도 12궁 띠
+  const n=ZOD.length;
+  for(let i=0;i<n;i++){const z=ZOD[i],pz=ZOD[(i+n-1)%n],nz=ZOD[(i+1)%n];const a0=z.lam-mod(z.lam-pz.lam,360)/2,a1=z.lam+mod(nz.lam-z.lam,360)/2;
+    const isSun=z===dv.sunZ,isMid=z===dv.midZ;
+    if(!ST.model){c.beginPath();c.arc(g.cx,g.cy,g.r2,-a1*D2R,-a0*D2R,false);c.arc(g.cx,g.cy,g.r1,-a0*D2R,-a1*D2R,true);c.closePath();c.fillStyle=isSun?'rgba(250,204,21,.30)':isMid?'rgba(37,99,235,.42)':(i%2?'rgba(120,140,200,.07)':'rgba(120,140,200,.13)');c.fill();c.strokeStyle='rgba(150,170,230,.35)';c.lineWidth=1.3;c.stroke();}
+  }
+  if(ST.model){c.strokeStyle='rgba(180,180,190,.45)';c.lineWidth=3;c.beginPath();c.arc(g.cx,g.cy,g.r2,0,7);c.stroke();}
+  for(let i=0;i<n;i++){const z=ZOD[i],isSun=z===dv.sunZ,isMid=z===dv.midZ,p=polar(g,(g.r1+g.r2)/2-g.Rv*0.012,z.lam),half=g.Rv*0.088;
+    if(ST.model){const cw=g.Rv*0.255,ch=g.Rv*0.15;c.fillStyle=isSun?'#fef3c7':isMid?'#dbeafe':'#e5e7eb';c.strokeStyle=isSun?'#f59e0b':isMid?'#2563eb':'#6b7280';c.lineWidth=isSun||isMid?3.5:2;rr(c,p[0]-cw/2,p[1]-ch/2,cw,ch,6);c.fill();c.stroke();drawFig(c,z,p[0],p[1]-ch*0.06,ch*0.30,'#1e293b',0.95,1.4,true);if(ST.names)txt(c,z.nm,p[0],p[1]+ch*0.36,F*0.66,'#0f172a','center',900);}
+    else{drawFig(c,z,p[0],p[1]-F*0.45,half,isSun?'#fde047':isMid?'#93c5fd':z.col,isSun||isMid?1:0.85,isSun||isMid?2.4:1.6,true,isSun||isMid);if(ST.names)txt(c,z.nm,p[0],p[1]+half+F*0.55,F*0.86,isSun?'#fde047':isMid?'#bfdbfe':'#e2e8f0','center',900,true);
+      txt(c,z.sym,p[0]-half-F*0.2,p[1]-half-F*0.1,F*0.9,'rgba(226,232,240,.55)','center',700);}
+  }
+  // 궤도와 월
+  c.strokeStyle=ST.model?'#a16207':'rgba(200,215,255,.7)';c.lineWidth=ST.model?g.Rv*0.05:2.5;if(ST.model)c.globalAlpha=0.4;c.beginPath();c.arc(g.cx,g.cy,g.ro,0,7);c.stroke();c.globalAlpha=1;
+  c.strokeStyle='rgba(226,232,240,.9)';c.lineWidth=2;c.setLineDash(ST.model?[8,8]:[]);c.beginPath();c.arc(g.cx,g.cy,g.ro,0,7);c.stroke();c.setLineDash([]);
+  for(let m=0;m<12;m++){const a0=derive(MSTART[m]).phi,a1=derive(MSTART[m]+MLEN[m]/2).phi,t1=polar(g,g.ro-g.Rv*0.03,a0),t2=polar(g,g.ro+g.Rv*0.03,a0);c.strokeStyle='rgba(226,232,240,.9)';c.lineWidth=2;c.beginPath();c.moveTo(t1[0],t1[1]);c.lineTo(t2[0],t2[1]);c.stroke();
+    const lb=polar(g,g.ro-g.Rv*0.115,a1),cur=Math.floor(xOfDoy(ST.doy))===m;txt(c,(m+1)+'월',lb[0],lb[1],F*(cur?1.2:0.95),cur?'#fde047':'#cbd5e1','center',900,true);}
+  // 공전 방향 화살표 (반시계)
+  [45,135,225,315].forEach(a=>{const phi=a,p=polar(g,g.ro,phi),ang=-(phi+90)*D2R;arrowHead(c,p[0],p[1],ang,F*0.7,'rgba(74,222,128,.95)');});
+  txt(c,'↺ 지구의 공전 방향',g.w-F*0.4,F*1.3,F*0.85,'#86efac','right',900,true);txt(c,'서 → 동 (반시계)',g.w-F*0.4,F*2.5,F*0.85,'#86efac','right',900,true);
+  // 태양 또는 전등
+  const sr=g.Rv*0.085;
+  if(!ST.model){const sg=c.createRadialGradient(g.cx,g.cy,sr*0.2,g.cx,g.cy,sr*3.2);sg.addColorStop(0,'rgba(255,230,120,.95)');sg.addColorStop(.4,'rgba(255,180,50,.4)');sg.addColorStop(1,'rgba(255,140,0,0)');c.fillStyle=sg;c.beginPath();c.arc(g.cx,g.cy,sr*3.2,0,7);c.fill();c.fillStyle='#fff3b0';c.strokeStyle='#f59e0b';c.lineWidth=3;c.beginPath();c.arc(g.cx,g.cy,sr,0,7);c.fill();c.stroke();txt(c,'태양',g.cx,g.cy,F*0.85,'#92400e','center',900);}
+  else{const sg=c.createRadialGradient(g.cx,g.cy,sr*0.3,g.cx,g.cy,sr*3.4);sg.addColorStop(0,'rgba(255,245,160,.9)');sg.addColorStop(1,'rgba(255,220,100,0)');c.fillStyle=sg;c.beginPath();c.arc(g.cx,g.cy,sr*3.4,0,7);c.fill();c.fillStyle='#fffbe0';c.strokeStyle='#f59e0b';c.lineWidth=3;c.beginPath();c.arc(g.cx,g.cy,sr*0.8,0,7);c.fill();c.stroke();c.strokeStyle='#92400e';c.lineWidth=2;c.beginPath();c.moveTo(g.cx-sr*0.3,g.cy+sr*0.3);c.lineTo(g.cx-sr*0.15,g.cy-sr*0.1);c.lineTo(g.cx,g.cy+sr*0.15);c.lineTo(g.cx+sr*0.15,g.cy-sr*0.1);c.lineTo(g.cx+sr*0.3,g.cy+sr*0.3);c.stroke();txt(c,'전등',g.cx,g.cy+sr*1.35,F*0.9,'#fde68a','center',900,true);}
+  // 지구와 시선 광선
+  const E=earthPos(g,dv.phi),re=g.Rv*0.062,thS=Math.atan2(g.cy-E.y,g.cx-E.x);
+  if(ST.rays){
+    const lenS=Math.hypot(g.cx-E.x,g.cy-E.y);
+    wedge(c,E.x,E.y,thS,lenS-sr*0.9,0.11,'rgba(250,204,21,.26)','#facc15',4);
+    const sp=polar(g,g.r1*0.0+g.r2-g.Rv*0.02,dv.lam);c.setLineDash([6,7]);c.strokeStyle='rgba(250,204,21,.75)';c.lineWidth=2.5;c.beginPath();c.moveTo(g.cx,g.cy);c.lineTo(sp[0],sp[1]);c.stroke();c.setLineDash([]);
+    const thO=thS+Math.PI,lenO=Math.hypot(...[polar(g,g.r2*0.97,dv.phi)[0]-E.x,polar(g,g.r2*0.97,dv.phi)[1]-E.y]);
+    wedge(c,E.x,E.y,thO,lenO,0.11,'rgba(30,64,175,.40)','#2563eb',4.5);c.strokeStyle='#bfdbfe';c.lineWidth=1.5;c.beginPath();c.moveTo(E.x,E.y);c.lineTo(E.x+Math.cos(thO)*lenO,E.y+Math.sin(thO)*lenO);c.stroke();
+    const lx=g.w-F*0.4,ly=g.h-F*2.5,fz=F*0.82;c.font='900 '+fz+'px '+FONT;const w1=c.measureText('낮 : 태양 방향').width,w2=c.measureText('한밤중 남쪽 하늘 방향').width;
+    c.fillStyle='rgba(250,204,21,.95)';c.fillRect(lx-w1-F*1.9,ly-F*0.3,F*1.4,F*0.6);txt(c,'낮 : 태양 방향',lx,ly,fz,'#fde047','right',900,true);c.fillStyle='#2563eb';c.fillRect(lx-w2-F*1.9,ly+F*1.2-F*0.3,F*1.4,F*0.6);c.strokeStyle='#bfdbfe';c.lineWidth=1.5;c.strokeRect(lx-w2-F*1.9,ly+F*1.2-F*0.3,F*1.4,F*0.6);txt(c,'한밤중 남쪽 하늘 방향',lx,ly+F*1.2,fz,'#93c5fd','right',900,true);
+  }
+  // 지구 (또는 회전의자 학생)
+  const pulse=0.5+0.5*Math.sin(performance.now()/350);
+  c.strokeStyle='rgba(74,222,128,'+(0.45+0.4*pulse)+')';c.lineWidth=3;c.beginPath();c.arc(E.x,E.y,re*(1.75+0.25*pulse),0,7);c.stroke();
+  if(!ST.model){c.fillStyle='#10244f';c.beginPath();c.arc(E.x,E.y,re,0,7);c.fill();c.fillStyle='#3b82f6';c.beginPath();c.arc(E.x,E.y,re,thS-Math.PI/2,thS+Math.PI/2);c.closePath();c.fill();c.strokeStyle='#e0f2fe';c.lineWidth=2.5;c.beginPath();c.arc(E.x,E.y,re,0,7);c.stroke();
+    // 관측자 핀 : 낮(태양 쪽) · 한밤(반대쪽)
+    const pd=[E.x+Math.cos(thS)*re,E.y+Math.sin(thS)*re],pn=[E.x-Math.cos(thS)*re,E.y-Math.sin(thS)*re];
+    c.fillStyle='#facc15';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(pd[0],pd[1],re*0.34,0,7);c.fill();c.stroke();c.fillStyle='#1e3a8a';c.beginPath();c.arc(pn[0],pn[1],re*0.34,0,7);c.fill();c.stroke();
+    txt(c,'지구',E.x,E.y,F*0.8,'#fff','center',900);}
+  else{ // 회전의자에 앉은 학생 (위에서 본 모습)
+    c.fillStyle='#78350f';c.strokeStyle='#fde68a';c.lineWidth=3;c.beginPath();c.arc(E.x,E.y,re*1.15,0,7);c.fill();c.stroke();
+    const out=thS+Math.PI;c.fillStyle='#fbbf24';c.beginPath();c.arc(E.x,E.y,re*0.62,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.moveTo(E.x+Math.cos(out)*re*0.95,E.y+Math.sin(out)*re*0.95);c.lineTo(E.x+Math.cos(out+0.7)*re*0.5,E.y+Math.sin(out+0.7)*re*0.5);c.lineTo(E.x+Math.cos(out-0.7)*re*0.5,E.y+Math.sin(out-0.7)*re*0.5);c.closePath();c.fill();
+    {const ox=-Math.cos(thS),oy=-Math.sin(thS);txt(c,'🪑 학생(지구)',E.x+ox*re*3.6,E.y+oy*re*2.4,F*0.82,'#fde68a','center',900,true);}}
+  c.fillStyle='rgba(0,0,0,0)';
+  // 지구 위치 정보
+  g.E=E;g.re=re;
+}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+/* ============================================================
+   우측 : 하늘 투영 (입체투영, 남쪽을 바라봄)
+   ============================================================ */
+function skyCam(W,H,alt0Deg,fill){const a0=alt0Deg*D2R,ta=Math.tan,s=fill*H/(2*(ta((Math.PI/2-a0)/2)+ta(a0/2))),yh=H*0.9,cy=yh-2*s*ta(a0/2);
+  const f=enu(a0,Math.PI),r=[Math.cos(Math.PI),-Math.sin(Math.PI),0],u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
+  return{P:(alt,az)=>{const v=enu(alt,az),vz=v[0]*f[0]+v[1]*f[1]+v[2]*f[2],vx=v[0]*r[0]+v[1]*r[1]+v[2]*r[2],vy=v[0]*u[0]+v[1]*u[1]+v[2]*u[2];if(vz<-0.88)return null;const k=2*s/(1+vz);return{x:W/2+vx*k,y:cy-vy*k};},yh:yh,s:s};}
+function starXY(cam,ra,dec,lst){const p=hor(ra,dec,lst);if(p.alt<-0.03)return null;const q=cam.P(p.alt,p.az);return q?{x:q.x,y:q.y,alt:p.alt,az:p.az}:null;}
+function skyGround(c,cam,W,H,F,lab){c.beginPath();let first=true,fx=0,lx=0;for(let d=-100;d<=100;d+=2){const q=cam.P(0,Math.PI+d*D2R);if(!q)continue;if(first){c.moveTo(q.x,q.y);fx=q.x;first=false;}else c.lineTo(q.x,q.y);lx=q.x;}c.lineTo(lx,H+4);c.lineTo(fx,H+4);c.closePath();const gd=c.createLinearGradient(0,cam.yh-20,0,H);gd.addColorStop(0,lab?'#314a38':'#0c1b12');gd.addColorStop(1,lab?'#1a2b1f':'#030806');c.fillStyle=gd;c.fill();
+  c.strokeStyle='rgba(190,230,200,.85)';c.lineWidth=2.5;c.beginPath();first=true;for(let d=-100;d<=100;d+=2){const q=cam.P(0,Math.PI+d*D2R);if(!q)continue;first?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);first=false;}c.stroke();
+  [['동',90],['남동',135],['남',180],['남서',225],['서',270]].forEach(a=>{const q=cam.P(-3*D2R,a[1]*D2R);if(!q||q.x<12||q.x>W-12)return;const main=a[0].length===1;txt(c,a[0],q.x,Math.min(q.y+F*0.9,H-F*0.6),F*(main?1.3:0.85),a[0]==='남'?'#fde047':'rgba(236,253,245,.85)','center',900,true);});}
+function eclPath(c,cam,lst,lamFrom,lamTo,col,w,dash){c.strokeStyle=col;c.lineWidth=w;c.setLineDash(dash||[]);c.beginPath();let f=true;for(let l=lamFrom;l<=lamTo;l+=2){const e=eclToEq(l,0),q=starXY(cam,e.ra,e.dec,lst);if(!q){f=true;continue;}f?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);f=false;}c.stroke();c.setLineDash([]);}
+
+function zodCentroid(cam,z,lst){return starXY(cam,z.cra,z.cdec,lst);}
+function drawZodSky(c,cam,lst,hi,hiCol,dimAlpha,showNames,F,glowAll){
+  ZOD.forEach(z=>{const isHi=z===hi,col=isHi?hiCol:'#cbd5e1';
+    c.strokeStyle=col;c.lineCap='round';c.globalAlpha=isHi?1:dimAlpha;c.lineWidth=isHi?3:1.6;c.beginPath();
+    z.ln.forEach(l=>{const a=z.st[l[0]],b=z.st[l[1]],p=starXY(cam,a[0],a[1],lst),q=starXY(cam,b[0],b[1],lst);if(p&&q){c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);}});c.stroke();c.globalAlpha=1;
+    Object.keys(z.st).forEach(k=>{const s=z.st[k],p=starXY(cam,s[0],s[1],lst);if(!p)return;const r=Math.max(1.6,(4.6-s[2])*1.15+1.1)*(isHi?1.25:1),a=isHi?1:Math.max(0.45,dimAlpha*2);
+      if(isHi||glowAll){const gl=c.createRadialGradient(p.x,p.y,0,p.x,p.y,r*3.4);gl.addColorStop(0,'rgba(255,255,255,'+(0.9*a)+')');gl.addColorStop(.35,isHi?'rgba(253,224,71,.35)':'rgba(190,215,255,.25)');gl.addColorStop(1,'rgba(160,190,255,0)');c.fillStyle=gl;c.beginPath();c.arc(p.x,p.y,r*3.4,0,7);c.fill();}
+      c.fillStyle='rgba(255,255,255,'+a+')';c.beginPath();c.arc(p.x,p.y,r,0,7);c.fill();});
+    const cp=zodCentroid(cam,z,lst);if(cp&&(isHi||showNames)){txt(c,z.nm,cp.x,cp.y-F*(isHi?2.6:1.5),F*(isHi?1.45:0.9),isHi?hiCol:'rgba(226,232,240,.78)','center',900,true);}
+  });}
+function drawNight(){
+  const c=gN,[W,H]=SZ.N,F=fsz(Math.min(W,H*1.7)),dv=derive(ST.doy),lst=dv.ra+12;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#01030a');g.addColorStop(1,'#0b1535');c.fillStyle=g;c.fillRect(0,0,W,H);
+  const cam=skyCam(W,H,38,0.88);
+  // 고도 고리와 자오선
+  c.setLineDash([5,9]);c.strokeStyle='rgba(180,200,255,.18)';c.lineWidth=1.3;[30,60].forEach(a=>{c.beginPath();let f=true;for(let az=90;az<=270;az+=3){const q=cam.P(a*D2R,az*D2R);if(!q){f=true;continue;}f?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);f=false;}c.stroke();});
+  c.strokeStyle='rgba(253,224,71,.28)';c.beginPath();let f=true;for(let a=0;a<=90;a+=3){const q=cam.P(a*D2R,Math.PI);if(!q){f=true;continue;}f?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);f=false;}c.stroke();c.setLineDash([]);
+  // 별
+  FAINT.forEach(s=>{const q=starXY(cam,s.ra,s.dec,lst);if(!q||q.x<-10||q.x>W+10||q.y<-10||q.y>H+10)return;c.fillStyle='rgba(255,255,255,'+(0.25+(5.6-s.mag)*0.18)+')';c.beginPath();c.arc(q.x,q.y,Math.max(0.7,(5.6-s.mag)*0.45+0.4),0,7);c.fill();});
+  EXTRA.forEach(s=>{const q=starXY(cam,s[2],s[3],lst);if(!q)return;const r=Math.max(1.5,(3.4-s[4])*1.0+1.4);const gl=c.createRadialGradient(q.x,q.y,0,q.x,q.y,r*3);gl.addColorStop(0,'rgba(255,255,255,.85)');gl.addColorStop(1,'rgba(160,190,255,0)');c.fillStyle=gl;c.beginPath();c.arc(q.x,q.y,r*3,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(q.x,q.y,r,0,7);c.fill();if(ST.names&&q.x>0&&q.x<W&&q.y<H*0.86)txt(c,s[1],q.x+F*0.5,q.y+F*0.9,F*0.72,'rgba(203,213,225,.7)','left',700,true);});
+  eclPath(c,cam,lst,dv.lam-80,dv.lam+260,'rgba(253,224,71,.55)',2,[10,8]);
+  drawZodSky(c,cam,lst,dv.midZ,'#fde047',0.34,ST.names,F,false);
+  skyGround(c,cam,W,H,F,false);
+  const mp=zodCentroid(cam,dv.midZ,lst);if(mp){const pu=0.5+0.5*Math.sin(performance.now()/380);c.strokeStyle='rgba(253,224,71,'+(0.4+0.5*pu)+')';c.lineWidth=3;c.beginPath();c.arc(mp.x,mp.y,F*(2.6+0.5*pu),0,7);c.stroke();}
+  {let best=null;for(let l=dv.lam-80;l<=dv.lam+260;l+=2){const e=eclToEq(l,0),q=starXY(cam,e.ra,e.dec,lst);if(q&&q.alt>6*D2R&&q.x>W*0.7&&q.x<W*0.95&&(!best||q.x>best.x))best=q;}if(best)txt(c,'황도 (태양이 지나는 길)',best.x-F*4,best.y-F*1.0,F*0.82,'rgba(253,224,71,.9)','center',800,true);}
+  // 설명
+  const alt=mp?Math.round(mp.alt/D2R):Math.round(hor(dv.midZ.cra,dv.midZ.cdec,lst).alt/D2R);
+  $('#cap2N').innerHTML='한밤중 남쪽 하늘의 대표 별자리 : <b>'+dv.midZ.nm+'</b><br>자정 무렵 남쪽 하늘 고도 약 '+alt+'°';
+  $('#capN').textContent='🌙 한밤중(자정) 남쪽 하늘 — 태양 반대쪽 별자리가 잘 보여요';
+}
+function sunCam(W,H,altDeg,s){const a0=altDeg*D2R,f=enu(a0,Math.PI),r=[Math.cos(Math.PI),-Math.sin(Math.PI),0],u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
+  return{P:(alt,az)=>{const v=enu(alt,az),vz=v[0]*f[0]+v[1]*f[1]+v[2]*f[2],vx=v[0]*r[0]+v[1]*r[1]+v[2]*r[2],vy=v[0]*u[0]+v[1]*u[1]+v[2]*u[2];if(vz<-0.88)return null;const k=2*s/(1+vz);return{x:W/2+vx*k,y:H*0.5-vy*k};},s:s,alt0:a0};}
+function drawDay(){
+  const c=gD,[W,H]=SZ.D,F=fsz(Math.min(W,H*2.2)),dv=derive(ST.doy),lst=dv.ra;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  const sp=hor(dv.ra,dv.dec,lst),sAlt=sp.alt/D2R,cam=sunCam(W,H,sAlt,H/(2*Math.tan(23*D2R/2))*0.8);
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1d63e0');g.addColorStop(1,'#a9d4ff');c.fillStyle=g;c.fillRect(0,0,W,H);
+  // 황도 (태양이 지나는 길)
+  eclPath(c,cam,lst,dv.lam-70,dv.lam+70,'rgba(255,255,255,.55)',2,[10,8]);
+  // 이웃 별자리 이름 (희미하게) : 황도를 따라 서 → 동 순서
+  ZOD.forEach(z=>{if(z===dv.sunZ)return;const p=starXY(cam,z.cra,z.cdec,lst);if(p&&p.x>10&&p.x<W-10&&p.y>10&&p.y<H-10)txt(c,z.nm,p.x,p.y,F*0.85,'rgba(255,255,255,.4)','center',800);});
+  // 태양이 있는 별자리 : 반투명 (햇빛 때문에 보이지 않음)
+  const z=dv.sunZ;c.save();c.globalAlpha=0.45;c.strokeStyle='#fff';c.lineWidth=2.4;c.setLineDash([7,7]);c.beginPath();z.ln.forEach(l=>{const a=z.st[l[0]],b=z.st[l[1]],p=starXY(cam,a[0],a[1],lst),q=starXY(cam,b[0],b[1],lst);if(p&&q){c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);}});c.stroke();c.setLineDash([]);
+  Object.keys(z.st).forEach(k=>{const s=z.st[k],p=starXY(cam,s[0],s[1],lst);if(!p)return;c.fillStyle='#fff';c.beginPath();c.arc(p.x,p.y,Math.max(2.4,(4.6-s[2])*1.2+1.3),0,7);c.fill();});c.restore();
+  const cp=starXY(cam,z.cra,z.cdec,lst);
+  // 태양
+  const sq=cam.P(sp.alt,sp.az);
+  if(sq){const r=clamp(H*0.085,16,42),sg=c.createRadialGradient(sq.x,sq.y,r*.2,sq.x,sq.y,r*3.4);sg.addColorStop(0,'rgba(255,245,170,.95)');sg.addColorStop(.35,'rgba(255,210,80,.5)');sg.addColorStop(1,'rgba(255,170,0,0)');c.fillStyle=sg;c.beginPath();c.arc(sq.x,sq.y,r*3.4,0,7);c.fill();c.fillStyle='rgba(255,251,224,.96)';c.strokeStyle='#f59e0b';c.lineWidth=3;c.beginPath();c.arc(sq.x,sq.y,r,0,7);c.fill();c.stroke();
+    txt(c,'태양',sq.x,sq.y,F*0.9,'#92400e','center',900);}
+  if(cp)txt(c,z.nm+'  (태양 빛 때문에 보이지 않음)',W*0.5,H*0.13,F*1.2,'#fff','center',900,true);
+  // 방향과 연주 운동 : 남쪽을 바라보면 동쪽이 왼쪽
+  txt(c,'◀ 동',F*0.4,H*0.5,F*1.05,'rgba(255,255,255,.9)','left',900,true);txt(c,'서 ▶',W-F*0.4,H*0.5,F*1.05,'rgba(255,255,255,.9)','right',900,true);
+  const ay=H*0.88;c.strokeStyle='rgba(255,255,255,.95)';c.lineWidth=3;c.beginPath();c.moveTo(W*0.64,ay);c.lineTo(W*0.36,ay);c.stroke();arrowHead(c,W*0.34,ay,Math.PI,F*0.8,'#fff');txt(c,'태양의 연주 운동 : 서 → 동 (별자리 사이를 하루 약 1°씩 이동)',W*0.5,ay-F*1.05,F*0.85,'#fff','center',800,true);
+  txt(c,'정오 · 남쪽 하늘 · 태양 고도 '+Math.round(sAlt)+'°',W-F*0.4,F*1.0,F*0.85,'rgba(255,255,255,.9)','right',800,true);
+  $('#cap2D').innerHTML='태양이 머무는 별자리 : <b>'+z.nm+'</b><br>햇빛이 너무 밝아 별이 보이지 않아요';
+  $('#capD').textContent='☀️ 낮 하늘 (정오 · 태양 방향) — 태양 쪽 별자리는 안 보여요';
+}
+function drawAll(){drawSpace();drawDay();drawNight();}
+
+/* ============================================================
+   정보 카드 · 조작
+   ============================================================ */
+const seasonOf=lam=>lam<90?'봄':lam<180?'여름':lam<270?'가을':'겨울';
+function update(){
+  const dv=derive(ST.doy),md=monthDay(ST.doy);
+  $('#l1').innerHTML='현재 '+md.m+'월 '+md.d+'일: 태양이 있는 별자리는 <b>'+dv.sunZ.nm+'</b> <em>(낮이라 관측 불가)</em>';
+  $('#l2').innerHTML='한밤중 남쪽 하늘에서 보이는 대표 별자리는 <b>'+dv.midZ.nm+'</b>';
+  $('#dnow').innerHTML=md.m+'월 '+md.d+'일<small>'+seasonOf(dv.lam)+'</small>';
+  $('#sl').value=xOfDoy(ST.doy);
+  $$('#sea .chip').forEach(b=>b.classList.toggle('on',false));
+  if(ST.model){$('#capS').textContent='🛰 우주 관점 : 전등(태양) 주위를 도는 회전의자(지구) 모형';}else $('#capS').textContent='🛰 우주 관점 : 북극 상공에서 본 지구의 공전';
+}
+let dirty=true;function draw(){dirty=true;}
+function render(){drawAll();update();}
+function setDoy(d,keepPlay){if(!keepPlay)ST.play=false;ST.doy=mod(d,365);$('#bPlay').textContent=ST.play?'⏸ 일시정지':'▶ 공전 재생';draw();}
+function hideHint(){$('#dragHint').style.opacity='0';}
+/* 지구 끌기 : 궤도 안쪽 띠 어디를 눌러도 그 방향으로 지구가 따라와요 */
+function eventPos(e){const r=cvS.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];}
+function dragTo(x,y){const g=spaceGeom(),phi=mod(Math.atan2(-(y-g.cy),x-g.cx)/D2R,360);setDoy(doyOfLambda(mod(phi-180,360)));}
+cvS.addEventListener('pointerdown',e=>{const [x,y]=eventPos(e),g=spaceGeom(),d=Math.hypot(x-g.cx,y-g.cy);if(d>g.Rv*0.3&&d<g.r1+g.Rv*0.03){ST.drag=true;try{cvS.setPointerCapture(e.pointerId);}catch(_){}hideHint();dragTo(x,y);e.preventDefault();}});
+cvS.addEventListener('pointermove',e=>{if(!ST.drag)return;const [x,y]=eventPos(e);dragTo(x,y);});
+const endDrag=e=>{ST.drag=false;try{cvS.releasePointerCapture(e.pointerId);}catch(_){}};cvS.addEventListener('pointerup',endDrag);cvS.addEventListener('pointercancel',endDrag);
+$('#sl').addEventListener('input',e=>{setDoy(doyOfX(+e.target.value));hideHint();});
+$('#bPlay').onclick=()=>{ST.play=!ST.play;$('#bPlay').textContent=ST.play?'⏸ 일시정지':'▶ 공전 재생';hideHint();draw();};
+function stepMonth(d){const x=xOfDoy(ST.doy),m=Math.floor(x);let n;if(d>0)n=(m+1)%12;else n=(x-m>0.03)?m:(m+11)%12;setDoy(MSTART[n]);}
+$('#bPrev').onclick=()=>stepMonth(-1);$('#bNext').onclick=()=>stepMonth(1);
+$$('#sea .chip').forEach(b=>b.onclick=()=>{setDoy(+b.dataset.d);hideHint();});
+$('#tRay').onclick=()=>{ST.rays=!ST.rays;$('#tRay').classList.toggle('on',ST.rays);draw();};
+$('#tMod').onclick=()=>{ST.model=!ST.model;$('#tMod').classList.toggle('on',ST.model);toast(ST.model?'🪑 교과서 탐구 모드: 전등(태양) 주위를 도는 회전의자(지구) 모형이에요':'우주 뷰로 돌아왔어요');draw();};
+$('#tNm').onclick=()=>{ST.names=!ST.names;$('#tNm').classList.toggle('on',ST.names);draw();};
+const SPD=[0.5,1,2,4];$('#tSpd').onclick=()=>{ST.spd=SPD[(SPD.indexOf(ST.spd)+1)%SPD.length];$('#tSpd').textContent='⏩ ×'+ST.spd;toast('재생 속도 ×'+ST.spd);};
+function tick(dt){if(!ST.play)return;ST.doy=mod(ST.doy+dt*ST.spd*17,365);dirty=true;}
+let last=0;function loop(now){const dt=Math.min(0.05,(now-(last||now))/1000);last=now;try{tick(dt);if(dirty||true){render();dirty=false;}}catch(e){console.error(e);}requestAnimationFrame(loop);}
+/* ---------- 생일 별자리 ---------- */
+function birthdayMsg(month){
+  const d0=MSTART[month-1],dv=derive(d0),sun=dv.sunZ,mid=dv.midZ;let M=0;for(let m=1;m<=12;m++){if(derive(MSTART[m-1]).midZ===sun){M=m;break;}}if(!M)M=mod(month+5,12)+1;
+  return{html:'내 생일 <b>'+month+'월</b>(월초 기준)에는 태양이 <b>'+sun.nm+'</b>에 있어요 → 그래서 <b>'+sun.nm+'</b>가 ‘내 생일 별자리’예요.<br>그런데 '+month+'월 한밤중 남쪽 하늘에는 <span class="bl">'+mid.nm+'</span>가 보여요. '+sun.nm+'는 태양과 같은 쪽에 있어서 낮에는 햇빛에 가려지고, 밤에는 태양과 함께 져 버려서 볼 수 없어요.<br>👉 '+sun.nm+'를 한밤중에 보려면 약 6개월 뒤인 <b>'+M+'월</b>에 관찰해야 해요.<small>※ 달 중순부터는 태양이 다음 별자리로 넘어가요(날짜 슬라이더로 확인!). 점성술이 정한 ‘별자리 날짜’는 오래전 기준이라 실제 태양이 있는 별자리와 한 칸쯤 달라요(세차 운동).</small>',sun:sun,mid:mid,M:M,d0:d0};}
+$('#mg').innerHTML=Array.from({length:12},(_,i)=>`<button class="chip" data-m="${i+1}">${i+1}월</button>`).join('');
+$$('#mg .chip').forEach(b=>b.onclick=()=>{const r=birthdayMsg(+b.dataset.m);$$('#mg .chip').forEach(x=>x.classList.toggle('on',x===b));$('#bmsg').innerHTML=r.html;setDoy(r.d0);});
+$('#bWhy').onclick=()=>{$('#ovB').classList.add('on');const md=monthDay(ST.doy);const b=$$('#mg .chip')[md.m-1];b.click();};
+$('#bX').onclick=()=>$('#ovB').classList.remove('on');$('#ovB').addEventListener('click',e=>{if(e.target.id==='ovB')$('#ovB').classList.remove('on');});
+/* ---------- 설정 · 전체화면 · QR ---------- */
+function openDr(){$('#dr').classList.add('on');$('#dim').classList.add('on');}function closeDr(){$('#dr').classList.remove('on');$('#dim').classList.remove('on');}
+$('#bSet').onclick=openDr;$('#drX').onclick=closeDr;$('#dim').onclick=closeDr;
+$('#bAll').onclick=()=>{ST.doy=222;ST.play=false;ST.rays=true;ST.model=false;ST.names=true;ST.spd=1;$('#tRay').classList.add('on');$('#tMod').classList.remove('on');$('#tNm').classList.add('on');$('#tSpd').textContent='⏩ ×1';$('#bPlay').textContent='▶ 공전 재생';closeDr();draw();toast('처음 상태로 돌아왔어요.');};
+const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+$('#bFs').onclick=()=>{try{if(!isFs())(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){toast('이 브라우저는 전체화면을 지원하지 않아요. (F11 키)');}};
+function syncFs(){$('#bFs').classList.toggle('on',isFs());$('#bFs').textContent=isFs()?'⛶ 전체화면 끄기':'⛶ 전체화면';setTimeout(()=>{sizeAll();draw();},120);}
+document.addEventListener('fullscreenchange',syncFs);document.addEventListener('webkitfullscreenchange',syncFs);
+const QK='labQrBase';const lsGet=k=>{try{return localStorage.getItem(k)||'';}catch(e){return '';}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};const normUrl=u=>{try{const x=new URL(u.trim());return/^https?:$/.test(x.protocol)?x.href:'';}catch(e){return '';}};
+function drawQR(){const raw=$('#qrUrl').value.trim(),c=$('#qrCv'),q=c.getContext('2d'),url=raw?normUrl(raw):'';$('#qrMsg').textContent='';
+  if(!url){c.width=c.height=400;q.fillStyle='#fff';q.fillRect(0,0,400,400);q.fillStyle='#64748b';q.font='700 24px sans-serif';q.textAlign='center';q.fillText('주소를 입력하세요',200,205);$('#qrCap').textContent='';if(raw)$('#qrMsg').textContent='http:// 또는 https:// 로 시작하는 주소를 입력하세요.';return;}
+  try{qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];const m=qrcode(0,'M');m.addData(url,'Byte');m.make();const n=m.getModuleCount(),b=4,cell=Math.max(4,Math.floor(640/(n+b*2))),sz=cell*(n+b*2);c.width=c.height=sz;q.fillStyle='#fff';q.fillRect(0,0,sz,sz);q.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(m.isDark(r,k))q.fillRect((k+b)*cell,(r+b)*cell,cell,cell);let cap=url;try{cap=decodeURI(url);}catch(e){}$('#qrCap').textContent=cap;lsSet(QK,url);}catch(e){$('#qrMsg').textContent='주소가 너무 길어 QR을 만들 수 없습니다.';}}
+$('#bQR').onclick=()=>{closeDr();const here=/^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(QK);$('#qrUrl').value=here;$('#ovQ').classList.add('on');drawQR();if(!here)$('#qrMsg').textContent='GitHub Pages 주소를 붙여 넣으면 QR이 만들어집니다.';};
+$('#qrUrl').addEventListener('input',drawQR);$('#qX').onclick=()=>$('#ovQ').classList.remove('on');$('#ovQ').addEventListener('click',e=>{if(e.target.id==='ovQ')$('#ovQ').classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='Escape'){closeDr();$$('.ov').forEach(o=>o.classList.remove('on'));}else if(e.key==='ArrowRight')stepMonth(1);else if(e.key==='ArrowLeft')stepMonth(-1);else if(e.key===' '){e.preventDefault();$('#bPlay').click();}});
+window.addEventListener('resize',()=>{sizeAll();draw();});if(window.ResizeObserver){['#spaceBox','#dayBox','#nightBox'].forEach(s=>new ResizeObserver(()=>{sizeAll();draw();}).observe($(s)));}
+sizeAll();update();requestAnimationFrame(loop);
+window.__zd={ST,ZOD,ZM,derive,sunLambda,sunEq,doyOfLambda,xOfDoy,doyOfX,monthDay,setDoy,stepMonth,tick,render,drawAll,drawSpace,drawDay,drawNight,update,birthdayMsg,spaceGeom,earthPos,sizeAll,hor,starXY,skyCam,MSTART,MLEN,dragTo,nearestZod,mod,LAT};
+})();
+
+</script>
+<script id="qrbigScript">
+/* 전자칠판용 QR 크게 보기 (오프라인 · 외부 의존 없음) */
+(function(){
+  var NAVY='#0a0e17';
+  function openBig(cv){
+    if(document.getElementById('qbOv'))return;
+    var t=(document.getElementById('qrTitle')||{}).textContent||document.title||'학생 접속 QR코드';
+    var cap=((document.getElementById('qrCap')||{}).textContent)||((document.getElementById('qrUrl')||{}).value)||'';
+    var ov=document.createElement('div');ov.id='qbOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:'+NAVY+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:2vh 3vw;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none';
+    var h=document.createElement('div');h.textContent='📱 휴대폰 카메라로 QR을 찍어 보세요';h.style.cssText='font-size:clamp(24px,3.4vh,44px);font-weight:900;text-align:center';
+    var s=document.createElement('div');s.textContent=t;s.style.cssText='font-size:clamp(20px,2.6vh,34px);font-weight:800;color:#7dd3fc;text-align:center;max-width:90vw';
+    var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;padding:clamp(18px,3vh,36px);box-shadow:0 0 0 6px #1e3a8a,0 20px 60px rgba(0,0,0,.6)';
+    var im=new Image();im.src=cv.toDataURL('image/png');im.alt='QR 코드';im.style.cssText='display:block;width:min(64vh,76vw);height:min(64vh,76vw);image-rendering:pixelated';box.appendChild(im);
+    var c=document.createElement('div');c.textContent=cap;c.style.cssText='font-size:clamp(18px,2.2vh,26px);color:#9fb2d0;font-weight:700;text-align:center;max-width:92vw;word-break:break-all';
+    var k=document.createElement('div');k.textContent='화면을 누르거나 Esc 키를 누르면 닫혀요';k.style.cssText='font-size:clamp(18px,2.2vh,24px);color:#fde68a;font-weight:800';
+    [h,s,box,c,k].forEach(function(e){if(e!==c||cap)ov.appendChild(e);});
+    document.body.appendChild(ov);
+    var usedFs=false;
+    try{var r=ov.requestFullscreen||ov.webkitRequestFullscreen;if(r&&!document.fullscreenElement&&!document.webkitFullscreenElement){var p=r.call(ov);usedFs=true;if(p&&p.catch)p.catch(function(){});}}catch(e){}
+    function close(){document.removeEventListener('keydown',key,true);if(ov.parentNode)ov.parentNode.removeChild(ov);
+      try{if(usedFs&&(document.fullscreenElement||document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+    function key(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    ov.addEventListener('click',close);document.addEventListener('keydown',key,true);
+    document.addEventListener('fullscreenchange',function f(){if(!document.fullscreenElement&&usedFs){document.removeEventListener('fullscreenchange',f);if(document.getElementById('qbOv'))close();}});
+  }
+  function attach(cv){
+    if(cv.__qb)return;cv.__qb=1;
+    var b=document.createElement('button');b.type='button';b.id=(cv.id||'qr')+'Big';b.textContent='⛶ 크게 보기 (전자칠판)';
+    b.style.cssText='display:block;margin:10px auto 0;min-height:52px;padding:0 20px;border-radius:14px;border:2px solid #38bdf8;background:'+NAVY+';color:#fff;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation';
+    b.onclick=function(e){e.stopPropagation();openBig(cv);};
+    cv.insertAdjacentElement('afterend',b);cv.style.cursor='zoom-in';cv.title='눌러서 크게 보기';
+    cv.addEventListener('click',function(e){e.stopPropagation();openBig(cv);});
+  }
+  function scan(){var all=document.querySelectorAll('canvas');for(var i=0;i<all.length;i++){if(/qr/i.test(all[i].id))attach(all[i]);}}
+  scan();document.addEventListener('DOMContentLoaded',scan);
+  try{new MutationObserver(function(){scan();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.__qrBig=openBig;
+})();
+</script>
+</body>
+</html>
