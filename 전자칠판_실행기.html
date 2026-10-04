@@ -2419,15 +2419,15 @@ var qrcode = function() {
 (function(){
 const $=s=>document.querySelector(s);
 const qs=new URLSearchParams(location.search);
-const F=(qs.get('f')||'').replace(/^\.?\//,''),T=qs.get('t')||F.replace(/\.html?$/i,'').replace(/_/g,' ')||'가상실험';
+const F=(qs.get('f')||'').replace(/^\.?\//,''),T=qs.get('t')||F.split('/').pop().replace(/\.html?$/i,'').replace(/_/g,' ')||'가상실험';
 let zoom=1;const IMM=qs.get('imm')==='1';const ZMAX=IMM?2.6:2;const ZKEY=IMM?'boardZoomGame_'+(screen.width||0)+'x'+(screen.height||0):'boardZoom';
 function autoFit(){return Math.max(1,Math.min(ZMAX,Math.round(Math.min(innerWidth/1280,innerHeight/720)*20)/20));}
 function note(t){const e=$('#note');e.textContent=t;e.classList.add('on');clearTimeout(note.t);note.t=setTimeout(()=>e.classList.remove('on'),2200);}
 function layout(){const z=zoom,box=$('#frameBox');box.style.width=(100/z)+'vw';box.style.height=(100/z)+'vh';box.style.transform='scale('+z+')';$('#zoomV').textContent=Math.round(z*100)+'%';}
 function setZoom(z){zoom=Math.max(.6,Math.min(ZMAX,Math.round(z*20)/20));layout();try{localStorage.setItem(ZKEY,String(zoom));}catch(e){}}
 $('#sTitle').textContent=T;document.title='전자칠판 · '+T;
-/* 안전: 같은 폴더의 html 파일만 허용 */
-const okFile=/^[^\/\\:?#]+\.html?$/i.test(F);
+/* 안전: 같은 폴더(또는 바로 아래 한 단계 폴더)의 html 파일만 허용 */
+const okFile=/^(?:[^\/\\:?#.][^\/\\:?#]*\/)?[^\/\\:?#]+\.html?$/i.test(F);
 if(!okFile){$('#sTitle').textContent='실행할 실험을 찾지 못했어요';$('#goFs').style.display='none';$('#goNo').style.display='none';}
 else{ const FQ=(()=>{const p=new URLSearchParams(qs.get('fq')||'');return ['g','u','teams'].filter(k=>p.has(k)).map(k=>k+'='+encodeURIComponent(p.get(k).slice(0,40))).join('&');})(); $('#frame').src='./'+encodeURI(F)+(IMM?'?imm=1'+(FQ?'&'+FQ:''):''); }
 if(IMM){zoom=autoFit();}

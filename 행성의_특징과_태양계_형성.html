@@ -1,0 +1,2867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>행성의 특징과 태양계 형성 실험실</title>
+<style>
+:root{--bg:#04070f;--card:#0c1328;--card2:#101a35;--ln:#2a3a66;--tx:#f1f5f9;--sub:#c3d0e8;--gold:#fde68a;--cy:#7dd3fc;
+  --fs:clamp(20px,1.1vw,46px);--fm:clamp(24px,1.45vw,58px);--fk:clamp(30px,1.8vw,72px);--tap:clamp(56px,3.4vw,110px);
+  --T:#fb923c;--J:#38bdf8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;font-size:var(--fs);-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button,a,input{font-family:inherit}button{color:inherit;cursor:pointer;border:0;background:none;font-size:inherit}a{color:inherit;text-decoration:none}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column}
+.hd{display:flex;align-items:center;gap:12px;padding:6px 14px;border-bottom:2px solid var(--ln);background:#060b19;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand .ic{width:calc(var(--tap) - 4px);height:calc(var(--tap) - 4px);border-radius:16px;background:radial-gradient(circle at 35% 30%,#fde68a,#f97316 55%,#7c2d12);display:flex;align-items:center;justify-content:center;font-size:1.5em;flex:none}
+.brand h1{font-size:var(--fm);font-weight:900;line-height:1.15;white-space:nowrap}.brand small{display:block;font-size:.8em;color:var(--sub);font-weight:700}
+.tabs{display:flex;gap:8px;flex:1;justify-content:center;flex-wrap:wrap}
+.tab,.tb{min-height:var(--tap);min-width:var(--tap);padding:0 18px;border-radius:16px;background:var(--card);border:2px solid var(--ln);font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.tab.on{background:#f59e0b;border-color:#fde68a;color:#1a1200}.tab.done::after{content:"✓";margin-left:4px;color:#16a34a;font-weight:900}.tab.on.done::after{color:#14532d}
+.tb:active,.tab:active{transform:scale(.97)}.tb.on{background:#16a34a;border-color:#bbf7d0}
+.tools{display:flex;gap:8px}
+.mn{flex:1;min-height:0;position:relative}
+.mode{position:absolute;inset:0;display:none}.mode.on{display:flex}
+.panel{background:var(--card);border:2px solid var(--ln);border-radius:20px;padding:10px 12px}
+.panel h2{font-size:var(--fm);font-weight:900;color:var(--cy);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.big{min-height:calc(var(--tap)*1.15);padding:0 24px;border-radius:18px;border:3px solid rgba(255,255,255,.5);font-weight:900;color:#fff;background:linear-gradient(135deg,#7c3aed,#4f46e5)}.big.or{background:linear-gradient(135deg,#f59e0b,#ea580c)}.big.gy{background:#1e293b;border-color:#64748b}.big:disabled{opacity:.5}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.x{min-width:var(--tap);min-height:var(--tap);border-radius:16px;background:#27406e;font-weight:900;color:#fff;flex:none}
+/* ===== 모드 1 ===== */
+.m1,.m2{padding:10px 14px;gap:12px;overflow:auto;align-items:stretch}
+.m1 .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.qbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#1e1b4b,#0f172a);border:3px solid #818cf8;border-radius:20px;padding:8px 16px}
+.qbar b{font-size:var(--fk);font-weight:900;flex:1;min-width:260px;line-height:1.3;word-break:keep-all}
+.cards{display:flex;flex-wrap:wrap;gap:8px;min-height:calc(var(--tap)*1.9);align-content:flex-start}
+.pc{width:clamp(110px,8.4vw,230px);background:var(--card2);border:3px solid var(--ln);border-radius:18px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;touch-action:none;cursor:grab;font-weight:900;text-align:center;line-height:1.2;position:relative}
+.pc canvas{width:clamp(52px,4.4vw,110px);height:clamp(52px,4.4vw,110px)}.pc.sel{border-color:#fde68a;background:#2a2410;box-shadow:0 0 0 4px rgba(253,224,71,.4)}
+.pc.bad{border-color:#ef4444;background:#2a0f12;animation:shk .5s}@keyframes shk{20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pc.T{box-shadow:inset 0 -6px 0 var(--T)}.pc.J{box-shadow:inset 0 -6px 0 var(--J)}.pc.sel.T,.pc.sel.J{box-shadow:0 0 0 4px rgba(253,224,71,.4)}
+.ghost{position:fixed;z-index:80;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.08)}
+.bks{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bsk{min-height:clamp(200px,17vw,420px);border-radius:22px;background:#0b1226;border:4px dashed #43538a;padding:8px 10px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.bsk h3{font-size:var(--fm);font-weight:900;line-height:1.2}.bsk.over{border-color:#fde68a;background:#1a1a0a}
+.bsk.okA{border-color:var(--T);border-style:solid;background:#1f1206}.bsk.okB{border-color:var(--J);border-style:solid;background:#06182a}
+#fb1{min-height:calc(var(--tap)*1.4);border-radius:18px;padding:8px 14px;font-weight:800;line-height:1.5;background:var(--card);border:2px solid var(--ln);display:flex;align-items:center}
+#fb1.bad{border-color:#ef4444;background:#2a0f12}#fb1.good{border-color:#22c55e;background:#0b2615}
+#insp,#insp2{width:clamp(340px,29vw,760px);flex:none;display:flex;flex-direction:column;gap:8px;overflow:auto}
+#insp canvas.pi,#insp2 canvas.pi{align-self:center;width:min(100%,clamp(150px,13vw,340px));aspect-ratio:1/1;border-radius:20px;background:radial-gradient(circle,#0f1a3a,#050914);border:2px solid var(--ln)}
+.insp h3{font-size:var(--fk);font-weight:900;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 14px;border-radius:999px;font-weight:900;color:#0b1020;font-size:.55em}
+table.dt{width:100%;border-collapse:separate;border-spacing:0 5px;font-weight:700}
+.dt th{text-align:left;color:var(--sub);font-weight:800;padding:6px 8px;width:36%;background:#0f1830;border-radius:12px 0 0 12px}.dt td{padding:6px 8px;background:#0f1830;border-radius:0 12px 12px 0;font-weight:800}
+.dt.cmp th{width:auto;text-align:center;border-radius:0}.dt.cmp td{text-align:center;border-radius:0}.dt.cmp td:first-child,.dt.cmp th:first-child{text-align:left;border-radius:12px 0 0 12px}
+.dt td.near{background:#14391f;color:#86efac}
+.hintp{color:var(--sub);font-weight:700;line-height:1.55}
+/* ===== 모드 2 ===== */
+.m2 .stagebox{flex:1;min-width:0;position:relative;border-radius:20px;border:2px solid var(--ln);background:radial-gradient(ellipse at 50% 40%,#0a1330,#04070f 75%);overflow:hidden;display:flex;flex-direction:column}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;padding:8px 10px;border-bottom:2px solid var(--ln);background:#060b19;align-items:center}
+.ctl .grp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.ctl .lab{color:var(--sub);font-weight:800;margin-right:2px}
+.chip{min-height:var(--tap);padding:0 16px;border-radius:999px;background:var(--card);border:2px solid var(--ln);font-weight:800;white-space:nowrap}.chip.on{background:#4f46e5;border-color:#a5b4fc}
+.cvw{position:relative;flex:1;min-height:0}#cv2,#cv3{position:absolute;inset:0;width:100%;height:100%;display:block}
+#note2{padding:8px 14px;border-top:2px solid var(--ln);background:#0a1126;font-weight:700;line-height:1.55;min-height:calc(var(--tap)*1.3)}
+#note2 b{color:var(--gold)}
+/* ===== 모드 3 ===== */
+.m3{flex-direction:column}
+.m3 .cvw{background:#04070f}
+#fx{position:absolute;right:10px;top:10px;bottom:calc(var(--tap)*2.2 + 24px);width:clamp(300px,27vw,700px);background:rgba(8,13,30,.93);border:3px solid var(--ln);border-radius:20px;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+#fx h3{font-size:var(--fm);font-weight:900;color:var(--gold);line-height:1.25}#fx p{font-weight:700;line-height:1.55}#fx .z{border-radius:14px;padding:6px 10px;font-weight:800;line-height:1.45}
+#fx .zin{background:#3a1608;border:2px solid #f97316}#fx .zout{background:#06223a;border:2px solid #38bdf8}
+.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font-weight:700}.lg span{display:inline-flex;align-items:center;gap:6px}.lg i{width:.8em;height:.8em;border-radius:50%;display:inline-block}
+#fres{display:none;font-weight:800;line-height:1.6}#fres.on{display:block}#fres table{width:100%;border-collapse:collapse}#fres td,#fres th{border-bottom:1px solid #2a3a66;padding:3px 6px;text-align:left}
+#fbar{position:absolute;left:10px;right:calc(clamp(300px,27vw,700px) + 20px);bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:rgba(8,13,30,.93);border:3px solid var(--ln);border-radius:20px;padding:8px 12px;min-height:calc(var(--tap)*2)}
+#fbar .sl{display:flex;flex-direction:column;gap:0;flex:1;min-width:200px}#fbar .sl label{font-weight:800;color:var(--sub);line-height:1.2}
+#fbar input[type=range]{width:100%;height:var(--tap);accent-color:#f59e0b;background:transparent;cursor:pointer}
+.stp{display:flex;gap:6px;flex-wrap:wrap}.stp .chip{padding:0 12px}
+/* ===== 서랍 · 모달 ===== */
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:none}#dim.on{display:block}
+.dr{position:fixed;top:0;right:0;bottom:0;width:clamp(340px,28vw,760px);background:#0a1126;border-left:3px solid var(--ln);z-index:50;transform:translateX(105%);transition:transform .3s;padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto}.dr.on{transform:none}
+.dr h3{font-size:var(--fm);display:flex;justify-content:space-between;align-items:center}.dr h4{color:var(--cy);margin-bottom:6px;font-size:1em}
+.dr .row2{display:flex;gap:8px;flex-wrap:wrap}.dr .tb{flex:1}
+.sw2{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:var(--tap);font-weight:800}
+.sw2 button{min-width:calc(var(--tap)*1.6);min-height:var(--tap);border-radius:999px;background:#334155;font-weight:900;border:2px solid #475569}.sw2 button.on{background:#16a34a;border-color:#bbf7d0}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:60;padding:14px}.ov.on{display:flex}
+.pop{background:#0c1328;border:2px solid var(--ln);border-radius:22px;width:100%;max-width:min(1200px,96vw);max-height:94vh;overflow:auto;padding:clamp(14px,1.6vw,30px)}
+.pop h2{font-size:var(--fm);color:var(--cy);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+table.sm{width:100%;border-collapse:separate;border-spacing:0;font-weight:800;border:2px solid #334155;border-radius:16px;overflow:hidden}.sm th,.sm td{padding:8px 12px;border-bottom:2px solid #223056;text-align:left;line-height:1.45}.sm th{background:#13203f}.sm td.T{background:#2a1608}.sm td.J{background:#06203a}.sm th.T{background:#7c2d12}.sm th.J{background:#0c4a6e}
+table.sm.all td,table.sm.all th{text-align:center;padding:6px 6px}.sm.all td:first-child,.sm.all th:first-child{text-align:left}
+.qn3{background:#2a2410;border:1px solid #f59e0b;color:var(--gold);border-radius:12px;padding:10px 14px;line-height:1.5;margin-bottom:8px}
+#qrUrl{width:100%;min-height:var(--tap);border-radius:14px;border:2px solid var(--ln);background:#0b1726;color:#fff;font:inherit;padding:0 12px;margin-bottom:8px;user-select:text;-webkit-user-select:text}
+#qrCv{background:#fff;padding:12px;border-radius:12px;width:min(70vw,340px);height:auto;image-rendering:pixelated;display:block;margin:0 auto}#qrMsg{color:#fca5a5;font-weight:700;min-height:1.3em}#qrCap{font-size:.8em;color:var(--sub);word-break:break-all;text-align:center}
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);z-index:90;background:rgba(8,13,30,.97);border:2px solid var(--gold);border-radius:16px;padding:10px 24px;font-weight:800;transition:transform .3s;pointer-events:none;max-width:92%;text-align:center}#toast.on{transform:translate(-50%,0)}
+@media (max-width:1100px){.m1,.m2{flex-direction:column}#insp,#insp2{width:auto}#fx{position:static;width:auto;margin:6px}#fbar{right:10px}.bks{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div class="brand"><div class="ic">🪐</div><div><h1>행성의 특징과 태양계 형성</h1><small>중1 · 태양계 · 지구형·목성형 행성 비교 / 스노우 라인과 성운 가설</small></div></div>
+    <nav class="tabs">
+      <button class="tab on" id="tab1" data-m="1">🧺 ① 행성 분류소</button>
+      <button class="tab" id="tab2" data-m="2">📈 ② 그래프 탐구</button>
+      <button class="tab" id="tab3" data-m="3">🌌 ③ 태양계 형성</button>
+    </nav>
+    <div class="tools">
+      <button class="tb" id="bFs" title="전체화면">⛶ 전체화면</button>
+      <button class="tb" id="bSet" title="설정">⚙️</button>
+    </div>
+  </header>
+  <main class="mn">
+    <section class="mode m1 on" id="m1">
+      <div class="main">
+        <div class="qbar"><b>🤔 화성은 지구와 목성 중 어느 행성과 특징이 비슷할까?</b><button class="tb" id="cmpBtn">🔎 화성·지구·목성 비교</button></div>
+        <div class="panel"><h2><span>🚀 대기실 <small id="wn" style="font-size:.7em;color:var(--sub)">8</small></span><span class="row"><small style="font-size:.6em;color:var(--sub);font-weight:700">카드를 끌어 놓거나, 눌러서 고른 뒤 바구니를 누르세요 · 두 번 누르면 자동 이동</small></span></h2><div class="cards" id="wait"></div></div>
+        <div class="bks">
+          <div class="bsk" data-b="A" id="bskA"><h3 id="hA">집단 (가)</h3><div class="cards" id="bA"></div></div>
+          <div class="bsk" data-b="B" id="bskB"><h3 id="hB">집단 (나)</h3><div class="cards" id="bB"></div></div>
+        </div>
+        <div class="row"><button class="big or" id="judge">✅ 판정하기</button><button class="big" id="tbl">📋 정리표·자료표</button><button class="big gy" id="m1r">↺ 다시 분류</button></div>
+        <div id="fb1">행성 카드를 눌러 오른쪽에서 자료를 살펴보고, 특징이 비슷한 행성끼리 두 집단으로 나눠 보세요.</div>
+      </div>
+      <aside class="panel insp" id="insp"></aside>
+    </section>
+    <section class="mode m2" id="m2">
+      <div class="stagebox">
+        <div class="ctl">
+          <span class="grp"><span class="lab">그래프</span><button class="chip on" data-a="0">반지름 ↔ 위성 수</button><button class="chip" data-a="1">질량 ↔ 밀도</button><button class="chip" data-a="2">태양과의 거리 ↔ 밀도</button></span>
+          <span class="grp"><span class="lab">보기</span><button class="chip on" data-v="all">전체</button><button class="chip" data-v="T">🔍 지구형 확대</button><button class="chip" data-v="J">🔍 목성형 확대</button></span>
+          <span class="grp"><button class="chip" id="cClus">🧲 군집 하이라이트</button><button class="chip on" id="cCol">🎨 분류 색</button></span>
+        </div>
+        <div class="cvw"><canvas id="cv2"></canvas></div>
+        <div id="note2"></div>
+      </div>
+      <aside class="panel insp" id="insp2"></aside>
+    </section>
+    <section class="mode m3" id="m3">
+      <div class="cvw"><canvas id="cv3"></canvas>
+        <aside id="fx"></aside>
+        <div id="fbar">
+          <button class="big or" id="fPlay" style="min-width:calc(var(--tap)*2)">▶ 재생</button>
+          <div class="stp" id="fStep"><button class="chip" data-t="0">① 성운 수축</button><button class="chip" data-t="0.3">② 온도 차와 응결</button><button class="chip" data-t="0.62">③ 핵 성장</button><button class="chip" data-t="1">④ 행성 완성</button></div>
+          <div class="sl"><label>⏱ 시간 흐름 : <b id="tv">0 %</b></label><input type="range" id="fT" min="0" max="100" step="1" value="0" aria-label="시간 흐름"></div>
+          <div class="sl"><label>❄️ 스노우 라인 위치 : <b id="sv">2.7 AU</b></label><input type="range" id="fS" min="0.8" max="6" step="0.1" value="2.7" aria-label="스노우 라인 위치"></div>
+          <button class="tb" id="fRst" title="스노우 라인을 2.7 AU로">↺ 2.7 AU</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="dim"></div>
+<aside class="dr" id="dr">
+  <h3>⚙️ 설정 <button class="x" id="drX">✕</button></h3>
+  <section><h4>📈 그래프</h4><div class="sw2"><span>점 옆에 이름 보이기</span><button id="oLab" class="on">켬</button></div></section>
+  <section><h4>🔊 소리</h4><div class="sw2"><span>효과음</span><button id="oSnd" class="on">켬</button></div></section>
+  <section><h4>🔗 이동</h4><div class="row2"><a class="tb" href="./가상실험실_서랍.html">🔬 가상실험실</a><a class="tb" href="./통합_과학수업_서랍.html">📚 통합과학</a><a class="tb" href="./시작하기_수업게임서랍.html">🎮 수업게임</a></div></section>
+  <section><h4>📱 학생 접속 QR</h4><button class="tb" id="bQR" style="width:100%">📱 QR 코드 만들기</button></section>
+  <section><h4>↺ 처음부터</h4><button class="tb" id="bAll" style="width:100%">모든 활동 초기화</button></section>
+</aside>
+<div class="ov" id="ovT"><div class="pop">
+  <h2><span id="tTitle">📋 교과서 정리표</span><button class="x" id="tX">✕</button></h2>
+  <div class="row" style="margin-bottom:10px"><button class="chip on" data-t="sum">정리표 (지구형 vs 목성형)</button><button class="chip" data-t="all">행성 자료표 (8개 행성)</button></div>
+  <div id="tBody"></div>
+</div></div>
+<div class="ov" id="ovQ"><div class="pop" style="max-width:520px">
+  <h2><span>📱 학생 접속 QR코드</span><button class="x" id="qX">✕</button></h2>
+  <div class="qn3">학생 휴대폰·태블릿 카메라로 찍으면 바로 열립니다. GitHub Pages 주소를 한 번 붙여 넣으면 이 컴퓨터에 저장돼요.</div>
+  <input id="qrUrl" type="url" placeholder="https://계정명.github.io/저장소명/행성의_특징과_태양계_형성.html" autocomplete="off" spellcheck="false">
+  <div id="qrMsg"></div><canvas id="qrCv" width="400" height="400"></canvas><div id="qrCap"></div>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* qrcode-generator 2.0.4 (c) Kazuhiko Arase, MIT License — 오프라인 내장 */
+//---------------------------------------------------------------------
+//
+// QR Code Generator for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//  http://www.opensource.org/licenses/mit-license.php
+//
+// The word 'QR Code' is registered trademark of
+// DENSO WAVE INCORPORATED
+//  http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+
+var qrcode = function() {
+
+  //---------------------------------------------------------------------
+  // qrcode
+  //---------------------------------------------------------------------
+
+  /**
+   * qrcode
+   * @param typeNumber 1 to 40
+   * @param errorCorrectionLevel 'L','M','Q','H'
+   */
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+
+    var _this = {};
+
+    var makeImpl = function(test, maskPattern) {
+
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+
+      mapData(_dataCache, maskPattern);
+    };
+
+    var setupPositionProbePattern = function(row, col) {
+
+      for (var r = -1; r <= 7; r += 1) {
+
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+
+        for (var c = -1; c <= 7; c += 1) {
+
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    var getBestMaskPattern = function() {
+
+      var minLostPoint = 0;
+      var pattern = 0;
+
+      for (var i = 0; i < 8; i += 1) {
+
+        makeImpl(true, i);
+
+        var lostPoint = QRUtil.getLostPoint(_this);
+
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+
+      return pattern;
+    };
+
+    var setupTimingPattern = function() {
+
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+
+    var setupPositionAdjustPattern = function() {
+
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+
+      for (var i = 0; i < pos.length; i += 1) {
+
+        for (var j = 0; j < pos.length; j += 1) {
+
+          var row = pos[i];
+          var col = pos[j];
+
+          if (_modules[row][col] != null) {
+            continue;
+          }
+
+          for (var r = -2; r <= 2; r += 1) {
+
+            for (var c = -2; c <= 2; c += 1) {
+
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    var setupTypeNumber = function(test) {
+
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+
+    var setupTypeInfo = function(test, maskPattern) {
+
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+
+      // vertical
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+
+      // horizontal
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+
+      // fixed module
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+
+    var mapData = function(data, maskPattern) {
+
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+
+        if (col == 6) col -= 1;
+
+        while (true) {
+
+          for (var c = 0; c < 2; c += 1) {
+
+            if (_modules[row][col - c] == null) {
+
+              var dark = false;
+
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+
+              var mask = maskFunc(row, col - c);
+
+              if (mask) {
+                dark = !dark;
+              }
+
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+
+          row += inc;
+
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    var createBytes = function(buffer, rsBlocks) {
+
+      var offset = 0;
+
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+
+        dcdata[r] = new Array(dcCount);
+
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+
+      var data = new Array(totalCodeCount);
+      var index = 0;
+
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      return data;
+    };
+
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+
+      var buffer = qrBitBuffer();
+
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+
+      // calc num max data.
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+
+      // end code
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+
+      // padding
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+
+      // padding
+      while (true) {
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+
+      return createBytes(buffer, rsBlocks);
+    };
+
+    _this.addData = function(data, mode) {
+
+      mode = mode || 'Byte';
+
+      var newData = null;
+
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+
+        _typeNumber = typeNumber;
+      }
+
+      makeImpl(false, getBestMaskPattern() );
+    };
+
+    _this.createTableTag = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var qrHtml = '';
+
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+
+        qrHtml += '<tr>';
+
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+
+        qrHtml += '</tr>';
+      }
+
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+
+      return qrHtml;
+    };
+
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        // Called by options.
+        opts = arguments[0];
+        // overwrite cellSize and margin.
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      // Compose alt property surrogate
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+
+      // Compose title property surrogate
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+
+      return qrSvg;
+    };
+
+    _this.createDataURL = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+
+    _this.createImgTag = function(cellSize, margin, alt) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+
+      return img;
+    };
+
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r1, r2, p;
+
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+
+        ascii += '\n';
+      }
+
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r, p;
+
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          line += p ? white : black;
+        }
+
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrcode.stringToBytes
+  //---------------------------------------------------------------------
+
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+
+  //---------------------------------------------------------------------
+  // qrcode.createStringToBytes
+  //---------------------------------------------------------------------
+
+  /**
+   * @param unicodeData base64 string of byte array.
+   * [16bit Unicode],[16bit Bytes], ...
+   * @param numChars
+   */
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+
+    // create conversion map.
+
+    var unicodeMap = function() {
+
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+
+      return unicodeMap;
+    }();
+
+    var unknownChar = '?'.charCodeAt(0);
+
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              // 1byte
+              bytes.push(b);
+            } else {
+              // 2bytes
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+
+  //---------------------------------------------------------------------
+  // QRMode
+  //---------------------------------------------------------------------
+
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+
+  //---------------------------------------------------------------------
+  // QRErrorCorrectionLevel
+  //---------------------------------------------------------------------
+
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+
+  //---------------------------------------------------------------------
+  // QRMaskPattern
+  //---------------------------------------------------------------------
+
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+
+  //---------------------------------------------------------------------
+  // QRUtil
+  //---------------------------------------------------------------------
+
+  var QRUtil = function() {
+
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+
+    var _this = {};
+
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+
+    _this.getMaskFunction = function(maskPattern) {
+
+      switch (maskPattern) {
+
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+
+    _this.getLengthInBits = function(mode, type) {
+
+      if (1 <= type && type < 10) {
+
+        // 1 - 9
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 27) {
+
+        // 10 - 26
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 41) {
+
+        // 27 - 40
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else {
+        throw 'type:' + type;
+      }
+    };
+
+    _this.getLostPoint = function(qrcode) {
+
+      var moduleCount = qrcode.getModuleCount();
+
+      var lostPoint = 0;
+
+      // LEVEL1
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+
+          for (var r = -1; r <= 1; r += 1) {
+
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+
+            for (var c = -1; c <= 1; c += 1) {
+
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+
+              if (r == 0 && c == 0) {
+                continue;
+              }
+
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+
+      // LEVEL2
+
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+
+      // LEVEL3
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      // LEVEL4
+
+      var darkCount = 0;
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+
+      return lostPoint;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // QRMath
+  //---------------------------------------------------------------------
+
+  var QRMath = function() {
+
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+
+    // initialize tables
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+
+    var _this = {};
+
+    _this.glog = function(n) {
+
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+
+      return LOG_TABLE[n];
+    };
+
+    _this.gexp = function(n) {
+
+      while (n < 0) {
+        n += 255;
+      }
+
+      while (n >= 256) {
+        n -= 255;
+      }
+
+      return EXP_TABLE[n];
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrPolynomial
+  //---------------------------------------------------------------------
+
+  function qrPolynomial(num, shift) {
+
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+
+    var _this = {};
+
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+
+    _this.getLength = function() {
+      return _num.length;
+    };
+
+    _this.multiply = function(e) {
+
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+
+      return qrPolynomial(num, 0);
+    };
+
+    _this.mod = function(e) {
+
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+
+      // recursive call
+      return qrPolynomial(num, 0).mod(e);
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // QRRSBlock
+  //---------------------------------------------------------------------
+
+  var QRRSBlock = function() {
+
+    var RS_BLOCK_TABLE = [
+
+      // L
+      // M
+      // Q
+      // H
+
+      // 1
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+
+      // 2
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+
+      // 3
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+
+      // 4
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+
+      // 5
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+
+      // 6
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+
+      // 7
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+
+      // 8
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+
+      // 9
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+
+      // 10
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+
+      // 11
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+
+      // 12
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+
+      // 13
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+
+      // 14
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+
+      // 15
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+
+      // 16
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+
+      // 17
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+
+      // 18
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+
+      // 19
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+
+      // 20
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+
+      // 21
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+
+      // 22
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+
+      // 23
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+
+      // 24
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+
+      // 25
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+
+      // 26
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+
+      // 27
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+
+      // 28
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+
+      // 29
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+
+      // 30
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+
+      // 31
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+
+      // 32
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+
+      // 33
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+
+      // 34
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+
+      // 35
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+
+      // 36
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+
+      // 37
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+
+      // 38
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+
+      // 39
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+
+      // 40
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+
+    var _this = {};
+
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+
+      var length = rsBlock.length / 3;
+
+      var list = [];
+
+      for (var i = 0; i < length; i += 1) {
+
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+
+      return list;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrBitBuffer
+  //---------------------------------------------------------------------
+
+  var qrBitBuffer = function() {
+
+    var _buffer = [];
+    var _length = 0;
+
+    var _this = {};
+
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+
+    _this.putBit = function(bit) {
+
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+
+      _length += 1;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrNumber
+  //---------------------------------------------------------------------
+
+  var qrNumber = function(data) {
+
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _data;
+
+      var i = 0;
+
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrAlphaNum
+  //---------------------------------------------------------------------
+
+  var qrAlphaNum = function(data) {
+
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var s = _data;
+
+      var i = 0;
+
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+
+    var getCode = function(c) {
+
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qr8BitByte
+  //---------------------------------------------------------------------
+
+  var qr8BitByte = function(data) {
+
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrKanji
+  //---------------------------------------------------------------------
+
+  var qrKanji = function(data) {
+
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      // self test for sjis support.
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+
+    var _bytes = stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _bytes;
+
+      var i = 0;
+
+      while (i + 1 < data.length) {
+
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
+        buffer.put(c, 13);
+
+        i += 2;
+      }
+
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+
+    return _this;
+  };
+
+  //=====================================================================
+  // GIF Support etc.
+  //
+
+  //---------------------------------------------------------------------
+  // byteArrayOutputStream
+  //---------------------------------------------------------------------
+
+  var byteArrayOutputStream = function() {
+
+    var _bytes = [];
+
+    var _this = {};
+
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64EncodeOutputStream
+  //---------------------------------------------------------------------
+
+  var base64EncodeOutputStream = function() {
+
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+
+    var _this = {};
+
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+
+    var encode = function(n) {
+      if (n < 0) {
+        // error.
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+
+    _this.writeByte = function(n) {
+
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+
+    _this.flush = function() {
+
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+
+      if (_length % 3 != 0) {
+        // padding
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+
+    _this.toString = function() {
+      return _base64;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64DecodeInputStream
+  //---------------------------------------------------------------------
+
+  var base64DecodeInputStream = function(str) {
+
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+
+    var _this = {};
+
+    _this.read = function() {
+
+      while (_buflen < 8) {
+
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+
+        var c = _str.charAt(_pos);
+        _pos += 1;
+
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          // ignore if whitespace.
+          continue;
+        }
+
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // gifImage (B/W)
+  //---------------------------------------------------------------------
+
+  var gifImage = function(width, height) {
+
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+
+    var _this = {};
+
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+
+    _this.write = function(out) {
+
+      //---------------------------------
+      // GIF Signature
+
+      out.writeString('GIF87a');
+
+      //---------------------------------
+      // Screen Descriptor
+
+      out.writeShort(_width);
+      out.writeShort(_height);
+
+      out.writeByte(0x80); // 2bit
+      out.writeByte(0);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Global Color Map
+
+      // black
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+
+      // white
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+
+      //---------------------------------
+      // Image Descriptor
+
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Local Color Map
+
+      //---------------------------------
+      // Raster Data
+
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+
+      out.writeByte(lzwMinCodeSize);
+
+      var offset = 0;
+
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+
+      //---------------------------------
+      // GIF Terminator
+      out.writeString(';');
+    };
+
+    var bitOutputStream = function(out) {
+
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+
+      var _this = {};
+
+      _this.write = function(data, length) {
+
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+
+      return _this;
+    };
+
+    var getLZWRaster = function(lzwMinCodeSize) {
+
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+
+      // Setup LZWTable
+      var table = lzwTable();
+
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+
+      // clear code
+      bitOut.write(clearCode, bitLength);
+
+      var dataIndex = 0;
+
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+
+      while (dataIndex < _data.length) {
+
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+
+        if (table.contains(s + c) ) {
+
+          s = s + c;
+
+        } else {
+
+          bitOut.write(table.indexOf(s), bitLength);
+
+          if (table.size() < 0xfff) {
+
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+
+            table.add(s + c);
+          }
+
+          s = c;
+        }
+      }
+
+      bitOut.write(table.indexOf(s), bitLength);
+
+      // end code
+      bitOut.write(endCode, bitLength);
+
+      bitOut.flush();
+
+      return byteOut.toByteArray();
+    };
+
+    var lzwTable = function() {
+
+      var _map = {};
+      var _size = 0;
+
+      var _this = {};
+
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+
+      _this.size = function() {
+        return _size;
+      };
+
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+
+      return _this;
+    };
+
+    return _this;
+  };
+
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+
+    var b = byteArrayOutputStream();
+    gif.write(b);
+
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+
+    return 'data:image/gif;base64,' + base64;
+  };
+
+  //---------------------------------------------------------------------
+  // returns qrcode function.
+
+  return qrcode;
+}();
+
+// multibyte support
+!function() {
+
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+          i++;
+          // UTF-16 encodes 0x10000-0x10FFFF by
+          // subtracting 0x10000 and splitting the
+          // 20 bits of 0x0-0xFFFFF into two halves
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+
+}();
+
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+
+</script>
+<script>
+"use strict";
+(function(){
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,ease=t=>{t=clamp(t,0,1);return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;};
+const FONT='"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+const ST={mode:1,snd:true,lab:true,sel:null,axis:0,view:'all',clus:false,col:true,judged:false,success:false,orient:null,attempts:0,cmp:false};
+let AC=null;function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}return AC;}
+function tone(f,t0,d,ty,v){const a=ac();if(!a||!ST.snd)return;try{const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=ty||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.12,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.05);}catch(e){}}
+const SFX={tap:()=>tone(520+Math.random()*80,0,.07,'sine',.09),drop:()=>tone(330,0,.09,'triangle',.12),ok:()=>[659,784,1047].forEach((f,i)=>tone(f,i*.08,.2,'triangle',.14)),bad:()=>{tone(180,0,.18,'sawtooth',.1);tone(140,.12,.2,'sawtooth',.09);},win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.11,.28,'triangle',.15))};
+let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2800);}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* ---------- 행성 자료 (NASA 2025 기준 · 교과서 값) ---------- */
+const GN={T:{nm:'지구형 행성',col:'#fb923c'},J:{nm:'목성형 행성',col:'#38bdf8'}};
+const PL=[
+ {id:'mercury',nm:'수성',g:'T',r:0.38,moons:0,mass:0.055,dens:5.43,au:0.39,ring:false,surf:'단단한 암석·금속 표면',comp:'암석·철(금속 핵이 매우 큼)'},
+ {id:'venus',nm:'금성',g:'T',r:0.95,moons:0,mass:0.815,dens:5.24,au:0.72,ring:false,surf:'단단한 암석·금속 표면',comp:'암석·철, 두꺼운 이산화 탄소 대기'},
+ {id:'earth',nm:'지구',g:'T',r:1.00,moons:1,mass:1.00,dens:5.51,au:1.00,ring:false,surf:'단단한 암석·금속 표면',comp:'암석·철, 표면에 액체 물'},
+ {id:'mars',nm:'화성',g:'T',r:0.53,moons:2,mass:0.107,dens:3.93,au:1.52,ring:false,surf:'단단한 암석·금속 표면',comp:'암석·철, 산화 철 먼지'},
+ {id:'jupiter',nm:'목성',g:'J',r:11.2,moons:95,mass:317.8,dens:1.33,au:5.20,ring:true,surf:'단단한 표면 없음 (기체)',comp:'수소·헬륨 (거대 가스 행성)'},
+ {id:'saturn',nm:'토성',g:'J',r:9.45,moons:146,mass:95.2,dens:0.69,au:9.58,ring:true,surf:'단단한 표면 없음 (기체)',comp:'수소·헬륨 (물보다 가벼운 밀도)'},
+ {id:'uranus',nm:'천왕성',g:'J',r:4.01,moons:28,mass:14.5,dens:1.27,au:19.2,ring:true,surf:'기체와 얼음 (표면 없음)',comp:'수소·헬륨·메테인, 물·암모니아 얼음'},
+ {id:'neptune',nm:'해왕성',g:'J',r:3.88,moons:16,mass:17.1,dens:1.64,au:30.05,ring:true,surf:'기체와 얼음 (표면 없음)',comp:'수소·헬륨·메테인, 물·암모니아 얼음'}];
+const PM={};PL.forEach(p=>PM[p.id]=p);
+const fmt=(v,d)=>(+v).toFixed(d===undefined?2:d).replace(/\.?0+$/,'');
+/* ---------- 행성 그림 ---------- */
+function rng(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function blob(c,x,y,r,seed,n,jit){const R=rng(seed);c.beginPath();for(let i=0;i<=n;i++){const a=i/n*6.2832,rr=r*(1-jit+R()*jit*2);const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?c.lineTo(px,py):c.moveTo(px,py);}c.closePath();}
+function ball(c,x,y,r,c1,c2,c3){const g=c.createRadialGradient(x-r*.35,y-r*.38,r*.1,x,y,r*1.05);g.addColorStop(0,c1);g.addColorStop(.6,c2);g.addColorStop(1,c3);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill();}
+function paint(c,id,x,y,r,opt){
+  opt=opt||{};c.save();
+  if(id==='sun'){const g=c.createRadialGradient(x,y,r*.6,x,y,r*2.4);g.addColorStop(0,'rgba(255,200,60,.55)');g.addColorStop(1,'rgba(255,140,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r*2.4,0,7);c.fill();ball(c,x,y,r,'#fff7c2','#fbbf24','#ea580c');}
+  else if(id==='mercury'){ball(c,x,y,r,'#cbd5e1','#9ca3af','#4b5563');c.fillStyle='rgba(55,65,81,.55)';[[-.3,-.2,.2],[.25,.1,.16],[-.05,.4,.13]].forEach(a=>{c.beginPath();c.arc(x+a[0]*r,y+a[1]*r,a[2]*r,0,7);c.fill();});}
+  else if(id==='venus'){ball(c,x,y,r,'#fff1c2','#e8c57a','#a16a2a');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=Math.max(1,r*.12);for(let i=-2;i<=2;i++){c.beginPath();c.arc(x+r*.3,y+i*r*.4,r*.9,3.4,5.6);c.stroke();}c.restore();}
+  else if(id==='earth'){ball(c,x,y,r,'#7dd3fc','#1d6fd8','#0b2e6b');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();c.fillStyle='#3fa34d';blob(c,x-r*.25,y-r*.1,r*.42,11,9,.35);c.fill();blob(c,x+r*.4,y+r*.35,r*.3,5,8,.4);c.fill();blob(c,x+r*.2,y-r*.5,r*.2,9,7,.4);c.fill();c.strokeStyle='rgba(255,255,255,.65)';c.lineWidth=Math.max(1,r*.12);c.lineCap='round';c.beginPath();c.arc(x-r*.1,y+r*.1,r*.7,3.8,4.8);c.stroke();c.beginPath();c.arc(x+r*.1,y-r*.2,r*.55,0.2,1.2);c.stroke();c.restore();}
+  else if(id==='mars'){ball(c,x,y,r,'#f0a070','#c1440e','#6b1d05');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();c.fillStyle='rgba(80,25,10,.45)';blob(c,x-r*.2,y+r*.1,r*.35,3,8,.4);c.fill();c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.ellipse(x,y-r*.92,r*.35,r*.16,0,0,7);c.fill();c.restore();}
+  else if(id==='jupiter'){ball(c,x,y,r,'#f5e3c8','#d2a679','#7a4b2a');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();const cols=['#b5835a','#e8d3b0','#9a6a45','#f0dfc0','#a8734c'];for(let i=0;i<5;i++){c.fillStyle=cols[i];c.globalAlpha=.55;c.fillRect(x-r,y-r+i*r*.4+r*.1,r*2,r*.18);}c.globalAlpha=1;c.fillStyle='#b8442b';c.beginPath();c.ellipse(x+r*.25,y+r*.28,r*.26,r*.14,0,0,7);c.fill();c.restore();}
+  else if(id==='saturn'){const rx=r*2.05,ry=r*.62;c.strokeStyle='rgba(217,201,160,.9)';c.lineWidth=Math.max(2,r*.28);c.beginPath();c.ellipse(x,y,rx,ry,-.28,Math.PI,Math.PI*2);c.stroke();ball(c,x,y,r,'#fff0c8','#e3c98b','#8a6a2e');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();c.fillStyle='rgba(150,110,50,.3)';c.fillRect(x-r,y-r*.2,r*2,r*.2);c.restore();c.strokeStyle='rgba(235,220,180,.95)';c.lineWidth=Math.max(2,r*.28);c.beginPath();c.ellipse(x,y,rx,ry,-.28,0,Math.PI);c.stroke();}
+  else if(id==='uranus'){ball(c,x,y,r,'#d5fbff','#8fdde3','#3d8b93');c.strokeStyle='rgba(190,240,245,.6)';c.lineWidth=Math.max(1,r*.1);c.beginPath();c.ellipse(x,y,r*.5,r*1.7,.15,0,7);c.stroke();}
+  else if(id==='neptune'){ball(c,x,y,r,'#8fb2ff','#2f55d6','#10206b');c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=Math.max(1,r*.1);c.beginPath();c.arc(x-r*.2,y+r*.2,r*.6,4,5.4);c.stroke();c.fillStyle='rgba(10,20,80,.6)';c.beginPath();c.ellipse(x+r*.25,y-r*.15,r*.2,r*.12,0,0,7);c.fill();c.restore();}
+  else if(id==='pluto'){ball(c,x,y,r,'#f3e6d0','#cbb79a','#6f5d45');c.fillStyle='rgba(255,250,240,.8)';c.beginPath();c.arc(x-r*.12,y-r*.05,r*.2,0,7);c.arc(x+r*.14,y-r*.05,r*.2,0,7);c.fill();c.beginPath();c.moveTo(x-r*.3,y);c.lineTo(x,y+r*.4);c.lineTo(x+r*.32,y);c.fill();}
+  else if(id==='ceres'){ball(c,x,y,r,'#cfcfcf','#8b8b8b','#424242');c.fillStyle='#fff';c.beginPath();c.arc(x+r*.2,y-r*.15,r*.12,0,7);c.fill();c.beginPath();c.arc(x+r*.38,y-r*.02,r*.07,0,7);c.fill();c.fillStyle='rgba(60,60,60,.5)';c.beginPath();c.arc(x-r*.3,y+r*.2,r*.22,0,7);c.fill();}
+  else if(id==='vesta'||id==='eros'){const g=c.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r*1.1);g.addColorStop(0,'#d6d3d1');g.addColorStop(.6,'#8d8782');g.addColorStop(1,'#3f3a36');c.fillStyle=g;blob(c,x,y,r,id==='vesta'?21:34,12,.22);c.fill();c.fillStyle='rgba(40,35,30,.5)';c.beginPath();c.arc(x+r*.15,y+r*.2,r*.28,0,7);c.fill();c.beginPath();c.arc(x-r*.3,y-r*.2,r*.15,0,7);c.fill();}
+  else if(id==='belt'){const R=rng(77);for(let i=0;i<9;i++){const a=R()*6.28,d=R()*r*.8,rr=r*(.14+R()*.2);const g=c.createRadialGradient(x+Math.cos(a)*d-rr*.3,y+Math.sin(a)*d-rr*.3,rr*.1,x+Math.cos(a)*d,y+Math.sin(a)*d,rr*1.1);g.addColorStop(0,'#d6d3d1');g.addColorStop(1,'#4b4540');c.fillStyle=g;blob(c,x+Math.cos(a)*d,y+Math.sin(a)*d,rr,i*7+3,10,.25);c.fill();}}
+  else if(id==='halley'){
+    const dir=opt.tail||{x:1,y:-.35};const L=opt.tailLen!==undefined?opt.tailLen:r*7;
+    if(L>2){const nx=-dir.y,ny=dir.x;c.save();let g=c.createLinearGradient(x,y,x+dir.x*L,y+dir.y*L);g.addColorStop(0,'rgba(160,230,255,.85)');g.addColorStop(1,'rgba(120,200,255,0)');c.fillStyle=g;c.beginPath();c.moveTo(x+nx*r*.5,y+ny*r*.5);c.lineTo(x+dir.x*L,y+dir.y*L);c.lineTo(x-nx*r*.5,y-ny*r*.5);c.closePath();c.fill();
+      g=c.createLinearGradient(x,y,x+dir.x*L*.8,y+dir.y*L*.8);g.addColorStop(0,'rgba(255,235,170,.7)');g.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=g;c.beginPath();c.moveTo(x+nx*r*.9,y+ny*r*.9);c.quadraticCurveTo(x+dir.x*L*.5+nx*r*2.2,y+dir.y*L*.5+ny*r*2.2,x+dir.x*L*.8+nx*r*3.2,y+dir.y*L*.8+ny*r*3.2);c.lineTo(x+dir.x*L*.8,y+dir.y*L*.8);c.lineTo(x-nx*r*.9,y-ny*r*.9);c.closePath();c.fill();c.restore();}
+    const g=c.createRadialGradient(x,y,r*.1,x,y,r*2);g.addColorStop(0,'rgba(220,250,255,.95)');g.addColorStop(1,'rgba(150,220,255,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r*2,0,7);c.fill();c.fillStyle='#3a3530';blob(c,x,y,r*.7,5,10,.25);c.fill();}
+  else if(id==='moon'){ball(c,x,y,r,'#f1f1f1','#bdbdbd','#6b6b6b');c.fillStyle='rgba(90,90,90,.45)';[[-.3,-.2,.28],[.25,.15,.2],[-.05,.45,.14],[.35,-.35,.12]].forEach(a=>{c.beginPath();c.arc(x+a[0]*r,y+a[1]*r,a[2]*r,0,7);c.fill();});}
+  else if(id==='io'){ball(c,x,y,r,'#fff3a8','#e8c547','#9a6a10');c.fillStyle='rgba(120,50,10,.6)';[[-.3,-.1,.2],[.3,.25,.15],[0,-.45,.12]].forEach(a=>{c.beginPath();c.arc(x+a[0]*r,y+a[1]*r,a[2]*r,0,7);c.fill();});c.fillStyle='rgba(250,250,230,.7)';c.beginPath();c.arc(x+r*.1,y+r*.1,r*.1,0,7);c.fill();}
+  else if(id==='titan'){ball(c,x,y,r,'#ffd48a','#d9902f','#6b3f0b');c.strokeStyle='rgba(255,230,170,.35)';c.lineWidth=Math.max(1,r*.18);c.beginPath();c.arc(x,y,r*1.08,0,7);c.stroke();}
+  else{ball(c,x,y,r,'#ddd','#999','#444');}
+  c.restore();
+}
+
+function drawIcon(cvs,id,k){const c=cvs.getContext('2d'),W=cvs.width;c.clearRect(0,0,W,W);const R={mercury:.2,venus:.28,earth:.3,mars:.22,jupiter:.38,saturn:.24,uranus:.3,neptune:.3}[id]||.3;paint(c,id,W/2,W/2,W*R*(k||1));}
+/* ============================================================
+   인스펙터 (모드 1·2 공용) : 선택한 행성의 실시간 자료
+   ============================================================ */
+function fillInsp(el){
+  const p=PM[ST.sel];
+  if(ST.cmp){const ids=['mars','earth','jupiter'],M=PM.mars,E=PM.earth,Jp=PM.jupiter;
+    const rows=[['반지름(지구=1)','r',v=>fmt(v)],['위성 수(개)','moons',v=>v],['질량(지구=1)','mass',v=>fmt(v,3)],['평균 밀도(g/cm³)','dens',v=>fmt(v)],['고리','ring',v=>v?'있음':'없음'],['표면','surf',v=>v]];
+    let near=0;const body=rows.map(r=>{const k=r[1];let toE;if(typeof M[k]==='boolean')toE=M[k]===E[k];else if(typeof M[k]==='string')toE=(M[k].indexOf('단단한 암석')===0)===(E[k].indexOf('단단한 암석')===0);else{const lg=k==='mass'||k==='moons'?(x=>Math.log10(x+.5)):(x=>x);toE=Math.abs(lg(M[k])-lg(E[k]))<Math.abs(lg(M[k])-lg(Jp[k]));}
+      if(toE)near++;return `<tr><td>${r[0]}</td><td class="${toE?'near':''}">${r[2](M[k])}</td><td class="${toE?'near':''}">${r[2](E[k])}</td><td class="${toE?'':'near'}">${r[2](Jp[k])}</td></tr>`;}).join('');
+    el.innerHTML=`<h2>🔎 화성은 누구와 비슷할까?</h2><table class="dt cmp"><tr><th>특징</th><th>화성</th><th>지구</th><th>목성</th></tr>${body}</table>
+     <p class="hintp">초록색 칸 = 화성과 더 비슷한 쪽이에요.<br>화성은 6가지 중 <b style="color:#86efac">${near}가지</b>가 <b>지구</b>와 비슷해요 → <b style="color:#fde68a">화성은 지구와 같은 집단</b>이에요!</p><button class="tb" id="cmpX">← 행성 자료로 돌아가기</button>`;
+    $('#cmpX',el)||0;el.querySelector('#cmpX').onclick=()=>{ST.cmp=false;SFX.tap();renderInsp();};return;}
+  if(!p){el.innerHTML='<h2>🔬 행성 자료</h2><p class="hintp">행성 카드(또는 그래프의 점)를 눌러 보세요.<br>반지름, 위성 수, 질량, 밀도, 표면 성분이 여기에 나와요.</p><canvas class="pi" width="360" height="360"></canvas>';return;}
+  const showG=ST.success||ST.mode===2&&ST.col;const gc=GN[p.g];
+  el.innerHTML=`<h2>🔬 행성 자료</h2><div class="insp"><h3>${p.nm}${showG?` <span class="badge" style="background:${gc.col}">${gc.nm}</span>`:''}</h3></div><canvas class="pi" width="360" height="360"></canvas>
+   <table class="dt"><tr><th>반지름</th><td>${fmt(p.r)} <small>(지구=1)</small></td></tr><tr><th>위성 수</th><td>${p.moons}개</td></tr><tr><th>질량</th><td>${fmt(p.mass,3)} <small>(지구=1)</small></td></tr><tr><th>평균 밀도</th><td>${fmt(p.dens)} g/cm³</td></tr><tr><th>고리</th><td>${p.ring?'있음':'없음'}</td></tr><tr><th>표면·성분</th><td>${p.surf}<br><small style="color:var(--sub)">${p.comp}</small></td></tr><tr><th>태양과의 거리</th><td>${fmt(p.au)} AU</td></tr></table>`;
+  const cv=el.querySelector('canvas.pi');paint(cv.getContext('2d'),p.id,180,180,p.id==='jupiter'?98:p.id==='saturn'?62:p.id==='mercury'?52:p.id==='mars'?58:p.id==='neptune'||p.id==='uranus'?84:76);
+}
+function renderInsp(){fillInsp($('#insp'));fillInsp($('#insp2'));}
+function selectP(id){ST.sel=id;ST.cmp=false;SFX.tap();renderInsp();$$('.pc').forEach(c=>c.classList.toggle('sel',c.dataset.id===id));if(ST.mode===2)drawScatter();}
+
+/* ============================================================
+   모드 1 : 행성 분류소
+   ============================================================ */
+const PLACE={};let order=[];
+function resetM1(){PL.forEach(p=>PLACE[p.id]='W');order=PL.map(p=>p.id);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  ST.judged=false;ST.success=false;ST.orient=null;ST.attempts=0;$('#hA').textContent='집단 (가)';$('#hB').textContent='집단 (나)';$('#bskA').className='bsk';$('#bskB').className='bsk';$('#tab1').classList.remove('done');
+  setFb('행성 카드를 눌러 오른쪽에서 자료를 살펴보고, 특징이 비슷한 행성끼리 두 집단으로 나눠 보세요.','');renderM1();renderInsp();}
+function setFb(h,k){const e=$('#fb1');e.className=k||'';e.innerHTML=h;}
+function cardEl(id){const p=PM[id],d=document.createElement('div');d.className='pc'+(ST.sel===id?' sel':'')+(ST.success?' '+p.g:'');d.dataset.id=id;d.innerHTML=`<canvas width="120" height="120"></canvas><span>${p.nm}</span>`;drawIcon(d.querySelector('canvas'),id);bindDrag(d);return d;}
+function renderM1(){
+  const w=$('#wait'),a=$('#bA'),b=$('#bB');w.innerHTML='';a.innerHTML='';b.innerHTML='';
+  order.forEach(id=>{const pl=PLACE[id];(pl==='W'?w:pl==='A'?a:b).appendChild(cardEl(id));});
+  $('#wn').textContent=order.filter(id=>PLACE[id]==='W').length+'개 남음';
+  if(!w.children.length)w.innerHTML='<div class="hintp" style="padding:8px;font-weight:800;color:#86efac">모든 행성을 분류했어요! 이제 [판정하기]를 눌러 보세요.</div>';
+  $$('.bsk').forEach(x=>x.onclick=e=>{if(e.target.closest('.pc'))return;if(ST.sel&&PLACE[ST.sel]!==undefined){moveTo(ST.sel,x.dataset.b);}});
+}
+function moveTo(id,where){PLACE[id]=where;ST.judged=false;SFX.drop();renderM1();}
+let drag=null,lastTap={id:null,t:0};
+function bindDrag(el){
+  el.addEventListener('pointerdown',e=>{if(e.button&&e.button!==0)return;ac();drag={id:el.dataset.id,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,pid:e.pointerId,el:el};try{el.setPointerCapture(e.pointerId);}catch(_){}});
+  el.addEventListener('pointermove',e=>{if(!drag||drag.pid!==e.pointerId)return;const dx=e.clientX-drag.x0,dy=e.clientY-drag.y0;
+    if(!drag.moved&&Math.hypot(dx,dy)>10){drag.moved=true;const gh=document.createElement('div');gh.className='pc ghost';gh.style.cssText='padding:10px 18px;border-color:#fde68a;background:#2a2410;width:auto';gh.textContent=PM[drag.id].nm;document.body.appendChild(gh);drag.ghost=gh;}
+    if(drag.moved){drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px';const t=document.elementFromPoint(e.clientX,e.clientY),b=t&&t.closest?t.closest('.bsk,.panel'):null;$$('.bsk').forEach(x=>x.classList.toggle('over',x===b));}});
+  const end=e=>{if(!drag||drag.pid!==e.pointerId)return;const d=drag;drag=null;try{d.el.releasePointerCapture(d.pid);}catch(_){}
+    if(d.ghost){d.ghost.remove();$$('.bsk').forEach(x=>x.classList.remove('over'));}
+    if(d.moved){const t=document.elementFromPoint(e.clientX,e.clientY),b=t&&t.closest?t.closest('.bsk'):null,wt=t&&t.closest?t.closest('#wait'):null;if(b)moveTo(d.id,b.dataset.b);else if(wt)moveTo(d.id,'W');else SFX.tap();return;}
+    const now=Date.now();
+    if(lastTap.id===d.id&&now-lastTap.t<450){lastTap={id:null,t:0};const cur=PLACE[d.id];moveTo(d.id,cur==='W'?'A':cur==='A'?'B':'W');}   // 두 번 누르면 대기실→(가)→(나)→대기실
+    else{lastTap={id:d.id,t:now};selectP(d.id);}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',e=>{if(drag&&drag.pid===e.pointerId){if(drag.ghost)drag.ghost.remove();drag=null;}});
+}
+const WHY={T:p=>`${p.nm}은(는) 반지름 ${fmt(p.r)}(작음) · 위성 ${p.moons}개(없거나 적음) · 밀도 ${fmt(p.dens)}(큼) · 고리 없음 → 수성·금성·지구·화성 쪽 집단이에요.`,J:p=>`${p.nm}은(는) 반지름 ${fmt(p.r)}(매우 큼) · 위성 ${p.moons}개(많음) · 밀도 ${fmt(p.dens)}(작음) · 고리 있음 → 목성·토성·천왕성·해왕성 쪽 집단이에요.`};
+function judge(){
+  ac();const A=order.filter(i=>PLACE[i]==='A'),B=order.filter(i=>PLACE[i]==='B'),W=order.filter(i=>PLACE[i]==='W');
+  if(W.length){SFX.bad();setFb(`⏳ 대기실에 ${W.length}개의 행성이 남아 있어요. 모두 분류한 뒤에 판정해 주세요.`,'bad');return;}
+  if(!A.length||!B.length){SFX.bad();setFb('두 집단 모두 행성이 한 개 이상 있어야 해요. 특징이 다른 행성끼리 나눠 보세요.','bad');return;}
+  ST.attempts++;
+  const aT=A.filter(i=>PM[i].g==='T').length,aJ=A.length-aT,bT=B.filter(i=>PM[i].g==='T').length,bJ=B.length-bT;
+  const o1=aT+bJ,o2=aJ+bT;                        // o1 : (가)=지구형, (나)=목성형 / o2 : 반대
+  if(o1===8||o2===8){
+    ST.success=true;ST.orient=o1===8?'AT':'AJ';const gA=o1===8?'T':'J',gB=o1===8?'J':'T';
+    $('#hA').innerHTML='집단 (가) <small style="color:'+GN[gA].col+'">· '+GN[gA].nm+'</small>';$('#hB').innerHTML='집단 (나) <small style="color:'+GN[gB].col+'">· '+GN[gB].nm+'</small>';
+    $('#bskA').className='bsk '+(gA==='T'?'okA':'okB');$('#bskB').className='bsk '+(gB==='T'?'okA':'okB');
+    $('#tab1').classList.add('done');SFX.win();
+    setFb(`🎉 성공! 두 집단은 <b style="color:#fb923c">지구형 행성</b>과 <b style="color:#38bdf8">목성형 행성</b>이에요. 처음 질문의 답 → <b>화성은 지구와 비슷한 집단</b>(반지름 작고, 위성 적고, 밀도 크고, 고리 없음)이에요. ${ST.attempts===1?'한 번에 성공했어요!':''}`,'good');
+    renderM1();renderInsp();setTimeout(()=>openTbl('sum'),700);return;}
+  const best=o1>=o2?'AT':'AJ';const wrong=order.filter(i=>{const g=PM[i].g,p=PLACE[i];return best==='AT'?((p==='A')!==(g==='T')):((p==='A')!==(g==='J'));});
+  SFX.bad();renderM1();wrong.forEach(i=>{const c=$('.pc[data-id="'+i+'"]');if(c)c.classList.add('bad');});setTimeout(()=>$$('.pc.bad').forEach(c=>c.classList.remove('bad')),1600);
+  let msg=`❌ ${wrong.length}개의 행성이 다른 집단에 들어 있어요 : <b>${wrong.map(i=>PM[i].nm).join(', ')}</b><br>`;
+  msg+=WHY[PM[wrong[0]].g](PM[wrong[0]]);
+  if(ST.attempts>=2)msg+='<br>💡 힌트 : 반지름 · 위성 수 · 밀도를 먼저 비교해 보세요. 오른쪽 자료에서 숫자를 확인할 수 있어요.';
+  setFb(msg,'bad');
+}
+$('#judge').onclick=judge;$('#m1r').onclick=()=>{SFX.tap();resetM1();};
+$('#cmpBtn').onclick=()=>{ac();ST.cmp=!ST.cmp;SFX.tap();renderInsp();};
+/* ---------- 정리표 모달 ---------- */
+function rng2(k,f){const T=PL.filter(p=>p.g==='T').map(p=>p[k]),J=PL.filter(p=>p.g==='J').map(p=>p[k]);return[f(Math.min(...T),Math.max(...T)),f(Math.min(...J),Math.max(...J))];}
+function openTbl(tab){
+  $$('#ovT [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  if(tab==='sum'){const r=rng2('r',(a,b)=>fmt(a)+' ~ '+fmt(b)),m=rng2('moons',(a,b)=>a+' ~ '+b+'개'),d=rng2('dens',(a,b)=>fmt(a)+' ~ '+fmt(b)+' g/cm³');
+    $('#tTitle').textContent='📋 교과서 정리표 : 지구형 행성과 목성형 행성';
+    $('#tBody').innerHTML=`<table class="sm"><tr><th style="width:20%">비교 항목</th><th class="T">🪨 지구형 행성<br><small>수성 · 금성 · 지구 · 화성</small></th><th class="J">🌀 목성형 행성<br><small>목성 · 토성 · 천왕성 · 해왕성</small></th></tr>
+     <tr><th>반지름 (지구=1)</th><td class="T">${r[0]} → <b>작다</b></td><td class="J">${r[1]} → <b>매우 크다</b></td></tr>
+     <tr><th>위성 수</th><td class="T">${m[0]} → <b>없거나 적다</b></td><td class="J">${m[1]} → <b>매우 많다</b></td></tr>
+     <tr><th>표면·성분</th><td class="T"><b>단단한 암석·금속</b> 표면</td><td class="J"><b>수소·헬륨·메테인</b> 등의 기체와 얼음 (단단한 표면 없음)</td></tr>
+     <tr><th>평균 밀도</th><td class="T">${d[0]} → <b>크다</b></td><td class="J">${d[1]} → <b>작다</b></td></tr>
+     <tr><th>고리</th><td class="T"><b>없다</b></td><td class="J"><b>있다</b></td></tr>
+     <tr><th>형성 위치</th><td class="T">스노우 라인 <b>안쪽</b> (고온)</td><td class="J">스노우 라인 <b>바깥쪽</b> (저온)</td></tr></table>
+     <p class="hintp" style="margin-top:10px">※ 위성 수는 계속 새로 발견되어 값이 바뀔 수 있어요. (자료는 이 실험실 안의 한 곳에서 고칠 수 있어요)</p>`;}
+  else{$('#tTitle').textContent='📋 행성 자료표 (8개 행성)';
+    $('#tBody').innerHTML='<table class="sm all"><tr><th>행성</th><th>분류</th><th>반지름</th><th>위성</th><th>질량</th><th>밀도</th><th>고리</th><th>거리(AU)</th></tr>'+PL.map(p=>`<tr><td class="${p.g}">${p.nm}</td><td class="${p.g}">${p.g==='T'?'지구형':'목성형'}</td><td>${fmt(p.r)}</td><td>${p.moons}</td><td>${fmt(p.mass,3)}</td><td>${fmt(p.dens)}</td><td>${p.ring?'있음':'없음'}</td><td>${fmt(p.au)}</td></tr>`).join('')+'</table>';}
+  $('#ovT').classList.add('on');}
+$('#tbl').onclick=()=>{SFX.tap();openTbl('sum');};$('#tX').onclick=()=>$('#ovT').classList.remove('on');$$('#ovT [data-t]').forEach(b=>b.onclick=()=>openTbl(b.dataset.t));$('#ovT').addEventListener('click',e=>{if(e.target.id==='ovT')$('#ovT').classList.remove('on');});
+
+/* ============================================================
+   모드 2 : 그래프 탐구 (2D 산점도)
+   ============================================================ */
+const cv2=$('#cv2'),g2=cv2.getContext('2d');let W2=900,H2=560,DPR2=1;
+const AXES=[
+ {nm:'반지름 ↔ 위성 수',x:{k:'r',lab:'반지름 (지구=1)',min:0,max:12},y:{k:'moons',lab:'위성 수 (개)',min:0,max:160}},
+ {nm:'질량 ↔ 밀도',x:{k:'mass',lab:'질량 (지구=1, 로그 눈금)',min:0.03,max:500,log:true},y:{k:'dens',lab:'평균 밀도 (g/cm³)',min:0,max:6}},
+ {nm:'태양과의 거리 ↔ 밀도',x:{k:'au',lab:'태양과의 거리 (AU, 로그 눈금)',min:0.25,max:50,log:true},y:{k:'dens',lab:'평균 밀도 (g/cm³)',min:0,max:6},snow:true}];
+function nice(lo,hi,n){const span=hi-lo,raw=span/n,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p,st=(m<1.5?1:m<3?2:m<7?5:10)*p,out=[];for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9;v+=st)out.push(+v.toFixed(6));return out;}
+function logTicks(lo,hi){const out=[];for(let e=Math.floor(Math.log10(lo));e<=Math.ceil(Math.log10(hi));e++)[1,2,5].forEach(m=>{const v=m*Math.pow(10,e);if(v>=lo*0.999&&v<=hi*1.001)out.push(v);});return out;}
+function range(c){
+  if(ST.view==='all'){if(c.log)return[c.min,c.max];const sp=c.max-c.min;return[c.min-sp*.05,c.max+sp*.02];}
+  const vals=PL.filter(p=>p.g===ST.view).map(p=>p[c.k]);let lo=Math.min(...vals),hi=Math.max(...vals);
+  if(c.log){const l1=Math.log10(lo),l2=Math.log10(hi),pad=Math.max(.22,(l2-l1)*.35);return[Math.pow(10,l1-pad),Math.pow(10,l2+pad)];}
+  let span=hi-lo;if(span<=0)span=1;const pad=span*.3;return[lo-pad,hi+pad];}
+let PLT={};
+function size2(){const w=cv2.parentNode;W2=w.clientWidth||900;H2=w.clientHeight||560;DPR2=Math.min(2,window.devicePixelRatio||1);cv2.width=Math.round(W2*DPR2);cv2.height=Math.round(H2*DPR2);}
+function drawScatter(){
+  const c=g2,ax=AXES[ST.axis];c.setTransform(DPR2,0,0,DPR2,0,0);c.clearRect(0,0,W2,H2);
+  const fs=Math.round(clamp(W2*.0155,18,38));const L=fs*4.4,R=fs*1.4,T=fs*1.1,B=fs*3.6,pw=W2-L-R,ph=H2-T-B;
+  const rx=range(ax.x),ry=range(ax.y);
+  const fx=v=>ax.x.log?L+(Math.log10(v)-Math.log10(rx[0]))/(Math.log10(rx[1])-Math.log10(rx[0]))*pw:L+(v-rx[0])/(rx[1]-rx[0])*pw;
+  const fy=v=>T+ph-(v-ry[0])/(ry[1]-ry[0])*ph;
+  PLT={fx,fy,L,T,pw,ph};
+  c.fillStyle='rgba(8,14,34,.7)';c.fillRect(L,T,pw,ph);
+  const xt=ax.x.log?logTicks(rx[0],rx[1]):nice(rx[0],rx[1],7),yt=nice(ry[0],ry[1],6);
+  c.font='700 '+fs+'px '+FONT;c.textBaseline='middle';
+  c.strokeStyle='rgba(120,145,210,.28)';c.lineWidth=1;
+  xt.forEach(v=>{const x=fx(v);if(x<L-1||x>L+pw+1)return;c.beginPath();c.moveTo(x,T);c.lineTo(x,T+ph);c.stroke();c.fillStyle='#c3d0e8';c.textAlign='center';c.fillText(String(+v.toFixed(3)),x,T+ph+fs*1.0);});
+  yt.forEach(v=>{const y=fy(v);if(y<T-1||y>T+ph+1)return;c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.fillStyle='#c3d0e8';c.textAlign='right';c.fillText(String(+v.toFixed(3)),L-10,y);});
+  c.strokeStyle='#8fa3d8';c.lineWidth=3;c.beginPath();c.moveTo(L,T);c.lineTo(L,T+ph);c.lineTo(L+pw,T+ph);c.stroke();
+  c.fillStyle='#fde68a';c.font='800 '+Math.round(fs*1.05)+'px '+FONT;c.textAlign='center';c.fillText(ax.x.lab,L+pw/2,H2-fs*.9);
+  c.save();c.translate(fs*.9,T+ph/2);c.rotate(-Math.PI/2);c.fillText(ax.y.lab,0,0);c.restore();
+  // 스노우 라인
+  if(ax.snow&&2.7>rx[0]&&2.7<rx[1]){const x=fx(2.7);c.setLineDash([10,8]);c.strokeStyle='#7dd3fc';c.lineWidth=3;c.beginPath();c.moveTo(x,T);c.lineTo(x,T+ph);c.stroke();c.setLineDash([]);c.fillStyle='#7dd3fc';c.font='800 '+fs+'px '+FONT;c.textAlign='left';c.fillText('❄️ 스노우 라인 (약 2.7 AU)',x+8,T+fs*.9);}
+  c.save();c.beginPath();c.rect(L,T,pw,ph);c.clip();
+  // 군집 하이라이트
+  const vis=PL.filter(p=>ST.view==='all'||p.g===ST.view);
+  if(ST.clus){['T','J'].forEach(gk=>{const pts=vis.filter(p=>p.g===gk);if(!pts.length)return;const xs=pts.map(p=>fx(p[ax.x.k])),ys=pts.map(p=>fy(p[ax.y.k])),pad=fs*1.9;
+      const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad,col=GN[gk].col;
+      c.fillStyle=col+'26';c.strokeStyle=col;c.lineWidth=3;c.setLineDash([12,8]);c.beginPath();const r=Math.min(40,(x1-x0)/2,(y1-y0)/2);c.moveTo(x0+r,y0);c.arcTo(x1,y0,x1,y1,r);c.arcTo(x1,y1,x0,y1,r);c.arcTo(x0,y1,x0,y0,r);c.arcTo(x0,y0,x1,y0,r);c.closePath();c.fill();c.stroke();c.setLineDash([]);
+      c.fillStyle=col;c.font='900 '+Math.round(fs*1.15)+'px '+FONT;c.textAlign='left';const ly=(y0-fs*.9>T+fs*.5)?y0-fs*.9:y1+fs*.9;c.fillText(GN[gk].nm+' 군집',x0+10,ly);});}
+  // 점
+  const sorted=vis.slice().sort((a,b)=>a[ax.x.k]-b[ax.x.k]);
+  sorted.forEach((p,i)=>{const x=fx(p[ax.x.k]),y=fy(p[ax.y.k]),ri=Math.round(clamp(fs*(ST.view==='all'?.78:1.15),14,40));
+    if(ST.col){c.strokeStyle=GN[p.g].col;c.lineWidth=4;c.beginPath();c.arc(x,y,ri+4,0,7);c.stroke();}
+    paint(c,p.id,x,y,p.id==='saturn'?ri*.62:ri);
+    if(ST.sel===p.id){c.strokeStyle='#fde68a';c.lineWidth=3.5;c.setLineDash([8,6]);c.beginPath();c.arc(x,y,ri+11,0,7);c.stroke();c.setLineDash([]);}
+    p._sx=x;p._sy=y;p._sr=ri;});
+  if(ST.lab){sorted.forEach((p,i)=>{const x=p._sx,y=p._sy,ri=p._sr;c.font='800 '+fs+'px '+FONT;c.textBaseline='middle';
+      let dx=ri+10,dy=0,al='left';if(ST.view==='all'&&p.g==='T'&&ST.axis!==2){dy=(i%2?1:-1)*(ri+fs*.7);dx=0;al='center';}
+      if(x+ri+10+c.measureText(p.nm).width>L+pw-4&&al==='left'){al='right';dx=-(ri+10);}
+      const lb=ST.sel===p.id?`${p.nm} (${fmt(p[ax.x.k],p[ax.x.k]<1?2:1)}, ${fmt(p[ax.y.k],1)})`:p.nm;
+      c.textAlign=al;c.lineWidth=5;c.lineJoin='round';c.strokeStyle='rgba(4,7,15,.92)';c.strokeText(lb,x+dx,y+dy);c.fillStyle=ST.col?GN[p.g].col:'#f1f5f9';c.fillText(lb,x+dx,y+dy);});}
+  c.restore();
+  // 설명
+  noteText();
+}
+function noteText(){
+  const T=PL.filter(p=>p.g==='T'),J=PL.filter(p=>p.g==='J'),mn=k=>Math.min(...PL.filter(p=>1).map(p=>p[k]));
+  const rg=(arr,k,d)=>{const v=arr.map(p=>p[k]);return fmt(Math.min(...v),d)+'~'+fmt(Math.max(...v),d);};
+  const a=ST.axis;let h='';
+  if(a===0)h=`<b>반지름 ↔ 위성 수</b> : 지구형 행성은 반지름이 <b>${rg(T,'r')}</b>로 작고 위성이 <b>${rg(T,'moons',0)}개</b>로 적어요. 목성형 행성은 반지름이 <b>${rg(J,'r')}</b>로 크고 위성이 <b>${rg(J,'moons',0)}개</b>로 많아요. → 그래프에서 두 무리가 뚜렷하게 나뉘어요.`;
+  else if(a===1)h=`<b>질량 ↔ 밀도</b> : 지구형은 질량이 작고(${rg(T,'mass',3)}) 밀도가 커요(${rg(T,'dens')}). 목성형은 질량이 매우 크고(${rg(J,'mass',1)}) 밀도가 작아요(${rg(J,'dens')}). → 질량이 큰 행성일수록 가벼운 기체가 많아 밀도가 작아요.`;
+  else h=`<b>태양과의 거리 ↔ 밀도</b> : 스노우 라인(약 2.7 AU) <b>안쪽</b>은 밀도가 큰 지구형, <b>바깥쪽</b>은 밀도가 작은 목성형이에요. → 왜 이렇게 나뉠까요? 모드 ③에서 확인해 보세요!`;
+  if(ST.view!=='all')h+=` <span style="color:#fde68a">(${GN[ST.view].nm} 확대 보기)</span>`;
+  $('#note2').innerHTML=h;}
+function pick2(x,y){let best=null,bd=1e9;PL.forEach(p=>{if(p._sx===undefined)return;if(ST.view!=='all'&&p.g!==ST.view)return;const d=Math.hypot(x-p._sx,y-p._sy);if(d<Math.max(p._sr+16,32)&&d<bd){bd=d;best=p.id;}});return best;}
+cv2.addEventListener('pointerup',e=>{const r=cv2.getBoundingClientRect(),id=pick2(e.clientX-r.left,e.clientY-r.top);ac();if(id){selectP(id);}else{SFX.tap();}});
+$$('#m2 [data-a]').forEach(b=>b.onclick=()=>{ST.axis=+b.dataset.a;$$('#m2 [data-a]').forEach(x=>x.classList.toggle('on',x===b));SFX.tap();drawScatter();});
+$$('#m2 [data-v]').forEach(b=>b.onclick=()=>{ST.view=b.dataset.v;$$('#m2 [data-v]').forEach(x=>x.classList.toggle('on',x===b));SFX.tap();drawScatter();});
+$('#cClus').onclick=()=>{ST.clus=!ST.clus;$('#cClus').classList.toggle('on',ST.clus);SFX.tap();drawScatter();};
+$('#cCol').onclick=()=>{ST.col=!ST.col;$('#cCol').classList.toggle('on',ST.col);SFX.tap();drawScatter();renderInsp();};
+
+/* ============================================================
+   모드 3 : 태양계 형성 시뮬레이터 (성운 가설 + 스노우 라인)
+   ============================================================ */
+const cv3=$('#cv3'),g3=cv3.getContext('2d');let W3=1000,H3=600,DPR3=1;
+const F={t:0,play:false,snow:2.7,done:false};
+const NPART=620;
+const PART=(()=>{const R=rng(2026),arr=[];const gs=()=>(R()+R()+R()+R()-2)/2;for(let i=0;i<NPART;i++){const gas=R()<.38;arr.push({xs:.35+Math.pow(R(),.85)*5.35,gy:gs(),na:R()*6.2832,nr:Math.sqrt(R()),gas:gas,ice:R()<.62,metal:R()<.35,ab:R()<.72,j:(R()-.5)*2,j2:(R()-.5)*2,ph:R()*6.28});}return arr;})();
+function size3(){const w=cv3.parentNode;W3=w.clientWidth||1000;H3=w.clientHeight||600;DPR3=Math.min(2,window.devicePixelRatio||1);cv3.width=Math.round(W3*DPR3);cv3.height=Math.round(H3*DPR3);}
+function geom(){
+  const wide=W3>1100,fxw=wide?($('#fx').offsetWidth+30):10,barH=wide?$('#fbar').offsetHeight+24:$('#fbar').offsetHeight+24;
+  const X0=Math.max(46,W3*.045),XR=Math.max(X0+300,W3-fxw-26),availH=Math.max(260,H3-(wide?barH:barH+($('#fx').offsetHeight||0)));
+  const cy=wide?(H3-barH)*.52:availH*.52;
+  return{X0:X0,XR:XR,cy:cy,kx:(XR-X0)/5.75,u:clamp(H3*.0125,6,15),availH:availH};}
+function statusOf(p){return p.au<F.snow?'T':'J';}
+function finalR(p,u){const st=statusOf(p);if(st==='T')return p.g==='T'?u*Math.pow(p.r,.6):u*Math.pow(1.3,.6);return p.g==='J'?u*Math.pow(p.r,.6):u*Math.pow(7,.6);}
+function planetR(p,u,t){const Rf=finalR(p,u),st=statusOf(p),core=ease((t-.38)/.42);if(st==='T')return Rf*core;return Rf*(.26*core+.74*ease((t-.76)/.22));}
+const STAGES=[
+ {t:0,nm:'① 성운의 수축과 원반 형성',h:'<p>차갑고 커다란 <b>원시 태양 성운</b>(가스와 먼지 구름)이 스스로의 중력으로 수축하며 회전해요.</p><p>중심에는 <b>원시 태양</b>이 생기고, 나머지는 납작한 <b>원반</b>이 돼요. (회전하는 구름은 납작해져요)</p>'},
+ {t:.22,nm:'② 온도 차이와 물질의 응결',h:'<div class="z zin">🔥 <b>태양 근처 (고온)</b><br>수소·헬륨 같은 가벼운 기체와 얼음은 증발해 날아가고, <b>녹는점이 높은 암석·철</b>만 응축해요.</div><div class="z zout">❄️ <b>스노우 라인 너머 (저온)</b><br>암석뿐 아니라 <b>얼음·메테인</b>도 대량으로 응결해요. 고체 재료가 훨씬 많아요!</div>'},
+ {t:.5,nm:'③ 미행성 집적 : 핵의 성장',h:'<p>작은 알갱이들이 서로 충돌·합쳐져 <b>미행성</b>이 되고, 다시 모여 <b>원시 행성(핵)</b>으로 자라요.</p><div class="z zin"><b>안쪽</b> : 재료가 암석·철뿐이라 핵이 <b>작게</b> 자라요.</div><div class="z zout"><b>바깥쪽</b> : 얼음까지 합쳐져 핵이 <b>매우 크게</b> 자라요.</div>'},
+ {t:.76,nm:'④ 행성의 완성',h:'<div class="z zin">🪨 <b>안쪽 → 지구형 행성</b><br>핵이 작아 가스를 붙잡지 못해요. 작고, 위성이 적고, 밀도가 커요.</div><div class="z zout">🌀 <b>바깥쪽 → 목성형 행성</b><br>커다란 핵의 강한 중력이 주변의 <b>수소·헬륨 기체</b>를 끌어당겨요. 크고, 위성이 많고, 밀도가 작아요.</div>'}];
+function stageIdx(t){let k=0;STAGES.forEach((s,i)=>{if(t>=s.t-1e-6)k=i;});return k;}
+let lastStage=-1,lastSnow=-1;
+function renderFx(force){
+  const k=stageIdx(F.t);if(!force&&k===lastStage&&F.snow===lastSnow&&(F.t>=.98)===F.done)return;lastStage=k;lastSnow=F.snow;F.done=F.t>=.98;
+  const s=STAGES[k];let h=`<h3>${s.nm}</h3>${s.h}<div class="lg"><span><i style="background:#c0845a"></i>암석·철</span><span><i style="background:#e0f2fe"></i>얼음·메테인</span><span><i style="background:#7da6ff"></i>수소·헬륨 기체</span></div>`;
+  if(F.done){const inn=PL.filter(p=>statusOf(p)==='T'),out=PL.filter(p=>statusOf(p)==='J'),diff=PL.filter(p=>statusOf(p)!==p.g);
+    h+=`<div id="fres" class="on"><b>스노우 라인 ${F.snow.toFixed(1)} AU</b> 기준<br>🪨 안쪽 → 지구형 : ${inn.map(p=>p.nm).join(' · ')||'없음'}<br>🌀 바깥쪽 → 목성형 : ${out.map(p=>p.nm).join(' · ')||'없음'}`+(diff.length?`<br><span style="color:#fca5a5">⚠ 실제 태양계와 달라졌어요! ${diff.map(p=>p.nm).join(', ')}은(는) ${diff[0].g==='J'?'스노우 라인 안쪽이라 작은 암석 행성이':'스노우 라인 바깥쪽이라 거대한 가스 행성이'} 돼요. 스노우 라인의 위치가 행성의 종류를 가른다는 뜻이에요.</span>`:`<br><span style="color:#86efac">✅ 실제 태양계와 같아요 (약 2.7 AU)</span>`)+'</div>';}
+  $('#fx').innerHTML=h;}
+function drawForm(now){
+  const c=g3,t=F.t,G=geom(),u=G.u;c.setTransform(DPR3,0,0,DPR3,0,0);c.clearRect(0,0,W3,H3);
+  const XS=xs=>G.X0+xs*G.kx*0.98+G.kx*0.02,sx=Math.sqrt(F.snow),cy=G.cy;
+  const bg=ease((t-.2)/.15);
+  // 온도 배경
+  if(bg>0){const gr=c.createLinearGradient(G.X0,0,G.XR,0),sp=clamp((XS(sx)-G.X0)/(G.XR-G.X0),.02,.98);
+    gr.addColorStop(0,'rgba(234,88,12,'+(.42*bg)+')');gr.addColorStop(sp*.9,'rgba(180,60,40,'+(.12*bg)+')');gr.addColorStop(Math.min(.99,sp+.01),'rgba(30,70,160,'+(.20*bg)+')');gr.addColorStop(1,'rgba(20,50,140,'+(.28*bg)+')');
+    c.fillStyle=gr;c.fillRect(0,cy-G.availH*.46,G.XR+30,G.availH*.92);}
+  // 원시 태양
+  const sr=lerp(10,u*3.0,ease(t/.3));const sg=c.createRadialGradient(G.X0,cy,sr*.3,G.X0,cy,sr*3);sg.addColorStop(0,'rgba(255,230,120,.95)');sg.addColorStop(.35,'rgba(255,170,40,.55)');sg.addColorStop(1,'rgba(255,100,0,0)');c.fillStyle=sg;c.beginPath();c.arc(G.X0,cy,sr*3,0,7);c.fill();c.fillStyle='#ffe58a';c.beginPath();c.arc(G.X0,cy,sr,0,7);c.fill();
+  // 원반 중심선 눈금 (AU)
+  if(bg>0){c.globalAlpha=bg;c.strokeStyle='rgba(180,200,255,.35)';c.lineWidth=1.5;c.beginPath();c.moveTo(G.X0,cy);c.lineTo(G.XR,cy);c.stroke();c.font='700 '+Math.round(clamp(W3*.0125,16,26))+'px '+FONT;c.fillStyle='#b6c4e8';c.textAlign='center';c.textBaseline='top';
+    [1,2,5,10,20,30].forEach(a=>{const x=XS(Math.sqrt(a));c.beginPath();c.moveTo(x,cy-5);c.lineTo(x,cy+5);c.stroke();c.save();c.strokeStyle='rgba(180,200,255,.16)';c.beginPath();c.moveTo(x,cy+G.u*3.2);c.lineTo(x,cy+G.availH*.29);c.stroke();c.restore();c.fillText(a+' AU',x,cy+G.availH*.31);});c.globalAlpha=1;}
+  // 스노우 라인 + 구역 이름
+  if(bg>0){const x=XS(sx);c.globalAlpha=bg;c.setLineDash([12,9]);c.strokeStyle='#bae6fd';c.lineWidth=3.5;c.beginPath();c.moveTo(x,cy-G.availH*.43);c.lineTo(x,cy+G.availH*.43);c.stroke();c.setLineDash([]);
+    const fs=Math.round(clamp(W3*.0145,18,32));c.font='900 '+fs+'px '+FONT;c.textBaseline='middle';c.textAlign='center';c.lineWidth=5;c.strokeStyle='rgba(4,7,15,.9)';
+    const ty=cy-G.availH*.40;c.strokeText('❄️ 스노우 라인 '+F.snow.toFixed(1)+' AU',x,ty);c.fillStyle='#bae6fd';c.fillText('❄️ 스노우 라인 '+F.snow.toFixed(1)+' AU',x,ty);
+    c.font='800 '+Math.round(fs*.88)+'px '+FONT;const x1=(G.X0+x)/2,x2=(x+G.XR)/2,ty2=cy-G.availH*.33;
+    if(x-G.X0>fs*6){c.strokeText('고온 : 암석·철만 응축',x1,ty2);c.fillStyle='#fdba74';c.fillText('고온 : 암석·철만 응축',x1,ty2);}
+    c.strokeText('저온 : 얼음·메테인도 응결',x2,ty2);c.fillStyle='#93c5fd';c.fillText('저온 : 얼음·메테인도 응결',x2,ty2);c.globalAlpha=1;}
+  // 입자
+  const s0=ease(t/.22),sprd=(G.availH*.045+2);
+  const caps=PL.map(p=>({p:p,x:XS(Math.sqrt(p.au)),st:statusOf(p)}));
+  caps.forEach((q,i)=>{const L=i>0?q.x-caps[i-1].x:1e9,Rr=i<caps.length-1?caps[i+1].x-q.x:1e9;q.rng=Math.min(.5*Math.min(L,Rr),G.kx*.42);});
+  const nebCx=(G.X0+G.XR)/2,nebCy=cy,nebR=Math.min((G.XR-G.X0)*.5,G.availH*.46);
+  const acc=ease((t-.5)/.28),gcap=ease((t-.78)/.2),tcol=ease((t-.22)/.12);
+  PART.forEach(pt=>{
+    const dxp=XS(pt.xs),au=pt.xs*pt.xs,inner=au<F.snow;
+    const diskX=dxp+pt.j*3,diskY=cy+pt.gy*(sprd+pt.xs*G.availH*.026);
+    const ang=pt.na+(1-s0)*2.2,nx=nebCx+Math.cos(ang)*nebR*pt.nr*1.05,ny=nebCy+Math.sin(ang)*nebR*pt.nr*.9;
+    let x=lerp(nx,diskX,s0),y=lerp(ny,diskY,s0),a=.75,r=1.6+pt.ph%1.4,col;
+    if(tcol<=0){col='200,210,255';a=.55;}
+    else{const solidKept=!pt.gas&&(!inner||!pt.ice);
+      if(pt.gas)col='125,166,255';else if(pt.ice&&!inner)col=(pt.metal?'186,230,253':'236,248,255');else col=pt.metal?'160,166,176':'192,132,90';
+      const evap=inner&&(pt.gas||pt.ice);const ev=evap?ease((t-.26)/.22):0;
+      a=lerp(.55,evap?0:(pt.gas?.5:.9),tcol*(evap?1:1));if(evap)a*=(1-ev);
+      if(evap){x+=ev*G.kx*.5*(.4+pt.j2);y+=ev*pt.j*G.availH*.08;}
+      // 미행성 집적
+      if(!pt.gas&&solidKept&&pt.ab){const q=caps.reduce((m,k)=>Math.abs(k.x-diskX)<Math.abs(m.x-diskX)?k:m,caps[0]);if(Math.abs(q.x-diskX)<q.rng){const ex=q.x+pt.j*3,ey=cy+pt.j2*3;x=lerp(x,ex,acc);y=lerp(y,ey,acc);if(acc>.97)a=0;else a*=1-acc*.6;r=lerp(r,1.2,acc);}}
+      if(!pt.gas&&solidKept&&!pt.ab&&t>.9)a*=lerp(1,.35,ease((t-.9)/.1));
+      // 가스 포획
+      if(pt.gas&&!inner){const q=caps.reduce((m,k)=>Math.abs(k.x-diskX)<Math.abs(m.x-diskX)?k:m,caps[0]);if(q.st==='J'&&Math.abs(q.x-diskX)<G.kx*.8){const ex=q.x+pt.j*3,ey=cy+pt.j2*3;x=lerp(x,ex,gcap);y=lerp(y,ey,gcap);if(gcap>.96)a=0;}}
+    }
+    if(a<.02)return;c.fillStyle='rgba('+col+','+a.toFixed(3)+')';c.beginPath();c.arc(x,y,r,0,7);c.fill();
+  });
+  // 행성(핵)
+  if(t>.36){const lab=ease((t-.8)/.15);
+    caps.forEach((q,i)=>{const p=q.p,R=planetR(p,u,t);if(R<1)return;const st=q.st,y=cy;
+      if(st==='J'&&t>.7){const env=ease((t-.76)/.22),rr=R*(1.0),hg=c.createRadialGradient(q.x,y,R*.2,q.x,y,rr);hg.addColorStop(0,'rgba(220,235,255,'+(.55*env)+')');hg.addColorStop(1,'rgba(120,170,255,'+(.12*env)+')');c.fillStyle=hg;c.beginPath();c.arc(q.x,y,rr,0,7);c.fill();}
+      if(t>=.97)paint(c,p.id,q.x,y,p.id==='saturn'?R*.62:R);
+      else{const coreR=st==='J'?Math.max(2.5,finalR(p,u)*.26*ease((t-.38)/.42)):R;const cg=c.createRadialGradient(q.x-coreR*.3,y-coreR*.3,1,q.x,y,coreR);cg.addColorStop(0,st==='J'?'#eef2f7':'#d6b08a');cg.addColorStop(1,st==='J'?'#8aa0b8':'#6b4a33');c.fillStyle=cg;c.beginPath();c.arc(q.x,y,coreR,0,7);c.fill();}
+      if(lab>0){const fs=Math.round(clamp(W3*.0125,17,28)),dy=(i%2?1:-1)*(R+fs*1.35);c.globalAlpha=lab;c.font='800 '+fs+'px '+FONT;c.textAlign='center';c.textBaseline='middle';c.lineWidth=5;c.strokeStyle='rgba(4,7,15,.92)';c.lineJoin='round';const nm=p.nm+(statusOf(p)!==p.g?' ⚠':'');c.strokeText(nm,q.x,y+dy);c.fillStyle=st==='T'?'#fdba74':'#93c5fd';c.fillText(nm,q.x,y+dy);c.globalAlpha=1;}
+    });}
+}
+function setT(v,fromUser){F.t=clamp(v,0,1);$('#fT').value=Math.round(F.t*100);$('#tv').textContent=Math.round(F.t*100)+' %';renderFx(false);drawForm();}
+let lastNow=0;
+function loop(now){const dt=Math.min(.05,(now-(lastNow||now))/1000);lastNow=now;
+  try{if(ST.mode===3){if(F.play){const nt=F.t+dt/38;if(nt>=1){setT(1);F.play=false;$('#fPlay').textContent='▶ 다시 재생';SFX.win();}else setT(nt);}else if(false)drawForm();}}catch(e){console.error(e);}
+  requestAnimationFrame(loop);}
+$('#fPlay').onclick=()=>{ac();if(F.t>=1)setT(0);F.play=!F.play;$('#fPlay').textContent=F.play?'⏸ 멈춤':'▶ 재생';SFX.tap();};
+$('#fT').addEventListener('input',e=>{F.play=false;$('#fPlay').textContent='▶ 재생';setT(+e.target.value/100);});
+$('#fS').addEventListener('input',e=>{F.snow=+e.target.value;$('#sv').textContent=F.snow.toFixed(1)+' AU';renderFx(true);drawForm();});
+$('#fRst').onclick=()=>{F.snow=2.7;$('#fS').value=2.7;$('#sv').textContent='2.7 AU';SFX.tap();renderFx(true);drawForm();};
+$$('#fStep .chip').forEach(b=>b.onclick=()=>{ac();F.play=false;$('#fPlay').textContent='▶ 재생';SFX.tap();setT(+b.dataset.t);$$('#fStep .chip').forEach(x=>x.classList.toggle('on',x===b));});
+
+/* ============================================================
+   탭 · 설정 · QR · 시작
+   ============================================================ */
+function showMode(n){
+  ST.mode=n;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===n);$('#tab'+i).classList.toggle('on',i===n);});SFX.tap();
+  if(n===1){renderInsp();}
+  if(n===2){size2();renderInsp();drawScatter();}
+  if(n===3){size3();renderFx(true);drawForm();}
+}
+$$('.tab').forEach(b=>b.onclick=()=>showMode(+b.dataset.m));
+function openDr(){$('#dr').classList.add('on');$('#dim').classList.add('on');}function closeDr(){$('#dr').classList.remove('on');$('#dim').classList.remove('on');}
+$('#bSet').onclick=openDr;$('#drX').onclick=closeDr;$('#dim').onclick=closeDr;
+function sw(id,key,after){const b=$(id);b.onclick=()=>{ST[key]=!ST[key];b.classList.toggle('on',ST[key]);b.textContent=ST[key]?'켬':'끔';SFX.tap();if(after)after();};}
+sw('#oLab','lab',()=>{if(ST.mode===2)drawScatter();});sw('#oSnd','snd');
+$('#bAll').onclick=()=>{closeDr();ST.sel=null;ST.cmp=false;ST.axis=0;ST.view='all';ST.clus=false;F.play=false;F.snow=2.7;$('#fS').value=2.7;$('#sv').textContent='2.7 AU';$('#fPlay').textContent='▶ 재생';
+  $$('#m2 [data-a]').forEach(x=>x.classList.toggle('on',x.dataset.a==='0'));$$('#m2 [data-v]').forEach(x=>x.classList.toggle('on',x.dataset.v==='all'));$('#cClus').classList.remove('on');$$('#fStep .chip').forEach(x=>x.classList.remove('on'));
+  resetM1();setT(0);showMode(1);toast('모든 활동을 처음 상태로 되돌렸어요.');};
+const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+$('#bFs').onclick=()=>{try{if(!isFs())(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){toast('이 브라우저는 전체화면을 지원하지 않아요. (F11 키)');}};
+function syncFs(){$('#bFs').classList.toggle('on',isFs());$('#bFs').textContent=isFs()?'⛶ 전체화면 끄기':'⛶ 전체화면';}
+document.addEventListener('fullscreenchange',syncFs);document.addEventListener('webkitfullscreenchange',syncFs);
+const QK='labQrBase';const lsGet=k=>{try{return localStorage.getItem(k)||'';}catch(e){return '';}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};const normUrl=u=>{try{const x=new URL(u.trim());return/^https?:$/.test(x.protocol)?x.href:'';}catch(e){return '';}};
+function drawQR(){const raw=$('#qrUrl').value.trim(),c=$('#qrCv'),q=c.getContext('2d'),url=raw?normUrl(raw):'';$('#qrMsg').textContent='';
+  if(!url){c.width=c.height=400;q.fillStyle='#fff';q.fillRect(0,0,400,400);q.fillStyle='#64748b';q.font='700 24px sans-serif';q.textAlign='center';q.fillText('주소를 입력하세요',200,205);$('#qrCap').textContent='';if(raw)$('#qrMsg').textContent='http:// 또는 https:// 로 시작하는 주소를 입력하세요.';return;}
+  try{qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];const m=qrcode(0,'M');m.addData(url,'Byte');m.make();const n=m.getModuleCount(),b=4,cell=Math.max(4,Math.floor(640/(n+b*2))),sz=cell*(n+b*2);c.width=c.height=sz;q.fillStyle='#fff';q.fillRect(0,0,sz,sz);q.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(m.isDark(r,k))q.fillRect((k+b)*cell,(r+b)*cell,cell,cell);let cap=url;try{cap=decodeURI(url);}catch(e){}$('#qrCap').textContent=cap;lsSet(QK,url);}catch(e){$('#qrMsg').textContent='주소가 너무 길어 QR을 만들 수 없습니다.';}}
+$('#bQR').onclick=()=>{closeDr();const here=/^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(QK);$('#qrUrl').value=here;$('#ovQ').classList.add('on');drawQR();if(!here)$('#qrMsg').textContent='GitHub Pages 주소를 붙여 넣으면 QR이 만들어집니다.';};
+$('#qrUrl').addEventListener('input',drawQR);$('#qX').onclick=()=>$('#ovQ').classList.remove('on');$('#ovQ').addEventListener('click',e=>{if(e.target.id==='ovQ')$('#ovQ').classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='Escape'){closeDr();$$('.ov').forEach(o=>o.classList.remove('on'));}else if(e.key==='1'||e.key==='2'||e.key==='3')showMode(+e.key);});
+function onResize(){if(ST.mode===2){size2();drawScatter();}if(ST.mode===3){size3();drawForm();}}
+window.addEventListener('resize',onResize);if(window.ResizeObserver){new ResizeObserver(onResize).observe($('#m2'));new ResizeObserver(onResize).observe($('#m3'));}
+resetM1();setT(0);requestAnimationFrame(loop);
+window.__t={ST,PL,PM,PLACE,F,PART,judge,moveTo,selectP,showMode,setT,drawForm,drawScatter,renderInsp,resetM1,openTbl,statusOf,planetR,finalR,geom,pick2,size2,size3,renderFx,order:()=>order,fmt,AXES};
+})();
+
+</script>
+<script id="qrbigScript">
+/* 전자칠판용 QR 크게 보기 (오프라인 · 외부 의존 없음) */
+(function(){
+  var NAVY='#0a0e17';
+  function openBig(cv){
+    if(document.getElementById('qbOv'))return;
+    var t=(document.getElementById('qrTitle')||{}).textContent||document.title||'학생 접속 QR코드';
+    var cap=((document.getElementById('qrCap')||{}).textContent)||((document.getElementById('qrUrl')||{}).value)||'';
+    var ov=document.createElement('div');ov.id='qbOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:'+NAVY+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:2vh 3vw;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none';
+    var h=document.createElement('div');h.textContent='📱 휴대폰 카메라로 QR을 찍어 보세요';h.style.cssText='font-size:clamp(24px,3.4vh,44px);font-weight:900;text-align:center';
+    var s=document.createElement('div');s.textContent=t;s.style.cssText='font-size:clamp(20px,2.6vh,34px);font-weight:800;color:#7dd3fc;text-align:center;max-width:90vw';
+    var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;padding:clamp(18px,3vh,36px);box-shadow:0 0 0 6px #1e3a8a,0 20px 60px rgba(0,0,0,.6)';
+    var im=new Image();im.src=cv.toDataURL('image/png');im.alt='QR 코드';im.style.cssText='display:block;width:min(64vh,76vw);height:min(64vh,76vw);image-rendering:pixelated';box.appendChild(im);
+    var c=document.createElement('div');c.textContent=cap;c.style.cssText='font-size:clamp(18px,2.2vh,26px);color:#9fb2d0;font-weight:700;text-align:center;max-width:92vw;word-break:break-all';
+    var k=document.createElement('div');k.textContent='화면을 누르거나 Esc 키를 누르면 닫혀요';k.style.cssText='font-size:clamp(18px,2.2vh,24px);color:#fde68a;font-weight:800';
+    [h,s,box,c,k].forEach(function(e){if(e!==c||cap)ov.appendChild(e);});
+    document.body.appendChild(ov);
+    var usedFs=false;
+    try{var r=ov.requestFullscreen||ov.webkitRequestFullscreen;if(r&&!document.fullscreenElement&&!document.webkitFullscreenElement){var p=r.call(ov);usedFs=true;if(p&&p.catch)p.catch(function(){});}}catch(e){}
+    function close(){document.removeEventListener('keydown',key,true);if(ov.parentNode)ov.parentNode.removeChild(ov);
+      try{if(usedFs&&(document.fullscreenElement||document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+    function key(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    ov.addEventListener('click',close);document.addEventListener('keydown',key,true);
+    document.addEventListener('fullscreenchange',function f(){if(!document.fullscreenElement&&usedFs){document.removeEventListener('fullscreenchange',f);if(document.getElementById('qbOv'))close();}});
+  }
+  function attach(cv){
+    if(cv.__qb)return;cv.__qb=1;
+    var b=document.createElement('button');b.type='button';b.id=(cv.id||'qr')+'Big';b.textContent='⛶ 크게 보기 (전자칠판)';
+    b.style.cssText='display:block;margin:10px auto 0;min-height:52px;padding:0 20px;border-radius:14px;border:2px solid #38bdf8;background:'+NAVY+';color:#fff;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation';
+    b.onclick=function(e){e.stopPropagation();openBig(cv);};
+    cv.insertAdjacentElement('afterend',b);cv.style.cursor='zoom-in';cv.title='눌러서 크게 보기';
+    cv.addEventListener('click',function(e){e.stopPropagation();openBig(cv);});
+  }
+  function scan(){var all=document.querySelectorAll('canvas');for(var i=0;i<all.length;i++){if(/qr/i.test(all[i].id))attach(all[i]);}}
+  scan();document.addEventListener('DOMContentLoaded',scan);
+  try{new MutationObserver(function(){scan();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.__qrBig=openBig;
+})();
+</script>
+</body>
+</html>
