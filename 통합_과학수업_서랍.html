@@ -556,6 +556,17 @@ a { text-decoration: none; color: inherit; }
   border-color: #10b981;
 }
 
+.btn-shoot {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+.btn-shoot:hover {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+}
+
 /* ==========================================================================
    6. 인지적 수업 흐름 가이드 모달
    ========================================================================== */
@@ -1819,6 +1830,32 @@ function render() {
           <span>🐍 뱀주사위 (${known ? m.unit : '종합'})</span>
         </a>
       `;
+    }
+
+    // 6) 개념 격추 : 이 차시의 단원 개념으로 도전 (별과 우주는 해당 차시까지 바로 선택)
+    {
+      const SHOOT_UNITS = {
+        "중1": ["과학과 인류의 지속가능한 삶", "생물의 구성과 다양성", "열", "물질의 상태 변화", "힘의 작용", "기체의 성질", "태양계"],
+        "중2": ["물질의 특성", "지권의 변화", "빛과 파동", "물질의 구성", "식물과 에너지", "동물과 에너지", "전기와 자기", "별과 우주"],
+        "중3": ["화학 반응의 규칙과 에너지 변화", "기권과 날씨", "운동과 에너지", "자극과 반응", "생식과 유전", "에너지 전환과 보존", "별과 우주"]
+      };
+      if ((SHOOT_UNITS[m.grade] || []).includes(m.unit)) {
+        let lessonNo = "";
+        if (m.unit === "별과 우주") {
+          if (m.lesson.includes("색과 표면 온도")) lessonNo = "1";
+          else if (m.lesson.includes("밝기와 등급")) lessonNo = "2";
+          else if (m.lesson.includes("연주 시차")) lessonNo = "3";
+        }
+        const fq = "g=" + encodeURIComponent(m.grade) + "&u=" + encodeURIComponent(m.unit) + (lessonNo ? "&s=" + lessonNo : "");
+        const kHref = boardMode
+          ? "./전자칠판_실행기.html?f=" + encodeURIComponent("개념격추.html") + "&imm=1&fq=" + encodeURIComponent(fq) + "&t=" + encodeURIComponent("개념 격추")
+          : "./개념격추.html?" + fq;
+        toolsHtml += `
+        <a href="${kHref}" class="btn-action btn-shoot" target="_blank" title="${m.unit}${lessonNo ? ' ' + lessonNo + '차시' : ''} 개념으로 도전하는 개념 격추">
+          <span>🎯 개념 격추</span>
+        </a>
+      `;
+      }
     }
 
     card.innerHTML = `
