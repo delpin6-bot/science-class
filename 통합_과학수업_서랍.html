@@ -545,6 +545,17 @@ a { text-decoration: none; color: inherit; }
   border-color: #7c3aed;
 }
 
+.btn-snake {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+.btn-snake:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
 /* ==========================================================================
    6. 인지적 수업 흐름 가이드 모달
    ========================================================================== */
@@ -1787,6 +1798,25 @@ function render() {
       toolsHtml += `
         <a href="${m.tools.game.url}" class="btn-action btn-game" target="_blank" title="개념 인출 및 형성평가 게임">
           <span>🔔 ${m.tools.game.nm}</span>
+        </a>
+      `;
+    }
+
+    // 5) 올인원 뱀주사위 : 이 차시의 단원 퀴즈로 모둠 대항 보드게임
+    {
+      const SNAKE_UNITS = {
+        "중1": ["기체의 성질", "물질의 상태 변화", "태양계"],
+        "중2": ["전기와 자기", "빛과 파동", "물질의 특성", "물질의 구성", "식물과 에너지", "동물과 에너지", "별과 우주"],
+        "중3": ["자극과 반응", "생식과 유전", "운동과 에너지", "에너지 전환과 보존", "별과 우주"]
+      };
+      const known = (SNAKE_UNITS[m.grade] || []).includes(m.unit);
+      const fq = "g=" + encodeURIComponent(known ? m.grade : "전학년") + "&u=" + encodeURIComponent(known ? m.unit : "종합 과학");
+      const sHref = boardMode
+        ? "./전자칠판_실행기.html?f=" + encodeURIComponent("올인원_뱀주사위놀이.html") + "&imm=1&fq=" + encodeURIComponent(fq) + "&t=" + encodeURIComponent("올인원 뱀주사위")
+        : "./올인원_뱀주사위놀이.html?" + fq;
+      toolsHtml += `
+        <a href="${sHref}" class="btn-action btn-snake" target="_blank" title="${known ? m.unit : '전 단원'} 퀴즈로 즐기는 모둠 뱀주사위 보드게임">
+          <span>🐍 뱀주사위 (${known ? m.unit : '종합'})</span>
         </a>
       `;
     }
