@@ -1,3 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>달의 위상 변화 가상실험실</title>
+<style>
+:root{--bg:#0a0e17;--card:#0f1626;--card2:#131c30;--ln:#2a3a66;--tx:#f1f5f9;--sub:#c3d0e8;--gold:#fde68a;--cy:#7dd3fc;
+  --fs:clamp(16px,1.05vw,40px);--fm:clamp(20px,1.35vw,52px);--fk:clamp(26px,2vw,76px);--tap:clamp(50px,3.1vw,100px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;font-size:var(--fs);-webkit-user-select:none;user-select:none;touch-action:none}
+button,a,input{font-family:inherit}button{color:inherit;cursor:pointer;border:0;background:none;font-size:inherit;touch-action:manipulation}a{color:inherit;text-decoration:none}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column}
+.hd{display:flex;align-items:center;gap:12px;padding:5px 12px;border-bottom:2px solid var(--ln);background:#070b16;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}.brand .ic{width:calc(var(--tap) - 6px);height:calc(var(--tap) - 6px);border-radius:14px;background:radial-gradient(circle at 70% 35%,#fffbe0,#fde68a 45%,#78716c);display:flex;align-items:center;justify-content:center;font-size:1.4em;flex:none}
+.brand h1{font-size:var(--fm);font-weight:900;line-height:1.15}.brand small{display:block;font-size:.78em;color:var(--sub);font-weight:700}
+.tb,.chip{min-height:var(--tap);min-width:var(--tap);padding:0 14px;border-radius:14px;background:var(--card);border:2px solid var(--ln);font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.tb:active,.chip:active{transform:scale(.97)}.tb.on{background:#16a34a;border-color:#bbf7d0}.chip.on{background:#4f46e5;border-color:#a5b4fc}.chip.y.on{background:#ca8a04;border-color:#fde68a;color:#1a1200}
+.tools{display:flex;gap:8px}
+/* 스테이지 */
+.mn{flex:1;min-height:0;display:flex;gap:8px;padding:6px 12px;position:relative}
+.box{position:relative;border-radius:18px;border:2px solid var(--ln);overflow:hidden;background:#04070f;min-width:0;min-height:0;flex:1}
+.box canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.cap{position:absolute;left:10px;top:8px;font-weight:900;font-size:var(--fs);background:rgba(6,11,25,.86);border:1.5px solid var(--ln);border-radius:12px;padding:3px 12px;z-index:2;pointer-events:none;max-width:90%}
+.ovc{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap;z-index:3;max-width:calc(100% - 20px)}
+.ovc .chip{background:rgba(6,11,25,.9)}.ovc .chip.on{background:#4f46e5}
+#hint{position:absolute;left:50%;top:8%;transform:translateX(-50%);background:rgba(6,11,25,.92);border:2px solid #4ade80;color:#86efac;font-weight:800;border-radius:14px;padding:4px 16px;z-index:3;pointer-events:none;transition:opacity .4s;white-space:nowrap}
+/* 오른쪽 뷰 */
+#viewTop{position:absolute;right:10px;top:8px;display:flex;gap:6px;z-index:3;flex-wrap:wrap;justify-content:flex-end}
+#viewTop .chip{background:rgba(6,11,25,.9)}#viewTop .chip.on{background:#4f46e5}#viewTop .chip.y.on{background:#ca8a04}
+#obsBar{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:6px;align-items:center;z-index:3;flex-wrap:wrap}
+#obsBar .lab{background:rgba(6,11,25,.9);border-radius:12px;padding:2px 10px;font-weight:800;color:var(--sub)}
+#obsBar .chip{background:rgba(6,11,25,.9)}#obsBar .chip.on{background:#0e7490;border-color:#67e8f9}
+#phaseInfo{position:absolute;left:10px;top:calc(var(--tap) + 18px);z-index:3;background:rgba(6,11,25,.88);border:2px solid var(--ln);border-radius:16px;padding:8px 14px;max-width:min(44%,560px);pointer-events:none}
+#phaseInfo .nm{font-size:var(--fk);font-weight:900;color:var(--gold);line-height:1.15}#phaseInfo .nm small{font-size:.5em;color:var(--sub);margin-left:6px}
+#phaseInfo .tag{display:inline-block;margin:4px 0;padding:2px 12px;border-radius:999px;background:#1e3a8a;border:2px solid #60a5fa;font-weight:900;font-size:var(--fm)}
+#phaseInfo .ln{font-weight:700;line-height:1.5;color:#e2e8f0}#phaseInfo .ln b{color:#fff}#phaseInfo .ln em{font-style:normal;color:#86efac;font-weight:900}#phaseInfo .ln i{font-style:normal;color:#fca5a5;font-weight:900}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .35s}
+/* 컨트롤 */
+.ctl{padding:5px 12px 8px;border-top:2px solid var(--ln);background:#070b16;display:flex;flex-direction:column;gap:6px}
+.pre{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.pre button{min-height:var(--tap);border-radius:14px;background:var(--card);border:2px solid var(--ln);font-weight:900;line-height:1.15;padding:2px 4px}
+.pre button small{display:block;font-size:.72em;color:var(--sub);font-weight:700}.pre button b{color:var(--gold);font-size:1.1em}
+.pre button.on{background:#f59e0b;border-color:#fde68a;color:#1a1200}.pre button.on small,.pre button.on b{color:#3a2a00}
+.r2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.big{min-height:var(--tap);padding:0 18px;border-radius:14px;border:3px solid rgba(255,255,255,.5);font-weight:900;color:#fff;background:linear-gradient(135deg,#0ea5e9,#0369a1);touch-action:manipulation}.big.pl{background:linear-gradient(135deg,#7c3aed,#4f46e5);min-width:calc(var(--tap)*2.1)}.big.or{background:linear-gradient(135deg,#f59e0b,#ea580c)}.big.gy{background:#1e293b;border-color:#64748b}
+.sl{display:flex;align-items:center;gap:8px;min-width:200px;flex:1}.sl span{font-weight:800;color:var(--sub);white-space:nowrap}.sl input[type=range]{flex:1;height:var(--tap);accent-color:#f59e0b;background:transparent;cursor:pointer;touch-action:pan-y}
+#age{min-width:clamp(150px,12vw,320px);font-weight:900;color:var(--gold);font-size:var(--fm);text-align:center;line-height:1.15}#age small{display:block;color:var(--sub);font-size:.62em;font-weight:700}
+/* 관측 일지 */
+#journal{position:absolute;left:12px;right:12px;bottom:6px;z-index:8;background:rgba(7,11,22,.97);border:3px solid #f59e0b;border-radius:20px;padding:8px 12px 10px;transform:translateY(112%);transition:transform .3s}
+#journal.on{transform:none}
+#journal h3{font-size:var(--fm);display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}#journal h3 b{color:var(--gold)}
+.jg{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.js{background:var(--card2);border:2px dashed #475569;border-radius:14px;padding:4px;text-align:center;font-weight:800;line-height:1.2;min-width:0}
+.js.ok{border-style:solid;border-color:#fbbf24}.js.fl{animation:fl 1s}@keyframes fl{0%,60%{box-shadow:0 0 0 6px rgba(253,224,71,.8)}100%{box-shadow:none}}
+.js canvas{display:block;width:100%;aspect-ratio:1/1;height:auto;border-radius:10px;background:#04070f}
+.js .n{color:var(--gold)}.js small{display:block;color:var(--sub);font-size:.78em;font-weight:700;min-height:1.2em}
+/* 서랍 · 모달 */
+#dim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:none}#dim.on{display:block}
+.dr{position:fixed;top:0;right:0;bottom:0;width:clamp(320px,26vw,700px);background:#0b1124;border-left:3px solid var(--ln);z-index:50;transform:translateX(105%);transition:transform .3s;padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto;touch-action:pan-y}.dr.on{transform:none}
+.dr h3{font-size:var(--fm);display:flex;justify-content:space-between;align-items:center}.dr h4{color:var(--cy);margin-bottom:6px}
+.x{min-width:var(--tap);min-height:var(--tap);border-radius:14px;background:#27406e;font-weight:900;color:#fff;flex:none}
+.row2{display:flex;gap:6px;flex-wrap:wrap}.row2 .chip{flex:1}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:60;padding:14px;touch-action:pan-y}.ov.on{display:flex}
+.pop{background:#0c1328;border:2px solid var(--ln);border-radius:22px;width:100%;max-width:520px;max-height:94vh;overflow:auto;padding:18px}
+.pop h2{font-size:var(--fm);color:var(--cy);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.qn3{background:#2a2410;border:1px solid #f59e0b;color:var(--gold);border-radius:12px;padding:10px 14px;line-height:1.5;margin-bottom:8px}
+#qrUrl{width:100%;min-height:var(--tap);border-radius:14px;border:2px solid var(--ln);background:#0b1726;color:#fff;font:inherit;padding:0 12px;margin-bottom:8px;user-select:text;-webkit-user-select:text}
+#qrCv{background:#fff;padding:12px;border-radius:12px;width:min(70vw,340px);height:auto;image-rendering:pixelated;display:block;margin:0 auto}#qrMsg{color:#fca5a5;font-weight:700;min-height:1.3em}#qrCap{font-size:.8em;color:var(--sub);word-break:break-all;text-align:center}
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);z-index:90;background:rgba(8,13,30,.97);border:2px solid var(--gold);border-radius:16px;padding:10px 24px;font-weight:800;transition:transform .3s;pointer-events:none;max-width:92%;text-align:center}#toast.on{transform:translate(-50%,0)}
+@media (max-width:1000px){.mn{flex-direction:column}.box{flex:none;height:46vh}.pre{grid-template-columns:repeat(4,1fr)}.jg{grid-template-columns:repeat(4,1fr)}.hd .brand small{display:none}#phaseInfo{max-width:92%}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div class="brand"><div class="ic">🌙</div><div><h1>달의 위상 변화</h1><small>중1 · 태양계 · 달의 공전과 태양-지구-달의 위치 관계</small></div></div>
+    <div class="tools">
+      <button class="tb" id="bFs" title="전체화면">⛶ 전체화면</button>
+      <button class="tb" id="bSet" title="설정">⚙️ 설정</button>
+    </div>
+  </header>
+  <main class="mn" id="mn">
+    <div class="box" id="spaceBox"><canvas id="cvS"></canvas><div class="cap">🛰 우주 시점 : 북극 상공에서 내려다본 모습</div><div id="hint">👆 달을 끌어서 공전시켜 보세요</div>
+      <div class="ovc"><button class="chip on" id="tSun">☀️ 태양 광선</button><button class="chip on" id="tGuide">👁 시선 가이드선</button><button class="chip on" id="tNum">🔢 위치 번호</button></div></div>
+    <div class="box" id="skyBox"><canvas id="cvK"></canvas><div class="cap" id="capK">🔭 지구에서 본 달의 모습</div>
+      <div id="viewTop"><button class="chip on" data-v="zoom">🔭 달 확대 보기</button><button class="chip" data-v="sky">🌌 남쪽 하늘 보기</button><button class="chip y" id="tSty">🧪 스타이로폼 모형 모드</button></div>
+      <div id="phaseInfo"></div>
+      <div id="obsBar"><span class="lab">관측 시각</span><button class="chip" data-t="12">☀️ 낮 12시</button><button class="chip on" data-t="18">🌇 저녁 18시</button><button class="chip" data-t="24">🌙 자정 24시</button><button class="chip" data-t="6">🌅 새벽 6시</button></div>
+      <div id="flash"></div></div>
+    <section id="journal" aria-label="나의 관측 일지"><h3><span>📒 나의 관측 일지 <b id="jcnt">0/8</b></span><span class="row2"><button class="chip" id="jClr">🗑 지우기</button><button class="chip" id="jX">▼ 닫기</button></span></h3><div class="jg" id="jg"></div></section>
+  </main>
+  <footer class="ctl">
+    <div class="pre" id="pre"></div>
+    <div class="r2">
+      <button class="big pl" id="bPlay">▶ 공전 재생</button>
+      <div class="sl"><span>🐢</span><input type="range" id="spd" min="0.25" max="4" step="0.25" value="1" aria-label="공전 속도"><span>🐇 <b id="spdV">×1</b></span></div>
+      <div id="age">달의 나이 0.0일<small>삭에서 0°</small></div>
+      <button class="big or" id="bShot">📸 관측 사진 촬영</button>
+      <button class="big gy" id="bJ">📒 관측 일지 <b id="jcnt2">0/8</b></button>
+    </div>
+  </footer>
+</div>
+<div id="dim"></div>
+<aside class="dr" id="dr">
+  <h3>⚙️ 설정 <button class="x" id="drX">✕</button></h3>
+  <section><h4>🔗 이동</h4><div class="row2"><a class="chip" href="./가상실험실_서랍.html">🔬 가상실험실</a><a class="chip" href="./통합_과학수업_서랍.html">📚 통합과학</a><a class="chip" href="./시작하기_수업게임서랍.html">🎮 수업게임</a><a class="chip" href="./동기유발_서랍.html">🚀 동기유발</a></div></section>
+  <section><h4>📱 학생 접속 QR</h4><button class="tb" id="bQR" style="width:100%">📱 QR 코드 만들기</button></section>
+  <section><h4>ℹ️ 알아 두기</h4><p style="line-height:1.6;color:var(--sub);font-weight:600">달의 위상은 <b>달이 지구 주위를 도는 위치</b> 때문에 바뀌어요. 달은 항상 같은 면(앞면)만 지구를 향하고, 달의 절반은 늘 태양 빛을 받아요. 지구 그림자가 달을 가리는 것(월식)과는 달라요. 북반구에서 보면 차오르는 달은 오른쪽부터 밝아져요.</p></section>
+  <section><h4>↺ 처음부터</h4><button class="tb" id="bAll" style="width:100%">위치 · 표시 · 일지 초기화</button></section>
+</aside>
+<div class="ov" id="ovQ"><div class="pop">
+  <h2><span>📱 학생 접속 QR코드</span><button class="x" id="qX">✕</button></h2>
+  <div class="qn3">학생 휴대폰·태블릿 카메라로 찍으면 바로 열립니다. GitHub Pages 주소를 한 번 붙여 넣으면 이 컴퓨터에 저장돼요.</div>
+  <input id="qrUrl" type="url" placeholder="https://계정명.github.io/저장소명/달의_위상_변화.html" autocomplete="off" spellcheck="false">
+  <div id="qrMsg"></div><canvas id="qrCv" width="400" height="400"></canvas><div id="qrCap"></div>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* qrcode-generator 2.0.4 (c) Kazuhiko Arase, MIT License — 오프라인 내장 */
 //---------------------------------------------------------------------
 //
 // QR Code Generator for JavaScript
@@ -722,7 +842,7 @@ var qrcode = function() {
       for (var row = 0; row < length; row++) {
         for (var col = 0; col < length; col++) {
           context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
-          context.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
         }
       }
     }
@@ -2295,134 +2415,278 @@ var qrcode = function() {
 }(function () {
     return qrcode;
 }));
-/* 수업 게임 서랍 · 바로 QR (게임 화면 머리글 + 서랍 카드)
-   - 웹 주소로 열면 그 주소로, 교실 PC 파일로 열면 저장해 둔 사이트 주소로 QR을 만든다.
-   - 주소 형식: 사이트/go.html?f=파일코드&q=차시코드 (짧아서 휴대폰 카메라가 잘 읽음) */
+
+</script>
+<script>
+"use strict";
 (function(){
-  if (window.KJSQR) return;
-  var LS = "kjs-qr-base";
-  var esc = function(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
-  function hcode(str){ var h=2166136261; for (var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h.toString(36); }
-  function normBase(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u.replace(/[^/]*\.html.*$/,"").replace(/\/?$/,"/"); }
-  function base(){
-    if (/^https?:/.test(location.protocol)) return normBase(location.href.split("?")[0].split("#")[0]);
-    try { return localStorage.getItem(LS) || ""; } catch(e){ return ""; }
-  }
-  function urlFor(file, q){ var b = base(); return b ? b + "go.html?f=" + hcode(file) + (q ? "&q=" + q : "") + "&qr=1" : ""; }
-  function svg(text, cell){ var qr = qrcode(0, "M"); qr.addData(text); qr.make(); return qr.createSvgTag({ cellSize: cell || 8, margin: 2, scalable: true }); }
-  function thisFile(){ var p = decodeURIComponent(location.pathname.split("/").pop() || ""); return p || "index.html"; }
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const D2R=Math.PI/180,TAU=Math.PI*2;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,mod=(a,n)=>((a%n)+n)%n;
+const FONT='"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+const LAT=37,SYN=29.53;
+const ST={a:90,play:false,spd:1,sun:true,guide:true,num:true,sty:false,view:'zoom',obsT:18,tween:null,drag:false,jr:{}};
+let toastT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2800);}
+function rng(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+/* ---------- 달의 위상 (α : 달이 태양에서 동쪽으로 떨어진 각 = 삭에서의 공전각, 반시계) ---------- */
+const PRE=[['삭','삭',0],['초승달','초승달',45],['상현','상현달',90],['보름달 직전','상현~망',135],['망(보름달)','보름달',180],['하현 직전','망~하현',225],['하현','하현달',270],['그믐달','그믐달',315]];
+function phaseOf(a){a=mod(a,360);
+  if(a<6||a>354)return{k:0,nm:'삭',tag:'보이지 않음 (삭)'};
+  if(a<=84)return{k:1,nm:'초승달',tag:'오른쪽 얇은 눈썹만 밝음 (초승달)'};
+  if(a<=96)return{k:2,nm:'상현달',tag:'오른쪽 반원만 밝음 (상현달)'};
+  if(a<174)return{k:3,nm:'상현달과 보름달 사이',tag:'오른쪽이 볼록하게 거의 다 밝음'};
+  if(a<=186)return{k:4,nm:'보름달 (망)',tag:'달의 앞면 전체가 밝음 (보름달)'};
+  if(a<264)return{k:5,nm:'보름달과 하현달 사이',tag:'왼쪽이 볼록하게 거의 다 밝음'};
+  if(a<=276)return{k:6,nm:'하현달',tag:'왼쪽 반원만 밝음 (하현달)'};
+  return{k:7,nm:'그믐달',tag:'왼쪽 얇은 눈썹만 밝음 (그믐달)'};}
+const illum=a=>(1-Math.cos(a*D2R))/2;
+const posIdx=a=>Math.round(mod(a,360)/45)%8;                 // 가장 가까운 위치 번호 (0~7)
+function altaz(Hdeg){const L=LAT*D2R,H=Hdeg*D2R,sa=Math.cos(L)*Math.cos(H),x=-Math.sin(L)*Math.cos(H),y=-Math.sin(H);let az=Math.atan2(y,x);if(az<0)az+=TAU;return{alt:Math.asin(clamp(sa,-1,1)),az:az};}
+const sunHA=t=>(t-12)*15;
+const moonHA=(t,a)=>(t-12)*15-a;                              // 달은 태양보다 α 만큼 동쪽 → 시간각이 α 만큼 작다
+const transitH=a=>mod(12+a/15,24);
+/* ---------- 달 표면 무늬 (실제 / 스타이로폼) ---------- */
+const TEX={};
+function blobP(c,x,y,r,seed,n){const R=rng(seed),p1=R()*TAU,p2=R()*TAU,p3=R()*TAU;c.beginPath();const N=36;for(let i=0;i<=N;i++){const ang=i/N*TAU,rr=r*(1+0.22*Math.sin(2*ang+p1)+0.16*Math.sin(3*ang+p2)+0.09*Math.sin(5*ang+p3));const px=x+Math.cos(ang)*rr,py=y+Math.sin(ang)*rr*0.85;i?c.lineTo(px,py):c.moveTo(px,py);}c.closePath();}
+function moonTex(sty){
+  if(TEX[sty])return TEX[sty];const S=256,cv=document.createElement('canvas');cv.width=cv.height=S;const c=cv.getContext('2d'),R=S/2;
+  if(!sty){const g=c.createRadialGradient(S*.42,S*.4,S*.05,S/2,S/2,R);g.addColorStop(0,'#f6f2de');g.addColorStop(.6,'#d6d0b6');g.addColorStop(1,'#a8a28c');c.fillStyle=g;c.fillRect(0,0,S,S);
+    const MARIA=[[-.28,-.34,.2,3],[.10,-.40,.12,5],[.30,-.12,.14,7],[.54,.08,.12,9],[.70,-.20,.07,11],[-.62,-.02,.22,13],[-.30,.30,.14,15],[-.56,.40,.1,17],[.02,.0,.1,19],[.18,.38,.09,21]];
+    MARIA.forEach(m=>{c.fillStyle='rgba(78,80,92,.52)';blobP(c,R+m[0]*R,R+m[1]*R,m[2]*R,m[3],14);c.fill();});
+    const Rr=rng(77);for(let i=0;i<40;i++){const a=Rr()*TAU,d=Math.sqrt(Rr())*R*.9,x=R+Math.cos(a)*d,y=R+Math.sin(a)*d,r=1.5+Rr()*6;c.strokeStyle='rgba(60,60,70,.22)';c.lineWidth=1.2;c.beginPath();c.arc(x,y,r,0,TAU);c.stroke();c.fillStyle='rgba(255,255,255,.10)';c.beginPath();c.arc(x-1,y-1,r*.7,0,TAU);c.fill();}
+    c.fillStyle='rgba(255,255,255,.55)';c.beginPath();c.arc(R-.15*R,R+.72*R,3.2,0,TAU);c.fill();c.strokeStyle='rgba(255,255,255,.28)';c.lineWidth=1.4;for(let k=0;k<12;k++){const a=k/12*TAU;c.beginPath();c.moveTo(R-.15*R+Math.cos(a)*4,R+.72*R+Math.sin(a)*4);c.lineTo(R-.15*R+Math.cos(a)*(18+(k%3)*8),R+.72*R+Math.sin(a)*(18+(k%3)*8));c.stroke();}}
+  else{const g=c.createRadialGradient(S*.4,S*.38,S*.05,S/2,S/2,R);g.addColorStop(0,'#fff27a');g.addColorStop(.7,'#ffe03a');g.addColorStop(1,'#f0b800');c.fillStyle=g;c.fillRect(0,0,S,S);const Rr=rng(5);for(let i=0;i<1100;i++){const x=Rr()*S,y=Rr()*S,r=.6+Rr()*1.6;c.fillStyle=Rr()<.5?'rgba(120,80,0,.14)':'rgba(255,255,255,.4)';c.beginPath();c.arc(x,y,r,0,TAU);c.fill();}}
+  TEX[sty]=cv;return cv;}
+/* ---------- 지구에서 본 달 (북반구 · 남쪽 하늘) : 차오르는 달은 오른쪽부터 밝아진다 ---------- */
+function litPath(c,x,y,r,a){const ca=Math.cos(a*D2R),sg=mod(a,360)>180?-1:1;
+  c.save();c.translate(x,y);c.scale(sg,1);c.beginPath();c.arc(0,0,r,-Math.PI/2,Math.PI/2,false);const rx=Math.max(0.01,r*Math.abs(ca));
+  if(ca>=0)c.ellipse(0,0,rx,r,0,Math.PI/2,-Math.PI/2,true);else c.ellipse(0,0,rx,r,0,Math.PI/2,Math.PI*1.5,false);c.closePath();c.restore();}
+function drawMoon(c,x,y,r,a,o){o=o||{};const sty=!!o.sty,tex=moonTex(sty),k=illum(a);
+  if(!o.noGlow&&k>0.02){const gl=c.createRadialGradient(x,y,r*.9,x,y,r*2.2);gl.addColorStop(0,'rgba(255,245,190,'+(0.28*k)+')');gl.addColorStop(1,'rgba(255,245,190,0)');c.fillStyle=gl;c.beginPath();c.arc(x,y,r*2.2,0,TAU);c.fill();}
+  c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();
+  if(sty){c.fillStyle='#0b0b0d';c.fillRect(x-r,y-r,2*r,2*r);}else{c.drawImage(tex,x-r,y-r,2*r,2*r);c.fillStyle='rgba(3,6,16,.93)';c.fillRect(x-r,y-r,2*r,2*r);}
+  c.restore();
+  if(k>0.004){c.save();litPath(c,x,y,r,a);c.clip();c.drawImage(tex,x-r,y-r,2*r,2*r);c.restore();}
+  c.strokeStyle=sty?'rgba(255,255,255,.28)':'rgba(255,255,255,.14)';c.lineWidth=Math.max(1,r*.012);c.beginPath();c.arc(x,y,r,0,TAU);c.stroke();
+  if(sty&&o.pin){c.fillStyle='#ef4444';c.strokeStyle='#fff';c.lineWidth=Math.max(1.5,r*.03);c.beginPath();c.arc(x,y,r*.07,0,TAU);c.fill();c.stroke();}}
+window.__mp0={ST,phaseOf,illum};
 
-  var css = document.createElement("style"); css.id = "kjs-qr-style";
-  css.textContent = [
-    ".kqr-ov{position:fixed;inset:0;background:rgba(15,23,42,.8);display:none;place-items:center;z-index:100100;padding:14px;font-family:-apple-system,'Pretendard','Malgun Gothic',sans-serif}",
-    ".kqr-ov.on{display:grid}",
-    ".kqr{background:#fff;color:#0f172a;border-radius:22px;padding:18px 20px 16px;width:min(720px,100%);max-height:96vh;overflow:auto;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35)}",
-    ".kqr .g{font-size:14px;font-weight:800;color:#64748b}.kqr h2{margin:2px 0 4px;font-size:clamp(20px,3vw,28px);line-height:1.25}",
-    ".kqr .s{font-size:14px;color:#64748b;margin-bottom:8px}",
-    ".kqr .opts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 10px}",
-    ".kqr .opts button{border:1.5px solid #cbd5e1;background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;color:#334155}",
-    ".kqr .opts button.on{background:#0f172a;border-color:#0f172a;color:#fff}",
-    ".kqr .code{width:min(62vh,74vw,520px);margin:0 auto}.kqr .code svg{width:100%;height:auto;display:block}",
-    ".kqr .hint{font-size:15px;font-weight:800;margin:10px 0 2px}",
-    ".kqr .u{font-size:12px;color:#94a3b8;word-break:break-all;margin:4px 0 10px}",
-    ".kqr .base{display:flex;gap:6px;margin:10px auto;max-width:520px}.kqr .base input{flex:1;min-width:0;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px;font:inherit}",
-    ".kqr .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}",
-    ".kqr .row button,.kqr .base button{border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:800;cursor:pointer;background:#e2e8f0;color:#0f172a}",
-    ".kqr .row .x{background:#0f172a;color:#fff}",
-    ".kqr .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0;line-height:1.5}",
-    ".kjs-qr-btn{font-weight:800}",
-    ".kqr-card{position:absolute;z-index:3;top:12px;right:50px;height:30px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:0 8px;font:inherit;font-size:12.5px;font-weight:800;color:#334155;cursor:pointer;box-shadow:0 1px 3px rgba(15,23,42,.08)}",
-    ".kqr-card:hover{border-color:#0f172a;color:#0f172a}",
-    "@media print{.kqr-ov,.kqr-card,.kjs-qr-btn{display:none!important}}"
-  ].join("\n");
-  document.head.appendChild(css);
+/* ============================================================
+   캔버스
+   ============================================================ */
+const cvS=$('#cvS'),gS=cvS.getContext('2d'),cvK=$('#cvK'),gK=cvK.getContext('2d');
+const SZ={S:[600,600],K:[600,600]};let DPR=1;
+function sizeAll(){DPR=Math.min(2,window.devicePixelRatio||1);[['S','#spaceBox',cvS],['K','#skyBox',cvK]].forEach(a=>{const e=$(a[1]),w=e.clientWidth||600,h=e.clientHeight||600;SZ[a[0]]=[w,h];a[2].width=Math.round(w*DPR);a[2].height=Math.round(h*DPR);});}
+function txt(c,s,x,y,size,col,al,wt,stroke){c.font=(wt||800)+' '+size+'px '+FONT;c.textAlign=al||'center';c.textBaseline='middle';if(stroke){c.lineWidth=5;c.lineJoin='round';c.strokeStyle='rgba(4,7,15,.92)';c.strokeText(s,x,y);}c.fillStyle=col;c.fillText(s,x,y);}
+function arrowH(c,x,y,ang,sz,col){c.fillStyle=col;c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.cos(ang-0.42)*sz,y-Math.sin(ang-0.42)*sz);c.lineTo(x-Math.cos(ang+0.42)*sz,y-Math.sin(ang+0.42)*sz);c.closePath();c.fill();}
+const STARS=(()=>{const R=rng(31),a=[];for(let i=0;i<190;i++)a.push({x:R(),y:R(),r:.5+R()*1.4,b:.25+R()*.7});return a;})();
+function spaceGeom(){const w=SZ.S[0],h=SZ.S[1],ro=Math.min(w*0.33,h*0.325);return{w:w,h:h,ex:w*0.465,ey:h*0.5,ro:ro,re:ro*0.21,rm:Math.max(14,ro*0.17),F:Math.round(clamp(w*0.03,13,26))};}
+const moonXY=(g,a)=>[g.ex+g.ro*Math.cos(a*D2R),g.ey-g.ro*Math.sin(a*D2R)];
+const CONT=[[20,.50,.30,3],[75,.62,.22,5],[140,.46,.26,9],[205,.60,.30,11],[262,.52,.20,13],[318,.64,.24,17]];
+function drawSpace(){
+  const c=gS,g=spaceGeom(),F=g.F,a=ST.a;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,g.w,g.h);
+  c.fillStyle='#03060d';c.fillRect(0,0,g.w,g.h);STARS.forEach(s=>{c.fillStyle='rgba(255,255,255,'+s.b*0.55+')';c.fillRect(s.x*g.w,s.y*g.h,s.r,s.r);});
+  // 태양
+  const sx=g.w+g.ro*0.1,sg=c.createRadialGradient(sx,g.ey,g.ro*0.05,sx,g.ey,g.ro*1.3);sg.addColorStop(0,'rgba(255,225,110,1)');sg.addColorStop(.35,'rgba(255,170,50,.5)');sg.addColorStop(1,'rgba(255,130,0,0)');c.fillStyle=sg;c.beginPath();c.arc(sx,g.ey,g.ro*1.3,0,TAU);c.fill();c.fillStyle='#ffe58a';c.beginPath();c.arc(sx,g.ey,g.ro*0.38,0,TAU);c.fill();txt(c,'☀️ 태양',g.w-F*3.2,g.ey-g.ro*0.5,F*1.05,'#fde68a','center',900,true);
+  if(ST.sun){for(let k=-3;k<=3;k++){if(k===0)continue;const y=g.ey+k*g.ro*0.30,x1=g.w-g.ro*0.5,x2=g.ex+g.ro*1.2;c.strokeStyle='rgba(253,230,138,.78)';c.lineWidth=2.4;c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();arrowH(c,x2,y,Math.PI,11,'rgba(253,230,138,.9)');}
+    txt(c,'평행한 태양 빛',(g.ex+g.ro*1.2+g.w-g.ro*0.5)/2,g.ey+g.ro*1.05,F*0.95,'#fde68a','center',800,true);}
+  // 궤도
+  c.setLineDash([8,8]);c.strokeStyle='rgba(200,215,255,.6)';c.lineWidth=2.4;c.beginPath();c.arc(g.ex,g.ey,g.ro,0,TAU);c.stroke();c.setLineDash([]);
+  [22.5,112.5,202.5,292.5].forEach(d=>{const p=moonXY(g,d);arrowH(c,p[0],p[1],-(d+90)*D2R,F*0.75,'rgba(74,222,128,.95)');});
+  txt(c,'↺ 달의 공전 : 서 → 동 (반시계)',g.w-F*0.5,F*1.5,F*0.92,'#86efac','right',900,true);
+  // 위치 번호 1~8
+  if(ST.num){for(let i=0;i<8;i++){const ang=i*45,p=moonXY(g,ang),on=posIdx(a)===i&&Math.abs(mod(a-ang+180,360)-180)<8;c.fillStyle=on?'#f59e0b':'rgba(15,23,42,.95)';c.strokeStyle=on?'#fde68a':'#94a3b8';c.lineWidth=2;c.beginPath();c.arc(p[0],p[1],F*0.95,0,TAU);c.fill();c.stroke();txt(c,String(i+1),p[0],p[1],F*1.05,on?'#1a1200':'#e2e8f0','center',900);
+      const q=[g.ex+(g.ro+F*2.8)*Math.cos(ang*D2R),g.ey-(g.ro+F*2.8)*Math.sin(ang*D2R)];txt(c,PRE[i][1],q[0],q[1],F*0.88,'rgba(226,232,240,.9)','center',800,true);}}
+  // 지구
+  const spin=(ST.obsT-12)*15;c.save();c.beginPath();c.arc(g.ex,g.ey,g.re,0,TAU);c.clip();
+  const eg=c.createRadialGradient(g.ex,g.ey,g.re*.1,g.ex,g.ey,g.re);eg.addColorStop(0,'#2f77de');eg.addColorStop(1,'#1d4fa8');c.fillStyle=eg;c.fillRect(g.ex-g.re,g.ey-g.re,g.re*2,g.re*2);
+  c.fillStyle='#3f9a57';CONT.forEach(q=>{const ang=(spin+q[0])*D2R,rr=g.re*q[1],R=rng(q[3]);c.beginPath();for(let i=0;i<=9;i++){const t=i/9*TAU,r2=g.re*q[2]*(0.65+R()*0.7);const px=g.ex+Math.cos(ang)*rr+Math.cos(t)*r2,py=g.ey-Math.sin(ang)*rr+Math.sin(t)*r2;i?c.lineTo(px,py):c.moveTo(px,py);}c.closePath();c.fill();});
+  c.fillStyle='rgba(2,6,23,.62)';c.fillRect(g.ex-g.re,g.ey-g.re,g.re,g.re*2);c.restore();c.strokeStyle='#bfdbfe';c.lineWidth=2.5;c.beginPath();c.arc(g.ex,g.ey,g.re,0,TAU);c.stroke();
+  txt(c,'지구',g.ex,g.ey+g.re*0.0,F*0.9,'#fff','center',900,true);
+  // 관측자 위치 4곳 (낮 · 초저녁 · 자정 · 새벽)
+  [[12,'낮 12시',0],[18,'저녁 18시',90],[24,'자정 24시',180],[6,'새벽 6시',270]].forEach(o=>{const ang=o[2]*D2R,on=(ST.obsT%24)===(o[0]%24),px=g.ex+Math.cos(ang)*g.re,py=g.ey-Math.sin(ang)*g.re;
+    c.fillStyle=on?'#f43f5e':'#e2e8f0';c.strokeStyle=on?'#fff':'#0f172a';c.lineWidth=2;c.beginPath();c.arc(px,py,on?g.re*0.2:g.re*0.14,0,TAU);c.fill();c.stroke();
+    const lx=g.ex+Math.cos(ang)*(g.re+F*1.0),ly=g.ey-Math.sin(ang)*(g.re+F*1.0),al=o[2]===0?'left':o[2]===180?'right':'center';txt(c,o[1],lx+(o[2]===0?4:o[2]===180?-4:0),ly+(o[2]===90?-F*0.55:o[2]===270?F*0.55:0),F*0.85,on?'#fda4af':'rgba(226,232,240,.85)',al,900,true);});
+  // 자전 방향
+  c.strokeStyle='#4ade80';c.lineWidth=3;c.beginPath();for(let i=0;i<=20;i++){const t=(205+130*i/20)*D2R,r=g.re*1.62;const px=g.ex+Math.cos(t)*r,py=g.ey-Math.sin(t)*r;i?c.lineTo(px,py):c.moveTo(px,py);}c.stroke();{const t=335*D2R,r=g.re*1.62,px=g.ex+Math.cos(t)*r,py=g.ey-Math.sin(t)*r;arrowH(c,px+Math.sin(t)*6,py+Math.cos(t)*6,-(335+90)*D2R+Math.PI,F*0.75,'#4ade80');}
+  txt(c,'지구 자전 ↺',g.ex+g.re*2.3,g.ey+g.re*1.15,F*0.85,'#86efac','left',800,true);
+  // 시선 가이드선
+  const M=moonXY(g,a);
+  if(ST.guide){c.setLineDash([6,6]);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2.4;c.beginPath();c.moveTo(g.ex,g.ey);c.lineTo(M[0],M[1]);c.stroke();c.setLineDash([]);const ang=Math.atan2(M[1]-g.ey,M[0]-g.ex);arrowH(c,M[0]-Math.cos(ang)*g.rm*1.12,M[1]-Math.sin(ang)*g.rm*1.12,ang,F*0.8,'#fff');}
+  // 달 (공전 궤도 위, 항상 태양 쪽 반구가 밝음)
+  const pulse=0.5+0.5*Math.sin(performance.now()/380);c.strokeStyle='rgba(74,222,128,'+(0.4+0.45*pulse)+')';c.lineWidth=3;c.beginPath();c.arc(M[0],M[1],g.rm*(1.5+0.25*pulse),0,TAU);c.stroke();
+  const rm=g.rm;c.save();c.beginPath();c.arc(M[0],M[1],rm,0,TAU);c.clip();
+  if(ST.sty){c.drawImage(moonTex(true),M[0]-rm,M[1]-rm,rm*2,rm*2);c.fillStyle='#0b0b0d';c.fillRect(M[0]-rm,M[1]-rm,rm,rm*2);}
+  else{c.drawImage(moonTex(false),M[0]-rm,M[1]-rm,rm*2,rm*2);c.fillStyle='rgba(4,7,18,.9)';c.fillRect(M[0]-rm,M[1]-rm,rm,rm*2);c.fillStyle='rgba(255,226,120,.28)';c.fillRect(M[0],M[1]-rm,rm,rm*2);}
+  c.restore();c.strokeStyle='#e2e8f0';c.lineWidth=2;c.beginPath();c.arc(M[0],M[1],rm,0,TAU);c.stroke();c.strokeStyle='rgba(148,163,184,.9)';c.lineWidth=1.5;c.beginPath();c.moveTo(M[0],M[1]-rm);c.lineTo(M[0],M[1]+rm);c.stroke();
+  // 압정 : 지구(관측자)를 향하는 면
+  const tE=Math.atan2(g.ey-M[1],g.ex-M[0]);
+  if(ST.sty||ST.guide){const px=M[0]+Math.cos(tE)*rm,py=M[1]+Math.sin(tE)*rm;if(ST.sty){const qx=M[0]+Math.cos(tE)*(rm+rm*0.8),qy=M[1]+Math.sin(tE)*(rm+rm*0.8);c.strokeStyle='#e5e7eb';c.lineWidth=3;c.beginPath();c.moveTo(px,py);c.lineTo(qx,qy);c.stroke();c.fillStyle='#ef4444';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(qx,qy,rm*0.2,0,TAU);c.fill();c.stroke();}else{c.fillStyle='#ef4444';c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(px,py,rm*0.17,0,TAU);c.fill();c.stroke();}}
+  txt(c,'달',M[0]-rm*1.9,M[1]-rm*0.2,F*1.0,'#fff','center',900,true);
+  txt(c,'밝은 쪽 = 태양을 향한 반쪽',g.w-F*0.5,F*3.0,F*0.88,'#fde68a','right',800,true);
+  if(ST.sty)txt(c,'📌 압정 = 지구(관측자)를 향한 면',g.w-F*0.5,F*5.9,F*0.88,'#fca5a5','right',800,true);
+}
 
-  var ov = null, cur = null;
-  function build(){
-    if (ov) return;
-    ov = document.createElement("div"); ov.className = "kqr-ov"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true");
-    ov.innerHTML = '<div class="kqr"><div class="g" id="kqrG"></div><h2 id="kqrT"></h2><div class="s" id="kqrS"></div>' +
-      '<div class="opts" id="kqrO"></div><div id="kqrBody"></div>' +
-      '<div class="row"><button type="button" id="kqrCopy">주소 복사</button><button type="button" class="x" id="kqrX">닫기</button></div></div>';
-    document.body.appendChild(ov);
-    ov.addEventListener("click", function(e){ if (e.target === ov) close(); });
-    document.getElementById("kqrX").onclick = close;
-    document.getElementById("kqrCopy").onclick = function(){
-      var u = urlFor(cur.opts[cur.i].file, cur.opts[cur.i].q); if (!u) return;
-      var b = this; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function(){ b.textContent = "복사됨 ✔"; setTimeout(function(){ b.textContent = "주소 복사"; }, 1200); }).catch(function(){ prompt("주소를 복사하세요", u); });
-    };
-    document.addEventListener("keydown", function(e){ if (e.key === "Escape" && ov.classList.contains("on")) close(); });
-  }
-  function close(){ if (ov) ov.classList.remove("on"); }
-  function paint(){
-    var o = cur.opts[cur.i];
-    document.getElementById("kqrG").textContent = cur.game || "";
-    document.getElementById("kqrT").textContent = o.title || cur.title || "";
-    document.getElementById("kqrS").textContent = o.sub || cur.sub || "";
-    var ob = document.getElementById("kqrO"); ob.innerHTML = "";
-    if (cur.opts.length > 1) cur.opts.forEach(function(x, i){
-      var b = document.createElement("button"); b.type = "button"; b.textContent = x.label; if (i === cur.i) b.className = "on";
-      b.onclick = function(){ cur.i = i; paint(); }; ob.appendChild(b);
-    });
-    var body = document.getElementById("kqrBody"), u = urlFor(o.file, o.q);
-    if (!u) {
-      body.innerHTML = '<div class="warn">📡 학생 휴대폰은 교실 PC의 파일에 접속할 수 없어요.<br>온라인에 올린 <b>사이트 주소</b>를 한 번만 입력해 주세요. (예: https://아이디.github.io/science-class/)</div>' +
-        '<div class="base"><input id="kqrBase" type="url" placeholder="https://아이디.github.io/science-class/"><button type="button" id="kqrSave">저장</button></div>';
-      document.getElementById("kqrSave").onclick = function(){
-        var v = normBase(document.getElementById("kqrBase").value); if (!v) return;
-        try { localStorage.setItem(LS, v); } catch(e){} paint();
-      };
-      return;
-    }
-    body.innerHTML = '<div class="code">' + svg(u, 10) + '</div><div class="hint">📱 휴대폰·아이패드 카메라로 찍으세요</div><div class="u">' + esc(u) + '</div>';
-  }
-  /* opts: [{label, file, q, title, sub}] */
-  function show(o){
-    build(); cur = { game: o.game, title: o.title, sub: o.sub, opts: o.opts, i: o.index || 0 };
-    paint(); ov.classList.add("on");
-  }
+/* ============================================================
+   우측 : 지구 관측자 시점
+   ============================================================ */
+function skyColors(altRad){const a=altRad/D2R;const mix=(c1,c2,t)=>{const A=[1,3,5].map(i=>parseInt(c1.slice(i,i+2),16)),B=[1,3,5].map(i=>parseInt(c2.slice(i,i+2),16));return'rgb('+A.map((v,i)=>Math.round(lerp(v,B[i],t))).join(',')+')';};
+  if(a>10)return[mix('#1e5bd8','#1e5bd8',0),mix('#8fc4ff','#8fc4ff',0)];if(a>0){const t=(10-a)/10;return[mix('#1e5bd8','#3b3f8f',t),mix('#8fc4ff','#f3a35c',t)];}
+  if(a>-12){const t=clamp(-a/12,0,1);return[mix('#3b3f8f','#02040c',t),mix('#f3a35c','#14204a',t)];}return['#02040c','#0b1230'];}
+function drawZoom(){
+  const c=gK,[W,H]=SZ.K,a=ST.a,F=Math.round(clamp(W*0.026,14,32));c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#01030a');g.addColorStop(1,'#0a1128');c.fillStyle=g;c.fillRect(0,0,W,H);
+  STARS.forEach(s=>{c.fillStyle='rgba(255,255,255,'+s.b+')';c.beginPath();c.arc(s.x*W,s.y*H,s.r,0,TAU);c.fill();});
+  const R=Math.min(W*0.22,H*0.30),cx=W*0.68,cy=H*0.55;
+  drawMoon(c,cx,cy,R,a,{sty:ST.sty,pin:ST.sty});
+  // 보이는 쪽 방향 안내
+  const ph=phaseOf(a);
+  if(illum(a)>0.02&&illum(a)<0.97){const right=mod(a,360)<180;const x=cx+(right?R*1.18:-R*1.18);arrowH(c,x+(right?-R*0.04:R*0.04),cy,right?Math.PI:0,F*0.9,'#fde68a');c.strokeStyle='#fde68a';c.lineWidth=3;c.beginPath();c.moveTo(x+(right?R*0.30:-R*0.30),cy);c.lineTo(x+(right?-R*0.04:R*0.04),cy);c.stroke();txt(c,'밝은 쪽',x+(right?R*0.02:-R*0.02),cy-F*1.2,F*0.9,'#fde68a','center',900,true);}
+  if(illum(a)<=0.02)txt(c,'(달의 밝은 면이 지구 반대쪽이라 보이지 않아요)',cx,cy+R+F*1.4,F,'#94a3b8','center',800,true);
+  txt(c,'지구에서 달을 바라본 모습 (북반구, 남쪽 하늘)',cx,cy-R-F*1.6,F*0.95,'#cbd5e1','center',800,true);
+}
+function skyCam(W,H,alt0Deg,fill){const a0=alt0Deg*D2R,ta=Math.tan,s=Math.min(fill*H/(2*(ta((Math.PI/2-a0)/2)+ta(a0/2))),W*0.235),yh=H*0.86,cy=yh-2*s*ta(a0/2);
+  const f=[0,-Math.cos(a0),Math.sin(a0)],r=[-1,0,0],u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
+  return{P:(alt,az)=>{const v=[Math.sin(az)*Math.cos(alt),Math.cos(az)*Math.cos(alt),Math.sin(alt)],vz=v[0]*f[0]+v[1]*f[1]+v[2]*f[2],vx=v[0]*r[0]+v[1]*r[1]+v[2]*r[2],vy=v[0]*u[0]+v[1]*u[1]+v[2]*u[2];if(vz<-0.88)return null;const k=2*s/(1+vz);return{x:W/2+vx*k,y:cy-vy*k};},yh:yh,s:s};}
+function drawSky(){
+  const c=gK,[W,H]=SZ.K,a=ST.a,t=ST.obsT,F=Math.round(clamp(W*0.026,14,32));c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  const sunP=altaz(sunHA(t)),moonP=altaz(moonHA(t,a)),sc=skyColors(sunP.alt),g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,sc[0]);g.addColorStop(1,sc[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+  const cam=skyCam(W,H,34,0.86),starA=clamp((-sunP.alt/D2R-2)/10,0,1);
+  if(starA>0.02)STARS.forEach(s=>{c.fillStyle='rgba(255,255,255,'+s.b*starA+')';c.beginPath();c.arc(s.x*W,s.y*H*0.8,s.r,0,TAU);c.fill();});
+  // 고도 눈금
+  c.setLineDash([5,9]);c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=1.3;[30,60].forEach(al=>{c.beginPath();let f=true;for(let az=90;az<=270;az+=3){const q=cam.P(al*D2R,az*D2R);if(!q){f=true;continue;}f?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);f=false;}c.stroke();});c.setLineDash([]);
+  // 태양
+  const sq=cam.P(sunP.alt,sunP.az);
+  if(sq&&sunP.alt>-4*D2R){const r=clamp(H*0.05,16,36),sg=c.createRadialGradient(sq.x,sq.y,r*.2,sq.x,sq.y,r*3.2);sg.addColorStop(0,'rgba(255,245,170,1)');sg.addColorStop(.4,'rgba(255,200,70,.5)');sg.addColorStop(1,'rgba(255,160,0,0)');c.fillStyle=sg;c.beginPath();c.arc(sq.x,sq.y,r*3.2,0,TAU);c.fill();c.fillStyle='#fff3b0';c.strokeStyle='#f59e0b';c.lineWidth=3;c.beginPath();c.arc(sq.x,sq.y,r,0,TAU);c.fill();c.stroke();txt(c,'태양',sq.x,sq.y+r+F*1.0,F*0.95,'#fff','center',900,true);}
+  // 달 (크기는 보기 좋게 확대)
+  const mq=cam.P(moonP.alt,moonP.az),mr=clamp(H*0.085,24,70);
+  if(mq&&moonP.alt>-1*D2R){drawMoon(c,mq.x,mq.y,mr,a,{sty:ST.sty,pin:ST.sty});txt(c,'달',mq.x,mq.y-mr-F*1.0,F*1.05,'#fde68a','center',900,true);txt(c,'고도 '+Math.round(moonP.alt/D2R)+'°',mq.x,mq.y+mr+F*1.0,F*0.85,'#e2e8f0','center',800,true);}
+  // 땅
+  c.beginPath();let first=true,fx=0,lx=0;for(let d=-100;d<=100;d+=2){const q=cam.P(0,Math.PI+d*D2R);if(!q)continue;if(first){c.moveTo(q.x,q.y);fx=q.x;first=false;}else c.lineTo(q.x,q.y);lx=q.x;}c.lineTo(lx,H+4);c.lineTo(fx,H+4);c.closePath();
+  const gd=c.createLinearGradient(0,cam.yh-20,0,H);gd.addColorStop(0,sunP.alt>0?'#3a5a40':'#0c1b12');gd.addColorStop(1,sunP.alt>0?'#1f3324':'#030806');c.fillStyle=gd;c.fill();
+  c.strokeStyle='rgba(190,230,200,.85)';c.lineWidth=2.5;c.beginPath();first=true;for(let d=-100;d<=100;d+=2){const q=cam.P(0,Math.PI+d*D2R);if(!q)continue;first?c.moveTo(q.x,q.y):c.lineTo(q.x,q.y);first=false;}c.stroke();
+  [['동',90],['남동',135],['남',180],['남서',225],['서',270]].forEach(o=>{const q=cam.P(-3*D2R,o[1]*D2R);if(!q||q.x<12||q.x>W-12)return;const main=o[0].length===1;txt(c,o[0],q.x,Math.min(q.y+F*0.9,H-F*3.3),F*(main?1.3:0.85),o[0]==='남'?'#fde047':'rgba(236,253,245,.9)','center',900,true);});
+  if(moonP.alt<=-1*D2R)txt(c,'달이 지평선 아래에 있어서 이 시각에는 볼 수 없어요',W/2,H*0.42,F*1.15,'#fecaca','center',900,true);
+  txt(c,'남쪽 하늘 · 오른쪽이 서쪽  (관측 시각 '+(t%24===0&&t>0?'24':t)+'시)',W-F*0.4,F*1.5,F*0.85,'rgba(255,255,255,.88)','right',800,true);
+}
+function drawRight(){if(ST.view==='sky')drawSky();else drawZoom();}
 
-  /* 게임 화면: 머리글에 📱 QR 버튼 */
-  function gameButton(){
-    if (window.DH_CONFIG || document.querySelector(".kjs-qr-btn")) return;
-    var nav = document.querySelector(".unified-nav-actions") || (document.querySelector(".btn-unified-nav") || {}).parentElement;
-    if (!nav) return;
-    var b = document.createElement("button"); b.type = "button"; b.className = "btn-top btn-unified-nav kjs-qr-btn"; b.title = "학생들이 찍을 QR 크게 보기";
-    b.textContent = "📱 QR";
-    b.onclick = function(){
-      var file = thisFile();
-      var gname = (document.title || "").split(/\s*[·|—]\s*/)[0];
-      var c = (window.KJSMenu && window.KJSMenu._current) || window.__kjsCurrent || null;
-      var opts = [];
-      if (c && c.q) opts.push({ label: "📘 지금 차시", file: file, q: c.q, title: c.title, sub: [c.grade, c.unit].filter(Boolean).join(" · ") });
-      opts.push({ label: "🏠 게임 첫 화면", file: file, q: "", title: gname, sub: c && c.q ? "학생이 직접 차시를 고릅니다" : "" });
-      show({ game: gname, opts: opts });
-    };
-    var home = nav.querySelector("#kjsHome");
-    if (home && home.nextSibling) nav.insertBefore(b, home.nextSibling); else nav.appendChild(b);
-  }
-
-  /* 서랍: 카드마다 📱 QR */
-  function decorate(grid){
-    if (!grid) return;
-    [].forEach.call(grid.children, function(card){
-      if (card.querySelector(".kqr-card")) return;
-      var links = [].filter.call(card.querySelectorAll('a[href$=".html"]'), function(a){ return !/서랍/.test(a.getAttribute("href")); });
-      if (!links.length) return;
-      var title = ((card.querySelector("h3,h2,.card-title,.title,.lesson-title,.game-title,.sim-title") || {}).textContent || links[0].textContent).trim();
-      var opts = links.map(function(a){
-        var f = decodeURIComponent(a.getAttribute("href").replace(/^\.\//, ""));
-        return { label: a.textContent.trim().replace(/\s+/g, " ").slice(0, 18), file: f, q: "", title: title, sub: a.textContent.trim().replace(/\s+/g, " ") };
-      });
-      if (getComputedStyle(card).position === "static") card.style.position = "relative";
-      var b = document.createElement("button"); b.type = "button"; b.className = "kqr-card"; b.textContent = "📱 QR";
-      b.title = "학생들이 찍을 QR 크게 보기"; b.setAttribute("aria-label", title + " QR 코드");
-      b.onclick = function(e){ e.stopPropagation(); e.preventDefault(); show({ game: (window.DH_CONFIG && { lesson:"📚 과학수업", lab:"🔬 가상실험", game:"🎮 수업게임" }[DH_CONFIG.hub]) || "", title: title, opts: opts }); };
-      card.appendChild(b);
-    });
-  }
-
-  window.KJSQR = { show: show, urlFor: urlFor, hcode: hcode, decorate: decorate };
-  function init(){ gameButton(); if (window.DH_CONFIG) decorate(document.querySelector(DH_CONFIG.grid)); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+/* ============================================================
+   정보 · 조작
+   ============================================================ */
+const hourTxt=h=>{h=mod(Math.round(h*10)/10,24);const whole=Math.round(h)===h;return(h===0?'24':whole?String(h):h.toFixed(1))+'시';};
+function visibleNow(){const H=mod(moonHA(ST.obsT,ST.a)+180,360)-180,p=altaz(H);return{alt:p.alt/D2R,az:p.az/D2R,up:p.alt>0};}
+function updateInfo(){
+  const a=mod(ST.a,360),ph=phaseOf(a),idx=posIdx(a),off=mod(a-idx*45+180,360)-180,k=Math.round(illum(a)*100),age=(a/360*SYN);
+  const where=Math.abs(off)<4?(idx+1)+'번 위치':(off<0?(idx+1)+'번 위치 바로 전':(idx+1)+'번 위치 지나는 중');
+  const v=visibleNow(),tT=transitH(a),tn=ST.obsT%24===0?'24':ST.obsT;
+  const vis=k<=1?'<i>달이 보이지 않아요 (삭)</i>':v.up?'<em>남쪽 하늘에서 보여요 (고도 '+Math.round(v.alt)+'°)</em>':'<i>지평선 아래 · 볼 수 없어요</i>';
+  $('#phaseInfo').innerHTML='<div class="nm">'+ph.nm+'<small>('+where+')</small></div><div class="tag">'+ph.tag+'</div>'+
+    (ST.view==='sky'?'':'<div class="ln">빛나는 부분 <b>'+k+'%</b> · 달의 나이 <b>'+age.toFixed(1)+'일</b></div><div class="ln">남중 시각 <b>'+hourTxt(tT)+'</b> · '+tn+'시에는 '+vis+'</div>');
+  $('#age').innerHTML='달의 나이 '+age.toFixed(1)+'일<small>삭에서 '+Math.round(a)+'° 공전 · '+where+'</small>';
+  $$('#pre button').forEach((b,i)=>b.classList.toggle('on',idx===i&&Math.abs(off)<6));
+  $('#capK').textContent=ST.view==='sky'?'🌌 지표면 관측자 : 남쪽 하늘의 태양과 달':'🔭 지구에서 본 달의 모습';
+  $('#phaseInfo').style.maxWidth=ST.view==='sky'?'min(46%,520px)':'';
+}
+function render(){drawSpace();drawRight();updateInfo();}
+/* ---------- 위치 이동 ---------- */
+function setA(a,keep){if(!keep){ST.play=false;ST.tween=null;$('#bPlay').textContent='▶ 공전 재생';}ST.a=mod(a,360);hideHint();}
+function hideHint(){$('#hint').style.opacity='0';}
+function goPreset(i){ST.play=false;$('#bPlay').textContent='▶ 공전 재생';const d=mod(PRE[i][2]-ST.a+180,360)-180;ST.tween={from:ST.a,d:d,t0:performance.now(),dur:700};hideHint();}
+$('#pre').innerHTML=PRE.map((p,i)=>'<button data-i="'+i+'"><b>'+(i+1)+'</b> '+p[0]+'<small>'+['태양과 같은 방향','오른쪽 눈썹','오른쪽 반원','볼록(오른쪽)','앞면 전체','볼록(왼쪽)','왼쪽 반원','왼쪽 눈썹'][i]+'</small></button>').join('');
+$$('#pre button').forEach(b=>b.onclick=()=>goPreset(+b.dataset.i));
+function tickTween(now){if(!ST.tween)return;const t=clamp((now-ST.tween.t0)/ST.tween.dur,0,1),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;ST.a=mod(ST.tween.from+ST.tween.d*e,360);if(t>=1){ST.a=mod(ST.tween.from+ST.tween.d,360);ST.tween=null;}}
+function tick(dt){if(ST.play)ST.a=mod(ST.a+dt*15*ST.spd,360);}
+let last=0;function loop(now){const dt=Math.min(0.05,(now-(last||now))/1000);last=now;try{tickTween(now);tick(dt);render();}catch(e){console.error(e);}requestAnimationFrame(loop);}
+/* ---------- 달 끌기 ---------- */
+function pos(e){const r=cvS.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];}
+function dragTo(x,y){const g=spaceGeom();setA(Math.atan2(-(y-g.ey),x-g.ex)/D2R);}
+cvS.addEventListener('pointerdown',e=>{const [x,y]=pos(e),g=spaceGeom(),d=Math.hypot(x-g.ex,y-g.ey);if(d>g.re*1.6&&d<g.ro*1.45){ST.drag=true;try{cvS.setPointerCapture(e.pointerId);}catch(_){}dragTo(x,y);e.preventDefault();}});
+cvS.addEventListener('pointermove',e=>{if(!ST.drag)return;const [x,y]=pos(e);dragTo(x,y);});
+const endDrag=e=>{ST.drag=false;try{cvS.releasePointerCapture(e.pointerId);}catch(_){}};cvS.addEventListener('pointerup',endDrag);cvS.addEventListener('pointercancel',endDrag);
+/* ---------- 버튼 ---------- */
+$('#bPlay').onclick=()=>{ST.play=!ST.play;ST.tween=null;$('#bPlay').textContent=ST.play?'⏸ 일시정지':'▶ 공전 재생';hideHint();};
+$('#spd').addEventListener('input',e=>{ST.spd=+e.target.value;$('#spdV').textContent='×'+ST.spd;});
+const tg=(id,key,fn)=>$(id).onclick=()=>{ST[key]=!ST[key];$(id).classList.toggle('on',ST[key]);if(fn)fn();};
+tg('#tSun','sun');tg('#tGuide','guide');tg('#tNum','num');
+$('#tSty').onclick=()=>{ST.sty=!ST.sty;$('#tSty').classList.toggle('on',ST.sty);toast(ST.sty?'🧪 스타이로폼 공 모형 : 노란 공(밝은 면) + 검은 면 + 압정(관측자 방향)':'실제 달 모드로 돌아왔어요');renderJournal();};
+$$('#viewTop [data-v]').forEach(b=>b.onclick=()=>{ST.view=b.dataset.v;$$('#viewTop [data-v]').forEach(x=>x.classList.toggle('on',x===b));});
+$$('#obsBar [data-t]').forEach(b=>b.onclick=()=>{ST.obsT=+b.dataset.t;$$('#obsBar [data-t]').forEach(x=>x.classList.toggle('on',x===b));});
+/* ---------- 관측 일지 ---------- */
+function renderJournal(){
+  const jg=$('#jg');if(!jg.children.length){jg.innerHTML=PRE.map((p,i)=>'<div class="js" data-i="'+i+'"><canvas width="160" height="160"></canvas><div class="n">'+(i+1)+'</div><small></small></div>').join('');}
+  let n=0;$$('#jg .js').forEach((el,i)=>{const cv=el.querySelector('canvas'),c=cv.getContext('2d'),e=ST.jr[i];c.clearRect(0,0,160,160);c.fillStyle='#04070f';c.fillRect(0,0,160,160);
+    if(e){n++;el.classList.add('ok');drawMoon(c,80,80,62,e.a,{sty:e.sty,pin:e.sty,noGlow:true});el.querySelector('small').textContent=phaseOf(e.a).nm;}
+    else{el.classList.remove('ok');c.fillStyle='#475569';c.font='700 56px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('?',80,84);el.querySelector('small').textContent=PRE[i][1];}});
+  $('#jcnt').textContent=n+'/8';$('#jcnt2').textContent=n+'/8';return n;}
+function openJ(on){$('#journal').classList.toggle('on',on);}
+function shot(){
+  const idx=posIdx(ST.a),ph=phaseOf(ST.a);ST.jr[idx]={a:mod(ST.a,360),sty:ST.sty};const n=renderJournal();
+  const f=$('#flash');f.style.transition='none';f.style.opacity='0.9';requestAnimationFrame(()=>{f.style.transition='opacity .35s';f.style.opacity='0';});
+  openJ(true);const el=$$('#jg .js')[idx];el.classList.remove('fl');void el.offsetWidth;el.classList.add('fl');
+  toast('📸 '+(idx+1)+'번 칸에 기록! ('+ph.nm+') · 일지 '+n+'/8'+(n===8?' — 🎉 모든 위상을 모았어요!':''));}
+$('#bShot').onclick=shot;$('#bJ').onclick=()=>openJ(!$('#journal').classList.contains('on'));$('#jX').onclick=()=>openJ(false);
+$('#jClr').onclick=()=>{ST.jr={};renderJournal();toast('관측 일지를 비웠어요.');};
+/* ---------- 설정 · 전체화면 · QR ---------- */
+function openDr(){$('#dr').classList.add('on');$('#dim').classList.add('on');}function closeDr(){$('#dr').classList.remove('on');$('#dim').classList.remove('on');}
+$('#bSet').onclick=openDr;$('#drX').onclick=closeDr;$('#dim').onclick=closeDr;
+$('#bAll').onclick=()=>{ST.a=90;ST.play=false;ST.tween=null;ST.spd=1;ST.sun=ST.guide=ST.num=true;ST.sty=false;ST.view='zoom';ST.obsT=18;ST.jr={};$('#spd').value=1;$('#spdV').textContent='×1';['#tSun','#tGuide','#tNum'].forEach(s=>$(s).classList.add('on'));$('#tSty').classList.remove('on');$$('#viewTop [data-v]').forEach(x=>x.classList.toggle('on',x.dataset.v==='zoom'));$$('#obsBar [data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==='18'));$('#bPlay').textContent='▶ 공전 재생';renderJournal();openJ(false);closeDr();toast('처음 상태로 돌아왔어요.');};
+const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+$('#bFs').onclick=()=>{try{if(!isFs())(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){toast('이 브라우저는 전체화면을 지원하지 않아요. (F11 키)');}};
+function syncFs(){$('#bFs').classList.toggle('on',isFs());$('#bFs').textContent=isFs()?'⛶ 전체화면 끄기':'⛶ 전체화면';setTimeout(sizeAll,120);}
+document.addEventListener('fullscreenchange',syncFs);document.addEventListener('webkitfullscreenchange',syncFs);
+const QK='labQrBase';const lsGet=k=>{try{return localStorage.getItem(k)||'';}catch(e){return '';}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};const normUrl=u=>{try{const x=new URL(u.trim());return/^https?:$/.test(x.protocol)?x.href:'';}catch(e){return '';}};
+function drawQR(){const raw=$('#qrUrl').value.trim(),c=$('#qrCv'),q=c.getContext('2d'),url=raw?normUrl(raw):'';$('#qrMsg').textContent='';
+  if(!url){c.width=c.height=400;q.fillStyle='#fff';q.fillRect(0,0,400,400);q.fillStyle='#64748b';q.font='700 24px sans-serif';q.textAlign='center';q.fillText('주소를 입력하세요',200,205);$('#qrCap').textContent='';if(raw)$('#qrMsg').textContent='http:// 또는 https:// 로 시작하는 주소를 입력하세요.';return;}
+  try{qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];const m=qrcode(0,'M');m.addData(url,'Byte');m.make();const n=m.getModuleCount(),b=4,cell=Math.max(4,Math.floor(640/(n+b*2))),sz=cell*(n+b*2);c.width=c.height=sz;q.fillStyle='#fff';q.fillRect(0,0,sz,sz);q.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(m.isDark(r,k))q.fillRect((k+b)*cell,(r+b)*cell,cell,cell);let cap=url;try{cap=decodeURI(url);}catch(e){}$('#qrCap').textContent=cap;lsSet(QK,url);}catch(e){$('#qrMsg').textContent='주소가 너무 길어 QR을 만들 수 없습니다.';}}
+$('#bQR').onclick=()=>{closeDr();const here=/^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(QK);$('#qrUrl').value=here;$('#ovQ').classList.add('on');drawQR();if(!here)$('#qrMsg').textContent='GitHub Pages 주소를 붙여 넣으면 QR이 만들어집니다.';};
+$('#qrUrl').addEventListener('input',drawQR);$('#qX').onclick=()=>$('#ovQ').classList.remove('on');$('#ovQ').addEventListener('click',e=>{if(e.target.id==='ovQ')$('#ovQ').classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='Escape'){closeDr();$('#ovQ').classList.remove('on');openJ(false);}else if(e.key===' '){e.preventDefault();$('#bPlay').click();}else if(/^[1-8]$/.test(e.key))goPreset(+e.key-1);else if(e.key==='p'||e.key==='P')shot();});
+window.addEventListener('resize',sizeAll);if(window.ResizeObserver){['#spaceBox','#skyBox'].forEach(s=>new ResizeObserver(sizeAll).observe($(s)));}
+sizeAll();renderJournal();updateInfo();requestAnimationFrame(loop);
+window.__mp={ST,PRE,phaseOf,illum,posIdx,altaz,moonHA,sunHA,transitH,visibleNow,drawMoon,litPath,setA,goPreset,tickTween,tick,render,sizeAll,spaceGeom,moonXY,shot,renderJournal,dragTo,updateInfo,moonTex};
 })();
+
+</script>
+<script id="qrbigScript">
+/* 전자칠판용 QR 크게 보기 (오프라인 · 외부 의존 없음) */
+(function(){
+  var NAVY='#0a0e17';
+  function openBig(cv){
+    if(document.getElementById('qbOv'))return;
+    var t=(document.getElementById('qrTitle')||{}).textContent||document.title||'학생 접속 QR코드';
+    var cap=((document.getElementById('qrCap')||{}).textContent)||((document.getElementById('qrUrl')||{}).value)||'';
+    var ov=document.createElement('div');ov.id='qbOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:'+NAVY+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:2vh 3vw;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none';
+    var h=document.createElement('div');h.textContent='📱 휴대폰 카메라로 QR을 찍어 보세요';h.style.cssText='font-size:clamp(24px,3.4vh,44px);font-weight:900;text-align:center';
+    var s=document.createElement('div');s.textContent=t;s.style.cssText='font-size:clamp(20px,2.6vh,34px);font-weight:800;color:#7dd3fc;text-align:center;max-width:90vw';
+    var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;padding:clamp(18px,3vh,36px);box-shadow:0 0 0 6px #1e3a8a,0 20px 60px rgba(0,0,0,.6)';
+    var im=new Image();im.src=cv.toDataURL('image/png');im.alt='QR 코드';im.style.cssText='display:block;width:min(64vh,76vw);height:min(64vh,76vw);image-rendering:pixelated';box.appendChild(im);
+    var c=document.createElement('div');c.textContent=cap;c.style.cssText='font-size:clamp(18px,2.2vh,26px);color:#9fb2d0;font-weight:700;text-align:center;max-width:92vw;word-break:break-all';
+    var k=document.createElement('div');k.textContent='화면을 누르거나 Esc 키를 누르면 닫혀요';k.style.cssText='font-size:clamp(18px,2.2vh,24px);color:#fde68a;font-weight:800';
+    [h,s,box,c,k].forEach(function(e){if(e!==c||cap)ov.appendChild(e);});
+    document.body.appendChild(ov);
+    var usedFs=false;
+    try{var r=ov.requestFullscreen||ov.webkitRequestFullscreen;if(r&&!document.fullscreenElement&&!document.webkitFullscreenElement){var p=r.call(ov);usedFs=true;if(p&&p.catch)p.catch(function(){});}}catch(e){}
+    function close(){document.removeEventListener('keydown',key,true);if(ov.parentNode)ov.parentNode.removeChild(ov);
+      try{if(usedFs&&(document.fullscreenElement||document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}}
+    function key(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    ov.addEventListener('click',close);document.addEventListener('keydown',key,true);
+    document.addEventListener('fullscreenchange',function f(){if(!document.fullscreenElement&&usedFs){document.removeEventListener('fullscreenchange',f);if(document.getElementById('qbOv'))close();}});
+  }
+  function attach(cv){
+    if(cv.__qb)return;cv.__qb=1;
+    var b=document.createElement('button');b.type='button';b.id=(cv.id||'qr')+'Big';b.textContent='⛶ 크게 보기 (전자칠판)';
+    b.style.cssText='display:block;margin:10px auto 0;min-height:52px;padding:0 20px;border-radius:14px;border:2px solid #38bdf8;background:'+NAVY+';color:#fff;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation';
+    b.onclick=function(e){e.stopPropagation();openBig(cv);};
+    cv.insertAdjacentElement('afterend',b);cv.style.cursor='zoom-in';cv.title='눌러서 크게 보기';
+    cv.addEventListener('click',function(e){e.stopPropagation();openBig(cv);});
+  }
+  function scan(){var all=document.querySelectorAll('canvas');for(var i=0;i<all.length;i++){if(/qr/i.test(all[i].id))attach(all[i]);}}
+  scan();document.addEventListener('DOMContentLoaded',scan);
+  try{new MutationObserver(function(){scan();}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  window.__qrBig=openBig;
+})();
+</script>
+</body>
+</html>
