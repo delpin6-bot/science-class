@@ -519,8 +519,6 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 18px;
 }
 .modal-header h2 { margin: 0; font-size: 20px; font-weight: 900; color: #0f172a; }
-.btn-game-qr{min-height:44px;margin-top:8px;width:100%;border-radius:12px;border:2px solid #38bdf8;background:#f0f9ff;color:#0369a1;font-weight:800;font-size:15px;cursor:pointer}
-.btn-game-qr:active{transform:scale(.98)}
 .qr-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; }
 #qrCanvas { background:#fff; border:1.5px solid var(--line-strong); border-radius:14px; padding:14px; width:min(78vw,52vh,440px); height:auto; image-rendering:pixelated; }
 .qr-cap { font-size:16px; font-weight:800; color:var(--ink); text-align:center; }
@@ -591,7 +589,7 @@ a { text-decoration: none; color: inherit; }
       <!-- 몰입 모드 버튼 -->
       <button class="btn-header-action" id="btnImm" title="게임 화면을 전체화면으로 크게 열기"><span>🖥 몰입 모드 : 켬</span></button>
       <!-- QR 접속 버튼 -->
-      <button class="btn-header-action" onclick="qrGame=null;openQrModal()" title="학생 접속 QR코드 보기">
+      <button class="btn-header-action" onclick="openQrModal()" title="학생 접속 QR코드 보기">
         <span>📱 학생 접속 QR</span>
       </button>
       <!-- 3. 인지과학가이드 버튼 -->
@@ -3540,7 +3538,6 @@ function render() {
         <a href="${gameHref(g)}" class="btn-play-game" title="${g.nm} 시작하기">
           <span>🚀 게임 시작하기</span>
         </a>
-        <button type="button" class="btn-game-qr" onclick="openGameQr('${g.id}')" title="${g.nm} 학생 접속 QR코드">📱 QR</button>
       </div>
     `;
 
@@ -3582,17 +3579,12 @@ function drawQr(text){
     return true;
   } catch(e){ qrMsg("주소가 너무 길어 QR을 만들 수 없어요."); return false; }
 }
-let qrGame=null;
-function qrDerive(u){ if(!qrGame||!u) return u; try{ return new URL("./"+encodeURI(qrGame.file), u).href; }catch(e){ return u; } }
-function openGameQr(id){ const g=GAMES_DATA.find(x=>x.id===id); if(!g) return; qrGame=g; openQrModal(); }
 function openQrModal(){
   const inp=document.getElementById("qrUrl"), url=qrDefaultUrl();
   inp.value=url;
-  const h=document.querySelector("#qrModal h2"); if(h) h.textContent=qrGame?("📱 학생 접속 QR · "+qrGame.nm):"📱 학생 접속 QR코드";
-  const cp=document.querySelector("#qrModal .qr-cap"); if(cp) cp.innerHTML=qrGame?("휴대폰·태블릿 카메라로 찍으면 <span style=\"color:#d97706;\">"+qrGame.nm+"</span> 게임이 바로 열려요"):"휴대폰·태블릿 카메라로 찍으면 <span style=\"color:#d97706;\">수업 게임 서랍</span>이 열려요";
   document.getElementById("qrNote").style.display = isLocalUrl(String(location.href)) ? "block" : "none";
   document.getElementById("qrModal").classList.add("show");
-  drawQr(qrDerive(url));
+  drawQr(url);
 }
 function closeQrModal(e){
   if (e && e.target !== document.getElementById("qrModal") && !e.target.classList.contains("btn-close")) return;
@@ -3601,7 +3593,7 @@ function closeQrModal(e){
 function makeQr(){
   const inp=document.getElementById("qrUrl"); let u=inp.value.trim();
   if (u && !/^https?:\/\//i.test(u)){ u="https://"+u; inp.value=u; }
-  if (drawQr(qrDerive(u))){ try{ localStorage.setItem(LS_QR,u); }catch(e){} if(isLocalUrl(u)) qrMsg("이 주소는 같은 컴퓨터에서만 열려요. 인터넷 주소를 넣어 주세요."); }
+  if (drawQr(u)){ try{ localStorage.setItem(LS_QR,u); }catch(e){} if(isLocalUrl(u)) qrMsg("이 주소는 같은 컴퓨터에서만 열려요. 인터넷 주소를 넣어 주세요."); }
 }
 function copyQrUrl(){
   const inp=document.getElementById("qrUrl"), v=inp.value.trim(); if(!v) return;
