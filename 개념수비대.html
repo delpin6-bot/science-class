@@ -345,6 +345,7 @@ header.unified-game-header .game-title {
     ".km-row[hidden]{display:none!important}",
     ".km-lab{flex:none;width:58px;padding-top:7px;font-size:12.5px;font-weight:800;color:#6b7672}",
     ".km-chips{display:flex;gap:6px;flex-wrap:wrap}",
+    ".km-row>.km-scroll,.km-row>.km-chips{min-width:0;flex:1 1 auto}",
     ".km-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}",
     ".km-chip{flex:none;border:1px solid #dfe3de;background:#fff;color:#1b2b2a;border-radius:9px;padding:7px 13px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}",
     ".km-chip.g[aria-pressed=true]{background:#1b2b2a;color:#fff;border-color:#1b2b2a}",
@@ -372,6 +373,9 @@ header.unified-game-header .game-title {
     ".km-card.unit .k{color:#0b7a5a}",
     ".km-card.mid{background:linear-gradient(135deg,#f3f0fb,#fff);border-color:#7048E8;grid-column:1/-1}",
     ".km-card.mid .k{color:#5f3dc4}",
+    ".km-card{position:relative}",
+    ".km-qrb{position:absolute;top:8px;right:10px;min-height:34px;display:inline-flex;align-items:center;padding:0 10px;border-radius:10px;border:1.5px solid #38bdf8;background:#f0f9ff;color:#0369a1;font-size:13px;font-weight:800;cursor:pointer}",
+    ".km-qrb:active{transform:scale(.96)}",
     ".km-hit{background:#fff3bf;border-radius:3px}",
     ".km-empty{color:#6b7672;padding:16px 4px}",
     ".km-note{font-size:13px;color:#6b7672;margin:8px 2px}",
@@ -388,6 +392,14 @@ header.unified-game-header .game-title {
     return esc(t.slice(0, i)) + '<span class="km-hit">' + esc(t.slice(i, i + q.length)) + "</span>" + esc(t.slice(i + q.length));
   }
 
+  /* 차시 고유 코드: 학년|단원|제목 → 짧은 영문 코드 (QR 주소용, 파일이 바뀌어도 제목이 같으면 그대로) */
+  function hcode(str){
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36);
+  }
+  function itemKey(x){ return [x.grade || "", x.unit || "", x.mid || "", x.title || ""].join("|"); }
+
   function init(o){
     if (!document.getElementById("km-style")) { var st = el("style"); st.id = "km-style"; st.textContent = CSS; document.head.appendChild(st); }
     var items = o.items || [];
@@ -398,6 +410,8 @@ header.unified-game-header .game-title {
       x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|"));
       x.th = nrm([x.unit, x.mid, x.title].join("|"));
     });
+    items.forEach(function(x){ x.q = hcode(itemKey(x)); });
+    window.KJSMenu._items = items.map(function(x){ return { q: x.q, grade: x.grade, unit: x.unit || "", mid: x.mid || "", title: x.title, kind: x.kind || "lesson" }; });
     var LS = "km-" + (o.key || location.pathname);
     var st = { g: grades[0], u: 0, q: "", sel: null };
     try { var sv = JSON.parse(localStorage.getItem(LS) || "{}"); if (grades.indexOf(sv.g) >= 0) st.g = sv.g; if (sv.u >= 0) st.u = sv.u; } catch(e) {}
@@ -425,6 +439,7 @@ header.unified-game-header .game-title {
     function setLegacy(show){ var t = (!show && o.legacyCss) ? o.legacyCss + "{display:none!important}" : ""; if (legacyStyle.textContent !== t) legacyStyle.textContent = t; }
 
     function pick(x){
+      window.KJSMenu._current = { q: x.q, grade: x.grade, unit: x.unit || "", title: x.title };
       if (o.mode === "select") {
         st.sel = x; if (o.onPick) o.onPick(x);
         selBox.hidden = false; selBox.querySelector("b").textContent = x.grade + " · " + (x.unit ? x.unit + " · " : "") + x.title;
@@ -447,6 +462,9 @@ header.unified-game-header .game-title {
         var u = []; hits.forEach(function(h){ if (u.indexOf(h) < 0) u.push(h); });
         if (u.length) c.appendChild(el("span", "h", "찾은 낱말: " + u.slice(0, 5).map(function(w){ return mark(String(w).slice(0, 40), q); }).join(", ") + (u.length > 5 ? " …" : "")));
       }
+      var qb = el("span", "km-qrb", "📱 QR"); qb.title = "이 차시 학생용 QR코드"; qb.setAttribute("role", "button");
+      qb.onclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); if (window.kjsLessonQr) window.kjsLessonQr(x); };
+      c.appendChild(qb);
       c.onclick = function(){ pick(x); };
       return c;
     }
@@ -560,10 +578,31 @@ header.unified-game-header .game-title {
       }).observe(o.observe, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
     }
     render(); sync();
+    /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
+    try {
+      var qp = new URLSearchParams(location.search).get("q");
+      var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      if (target) {
+        st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
+        render(); sync();
+        setTimeout(function(){
+          pick(target);
+          var qrMode = new URLSearchParams(location.search).get("qr") === "1";
+          if (o.mode === "select" && qrMode && o.onStart) { setTimeout(function(){ o.onStart(target); }, 250); return; }
+          if (o.mode === "select") {
+            selBox.hidden = false;
+            selBox.style.boxShadow = "0 0 0 3px #f59e0b";
+            var note = selBox.querySelector(".km-qr-note");
+            if (!note) { note = el("span", "km-qr-note", "📱 선생님이 고른 차시예요. 아래 설정을 확인하고 시작하세요."); note.style.cssText = "flex-basis:100%;font-size:12.5px;color:#92400e"; selBox.appendChild(note); }
+            root.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 350);
+      }
+    } catch(e) {}
     return { refresh: function(newItems){ if (newItems) { items = newItems; items.forEach(function(x){ x.hay = nrm([x.grade, x.unit, x.mid, x.title, x.sub].concat(x.words || []).join("|")); x.th = nrm([x.unit, x.mid, x.title].join("|")); }); } render(); sync(); },
              root: root, select: function(x){ st.sel = x; paintSel(); } };
   }
-  window.KJSMenu = { init: init };
+  window.KJSMenu = { init: init, hcode: hcode };
 })();
 
 </script>
@@ -921,7 +960,7 @@ document.getElementById('kjsHome').addEventListener('click', function(){
 (function(){
 'use strict';
 if(window.__kjsKit)return;window.__kjsKit=1;
-var CFG={"name": "개념 수비대", "play": "!D.getElementById('stage').classList.contains('hidden')", "hide": [".title-block p", ".title-block .badge", ".header-actions", ".kjs-seg", "#kjsImmBtn"], "qrHost": [".header-actions"]};
+var CFG={"lessonQr": true, "name": "개념 수비대", "play": "!D.getElementById('stage').classList.contains('hidden')", "hide": [".title-block p", ".title-block .badge", ".header-actions", ".kjs-seg", "#kjsImmBtn"], "qrHost": [".header-actions"]};
 var D=document,H=D.documentElement,MIN=CFG.min||.6;
 var FILE='';try{FILE=decodeURIComponent((location.pathname.split('/').pop()||'').replace(/\+/g,' '));}catch(e){FILE=location.pathname.split('/').pop()||'';}
 var DEF_HIDE=['a[href*="서랍"]','.kjs-seg','.dh-seg','.dh-menu','#dhTools','#dhToolsBtn','#kjsImmBtn','.btn-hub-main','.btn-hub-sim','.btn-hub-game','.btn-hub-mod'];
@@ -994,6 +1033,11 @@ function normUrl(u){try{var x=new URL(String(u).trim());return /^https?:$/.test(
 function targetUrl(){
   if(/^https?:$/.test(location.protocol)){var u=location.href.split('#')[0].split('?')[0];return u;}
   var b=lsGet(LSK);if(!b)return '';try{return new URL('./'+encodeURI(FILE),b).href;}catch(e){return '';}}
+var qrLesson=null;
+function fnv(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h.toString(36);}
+function baseUrl(){return /^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(LSK);}
+function lessonUrl(x){var b=baseUrl();if(!b||!x||!x.q)return '';try{return new URL('./go.html?f='+fnv(FILE)+'&q='+x.q+'&qr=1',b).href;}catch(e){return '';}}
+function curLesson(){if(!CFG.lessonQr)return null;var m=window.KJSMenu;return (m&&m._current&&m._current.q)?m._current:null;}
 var ov=null;
 function paint(url){
   var c=ov.querySelector('canvas'),q=c.getContext('2d');ov.querySelector('.er').textContent='';
@@ -1001,28 +1045,29 @@ function paint(url){
     for(var r=0;r<n;r++)for(var k=0;k<n;k++)if(m.isDark(r,k))q.fillRect((k+b)*cell,(r+b)*cell,cell,cell);
     var cap=url;try{cap=decodeURI(url);}catch(e){}ov.querySelector('.cap').textContent=cap;ov.querySelector('canvas').style.display='';}
   catch(e){ov.querySelector('.er').textContent='QR을 만들 수 없어요. 주소가 너무 길어요.';}}
-function openQr(){
+function openQr(L){
+  qrLesson=(L&&L.q)?L:null;
   if(!ov){ov=D.createElement('div');ov.id='kjsQrOv';ov.innerHTML='<div class="c"><h2></h2><p class="note" style="display:none">지금은 내 컴퓨터에서 열린 파일이라 학생 휴대폰에서는 열리지 않아요. GitHub에 올린 <b>인터넷 주소</b>(https://계정명.github.io/저장소명/아무_자료.html)를 한 번 붙여 넣으면 이 컴퓨터가 기억해요.</p><input type="url" placeholder="https://계정명.github.io/저장소명/아무_자료.html" autocomplete="off" spellcheck="false"><canvas width="300" height="300" style="display:none"></canvas><div class="cap"></div><div class="er"></div><div class="row"><button type="button" class="mk">QR 만들기</button><button type="button" class="bg">⛶ 크게 보기</button><button type="button" class="cl">닫기 ✕</button></div></div>';D.body.appendChild(ov);
     ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('on');});
     ov.querySelector('.cl').onclick=function(){ov.classList.remove('on');};
     ov.querySelector('.bg').onclick=function(){ov.classList.toggle('big');ov.querySelector('.bg').textContent=ov.classList.contains('big')?'⛶ 작게 보기':'⛶ 크게 보기';};
-    ov.querySelector('.mk').onclick=function(){var u=normUrl(ov.querySelector('input').value);if(!u){ov.querySelector('.er').textContent='http:// 또는 https:// 로 시작하는 주소를 넣어 주세요.';return;}lsSet(LSK,u);openQr();};
+    ov.querySelector('.mk').onclick=function(){var u=normUrl(ov.querySelector('input').value);if(!u){ov.querySelector('.er').textContent='http:// 또는 https:// 로 시작하는 주소를 넣어 주세요.';return;}lsSet(LSK,u);openQr(qrLesson);};
     ov.querySelector('input').addEventListener('keydown',function(e){e.stopPropagation();if(e.key==='Enter')ov.querySelector('.mk').click();});}
-  ov.querySelector('h2').textContent='📱 학생 접속 QR · '+(CFG.name||D.title||FILE);
-  var url=targetUrl(),isWeb=/^https?:$/.test(location.protocol);
+  ov.querySelector('h2').textContent='📱 학생 접속 QR · '+(CFG.name||D.title||FILE)+(qrLesson?' · '+String(qrLesson.title||'').slice(0,40):'');
+  var url=qrLesson?lessonUrl(qrLesson):targetUrl(),isWeb=/^https?:$/.test(location.protocol);
   ov.querySelector('.note').style.display=(!isWeb)?'':'none';
   ov.querySelector('input').style.display=(!isWeb&&!url)?'':'none';ov.querySelector('.mk').style.display=(!isWeb&&!url)?'':'none';
   ov.querySelector('.bg').style.display=url?'':'none';ov.classList.add('on');
   if(url)paint(url);else{ov.querySelector('canvas').style.display='none';ov.querySelector('.cap').textContent='';}
 }
-window.kjsOpenQr=openQr;
+window.kjsOpenQr=function(){openQr(curLesson());};window.kjsLessonQr=function(x){openQr(x);};
 function mountQr(){
   if(CFG.noqr||D.getElementById('kjsQrBtn')||!D.body)return;
   var host=null;(CFG.qrHost||['.header-actions','.unified-nav-actions']).some(function(s){host=D.querySelector(s);return !!host;});
   var b=D.createElement('button');b.id='kjsQrBtn';b.type='button';b.textContent='📱 QR';b.title='학생 접속 QR코드 (이 게임)';
   if(host){var sib=host.querySelector('button');b.className=(sib?sib.className:'')+' kjs-in';host.insertBefore(b,host.firstChild);b.style.cssText+=';min-height:44px;cursor:pointer';}
   else{b.className='kjs-float';D.body.appendChild(b);}
-  b.onclick=openQr;
+  b.onclick=function(){openQr(curLesson());};
 }
 /* ---------- 시작 ---------- */
 function boot(){mountQr();update();setTimeout(update,500);setTimeout(update,1500);}
