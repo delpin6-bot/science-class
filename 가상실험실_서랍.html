@@ -695,6 +695,34 @@ a { text-decoration: none; color: inherit; }
   .row-item .ri-btns .btn-action { flex: 1; }
 }
 @media print { body * { visibility: hidden; } #qrBox, #qrBox * { visibility: visible; } #qrBox { position: absolute; left: 0; top: 0; width: 100%; } }
+
+/* ===== 간소화: 한 줄 필터 바 + 접이식 목록 (주의집중 부담 최소화) ===== */
+.header-inner{padding:8px 16px;gap:10px}
+.brand-icon{width:36px;height:36px;font-size:18px;border-radius:10px}
+.brand-title h1{font-size:18px}
+.container{padding-top:14px}
+.results-info{margin-bottom:10px}
+.fbar{position:relative;display:flex;gap:8px;align-items:stretch;margin:0 0 12px;flex-wrap:wrap;z-index:60}
+.fbar .search-wrapper{flex:1 1 240px;min-width:200px}
+.fbar .search-input{padding:11px 0}
+.fb-btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;background:#fff;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;font-weight:700;color:#334155;white-space:nowrap;cursor:pointer}
+.fb-btn .fb-k{font-size:11.5px;font-weight:800;color:#64748b}
+.fb-btn b{display:inline-block;font-weight:800;color:#0f172a;max-width:9.5em;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.fb-btn i{font-style:normal;font-size:11px;color:#64748b}
+.fb-btn.on{background:#eff6ff;border-color:#3b82f6}
+.fb-btn.on b{color:#1d4ed8}
+.fb-btn.open{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.fb-fav.on{background:#fffbeb;border-color:#f59f00;color:#b45309}
+.fb-home.on{background:#0f172a;border-color:#0f172a;color:#fff}
+.fpanel{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1.5px solid #cbd5e1;border-radius:14px;box-shadow:0 10px 25px -3px rgba(15,23,42,.18);padding:12px;max-height:60vh;overflow:auto}
+.fpanel.open{display:block}
+.fpanel .primary-nav-inner,.fpanel .unit-chips-container,.fpanel .grade-chips-container,.fpanel .stage-chips{display:flex;flex-wrap:wrap;gap:8px;overflow:visible;padding:0;margin:0;max-width:none}
+.fpanel .primary-nav-btn{border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 14px;background:#f8fafc;min-height:44px}
+.fpanel .primary-nav-btn.active{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8}
+.fpanel .primary-nav-btn.active::after{display:none}
+.fpanel .unit-chip,.fpanel .grade-chip,.fpanel .stage-chip{min-height:40px;padding:8px 14px}
+.btn-all{min-height:40px;padding:0 16px;border-radius:10px;border:1.5px solid #0f172a;background:#0f172a;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}
+@media (max-width:640px){.fb-btn b{max-width:6em}.fbar .search-wrapper{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -709,6 +737,7 @@ a { text-decoration: none; color: inherit; }
       </div>
     </div>
     <div class="header-utils">
+      <a href="./index.html" class="btn-guide-modal" title="첫 화면(과학수업 서랍 홈)으로"><span>🏠 처음 화면</span></a>
       <a href="./통합_과학수업_서랍.html" class="btn-guide-modal" title="과학수업 통합 서랍"><span>📚 통합과학</span></a>
       <a href="./시작하기_수업게임서랍.html" class="btn-guide-modal" title="수업 게임 서랍"><span>🎮 수업게임</span></a>
       <a href="./동기유발_서랍.html" class="btn-guide-modal" title="동기유발 서랍 (수업 시작 3분)"><span>🚀 동기유발</span></a>
@@ -716,40 +745,41 @@ a { text-decoration: none; color: inherit; }
       <button class="btn-guide-modal" id="btnQR" title="학생 접속 QR코드 만들기"><span>📱 QR</span></button>
     </div>
   </div>
-  <nav class="primary-nav-bar">
-    <div class="primary-nav-inner" id="gradeNav"></div>
-  </nav>
+  
 </header>
 
 <main class="container">
 
-  <div class="cat-card">
-    <div class="cat-row"><span class="row-label">분야</span><div class="stage-chips" id="catChips"></div></div>
-    <div class="cat-row"><span class="row-label">유형</span><div class="stage-chips" id="typeChips"></div></div>
-  </div>
-
-  <div class="filter-search-row">
+  <!-- 한 줄 필터 바 : 검색 · 학년 · 분야/유형 · 단원/차시 · 즐겨찾기 · 처음 -->
+  <div class="fbar" id="fbar">
     <div class="search-wrapper">
       <span>🔍</span>
-      <input type="text" id="keywordSearch" class="search-input" placeholder="실험명·개념어 검색 (예: 옴의 법칙, 나침반, 보일, 멘델, 정전기, 증류, 부력...)" autocomplete="off">
+      <input type="text" id="keywordSearch" class="search-input" placeholder="실험명·개념어 검색 (예: 옴의 법칙, 보일, 멘델, 증류…)" autocomplete="off">
     </div>
-    <div class="view-toggle" role="group" aria-label="보기 방식">
-      <button id="vCard" class="active">▦ 카드</button>
-      <button id="vList">☰ 목록</button>
+    <button type="button" class="fb-btn" id="fbGrade" data-p="pGrade" aria-expanded="false" aria-haspopup="true"><span class="fb-k">학년</span><b id="fbGradeV">전체</b><i>▾</i></button>
+    <button type="button" class="fb-btn" id="fbCT" data-p="pCT" aria-expanded="false" aria-haspopup="true"><span class="fb-k">분야·유형</span><b id="fbCTV">전체</b><i>▾</i></button>
+    <button type="button" class="fb-btn" id="fbUnit" data-p="pUnit" aria-expanded="false" aria-haspopup="true"><span class="fb-k">단원·차시</span><b id="fbUnitV">전체</b><i>▾</i></button>
+    <button type="button" class="fb-btn fb-fav" id="fbFav" title="내 실험 서랍 (즐겨찾기)">★ <span id="fbFavN">0</span></button>
+    <button type="button" class="fb-btn fb-home" id="fbHome" title="처음 화면 (즐겨찾기·최근 사용)">🏠</button>
+    <div class="fpanel" id="pGrade"><div class="primary-nav-inner" id="gradeNav"></div></div>
+    <div class="fpanel" id="pCT">
+      <div class="cat-row"><span class="row-label">분야</span><div class="stage-chips" id="catChips"></div></div>
+      <div class="cat-row" style="margin-top:10px"><span class="row-label">유형</span><div class="stage-chips" id="typeChips"></div></div>
     </div>
-    <button class="btn-tool" id="btnRandom" title="조건에 맞는 가상실험 중 하나를 무작위로 열기">🎲 랜덤 탐구</button>
-  </div>
-
-  <div class="cat-card" style="padding:10px 16px">
-    <div class="cat-row"><span class="row-label">단원</span><div class="unit-chips-container" id="unitChips"></div></div>
-    <div class="cat-row" id="lessonRow"><span class="row-label">차시</span><div class="unit-chips-container" id="lessonChips"></div></div>
+    <div class="fpanel" id="pUnit">
+      <div class="cat-row"><span class="row-label">단원</span><div class="unit-chips-container" id="unitChips"></div></div>
+      <div class="cat-row" id="lessonRow" style="margin-top:10px"><span class="row-label">차시</span><div class="unit-chips-container" id="lessonChips"></div></div>
+    </div>
   </div>
 
   <div class="results-info">
     <h3 id="resultTitle">가상실험 카드</h3>
     <div class="results-tools">
       <button class="btn-mini" id="btnFold" title="단원 묶음 모두 접기/펼치기">▾ 모두 접기</button>
-      <div style="font-size:12.5px; color:var(--muted);">💡 <b>찾는 방법:</b> 학년 → 단원 → 차시 순으로 눌러 보세요. · 🖥 <b>전자칠판 모드</b>를 켜면 실험이 전체화면으로 열려요.</div>
+      <div id="homeAct"></div><div class="view-toggle" role="group" aria-label="보기 방식">
+      <button id="vCard" class="active">▦ 카드</button>
+      <button id="vList">☰ 목록</button>
+    </div><button class="btn-tool" id="btnRandom" title="조건에 맞는 가상실험 중 하나를 무작위로 열기">🎲 랜덤 탐구</button>
     </div>
   </div>
 
@@ -4175,6 +4205,216 @@ const DATA = [
     icon: "🧬",
     desc: "실제 염색체 사진에서 출발해 염색체 → 염색분체 → DNA와 단백질 → 유전자로 연속 줌인하며 구조의 크기와 위계를 한눈에 구분합니다. 복제 전(1가닥)·복제 후(2가닥)·분열(분리)을 비교하고, 두 염색분체에 눈동자 색·혈액형 유전자가 같은 높이·같은 색으로 있어 동일한 유전 정보를 가짐을 확인해요. 개념 카드(크기·정의·비유·헷갈리는 점)와 이름표 붙이기 퀴즈로 정리합니다. (교과서 그림이 들어 있어 개인 수업용으로만 쓰세요.)",
     keywords: ["염색체", "염색분체", "DNA", "유전자", "복제", "히스톤", "단백질", "이중나선", "위계", "줌인", "교과서그림"]
+  },
+  {
+    id: "elec-n-fric",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "마찰 전기와 대전",
+    seq: 1,
+    title: "마찰 전기 탐구 실험실 (빨대와 털가죽으로 관찰하기)",
+    file: "마찰_전기_실험실.html",
+    type: "SIM",
+    icon: "🧽",
+    desc: "빨대와 털가죽을 문질러 전자가 이동하며 대전되는 모습과 대전된 물체 사이의 인력·척력을 관찰하고 퀴즈로 확인합니다.",
+    keywords: ["마찰전기", "대전", "전자이동", "빨대", "털가죽", "인력", "척력"]
+  },
+  {
+    id: "elec-n-induc",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "마찰 전기와 정전기 유도",
+    seq: 2,
+    title: "정전기 유도 탐구 실험실 (알루미늄 깡통 굴리기)",
+    file: "정전기_유도_실험실.html",
+    type: "SIM",
+    icon: "🥫",
+    desc: "대전된 막대를 알루미늄 깡통에 가까이 하면 자유 전자가 이동해 깡통이 끌려오는 정전기 유도 현상을 단계별로 탐구합니다.",
+    keywords: ["정전기유도", "알루미늄깡통", "자유전자", "대전체", "인력"]
+  },
+  {
+    id: "elec-n-iv",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "전류와 도체, 부도체",
+    seq: 5,
+    title: "전류와 전압 탐구 실험실 (전자의 이동과 전류의 방향)",
+    file: "전류와_전압_실험실.html",
+    type: "SIM",
+    icon: "🔋",
+    desc: "도선 속을 확대해 전지에서 나온 전자의 이동 방향과 전류의 방향이 반대임을 시각화하고, 스위치·전지 조작으로 전류와 전압의 의미를 확인합니다.",
+    keywords: ["전류", "전압", "전자", "전류방향", "전지", "스위치", "도선"]
+  },
+  {
+    id: "elec-n-ohm",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "전류, 전압, 저항과 옴의 법칙",
+    seq: 6,
+    title: "옴의 법칙 탐구 실험실 (MBL · 전압·전류·저항의 관계)",
+    file: "옴의_법칙_실험실.html",
+    type: "SIM",
+    icon: "📈",
+    desc: "전압과 저항을 바꿔 가며 전류를 측정하고 그래프로 정리하여 전압·전류·저항 사이의 관계(옴의 법칙)를 스스로 발견합니다.",
+    keywords: ["옴의법칙", "전압", "전류", "저항", "MBL", "그래프", "V=IR"]
+  },
+  {
+    id: "elec-n-res",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "저항의 직렬연결과 병렬연결",
+    seq: 7,
+    title: "저항의 연결 탐구 실험실 (직렬연결 vs 병렬연결)",
+    file: "저항의_연결_실험실.html",
+    type: "SIM",
+    icon: "💡",
+    desc: "전구를 직렬·병렬로 연결해 밝기와 전류, 합성 저항의 변화를 비교하며 두 연결 방식의 특징을 확인합니다.",
+    keywords: ["저항의연결", "직렬연결", "병렬연결", "합성저항", "전구", "밝기"]
+  },
+  {
+    id: "elec-n-coil",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "전류의 자기 작용과 코일",
+    seq: 13,
+    title: "코일 주위의 자기장 탐구 실험실 (나침반 · 앙페르 오른손 법칙 · 전자석)",
+    file: "코일_주위의_자기장_실험실.html",
+    type: "SIM",
+    icon: "🧲",
+    desc: "코일 주위에 나침반을 놓아 자기장의 방향을 확인하고 앙페르의 오른손 법칙과 전자석의 세기 변화를 탐구합니다.",
+    keywords: ["코일", "자기장", "나침반", "앙페르", "오른손법칙", "전자석", "솔레노이드"]
+  },
+  {
+    id: "elec-n-motor",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "전자기력과 전동기의 원리",
+    seq: 14,
+    title: "전자기력과 전동기 탐구 실험실 (전기 그네 · 오른손 손바닥 법칙 · 직류 전동기)",
+    file: "전자기력과_전동기_실험실.html",
+    type: "SIM",
+    icon: "⚙️",
+    desc: "자기장 속 도선이 받는 힘(전기 그네)을 오른손 손바닥 법칙으로 예측하고, 이를 이용한 직류 전동기의 회전 원리를 두 가지 모드로 탐구합니다.",
+    keywords: ["전자기력", "전기그네", "오른손손바닥법칙", "직류전동기", "정류자", "자기장"]
+  },
+  {
+    id: "elec-n-energy",
+    cat: "전기와 자기",
+    catKey: "elec",
+    grade: "중2",
+    unit: "전기와 자기",
+    lesson: "전기 에너지의 전환과 소비 전력",
+    seq: 15,
+    title: "전기 에너지와 소비 전력 탐구 실험실 (에너지 전환 · 효율 · 대기 전력)",
+    file: "전기에너지와_소비전력_실험실.html",
+    type: "SIM",
+    icon: "🔌",
+    desc: "가전제품의 에너지 전환과 효율, 소비 전력·전력량 계산, 대기 전력까지 3개 스테이지로 탐구합니다.",
+    keywords: ["전기에너지", "소비전력", "전력량", "에너지효율", "대기전력", "에너지전환"]
+  },
+  {
+    id: "star-n-nebula",
+    cat: "지구",
+    catKey: "earth",
+    grade: "중3",
+    unit: "별과 우주",
+    lesson: "우주의 구성 : 성운과 성단",
+    seq: 4,
+    title: "성운과 성단 탐구 실험실",
+    file: "성운과_성단_실험실.html",
+    type: "SIM",
+    icon: "🔭",
+    desc: "발광 성운·반사 성운·암흑 성운과 산개 성단·구상 성단의 모습과 특징을 비교하며 별이 태어나고 모여 있는 장소를 탐구합니다.",
+    keywords: ["성운", "성단", "산개성단", "구상성단", "발광성운", "암흑성운", "별의탄생"]
+  },
+  {
+    id: "star-n-milky",
+    cat: "지구",
+    catKey: "earth",
+    grade: "중3",
+    unit: "별과 우주",
+    lesson: "우주의 구성 : 우리은하",
+    seq: 5,
+    title: "우리은하 탐구 실험실",
+    file: "우리은하_실험실.html",
+    type: "SIM",
+    icon: "🌌",
+    desc: "우리은하의 모양과 구조(막대 나선 은하), 태양계의 위치, 지구에서 보이는 은하수를 관측 시점에 따라 탐구합니다.",
+    keywords: ["우리은하", "은하수", "막대나선", "은하핵", "나선팔", "태양계위치"]
+  },
+  {
+    id: "star-n-galaxy",
+    cat: "지구",
+    catKey: "earth",
+    grade: "중3",
+    unit: "별과 우주",
+    lesson: "우주의 구성 : 외부 은하",
+    seq: 6,
+    title: "외부 은하 탐구 실험실",
+    file: "외부_은하_실험실.html",
+    type: "SIM",
+    icon: "🌠",
+    desc: "나선·타원·불규칙 은하의 모양을 분류하고, 외부 은하까지의 거리와 크기를 비교해 우주 규모를 가늠합니다.",
+    keywords: ["외부은하", "나선은하", "타원은하", "불규칙은하", "은하분류", "허블"]
+  },
+  {
+    id: "star-n-expand",
+    cat: "지구",
+    catKey: "earth",
+    grade: "중3",
+    unit: "별과 우주",
+    lesson: "우주의 팽창",
+    seq: 7,
+    title: "우주 팽창 탐구 실험실 (풍선 모형 · 대폭발 · 허블 법칙)",
+    file: "우주_팽창_실험실.html",
+    type: "SIM",
+    icon: "🎈",
+    desc: "부풀어 오르는 풍선 위 은하 모형으로 우주 팽창을 체험하고, 은하의 후퇴 속도와 거리의 관계를 그래프로 정리합니다.",
+    keywords: ["우주팽창", "풍선모형", "대폭발", "빅뱅", "허블법칙", "적색편이", "은하후퇴"]
+  },
+  {
+    id: "gas-n-boyle",
+    cat: "힘과 운동",
+    catKey: "force",
+    grade: "중1",
+    unit: "기체의 성질",
+    lesson: "기체의 압력과 부피 관계",
+    seq: 1,
+    title: "보일 법칙 탐구 실험 (주사기 속 기체의 부피와 압력)",
+    file: "보일_법칙_주사기.html",
+    type: "SIM",
+    icon: "💉",
+    desc: "주사기 속 기체를 눌러 부피를 줄일 때 압력이 커지는 반비례 관계를 P–V 그래프와 P–(1/V) 그래프로 확인합니다.",
+    keywords: ["보일법칙", "주사기", "압력", "부피", "반비례", "P-V그래프"]
+  },
+  {
+    id: "gas-n-charles",
+    cat: "일과 에너지",
+    catKey: "energy",
+    grade: "중1",
+    unit: "기체의 성질",
+    lesson: "기체의 온도와 부피 관계",
+    seq: 3,
+    title: "샤를 법칙 탐구 실험 (풍선 속 기체의 온도와 부피)",
+    file: "샤를_법칙_풍선.html",
+    type: "SIM",
+    icon: "🎈",
+    desc: "풍선 속 기체의 온도를 바꾸며 부피 변화를 관찰하여 압력이 일정할 때 온도와 부피의 관계(샤를 법칙)를 확인합니다.",
+    keywords: ["샤를법칙", "풍선", "온도", "부피", "열팽창", "절대온도"]
   }
 ];
 
@@ -4191,6 +4431,7 @@ const TYPES = [["ALL", "전체 유형"], ["SIM", "🔬 가상실험"], ["WS", "�
 
 let selGrade = "ALL", selCat = "ALL", selType = "ALL", selUnit = "ALL", selLesson = "ALL", query = "", viewMode = "card";
 const collapsed = {};
+let showAll = false;   // false = 처음 화면(즐겨찾기+최근), true = 전체 목록
 const LS_FAV_KEY = "javalab_hub_favs_v1";
 let favs = {};
 try { favs = JSON.parse(localStorage.getItem(LS_FAV_KEY) || "{}"); } catch(e) { favs = {}; }
@@ -4202,6 +4443,75 @@ const gRank = g => { const i = GRADE_ORDER.indexOf(g); return i < 0 ? 99 : i; };
 const uRank = (g, u) => { const i = (UNIT_ORDER[g] || []).indexOf(u); return i < 0 ? 99 : i; };
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 const gradeOK = (d, g) => g === "ALL" ? true : g === "FAV" ? !!favs[d.id] : (d.grade === g || d.grade === "전학년");
+
+
+/* ===== 한 줄 필터 바 : 드롭다운 패널 열기/닫기 ===== */
+function closePanels(){
+  document.querySelectorAll(".fpanel.open").forEach(p => p.classList.remove("open"));
+  document.querySelectorAll(".fb-btn[data-p]").forEach(b => { b.classList.remove("open"); b.setAttribute("aria-expanded","false"); });
+}
+function togglePanel(btn){
+  const p = document.getElementById(btn.dataset.p);
+  const was = p.classList.contains("open");
+  closePanels();
+  if (!was) { p.classList.add("open"); btn.classList.add("open"); btn.setAttribute("aria-expanded","true"); }
+}
+let keepOpen = false;
+function initBar(){
+  document.querySelectorAll(".fb-btn[data-p]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); togglePanel(b); }));
+  document.querySelectorAll(".fpanel").forEach(p => {
+    p.addEventListener("click", e => { showAll = true; keepOpen = !!e.target.closest("#unitChips .unit-chip:not(:first-child)"); }, true);
+    p.addEventListener("click", e => { if (e.target.closest("button") && !keepOpen) closePanels(); });
+  });
+  document.addEventListener("click", e => { const bar = document.getElementById("fbar"); if (!e.composedPath().includes(bar)) closePanels(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closePanels(); });
+}
+function fbSet(id, t){ const e = document.getElementById(id); if (e) e.textContent = t; }
+function fbOn(id, on){ const e = document.getElementById(id); if (e) e.classList.toggle("on", !!on); }
+
+const LS_RECENT = "javalab_recent_v1";
+let recents = [];
+try { recents = JSON.parse(localStorage.getItem(LS_RECENT) || "[]"); } catch(e) { recents = []; }
+if (!Array.isArray(recents)) recents = [];
+function addRecent(id) {
+  recents = [id].concat(recents.filter(x => x !== id)).slice(0, 8);
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(recents)); } catch(e) {}
+}
+const GRADE_LABEL = {ALL:"전체 학년", "중1":"중1 과학", "중2":"중2 과학", "중3":"중3 과학", FAV:"내 실험 서랍"};
+let homeMeta = {nf:0, nr:0, fb:false};
+function isHome(){ return !showAll && selGrade === "ALL" && selCat === "ALL" && selType === "ALL" && selUnit === "ALL" && selLesson === "ALL" && !query.trim(); }
+function homeList(){
+  const fv = DATA.filter(d => favs[d.id]);
+  const rec = recents.map(id => DATA.find(d => d.id === id)).filter(d => d && !favs[d.id]);
+  homeMeta = {nf: fv.length, nr: rec.length, fb: false};
+  let list = fv.concat(rec);
+  if (!list.length) { list = DATA.filter(d => d.type === "SIM").slice(0, 6); homeMeta.fb = true; }
+  return list;
+}
+function homeTitle(){
+  return homeMeta.fb ? "처음이라면 이 실험부터 (추천 6개)" : "★ 즐겨찾기 " + homeMeta.nf + " · 🕘 최근 사용 " + homeMeta.nr;
+}
+function renderHomeAct(home){
+  const e = $id("homeAct"); if (!e) return;
+  e.innerHTML = home ? '<button type="button" class="btn-all" id="btnAll">전체 ' + DATA.length + '개 자료 보기 ▸</button>' : "";
+  const b = $id("btnAll"); if (b) b.onclick = () => { showAll = true; render(); };
+}
+function goHome(){
+  selGrade = "ALL"; selCat = "ALL"; selType = "ALL"; selUnit = "ALL"; selLesson = "ALL"; query = ""; showAll = false;
+  $id("keywordSearch").value = ""; closePanels(); render();
+}
+function toggleFavView(){ showAll = true; closePanels(); selGrade = (selGrade === "FAV") ? "ALL" : "FAV"; selUnit = "ALL"; selLesson = "ALL"; render(); }
+function syncBar(){
+  fbSet("fbGradeV", selGrade === "ALL" ? (showAll ? "전체 학년" : "처음 화면") : (GRADE_LABEL[selGrade] || selGrade));
+  const tl = (TYPES.find(t => t[0] === selType) || [0, ""])[1].replace(/^[^\s]+\s/, "");
+  const ct = [selCat !== "ALL" ? selCat : "", selType !== "ALL" ? tl : ""].filter(Boolean).join(" · ");
+  fbSet("fbCTV", ct || "전체");
+  const un = selUnit === "ALL" ? "" : selUnit.split("|")[1];
+  fbSet("fbUnitV", un ? un + (selLesson !== "ALL" ? " · " + selLesson : "") : "전체");
+  fbSet("fbFavN", Object.keys(favs).length);
+  fbOn("fbGrade", selGrade !== "ALL"); fbOn("fbCT", selCat !== "ALL" || selType !== "ALL"); fbOn("fbUnit", selUnit !== "ALL");
+  fbOn("fbFav", selGrade === "FAV"); fbOn("fbHome", isHome());
+}
 
 /* ---------- 1. 학년 탭 ---------- */
 function renderGradeNav() {
@@ -4289,7 +4599,8 @@ function syncBoardBtn() {
   b.style.background = boardMode ? "#0a0e17" : ""; b.style.color = boardMode ? "#fff" : ""; b.style.borderColor = boardMode ? "#38bdf8" : "";
 }
 function openLabel(d) { return d.type === "GAME" ? "게임 시작" : d.type === "WS" ? "활동지 열기" : "실험 열기"; }
-function filteredItems() {
+function filteredItems(all) {
+  if (!all && isHome()) return homeList();
   const q = query.trim().toLowerCase();
   return baseItems().filter(d => {
     if (selUnit !== "ALL" && d.grade + "|" + d.unit !== selUnit) return false;
@@ -4338,16 +4649,18 @@ function rowHTML(d) {
 function render() {
   renderGradeNav(); renderCatChips(); renderHier();
   const items = filteredItems();
+  const home = isHome();
+  syncBar(); renderHomeAct(home);
   const grid = $id("lessonGrid"), empty = $id("emptyState");
   const lessons = new Set(items.map(d => d.grade + "|" + d.unit + "|" + d.lesson)).size;
-  $id("resultTitle").textContent = `가상실험 ${viewMode === "card" ? "카드" : "목록"} (${items.length}개 자료 · ${lessons}개 차시)`;
+  $id("resultTitle").textContent = home ? homeTitle() : `가상실험 ${viewMode === "card" ? "카드" : "목록"} (${items.length}개 자료 · ${lessons}개 차시)`;
   grid.className = "lesson-grid" + (viewMode === "list" ? " list" : "");
   $id("vCard").classList.toggle("active", viewMode === "card");
   $id("vList").classList.toggle("active", viewMode === "list");
   grid.innerHTML = "";
   if (!items.length) { empty.style.display = "block"; $id("btnFold").style.display = "none"; return; }
   empty.style.display = "none";
-  const grouped = selUnit === "ALL";
+  const grouped = selUnit === "ALL" && !home;
   $id("btnFold").style.display = grouped ? "" : "none";
   let lastU = "", lastL = "", hide = false;
   items.forEach(d => {
@@ -4366,6 +4679,7 @@ function render() {
     if (hide) return;
     const el = document.createElement(viewMode === "card" ? "article" : "div");
     el.className = viewMode === "card" ? "lesson-card" : "row-item";
+    el.dataset.id = d.id;
     el.innerHTML = viewMode === "card" ? cardHTML(d) : rowHTML(d);
     grid.appendChild(el);
   });
@@ -4383,7 +4697,7 @@ $id("vCard").onclick = () => { viewMode = "card"; render(); };
 $id("vList").onclick = () => { viewMode = "list"; render(); };
 $id("keywordSearch").addEventListener("input", e => { query = e.target.value; if (query.trim()) { selUnit = "ALL"; selLesson = "ALL"; } render(); });
 $id("btnRandom").onclick = () => {
-  const pool = filteredItems().filter(d => d.type === "SIM");
+  const pool = filteredItems(true).filter(d => d.type === "SIM");
   const pick = pool[Math.floor(Math.random() * pool.length)];
   if (pick) window.open(openHref(pick), "_blank");
 };
@@ -4453,6 +4767,12 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $id("ovQR").
 
 $id("btnBoard").onclick = () => { boardMode = !boardMode; try { localStorage.setItem(LS_BOARD, boardMode ? "on" : "off"); } catch(e) {} syncBoardBtn(); render(); };
 syncBoardBtn();
+$id("lessonGrid").addEventListener("click", e => {
+  const a = e.target.closest("a.btn-action"); if (!a) return;
+  const c = a.closest("[data-id]"); if (c) addRecent(c.dataset.id);
+});
+$id("fbHome").onclick = goHome; $id("fbFav").onclick = toggleFavView;
+initBar();
 render();
 </script>
 <script id="qrbigScript">

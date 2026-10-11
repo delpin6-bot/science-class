@@ -488,6 +488,34 @@ a { text-decoration: none; color: inherit; }
   color: var(--muted);
   margin-top: 20px;
 }
+
+/* ===== 간소화: 한 줄 필터 바 + 접이식 목록 (주의집중 부담 최소화) ===== */
+.header-inner{padding:8px 16px;gap:10px}
+.brand-icon{width:36px;height:36px;font-size:18px;border-radius:10px}
+.brand-title h1{font-size:18px}
+.container{padding-top:14px}
+.results-info{margin-bottom:10px}
+.fbar{position:relative;display:flex;gap:8px;align-items:stretch;margin:0 0 12px;flex-wrap:wrap;z-index:60}
+.fbar .search-wrapper{flex:1 1 240px;min-width:200px}
+.fbar .search-input{padding:11px 0}
+.fb-btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;background:#fff;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;font-weight:700;color:#334155;white-space:nowrap;cursor:pointer}
+.fb-btn .fb-k{font-size:11.5px;font-weight:800;color:#64748b}
+.fb-btn b{display:inline-block;font-weight:800;color:#0f172a;max-width:9.5em;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.fb-btn i{font-style:normal;font-size:11px;color:#64748b}
+.fb-btn.on{background:#eff6ff;border-color:#3b82f6}
+.fb-btn.on b{color:#1d4ed8}
+.fb-btn.open{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.fb-fav.on{background:#fffbeb;border-color:#f59f00;color:#b45309}
+.fb-home.on{background:#0f172a;border-color:#0f172a;color:#fff}
+.fpanel{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1.5px solid #cbd5e1;border-radius:14px;box-shadow:0 10px 25px -3px rgba(15,23,42,.18);padding:12px;max-height:60vh;overflow:auto}
+.fpanel.open{display:block}
+.fpanel .primary-nav-inner,.fpanel .unit-chips-container,.fpanel .grade-chips-container,.fpanel .stage-chips{display:flex;flex-wrap:wrap;gap:8px;overflow:visible;padding:0;margin:0;max-width:none}
+.fpanel .primary-nav-btn{border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 14px;background:#f8fafc;min-height:44px}
+.fpanel .primary-nav-btn.active{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8}
+.fpanel .primary-nav-btn.active::after{display:none}
+.fpanel .unit-chip,.fpanel .grade-chip,.fpanel .stage-chip{min-height:40px;padding:8px 14px}
+.btn-all{min-height:40px;padding:0 16px;border-radius:10px;border:1.5px solid #0f172a;background:#0f172a;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}
+@media (max-width:640px){.fb-btn b{max-width:6em}.fbar .search-wrapper{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -505,6 +533,7 @@ a { text-decoration: none; color: inherit; }
       </div>
     </div>
     <div class="header-utils">
+      <a href="./index.html" class="btn-header-action" title="첫 화면(과학수업 서랍 홈)으로"><span>🏠 처음 화면</span></a>
       <!-- 1. 가상실험 버튼 -->
       <a href="./가상실험실_서랍.html" class="btn-header-action" title="가상실험실 바로가기">
         <span>🔬 가상실험</span>
@@ -522,8 +551,24 @@ a { text-decoration: none; color: inherit; }
     </div>
   </div>
 
-  <!-- 1차 카테고리 네비게이션 (작업기억 청킹) -->
-  <nav class="primary-nav-bar">
+  
+</header>
+
+<main class="container">
+
+  
+
+  <!-- 한 줄 필터 바 : 검색 · 분류 · 단원 · 즐겨찾기 · 처음 -->
+  <div class="fbar" id="fbar">
+    <div class="search-wrapper">
+      <span>🔍</span>
+      <input type="text" id="keywordSearch" class="search-input" placeholder="게임명·개념어 검색 (예: 마인드맵, 골든벨, 퍼즐…)" autocomplete="off">
+    </div>
+    <button type="button" class="fb-btn" id="fbCat" data-p="pCat" aria-expanded="false" aria-haspopup="true"><span class="fb-k">분류</span><b id="fbCatV">전체</b><i>▾</i></button>
+    <button type="button" class="fb-btn" id="fbUnit" data-p="pUnit" aria-expanded="false" aria-haspopup="true"><span class="fb-k">단원</span><b id="fbUnitV">전체</b><i>▾</i></button>
+    <button type="button" class="fb-btn fb-fav" id="fbFav" title="내 수업 서랍 (즐겨찾기)" onclick="toggleFavView()">★ <span id="fbFavN">0</span></button>
+    <button type="button" class="fb-btn fb-home" id="fbHome" title="처음 화면 (즐겨찾기·최근 사용)" onclick="goHome()">🏠</button>
+    <div class="fpanel" id="pCat">
     <div class="primary-nav-inner" id="primaryNav">
       <button class="primary-nav-btn active" onclick="setCategoryFilter('ALL')">
         <span>전체 게임</span> <span class="nav-counter" id="countAll">12</span>
@@ -547,45 +592,8 @@ a { text-decoration: none; color: inherit; }
         <span>★ 내 수업 서랍</span> <span class="nav-counter" id="countFav">0</span>
       </button>
     </div>
-  </nav>
-</header>
-
-<main class="container">
-
-  <!-- 2차 인지 흐름 안내 스트립 -->
-  <section class="flow-selector-card">
-    <div class="flow-title">
-      <span>수업 인지 흐름 필터 (Mayer의 자르기 원리 기반)</span>
-      <span style="font-weight:500;">게임을 고르면 그 안에서 학년 → 단원 → 차시를 선택합니다</span>
     </div>
-    <div class="stage-chips" id="stageChips">
-      <button class="stage-chip active" onclick="setCategoryFilter('ALL')">
-        <span>전체 흐름 보기</span>
-      </button>
-      <button class="stage-chip" onclick="setCategoryFilter('INTRO')">
-        <span>🚀 1단계: 도입·동기유발 (빙산, 몸으로)</span>
-      </button>
-      <button class="stage-chip" onclick="setCategoryFilter('LEARN')">
-        <span>🎯 2단계: 개념 익히기 (거짓말탐지기, 기억의계단, 개념격추)</span>
-      </button>
-      <button class="stage-chip" onclick="setCategoryFilter('ORG')">
-        <span>🧠 3단계: 복습·정리 (마인드맵, 코드네임, 십자말)</span>
-      </button>
-      <button class="stage-chip" onclick="setCategoryFilter('EVAL')">
-        <span>🔔 4단계: 형성평가 (골든벨)</span>
-      </button>
-      <button class="stage-chip" onclick="setCategoryFilter('PRINT')">
-        <span>🔤 5단계: 인쇄용 활동지 (낱말퍼즐 생성기)</span>
-      </button>
-    </div>
-  </section>
-
-  <!-- 검색 및 단원별 필터 바 -->
-  <div class="filter-search-row">
-    <div class="search-wrapper">
-      <span>🔍</span>
-      <input type="text" id="keywordSearch" class="search-input" placeholder="게임명, 개념어, 활동 유형 검색 (예: 마인드맵, 골든벨, 격추, 퍼즐, 암기...)" autocomplete="off">
-    </div>
+    <div class="fpanel" id="pUnit">
     <div class="grade-chips-container" id="unitChips">
       <button class="grade-chip active" onclick="setUnitFilter('ALL')">전체 추천</button>
       <button class="grade-chip" onclick="setUnitFilter('물질의 구성')">물질의 구성</button>
@@ -598,14 +606,13 @@ a { text-decoration: none; color: inherit; }
       <button class="grade-chip" onclick="setUnitFilter('여러 가지 힘')">여러 가지 힘</button>
       <button class="grade-chip" onclick="setUnitFilter('운동과 에너지')">운동과 에너지</button>
     </div>
+    </div>
   </div>
 
   <!-- 결과 헤더 -->
   <div class="results-info">
     <h3 id="resultTitle">수업 활동 게임 목록 (12개 게임)</h3>
-    <div style="font-size:12.5px; color:var(--muted);">
-      💡 <b>인출 연습(Retrieval Practice):</b> 모든 게임은 인터넷 없이 교실 PC와 태블릿에서 단독 구동됩니다.
-    </div>
+    <div id="homeAct"></div>
   </div>
 
   <!-- 게임 카드 그리드 -->
@@ -1052,6 +1059,17 @@ function syncImmBtn() {
 let selectedCat = "ALL";
 let selectedUnit = "ALL";
 let searchQuery = "";
+let showAll = false;   // false = 처음 화면(즐겨찾기+최근), true = 전체 목록
+
+// 최근 사용
+const LS_RECENT = "gamehub_recent_v1";
+let recents = [];
+try { recents = JSON.parse(localStorage.getItem(LS_RECENT) || "[]"); } catch(e) { recents = []; }
+if (!Array.isArray(recents)) recents = [];
+function addRecent(id) {
+  recents = [id].concat(recents.filter(x => x !== id)).slice(0, 8);
+  try { localStorage.setItem(LS_RECENT, JSON.stringify(recents)); } catch(e) {}
+}
 
 // 로컬 스토리지 즐겨찾기
 const LS_GAME_FAV = "gamehub_favs_v3";
@@ -1068,6 +1086,65 @@ function toggleFav(id, event) {
   saveFavs();
   updateCounters();
   render();
+}
+
+
+/* ===== 한 줄 필터 바 : 드롭다운 패널 열기/닫기 ===== */
+function closePanels(){
+  document.querySelectorAll(".fpanel.open").forEach(p => p.classList.remove("open"));
+  document.querySelectorAll(".fb-btn[data-p]").forEach(b => { b.classList.remove("open"); b.setAttribute("aria-expanded","false"); });
+}
+function togglePanel(btn){
+  const p = document.getElementById(btn.dataset.p);
+  const was = p.classList.contains("open");
+  closePanels();
+  if (!was) { p.classList.add("open"); btn.classList.add("open"); btn.setAttribute("aria-expanded","true"); }
+}
+function initBar(){
+  document.querySelectorAll(".fb-btn[data-p]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); togglePanel(b); }));
+  document.querySelectorAll(".fpanel").forEach(p => {
+    p.addEventListener("click", () => { showAll = true; }, true);
+    p.addEventListener("click", e => { if (e.target.closest("button")) closePanels(); });
+  });
+  document.addEventListener("click", e => { if (!e.target.closest(".fbar")) closePanels(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closePanels(); });
+}
+function fbSet(id, t){ const e = document.getElementById(id); if (e) e.textContent = t; }
+function fbOn(id, on){ const e = document.getElementById(id); if (e) e.classList.toggle("on", !!on); }
+
+const CAT_LABEL = {ALL:"전체 게임", INTRO:"도입·동기유발", LEARN:"개념 익히기", ORG:"복습·정리", EVAL:"형성평가", PRINT:"활동지·인쇄", FAV:"내 수업 서랍", REVIEW:"단원 종합"};
+let homeMeta = {nf:0, nr:0, fb:false};
+function isHome(){ return !showAll && selectedCat === "ALL" && selectedUnit === "ALL" && !searchQuery.trim(); }
+function homeList(){
+  const favs = GAMES_DATA.filter(g => gameFavs[g.id]);
+  const rec = recents.map(id => GAMES_DATA.find(g => g.id === id)).filter(g => g && !gameFavs[g.id]);
+  homeMeta = {nf: favs.length, nr: rec.length, fb: false};
+  let list = favs.concat(rec);
+  if (!list.length) { list = GAMES_DATA.slice(0, 6); homeMeta.fb = true; }
+  return list;
+}
+function homeTitle(){
+  return homeMeta.fb ? "처음이라면 이 게임부터 (추천 " + 6 + "개)" : "★ 즐겨찾기 " + homeMeta.nf + " · 🕘 최근 사용 " + homeMeta.nr;
+}
+function renderHomeAct(home){
+  const e = document.getElementById("homeAct"); if (!e) return;
+  e.innerHTML = home ? '<button type="button" class="btn-all" onclick="showAllNow()">전체 ' + GAMES_DATA.length + '개 게임 보기 ▸</button>' : "";
+}
+function showAllNow(){ showAll = true; render(); }
+function goHome(){
+  selectedUnit = "ALL"; searchQuery = ""; showAll = false;
+  const inp = document.getElementById("keywordSearch"); if (inp) inp.value = "";
+  document.querySelectorAll(".grade-chip").forEach((b, i) => b.classList.toggle("active", i === 0));
+  closePanels();
+  setCategoryFilter("ALL");
+}
+function toggleFavView(){ showAll = true; closePanels(); setCategoryFilter(selectedCat === "FAV" ? "ALL" : "FAV"); }
+function syncBar(){
+  fbSet("fbCatV", selectedCat === "ALL" ? (showAll ? "전체 게임" : "처음 화면") : (CAT_LABEL[selectedCat] || selectedCat));
+  fbSet("fbUnitV", selectedUnit === "ALL" ? "전체" : selectedUnit);
+  fbSet("fbFavN", Object.keys(gameFavs).length);
+  fbOn("fbCat", selectedCat !== "ALL"); fbOn("fbUnit", selectedUnit !== "ALL");
+  fbOn("fbFav", selectedCat === "FAV"); fbOn("fbHome", isHome());
 }
 
 function setCategoryFilter(cat) {
@@ -1111,7 +1188,7 @@ function render() {
   const resultTitle = document.getElementById("resultTitle");
   const q = searchQuery.trim().toLowerCase();
 
-  const filtered = GAMES_DATA.filter(item => {
+  let filtered = GAMES_DATA.filter(item => {
     // 1. 카테고리 필터
     if (selectedCat === "FAV") {
       if (!gameFavs[item.id]) return false;
@@ -1131,7 +1208,11 @@ function render() {
     return true;
   });
 
-  resultTitle.textContent = `수업 활동 게임 목록 (${filtered.length}개 게임)`;
+  const home = isHome();
+  if (home) filtered = homeList();
+  resultTitle.textContent = home ? homeTitle() : `수업 활동 게임 목록 (${filtered.length}개 게임)`;
+  renderHomeAct(home);
+  syncBar();
 
   if (filtered.length === 0) {
     grid.innerHTML = "";
@@ -1165,7 +1246,7 @@ function render() {
       </div>
 
       <div class="card-action-bar">
-        <a href="${gameHref(g)}" class="btn-play-game" title="${g.nm} 시작하기">
+        <a href="${gameHref(g)}" onclick="addRecent('${g.id}')" class="btn-play-game" title="${g.nm} 시작하기">
           <span>🚀 게임 시작하기</span>
         </a>
       </div>
@@ -1183,6 +1264,7 @@ document.getElementById("keywordSearch").addEventListener("input", e => {
 
 // 초기화
 updateCounters();
+initBar();
 render();
 
 document.getElementById("btnImm").onclick = () => { immMode = !immMode; try { localStorage.setItem(LS_IMM, immMode ? "on" : "off"); } catch(e) {} syncImmBtn(); if (typeof render === "function") render(); };
