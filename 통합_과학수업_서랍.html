@@ -578,6 +578,30 @@ a { text-decoration: none; color: inherit; }
 }
 .group-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin: 12px 0 -2px; padding: 8px 14px; background: #0f172a; color: #fff; border-radius: 10px; font-weight: 800; font-size: 15px; }
 .group-head .gh-sub { margin-left: auto; font-size: 12px; font-weight: 700; color: #cbd5e1; }
+
+/* ===== 단원 연계 지도 (v2) ===== */
+.unit-map{grid-column:1/-1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 14px;margin:-2px 0 6px;display:grid;gap:7px;font-size:13px}
+.unit-map .um-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.unit-map .um-lab{flex:0 0 92px;font-weight:900;color:#334155;font-size:12.5px}
+.unit-map .um-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:800;font-size:12.5px;cursor:pointer;text-decoration:none;font-family:inherit}
+.unit-map .um-chip:hover{border-color:#2563eb;color:#1d4ed8}
+.unit-map .um-chip .no{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#0f172a;color:#fff;font-size:11px}
+.unit-map .um-arrow{color:#94a3b8;font-weight:900}
+.unit-map .um-chip.intro{background:#fefce8;border-color:#fde68a;color:#a16207}
+.unit-map .um-chip.wrap{background:#faf5ff;border-color:#e9d5ff;color:#7e22ce}
+.unit-map .um-chip.link{background:#ecfeff;border-color:#a5f3fc;color:#0e7490}
+.unit-map .um-why{font-weight:600;color:#64748b;font-size:12px}
+.btn-intro{background:#fefce8;color:#a16207;border-color:#fde68a}
+.btn-intro:hover{background:#fef9c3}
+.stp{font-style:normal;display:inline-grid;place-items:center;min-width:17px;height:17px;border-radius:50%;background:rgba(15,23,42,.85);color:#fff;font-size:10.5px;font-weight:900;margin-right:3px}
+.lesson-nav{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:9px;border-top:1px dashed #e2e8f0;font-size:12px}
+.lesson-nav button{flex:1;min-width:0;border:1.5px solid #e2e8f0;background:#f8fafc;border-radius:8px;padding:6px 8px;font-weight:800;font-size:12px;color:#334155;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit}
+.lesson-nav button:hover:not(:disabled){border-color:#2563eb;color:#1d4ed8}
+.lesson-nav button:disabled{opacity:.35;cursor:default}
+.lesson-nav .ln-pos{flex:0 0 auto;font-weight:900;color:#64748b}
+.lesson-card.flash{animation:cardFlash 1.6s ease}
+@keyframes cardFlash{0%,60%{box-shadow:0 0 0 4px #38bdf8;border-color:#38bdf8}100%{}}
+@media (max-width:680px){.unit-map .um-lab{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -645,16 +669,16 @@ a { text-decoration: none; color: inherit; }
         <span>전체 흐름 보기</span>
       </button>
       <button class="stage-chip stage-sim" onclick="setStageFilter('SIM')">
-        <span>🔬 1단계: 가상실험실(미시·거시 탐구)</span>
+        <span>🔬 ② 탐구: 가상실험실</span>
       </button>
       <button class="stage-chip stage-ws" onclick="setStageFilter('WS')">
-        <span>📄 2단계: 학생 탐구 활동지</span>
+        <span>📄 ③ 활동: 탐구 활동지</span>
       </button>
       <button class="stage-chip stage-org" onclick="setStageFilter('ORG')">
-        <span>🧠 3단계: 정리·개념화(마인드맵)</span>
+        <span>🧠 ④ 정리: 마인드맵</span>
       </button>
       <button class="stage-chip stage-eval" onclick="setStageFilter('EVAL')">
-        <span>🔔 4단계: 형성평가·게임</span>
+        <span>🔔 ⑤ 평가: 형성평가·게임</span>
       </button>
     </div>
   </section>
@@ -1478,6 +1502,7 @@ const LESSON_MODULES = [
     icon: "🪐",
     keywords: ["지구형행성", "목성형행성", "행성분류", "스노우라인", "성운설", "원시태양", "행성형성", "밀도", "위성수", "태양계"],
     tools: {
+      more: [{ nm: "행성의 크기와 거리 비교", url: "./태양계_행성의_크기와_거리.html" }],
       sim: { nm: "행성의 특징과 태양계 형성 가상실험", url: "./행성의_특징과_태양계_형성.html" },
       ws: null,
       org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
@@ -1708,8 +1733,224 @@ const LESSON_MODULES = [
       org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
       game: { nm: "골든벨 형성평가", url: "./골든벨.html" }
     }
+  },
+  {
+    id: "m-state-1",
+    grade: "중1",
+    unit: "물질의 상태 변화",
+    lesson: "입자의 운동: 확산과 증발",
+    title: "입자 모형과 확산·증발",
+    conceptLead: "물질을 이루는 입자가 스스로 운동하여 퍼져나가는 확산(찬물 vs 온수, 암모니아 vs 염산)과 액체 표면에서의 기화(증발) 메커니즘을 탐구합니다.",
+    icon: "💨",
+    keywords: ["입자모형", "확산", "증발", "브라운운동", "암모니아염산", "그레이엄법칙", "온도와속도"],
+    tools: {
+      sim: { nm: "입자 모형과 확산·증발", url: "./입자_모형과_확산_증발.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-state-2",
+    grade: "중1",
+    unit: "물질의 상태 변화",
+    lesson: "상태 변화와 열에너지",
+    title: "상태 변화와 열에너지",
+    conceptLead: "가열 곡선과 냉각 곡선에서 수평 구간(융해열, 기화열, 응고열, 액화열)의 생성 원리와 상태에 따른 입자 배열 및 운동을 실시간으로 탐구합니다.",
+    icon: "🌡️",
+    keywords: ["상태변화", "가열곡선", "냉각곡선", "녹는점", "끓는점", "융해열", "기화열", "입자모형"],
+    tools: {
+      sim: { nm: "상태 변화와 열에너지", url: "./상태_변화와_열에너지.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-light-1",
+    grade: "중2",
+    unit: "빛과 파동",
+    lesson: "빛의 합성과 색",
+    title: "빛의 삼원색 합성",
+    conceptLead: "빨강, 초록, 파랑 빛의 가산 혼합(노랑, 자홍, 청록, 흰색)과 무대 조명 아래 컬러 그림자, 디스플레이 RGB 서브픽셀 발광 원리를 탐구합니다.",
+    icon: "💡",
+    keywords: ["빛의삼원색", "가산혼합", "컬러그림자", "RGB픽셀", "보색", "합성빛"],
+    tools: {
+      sim: { nm: "빛의 삼원색 합성", url: "./빛의_삼원색_합성.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-light-2",
+    grade: "중2",
+    unit: "빛과 파동",
+    lesson: "거울과 렌즈에 의한 상",
+    title: "거울과 렌즈에 의한 상의 형성",
+    conceptLead: "볼록렌즈, 오목렌즈, 평면거울에서 빛의 굴절과 반사 법칙을 적용한 실시간 광선 추적과 물체 거리(f, 2f)에 따른 실상·허상의 위치 및 크기를 작도합니다.",
+    icon: "🔍",
+    keywords: ["볼록렌즈", "오목렌즈", "평면거울", "광선추적", "초점거리", "실상", "허상", "배율"],
+    tools: {
+      sim: { nm: "거울과 렌즈에 의한 상의 형성", url: "./거울과_렌즈_상의_형성.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-chem-density",
+    grade: "중2",
+    unit: "물질의 특성",
+    lesson: "밀도와 혼합물의 분리",
+    title: "밀도차에 의한 혼합물 분리",
+    conceptLead: "서로 섞이지 않는 액체의 다층 밀도 탑과 고체의 뜨고 가라앉음, 분별 깔때기 밸브를 조작하여 물과 기름을 분리하는 실험을 수행합니다.",
+    icon: "⚖️",
+    keywords: ["밀도", "밀도차", "혼합물분리", "밀도탑", "분별깔때기", "물과식용유", "사염화탄소"],
+    tools: {
+      sim: { nm: "밀도차에 의한 혼합물 분리", url: "./밀도차에_의한_혼합물_분리.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-chem-sol",
+    grade: "중2",
+    unit: "물질의 특성",
+    lesson: "용해도와 석출",
+    title: "용해도 곡선과 석출량",
+    conceptLead: "온도에 따른 고체 물질의 용해도 곡선과 고온 포화 용액을 냉각시킬 때 석출되는 결정의 질량 자동 계산 및 재결정 원리를 탐구합니다.",
+    icon: "🧪",
+    keywords: ["용해도", "용해도곡선", "석출량", "재결정", "포화용액", "불포화용액", "과포화", "질산포타슘"],
+    tools: {
+      sim: { nm: "용해도 곡선과 석출량", url: "./용해도_곡선과_석출량.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-eclipse",
+    grade: "중1",
+    unit: "태양계",
+    lesson: "달의 운동과 일식·월식",
+    title: "일식과 월식의 원리",
+    conceptLead: "태양-달-지구(일식) 및 태양-지구-달(월식) 천체 배열과 본그림자·반그림자, 지구 관측자의 시선에서 본 개기일식·개기월식을 시뮬레이션합니다.",
+    icon: "🌑",
+    keywords: ["일식", "월식", "개기일식", "개기월식", "본그림자", "반그림자", "삭", "망", "블러드문"],
+    tools: {
+      sim: { nm: "일식과 월식의 원리", url: "./일식과_월식의_원리.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-bio-digest",
+    grade: "중2",
+    unit: "동물과 에너지",
+    lesson: "영양소의 소화",
+    title: "소화 효소의 작용",
+    conceptLead: "탄수화물(녹말), 단백질, 지방의 소화 기관(입, 위, 소장)별 소화 효소(아밀레이스, 펩신, 쓸개즙, 라이페이스) 분해 메커니즘과 소장 융털 흡수를 탐구합니다.",
+    icon: "✂️",
+    keywords: ["소화효소", "아밀레이스", "펩신", "라이페이스", "쓸개즙", "녹말", "단백질", "지방", "융털흡수"],
+    tools: {
+      sim: { nm: "소화 효소의 작용", url: "./소화_효소의_작용.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-bio-circ",
+    grade: "중2",
+    unit: "동물과 에너지",
+    lesson: "순환계: 심장 박동과 혈액 순환",
+    title: "심장 박동과 혈액 순환",
+    conceptLead: "2심방 2심실의 판막 구조와 심실 수축·이완 박동, 동맥혈과 정맥혈의 체순환(온몸) 및 폐순환 실시간 혈류 경로를 시뮬레이션합니다.",
+    icon: "❤️",
+    keywords: ["심장박동", "혈액순환", "체순환", "폐순환", "좌심실", "우심실", "판막", "동맥혈", "정맥혈"],
+    tools: {
+      sim: { nm: "심장 박동과 혈액 순환", url: "./심장_박동과_혈액_순환.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
+  },
+  {
+    id: "m-gas-8",
+    grade: "중1",
+    unit: "기체의 성질",
+    lesson: "기체 법칙 종합 실험",
+    title: "기체 가상실험실 종합 (보일·샤를·분자 운동)",
+    conceptLead: "보일 법칙, 샤를 법칙, 분자 운동을 단일 인터페이스에서 종합적으로 조작하고 비교 분석할 수 있는 통합 실험실입니다.",
+    icon: "🧰",
+    keywords: ["기체통합", "보일샤를", "가스코스모스", "대시보드"],
+    tools: {
+      sim: { nm: "기체 가상실험실 종합 (보일·샤를·분자 운동)", url: "./기체_가상실험실_통합.html" },
+      ws: null,
+      org: { nm: "마인드맵 정리", url: "./마인드맵.html" },
+      game: null
+    }
   }
 ];
+
+
+/* ===== 단원 연계 지도 (v2) : 단원 도입 → 차시 흐름 → 단원 마무리 → 이어지는 단원 ===== */
+const UNIT_FLOW = {"중2|전기와 자기": ["m-elec-0", "m-elec-1", "m-elec-2", "m-elec-3", "m-elec-4", "m-elec-ohm", "m-elec-5", "m-elec-6", "m-elec-wm", "m-elec-7", "m-elec-mag", "m-elec-8", "m-elec-9", "m-elec-10"], "중1|기체의 성질": ["m-gas-1", "m-gas-2", "m-gas-3", "m-gas-4", "m-gas-5", "m-gas-6", "m-gas-7", "m-gas-8"], "중2|식물과 에너지": ["m-bio-1"], "중2|동물과 에너지": ["m-bio-digest", "m-bio-circ", "m-bio-2"], "중2|물질의 특성": ["m-chem-density", "m-chem-sol", "m-chem-1"], "중2|물질의 구성": ["m-chem-2", "m-chem-3", "m-chem-4"], "중3|자극과 반응": ["m-bio3-1", "m-bio3-horm", "m-bio3-homeo"], "중3|생식과 유전": ["m-bio3-2", "m-bio3-chromo", "m-bio3-3", "m-bio3-4", "m-bio3-5", "m-bio3-6", "m-bio3-7", "m-bio3-8", "m-bio3-9", "m-human-genetics", "m-bio3-xlinked", "m-bio3-10", "m-bio3-practice"], "중2|별과 우주": ["m-star-temp-2", "m-star-mag-2", "m-star-parallax-2"], "중1|태양계": ["m-solar-bodies", "m-solar-planets", "m-earth-rotation", "m-earth-revolution", "m-moon-phase", "m-eclipse"], "중3|별과 우주": ["m-star-temp-3", "m-star-mag-3", "m-star-parallax", "m-star-n-nebula", "m-star-n-milky", "m-star-n-galaxy", "m-star-n-expand"], "중3|에너지 전환과 보존": ["m-energy-power", "m-power-trans"], "중1|물질의 상태 변화": ["m-state-1", "m-state-2"], "중2|빛과 파동": ["m-light-1", "m-light-2"]};
+const UNIT_LINKS = [["중1|물질의 상태 변화", "중1|기체의 성질", "입자 운동 모형으로 기체의 압력·부피 변화를 설명"], ["중1|물질의 상태 변화", "중2|물질의 특성", "상태 변화 때 온도가 일정한 점 → 끓는점·녹는점으로 물질을 구별·분리"], ["중1|태양계", "중2|별과 우주", "지구의 자전·공전 → 별의 연주 시차와 밝기·색"], ["중2|별과 우주", "중3|별과 우주", "별의 특성 → 성운·성단·은하·우주 팽창"], ["중2|물질의 구성", "중2|전기와 자기", "이온 결합의 정전기적 인력 ↔ 마찰 전기·정전기 유도"], ["중2|전기와 자기", "중3|에너지 전환과 보존", "전류·전압·저항 → 전기 에너지 전환·소비 전력·송전"], ["중2|빛과 파동", "중3|자극과 반응", "렌즈에서 빛의 굴절 → 눈의 수정체 조절 작용"], ["중2|식물과 에너지", "중2|동물과 에너지", "광합성으로 만든 양분 → 소화·순환·호흡으로 이용"], ["중2|동물과 에너지", "중3|자극과 반응", "순환·배설 → 호르몬과 항상성 유지"]];
+const MOD_BY_ID = {}; LESSON_MODULES.forEach((m, i) => { m._ai = i; MOD_BY_ID[m.id] = m; });
+function flowPos(m) { const i = (UNIT_FLOW[m.grade + "|" + m.unit] || []).indexOf(m.id); return i < 0 ? 999 : i; }
+function flowOf(g, u) {
+  const key = g + "|" + u, all = LESSON_MODULES.filter(m => m.grade === g && m.unit === u);
+  const fl = UNIT_FLOW[key] || [];
+  const pos = m => { const i = fl.indexOf(m.id); return i < 0 ? 999 : i; };
+  return all.slice().sort((a, b) => pos(a) - pos(b) || a._ai - b._ai);
+}
+const gradeUnitKnown = (g, u) => (UNITS_KNOWN[g] || []).includes(u);
+const UNITS_KNOWN = {
+  "중1": ["과학과 인류의 지속가능한 삶", "생물의 구성과 다양성", "열", "물질의 상태 변화", "힘의 작용", "기체의 성질", "태양계"],
+  "중2": ["물질의 특성", "지권의 변화", "빛과 파동", "물질의 구성", "식물과 에너지", "동물과 에너지", "전기와 자기", "별과 우주"],
+  "중3": ["화학 반응의 규칙과 에너지 변화", "기권과 날씨", "운동과 에너지", "자극과 반응", "생식과 유전", "에너지 전환과 보존", "별과 우주"]
+};
+function introHref(g, u) { return "./동기유발_서랍.html?g=" + encodeURIComponent(g) + "&u=" + encodeURIComponent(u); }
+function gameHref(file, fq, t) {
+  return boardMode ? "./전자칠판_실행기.html?f=" + encodeURIComponent(file) + "&imm=1" + (fq ? "&fq=" + encodeURIComponent(fq) : "") + "&t=" + encodeURIComponent(t) : "./" + file + (fq ? "?" + fq : "");
+}
+function goUnit(g, u) {
+  selectedPrimary = g; selectedUnit = u; selectedStage = "ALL"; searchQuery = "";
+  const si = document.getElementById("keywordSearch"); if (si) si.value = "";
+  document.querySelectorAll(".primary-nav-btn").forEach(b => b.classList.toggle("active", (b.getAttribute("onclick") || "").indexOf("'" + g + "'") >= 0));
+  document.querySelectorAll(".stage-chip").forEach((b, i) => b.classList.toggle("active", i === 0));
+  renderUnitChips(); render(); window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function goCard(id) {
+  let el = document.getElementById("card-" + id);
+  if (!el) { selectedStage = "ALL"; searchQuery = ""; const si = document.getElementById("keywordSearch"); if (si) si.value = ""; render(); el = document.getElementById("card-" + id); }
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+}
+function unitMapEl(g, u) {
+  const fl = flowOf(g, u), key = g + "|" + u;
+  const box = document.createElement("div"); box.className = "unit-map";
+  const known = gradeUnitKnown(g, u);
+  const fq = "g=" + encodeURIComponent(g) + "&u=" + encodeURIComponent(u);
+  let h = `<div class="um-row"><span class="um-lab">🚀 단원 도입</span><a class="um-chip intro" href="${introHref(g, u)}" target="_blank" title="수업 시작 3분 동기유발 (오개념 저격수·밸런스 게임 등)">동기유발 3분 도입 · ${u}</a></div>`;
+  h += `<div class="um-row"><span class="um-lab">🧭 학습 흐름</span>` + fl.map((x, i) => `<button class="um-chip" onclick="goCard('${x.id}')" title="${x.lesson}"><span class="no">${i + 1}</span>${x.lesson.replace(/^별의 특성 : |^우주의 구성 : /, "")}</button>`).join('<span class="um-arrow">→</span>') + `</div>`;
+  h += `<div class="um-row"><span class="um-lab">🏁 단원 마무리</span>` +
+    (known ? `<a class="um-chip wrap" href="${gameHref("개념격추.html", fq, "개념 격추")}" target="_blank">🎯 개념 격추 (단원 종합)</a><a class="um-chip wrap" href="${gameHref("올인원_뱀주사위놀이.html", fq, "올인원 뱀주사위")}" target="_blank">🐍 뱀주사위 (단원 퀴즈)</a>` : "") +
+    `<a class="um-chip wrap" href="./판서_마인드맵.html" target="_blank">🧑‍🏫 판서 마인드맵</a></div>`;
+  const prev = UNIT_LINKS.filter(l => l[1] === key), next = UNIT_LINKS.filter(l => l[0] === key);
+  const lk = (k, why, arrow) => { const [gg, uu] = k.split("|"); return `<button class="um-chip link" onclick="goUnit('${gg}','${uu}')" title="${why}">${arrow} ${gg} ${uu}</button><span class="um-why">${why}</span>`; };
+  if (prev.length || next.length) {
+    h += `<div class="um-row"><span class="um-lab">🔗 연계 단원</span>` +
+      prev.map(l => lk(l[0], l[2], "◀ 먼저")).join(" ") + (prev.length && next.length ? '<span class="um-arrow">｜</span>' : "") +
+      next.map(l => lk(l[1], l[2], "이어서 ▶")).join(" ") + `</div>`;
+  }
+  box.innerHTML = h; return box;
+}
 
 /* 상태 관리 */
 let selectedPrimary = "ALL"; // ALL, 중1, 중2, 중3, FAV
@@ -1777,7 +2018,9 @@ function renderUnitChips() {
     modules = modules.filter(m => m.grade === selectedPrimary);
   }
 
-  const units = Array.from(new Set(modules.map(m => m.unit)));
+  const _gr = g => ["중1", "중2", "중3"].indexOf(g);
+  const _rank = u => { let best = [9, 99]; modules.forEach(m => { if (m.unit === u) { const r = [_gr(m.grade), (UNITS_KNOWN[m.grade] || []).indexOf(m.unit)]; if (r[0] < best[0] || (r[0] === best[0] && r[1] < best[1])) best = r; } }); return best; };
+  const units = Array.from(new Set(modules.map(m => m.unit))).sort((a, b) => { const x = _rank(a), y = _rank(b); return x[0] - y[0] || x[1] - y[1]; });
 
   const allBtn = document.createElement("button");
   allBtn.className = "unit-chip" + (selectedUnit === "ALL" ? " active" : "");
@@ -1836,7 +2079,7 @@ function render() {
   const gr = g => { const i = GR.indexOf(g); return i < 0 ? 9 : i; };
   const ur = (g, u) => { const i = (UO[g] || []).indexOf(u); return i < 0 ? 99 : i; };
   filtered.map((m, i) => (m._o = i, m));
-  filtered.sort((a, b) => gr(a.grade) - gr(b.grade) || ur(a.grade, a.unit) - ur(b.grade, b.unit) || a._o - b._o);
+  filtered.sort((a, b) => gr(a.grade) - gr(b.grade) || ur(a.grade, a.unit) - ur(b.grade, b.unit) || flowPos(a) - flowPos(b) || a._o - b._o);
 
   resultTitle.textContent = `수업 모듈 카드 (${filtered.length}개 차시 연계 세트)`;
 
@@ -1858,20 +2101,26 @@ function render() {
       gh.className = "group-head";
       gh.innerHTML = `<span>${m.grade}</span><span>·</span><span>${m.unit}</span><span class="gh-sub">${n}개 차시</span>`;
       grid.appendChild(gh);
+      grid.appendChild(unitMapEl(m.grade, m.unit));
       lastGroup = gk;
     }
     const isFav = !!favs[m.id];
     const card = document.createElement("article");
     card.className = "lesson-card";
+    card.id = "card-" + m.id;
 
     // 도구 버튼 구성 (Spatial Contiguity: 4단계 수업 세트 근접 배치)
-    let toolsHtml = "";
+    let toolsHtml = `
+        <a href="${introHref(m.grade, m.unit)}" class="btn-action btn-intro" target="_blank" title="수업 시작 3분 동기유발 (${m.unit})">
+          <span><i class="stp">①</i>🚀 도입 3분</span>
+        </a>
+      `;
     
     // 1) 가상실험실
     if (m.tools.sim) {
       toolsHtml += `
         <a href="${simHref(m.tools.sim.url, m.title)}" class="btn-action btn-sim" target="_blank" title="가상실험실 조작">
-          <span>🔬 ${m.tools.sim.nm}</span>
+          <span><i class="stp">②</i>🔬 ${m.tools.sim.nm}</span>
         </a>
       `;
     }
@@ -1879,7 +2128,7 @@ function render() {
     if (m.tools.sim2) {
       toolsHtml += `
         <a href="${simHref(m.tools.sim2.url, m.tools.sim2.nm)}" class="btn-action btn-sim" target="_blank" title="같은 차시의 추가 가상실험">
-          <span>🔬 ${m.tools.sim2.nm}</span>
+          <span><i class="stp">②</i>🔬 ${m.tools.sim2.nm}</span>
         </a>
       `;
     }
@@ -1888,7 +2137,7 @@ function render() {
       m.tools.more.forEach(x => {
         toolsHtml += `
         <a href="${simHref(x.url, x.nm)}" class="btn-action btn-sim" target="_blank" title="같은 차시의 탐구형 가상실험실">
-          <span>🔬 ${x.nm}</span>
+          <span><i class="stp">②</i>🔬 ${x.nm}</span>
         </a>
       `;
       });
@@ -1897,7 +2146,7 @@ function render() {
     if (m.tools.ws) {
       toolsHtml += `
         <a href="${m.tools.ws.url}" class="btn-action btn-ws" target="_blank" title="1쪽 오프라인 활동지 인쇄/열기">
-          <span>📄 ${m.tools.ws.nm}</span>
+          <span><i class="stp">③</i>📄 ${m.tools.ws.nm}</span>
         </a>
       `;
     }
@@ -1905,7 +2154,7 @@ function render() {
     if (m.tools.org) {
       toolsHtml += `
         <a href="${m.tools.org.url}" class="btn-action btn-org" target="_blank" title="개념 구조화 및 정리">
-          <span>🧠 ${m.tools.org.nm}</span>
+          <span><i class="stp">④</i>🧠 ${m.tools.org.nm}</span>
         </a>
       `;
     }
@@ -1913,7 +2162,7 @@ function render() {
     if (m.tools.game) {
       toolsHtml += `
         <a href="${m.tools.game.url}" class="btn-action btn-game" target="_blank" title="개념 인출 및 형성평가 게임">
-          <span>🔔 ${m.tools.game.nm}</span>
+          <span><i class="stp">⑤</i>🔔 ${m.tools.game.nm}</span>
         </a>
       `;
     }
@@ -1932,7 +2181,7 @@ function render() {
         : "./올인원_뱀주사위놀이.html?" + fq;
       toolsHtml += `
         <a href="${sHref}" class="btn-action btn-snake" target="_blank" title="${known ? m.unit : '전 단원'} 퀴즈로 즐기는 모둠 뱀주사위 보드게임">
-          <span>🐍 뱀주사위 (${known ? m.unit : '종합'})</span>
+          <span><i class="stp">⑤</i>🐍 뱀주사위 (${known ? m.unit : '종합'})</span>
         </a>
       `;
     }
@@ -1957,12 +2206,19 @@ function render() {
           : "./개념격추.html?" + fq;
         toolsHtml += `
         <a href="${kHref}" class="btn-action btn-shoot" target="_blank" title="${m.unit}${lessonNo ? ' ' + lessonNo + '차시' : ''} 개념으로 도전하는 개념 격추">
-          <span>🎯 개념 격추</span>
+          <span><i class="stp">⑤</i>🎯 개념 격추</span>
         </a>
       `;
       }
     }
 
+    const _fl = flowOf(m.grade, m.unit), _ix = _fl.findIndex(x => x.id === m.id);
+    const _pv = _ix > 0 ? _fl[_ix - 1] : null, _nx = _ix >= 0 && _ix < _fl.length - 1 ? _fl[_ix + 1] : null;
+    const navHtml = `<div class="lesson-nav">
+          <button ${_pv ? `onclick="goCard('${_pv.id}')" title="${_pv.lesson}"` : "disabled"}>◀ ${_pv ? _pv.lesson.replace(/^별의 특성 : |^우주의 구성 : /, "") : "첫 차시"}</button>
+          <span class="ln-pos">${_ix + 1}/${_fl.length}</span>
+          <button ${_nx ? `onclick="goCard('${_nx.id}')" title="${_nx.lesson}"` : "disabled"}>${_nx ? _nx.lesson.replace(/^별의 특성 : |^우주의 구성 : /, "") : "마지막 차시"} ▶</button>
+        </div>`;
     card.innerHTML = `
       <div>
         <div class="card-top">
@@ -1991,11 +2247,12 @@ function render() {
 
       <div class="card-tools-matrix">
         <div class="matrix-label">
-          <span>⚡ 연계 수업 도구 세트 (공간적 근접성)</span>
+          <span>⚡ 수업 흐름 ① 도입 → ② 탐구 → ③ 활동 → ④ 정리 → ⑤ 평가</span>
         </div>
         <div class="action-btn-row">
           ${toolsHtml}
         </div>
+        ${navHtml}
       </div>
     `;
 
