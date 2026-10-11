@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="샤를 법칙 가상실험: 온도에 따른 풍선 속 기체의 부피 변화와 입자 운동을 관찰해 보세요.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#eef4fa">
+<meta property="og:type" content="website">
+<meta property="og:title" content="샤를 법칙 가상실험 - 풍선 속 기체의 온도와 부피">
+<meta property="og:description" content="온도 슬라이더로 풍선 부피와 입자 운동의 변화를 관찰하는 중학교 과학 가상실험">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='22' fill='%23ee4a62'/%3E%3Crect x='28' y='48' width='8' height='10' rx='3' fill='%23c92a47'/%3E%3C/svg%3E">
+<title>샤를 법칙 가상실험 - 풍선 속 기체의 온도와 부피</title>
+<style>
+  :root{
+    --bg:#eef4fa; --card:#ffffff; --ink:#1d2b3a; --sub:#5b6b7c; --line:#d6e0ea;
+    --blue:#2b7de9; --red:#e5533d; --green:#22a06b; --amber:#f0a020;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;}
+  header{display:flex; align-items:baseline; gap:14px; padding:12px 20px 4px; flex-wrap:wrap;}
+  header h1{margin:0; font-size:26px;}
+  header p{margin:0; color:var(--sub); font-size:16px;}
+  .app{display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:14px; padding:10px 20px 20px; align-items:start;}
+  .card{background:var(--card); border-radius:18px; box-shadow:0 2px 10px rgba(30,60,100,.10); padding:12px 14px;}
+  .card h2{margin:0 0 8px; font-size:19px; display:flex; align-items:center; gap:8px;}
+  .tag{font-size:13px; font-weight:700; padding:3px 10px; border-radius:999px; color:#fff;}
+  .tag.macro{background:var(--blue);} .tag.micro{background:var(--green);}
+  .stages{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px;}
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#f8fbff;}
+  .note{margin:6px 2px 0; font-size:14px; color:var(--sub); min-height:20px;}
+  .right{display:flex; flex-direction:column; gap:14px;}
+  .presets{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  button{font-family:inherit; cursor:pointer; border:0;}
+  .pre{min-height:68px; border-radius:14px; font-size:18px; font-weight:800; color:#fff; line-height:1.2;
+    box-shadow:0 3px 0 rgba(0,0,0,.18); transition:transform .08s, box-shadow .08s, outline-color .1s; outline:4px solid transparent;}
+  .pre small{display:block; font-size:15px; font-weight:700; opacity:.95;}
+  .pre:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .pre.ice{background:#3a9bdc;} .pre.room{background:#3fae7a;} .pre.hot{background:#e5533d;}
+  .pre.active{outline-color:#1d2b3a55;}
+  .sliderRow{margin-top:14px;}
+  .sliderRow label{display:flex; justify-content:space-between; font-size:16px; font-weight:700; margin-bottom:6px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:14px; border-radius:999px;
+    background:linear-gradient(90deg,#3a9bdc,#7fd0a8 40%,#f3c45a 70%,#e5533d); outline:none; margin:10px 0;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:44px; height:44px; border-radius:50%;
+    background:#fff; border:5px solid #1d2b3a; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  input[type=range]::-moz-range-thumb{width:34px; height:34px; border-radius:50%; background:#fff; border:5px solid #1d2b3a;}
+  .ticks{display:flex; justify-content:space-between; font-size:13px; color:var(--sub); padding:0 4px;}
+  .toggles{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
+  .tg{min-height:60px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:8px; text-align:left;}
+  .tg b{min-width:46px; text-align:center; padding:6px 0; border-radius:999px; background:#9fb1c3; color:#fff; font-size:14px;}
+  .tg.on{background:#dff3e8; color:#14633f;} .tg.on b{background:var(--green);}
+  .tg.wide{grid-column:1 / -1;}
+  .reset{margin-top:12px; width:100%; min-height:56px; border-radius:14px; background:#42576b; color:#fff; font-size:18px; font-weight:800;}
+  .reset:active{background:#2c3b49;}
+  .data{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .box{background:#f3f7fb; border-radius:12px; padding:8px 6px; text-align:center;}
+  .box span{display:block; font-size:13px; color:var(--sub);}
+  .box strong{display:block; font-size:26px; line-height:1.25;}
+  .box em{font-style:normal; font-size:15px; color:var(--sub); font-weight:700;}
+  .status{margin-top:8px; padding:9px 12px; border-radius:12px; background:#fff6e0; font-size:16px; font-weight:700; min-height:40px;}
+  .facts{margin-top:8px; font-size:14px; color:var(--sub); display:flex; flex-wrap:wrap; gap:4px 14px;}
+  .facts b{color:var(--ink);}
+  @media (max-width:980px){
+    .app{grid-template-columns:1fr; padding:8px 12px 16px;}
+    .stages{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:640px){
+    .stages{grid-template-columns:1fr;}
+    header h1{font-size:21px;}
+  }
+  .back{margin-left:auto; min-height:44px; display:inline-flex; align-items:center; padding:0 16px; border-radius:12px;
+    background:#42576b; color:#fff; font-size:16px; font-weight:800; text-decoration:none;}
+  .back:active{background:#2c3b49;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎈 샤를 법칙 가상실험</h1>
+  <p>온도가 변하면 풍선 속 기체의 부피는 어떻게 될까요?</p>
+  <a class="back" href="./가상실험실_서랍.html">← 서랍으로</a>
+</header>
+
+<div class="app">
+  <!-- 왼쪽: 실험 뷰 -->
+  <div class="card">
+    <div class="stages">
+      <div>
+        <h2><span class="tag macro">거시 관점</span> 수조와 풍선</h2>
+        <canvas id="macro" width="520" height="560"></canvas>
+        <div class="note" id="exNote"></div>
+      </div>
+      <div>
+        <h2><span class="tag micro">미시 관점</span> 풍선 속 확대</h2>
+        <canvas id="micro" width="400" height="400"></canvas>
+        <div class="note" id="microNote"></div>
+        <div class="facts">
+          <span>입자 수: <b>36개</b> (변하지 않음)</span>
+          <span>평균 속력: <b id="spd">×1.00</b></span>
+          <span>벽 충돌: <b id="hits">0</b>회/초</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 조작 패널 + 데이터 -->
+  <div class="right">
+    <div class="card">
+      <h2>🌡️ 수조 온도 조절</h2>
+      <div class="presets">
+        <button class="pre ice" data-t="0">얼음물<small>0℃</small></button>
+        <button class="pre room" data-t="20">상온<small>20℃</small></button>
+        <button class="pre hot" data-t="80">뜨거운 물<small>80℃</small></button>
+      </div>
+      <div class="sliderRow">
+        <label><span>온도 미세 조절</span><span id="sliderVal">20℃</span></label>
+        <input type="range" id="slider" min="-20" max="100" step="1" value="20">
+        <div class="ticks"><span>-20℃</span><span>0℃</span><span>20℃</span><span>40℃</span><span>60℃</span><span>80℃</span><span>100℃</span></div>
+      </div>
+      <div class="toggles">
+        <button class="tg on" id="tgP" aria-pressed="true"><span>입자 운동 표시</span><b>ON</b></button>
+        <button class="tg" id="tgV" aria-pressed="false"><span>속도 벡터(화살표)</span><b>OFF</b></button>
+        <button class="tg on wide" id="tgX" aria-pressed="true"><span>풍선 변화 크게 보기 (과장 표시)</span><b>ON</b></button>
+      </div>
+      <button class="reset" id="reset">↺ 초기화</button>
+    </div>
+
+    <div class="card">
+      <h2>📊 실시간 데이터</h2>
+      <div class="data">
+        <div class="box"><span>현재 온도</span><strong id="dT">20.0</strong><em>℃</em></div>
+        <div class="box"><span>절대 온도</span><strong id="dK">293</strong><em>K</em></div>
+        <div class="box"><span>풍선 부피(상댓값)</span><strong id="dV">107</strong><em>mL</em></div>
+      </div>
+      <div class="status" id="status">온도를 바꿔 보세요.</div>
+      <div class="facts"><span>부피 ÷ 절대온도 = <b id="ratio">0.366</b> mL/K (항상 일정)</span></div>
+      <canvas id="graph" width="440" height="320" style="margin-top:10px"></canvas>
+      <div class="note">주황 선: 지금까지 측정한 값 · 점선: 샤를 법칙 직선</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- 상수 ---------- */
+  var T_MIN=-20, T_MAX=100, T0K=273.15;
+  var V_AT_0C=100;            // 0℃에서 부피(상댓값) 100 mL
+  var N=36;                   // 입자 수(일정)
+  var SPEED_K=14;             // 속력 = SPEED_K * sqrt(T_K) * (개체별 계수)
+  var R0=70;                  // 0℃ 풍선 기준 반지름(그림 좌표)
+
+  /* ---------- 상태 ---------- */
+  var S={ T:20, target:20, showP:true, showV:false, exag:true, trail:[], hitCount:0, hitRate:0, hitTimer:0, t:0 };
+
+  function kelvin(T){ return T+T0K; }
+  function volume(T){ return V_AT_0C*kelvin(T)/T0K; }          // V ∝ T(K)
+  function rOf(T){                                              // 풍선 반지름(그림)
+    var ratio=Math.cbrt(volume(T)/V_AT_0C);
+    return R0*(S.exag ? 1+3*(ratio-1) : ratio);
+  }
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function tempColor(T){ var t=clamp((T-T_MIN)/(T_MAX-T_MIN),0,1); return 'hsl('+Math.round(220-220*t)+',85%,50%)'; }
+
+  /* ---------- 캔버스 준비 ---------- */
+  function setup(id){
+    var el=document.getElementById(id);
+    var c={el:el, ctx:el.getContext('2d'), W:el.width, H:el.height, s:1};
+    c.fit=function(){
+      var dpr=window.devicePixelRatio||1, w=el.clientWidth||c.W;
+      el.width=Math.round(w*dpr); el.height=Math.round(w*c.H/c.W*dpr); c.s=el.width/c.W;
+    };
+    c.fit(); return c;
+  }
+  var macro=setup('macro'), micro=setup('micro'), graph=setup('graph');
+  function refit(){ macro.fit(); micro.fit(); graph.fit(); }
+  if(window.ResizeObserver){
+    var ro=new ResizeObserver(refit);
+    ro.observe(macro.el); ro.observe(micro.el); ro.observe(graph.el);
+  } else { window.addEventListener('resize',refit); }
+
+  function rr(ctx,x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  }
+
+  /* ---------- 입자 ---------- */
+  var P=[];
+  function initParticles(){
+    P=[]; var fs=[], sum=0, i;
+    for(i=0;i<N;i++){ var f=0.7+Math.random()*0.6; fs.push(f); sum+=f; }
+    var mean=sum/N;
+    for(i=0;i<N;i++){
+      var a=Math.random()*Math.PI*2, d=Math.sqrt(Math.random())*100, b=Math.random()*Math.PI*2;
+      P.push({x:Math.cos(a)*d, y:Math.sin(a)*d, dx:Math.cos(b), dy:Math.sin(b), f:fs[i]/mean, flash:0, wx:0, wy:0});
+    }
+  }
+  initParticles();
+  var PR=7;   // 입자 반지름(그림)
+
+  function microRadius(){ return 150*rOf(S.T)/rOf(T_MAX); }
+
+  function updateParticles(dt){
+    var R=microRadius(), lim=R-PR, base=SPEED_K*Math.sqrt(kelvin(S.T));
+    for(var i=0;i<P.length;i++){
+      var p=P[i], v=base*p.f;
+      p.x+=p.dx*v*dt; p.y+=p.dy*v*dt;
+      var d=Math.hypot(p.x,p.y);
+      if(d>lim){
+        var nx=p.x/d, ny=p.y/d, dot=p.dx*nx+p.dy*ny;
+        if(dot>0){ p.dx-=2*dot*nx; p.dy-=2*dot*ny; S.hitCount++; p.flash=1; p.wx=nx*R; p.wy=ny*R; }
+        p.x=nx*lim; p.y=ny*lim;
+      }
+      if(p.flash>0) p.flash=Math.max(0,p.flash-dt*3);
+    }
+    S.hitTimer+=dt;
+    if(S.hitTimer>=0.5){ S.hitRate=Math.round(S.hitCount/S.hitTimer); S.hitCount=0; S.hitTimer=0; }
+  }
+
+  /* ---------- 거시 뷰 그리기 ---------- */
+  function drawMacro(){
+    var c=macro, ctx=c.ctx, W=c.W, H=c.H, T=S.T;
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.clearRect(0,0,W,H);
+    var cx=235, mouthY=215;
+
+    // 탁자
+    ctx.fillStyle='#d9c7a8'; ctx.fillRect(20,535,420,14);
+
+    // 삼각플라스크
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx-18,215); ctx.lineTo(cx-18,320); ctx.bezierCurveTo(cx-30,360,cx-85,420,cx-85,480);
+    ctx.quadraticCurveTo(cx-85,505,cx-60,505); ctx.lineTo(cx+60,505); ctx.quadraticCurveTo(cx+85,505,cx+85,480);
+    ctx.bezierCurveTo(cx+85,420,cx+30,360,cx+18,320); ctx.lineTo(cx+18,215);
+    ctx.fillStyle='rgba(230,245,255,0.55)'; ctx.fill();
+    ctx.lineWidth=4; ctx.strokeStyle='#8aa6bd'; ctx.stroke();
+    ctx.restore();
+
+    // 물
+    var t01=clamp((T-T_MIN)/(T_MAX-T_MIN),0,1);
+    var wr=Math.round(120+135*t01), wg=Math.round(200-60*t01), wb=Math.round(250-170*t01);
+    ctx.fillStyle='rgba('+wr+','+wg+','+wb+',0.50)';
+    ctx.fillRect(68,335,334,198);
+
+    // 얼음
+    if(T<=3){
+      ctx.fillStyle='rgba(235,248,255,0.85)'; ctx.strokeStyle='#9ccbe8'; ctx.lineWidth=2;
+      var ice=[[95,318,44],[330,322,50],[155,326,38]];
+      for(var i=0;i<ice.length;i++){ rr(ctx,ice[i][0],ice[i][1]+Math.sin(S.t*1.5+i)*2,ice[i][2],ice[i][2]*0.85,8); ctx.fill(); ctx.stroke(); }
+    }
+    // 끓는 기포
+    if(T>=55){
+      var al=clamp((T-55)/45,0.2,0.9);
+      ctx.fillStyle='rgba(255,255,255,'+al+')';
+      for(var j=0;j<14;j++){
+        var sp=22+(j%4)*12, bx=88+(j*53)%300+Math.sin(S.t*2+j)*5;
+        var by=530-((S.t*sp+j*41)%190), br=3+(j%3)*2;
+        ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    // 비커 유리
+    ctx.lineWidth=5; ctx.strokeStyle='#7f9bb3'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(62,285); ctx.lineTo(68,285); ctx.lineTo(68,533); ctx.lineTo(402,533); ctx.lineTo(402,285); ctx.lineTo(408,285); ctx.stroke();
+    ctx.fillStyle='#56708a'; ctx.font='bold 15px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('수조',76,310);
+
+    // 기준 풍선(0℃) 점선
+    var rRef=R0, cyRef=mouthY-rRef*0.95;
+    ctx.setLineDash([7,6]); ctx.lineWidth=2.5; ctx.strokeStyle='#8a97a5';
+    ctx.beginPath(); ctx.arc(cx,cyRef,rRef,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#8a97a5'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('0℃일 때 크기',cx,cyRef-rRef-8);
+
+    // 풍선
+    var r=rOf(T), cy=mouthY-r*0.95;
+    var g=ctx.createRadialGradient(cx-r*0.35,cy-r*0.4,r*0.1,cx,cy,r);
+    g.addColorStop(0,'#ff9aa8'); g.addColorStop(0.6,'#ee4a62'); g.addColorStop(1,'#c92a47');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx-r*0.18,cy+r*0.93); ctx.lineTo(cx+r*0.18,cy+r*0.93); ctx.lineTo(cx+14,mouthY); ctx.lineTo(cx-14,mouthY); ctx.closePath();
+    ctx.fillStyle='#d93651'; ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.ellipse(cx-r*0.38,cy-r*0.42,r*0.14,r*0.24,-0.6,0,Math.PI*2); ctx.fill();
+    // 고무줄 띠
+    ctx.fillStyle='#9a2238'; rr(ctx,cx-24,mouthY-4,48,12,5); ctx.fill();
+
+    // 풍선 표시(돋보기 연결 표시)
+    ctx.strokeStyle='#22a06b'; ctx.lineWidth=3; ctx.setLineDash([4,5]);
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.72,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+    // 온도계
+    var tx=455, top=150, bot=440, hh=bot-top;
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#7f9bb3'; ctx.lineWidth=3;
+    rr(ctx,tx-9,top,18,hh,9); ctx.fill(); ctx.stroke();
+    var fillH=hh*clamp((T-T_MIN)/(T_MAX-T_MIN),0,1);
+    ctx.fillStyle=tempColor(T); ctx.fillRect(tx-4,bot-fillH,8,fillH+6);
+    ctx.beginPath(); ctx.arc(tx,bot+12,17,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#56708a'; ctx.font='bold 13px sans-serif'; ctx.textAlign='right';
+    [-20,0,50,100].forEach(function(v){ var y=bot-hh*(v-T_MIN)/(T_MAX-T_MIN); ctx.fillText(v,tx-14,y+4); ctx.fillRect(tx-12,y-1,6,2); });
+    ctx.textAlign='center'; ctx.fillStyle='#1d2b3a'; ctx.font='bold 20px sans-serif';
+    ctx.fillText(T.toFixed(0)+'℃',tx,bot+48);
+  }
+
+  /* ---------- 미시 뷰 그리기 ---------- */
+  function drawMicro(){
+    var c=micro, ctx=c.ctx, W=c.W, H=c.H, cx=W/2, cy=H/2, R=microRadius();
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.clearRect(0,0,W,H);
+
+    // 최대 크기 안내선
+    ctx.setLineDash([5,6]); ctx.strokeStyle='#c4d0dc'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(cx,cy,150,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+    // 풍선 내부(고무막)
+    ctx.fillStyle='rgba(255,225,230,0.55)'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=8; ctx.strokeStyle='#e0455d'; ctx.stroke();
+    ctx.lineWidth=2; ctx.strokeStyle='#22a06b'; ctx.beginPath(); ctx.arc(cx,cy,R+8,0,Math.PI*2); ctx.stroke();
+
+    if(!S.showP){
+      ctx.fillStyle='#6b7c8d'; ctx.font='bold 18px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('입자 운동 표시 OFF',cx,cy+6);
+      return;
+    }
+    var col=tempColor(S.T), base=SPEED_K*Math.sqrt(kelvin(S.T));
+    var i,p;
+    // 충돌 불꽃
+    for(i=0;i<P.length;i++){
+      p=P[i];
+      if(p.flash>0){
+        ctx.fillStyle='rgba(255,196,0,'+(p.flash*0.9)+')';
+        ctx.beginPath(); ctx.arc(cx+p.wx,cy+p.wy,5+8*p.flash,0,Math.PI*2); ctx.fill();
+      }
+    }
+    // 입자
+    for(i=0;i<P.length;i++){
+      p=P[i];
+      ctx.fillStyle=col; ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(cx+p.x,cy+p.y,PR,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      if(S.showV){
+        var len=base*p.f*0.28, ex=cx+p.x+p.dx*(PR+len), ey=cy+p.y+p.dy*(PR+len);
+        var sx=cx+p.x+p.dx*PR, sy=cy+p.y+p.dy*PR;
+        ctx.strokeStyle='#1d2b3a'; ctx.fillStyle='#1d2b3a'; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke();
+        var ang=Math.atan2(p.dy,p.dx);
+        ctx.beginPath(); ctx.moveTo(ex+Math.cos(ang)*6,ey+Math.sin(ang)*6);
+        ctx.lineTo(ex+Math.cos(ang+2.5)*7,ey+Math.sin(ang+2.5)*7);
+        ctx.lineTo(ex+Math.cos(ang-2.5)*7,ey+Math.sin(ang-2.5)*7); ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+
+  /* ---------- 그래프 ---------- */
+  function drawGraph(){
+    var c=graph, ctx=c.ctx, W=c.W, H=c.H;
+    var L=62, Rg=20, Tp=20, B=52, pw=W-L-Rg, ph=H-Tp-B;
+    var yMin=90, yMax=140;
+    function gx(T){ return L+pw*(T-T_MIN)/(T_MAX-T_MIN); }
+    function gy(V){ return Tp+ph*(1-(V-yMin)/(yMax-yMin)); }
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.clearRect(0,0,W,H);
+    ctx.font='13px sans-serif'; ctx.lineWidth=1; ctx.strokeStyle='#dde6ee'; ctx.fillStyle='#5b6b7c';
+    var v,t;
+    ctx.textAlign='right';
+    for(v=yMin; v<=yMax; v+=10){ ctx.beginPath(); ctx.moveTo(L,gy(v)); ctx.lineTo(W-Rg,gy(v)); ctx.stroke(); ctx.fillText(v,L-8,gy(v)+4); }
+    ctx.textAlign='center';
+    for(t=T_MIN; t<=T_MAX; t+=20){ ctx.beginPath(); ctx.moveTo(gx(t),Tp); ctx.lineTo(gx(t),Tp+ph); ctx.stroke(); ctx.fillText(t,gx(t),Tp+ph+18); }
+    ctx.strokeStyle='#42576b'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(L,Tp); ctx.lineTo(L,Tp+ph); ctx.lineTo(W-Rg,Tp+ph); ctx.stroke();
+    ctx.fillStyle='#1d2b3a'; ctx.font='bold 14px sans-serif';
+    ctx.fillText('온도(℃)',L+pw/2,H-8);
+    ctx.save(); ctx.translate(16,Tp+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText('부피(mL)',0,0); ctx.restore();
+
+    // 이론 직선
+    ctx.setLineDash([6,5]); ctx.strokeStyle='#8a97a5'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(gx(T_MIN),gy(volume(T_MIN))); ctx.lineTo(gx(T_MAX),gy(volume(T_MAX))); ctx.stroke(); ctx.setLineDash([]);
+
+    // 측정 자취
+    if(S.trail.length>1){
+      ctx.strokeStyle='#f08a1c'; ctx.lineWidth=5; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.beginPath();
+      for(var i=0;i<S.trail.length;i++){ var q=S.trail[i]; if(i===0) ctx.moveTo(gx(q.T),gy(q.V)); else ctx.lineTo(gx(q.T),gy(q.V)); }
+      ctx.stroke();
+    }
+    // 현재 점
+    ctx.fillStyle=tempColor(S.T); ctx.strokeStyle='#1d2b3a'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(gx(S.T),gy(volume(S.T)),9,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+
+  /* ---------- 데이터/상태 표시 ---------- */
+  var el={ dT:document.getElementById('dT'), dK:document.getElementById('dK'), dV:document.getElementById('dV'),
+    status:document.getElementById('status'), ratio:document.getElementById('ratio'),
+    spd:document.getElementById('spd'), hits:document.getElementById('hits'),
+    sliderVal:document.getElementById('sliderVal'), exNote:document.getElementById('exNote'), microNote:document.getElementById('microNote') };
+
+  function updateText(){
+    var T=S.T, V=volume(T), K=kelvin(T);
+    el.dT.textContent=T.toFixed(1); el.dK.textContent=K.toFixed(0); el.dV.textContent=V.toFixed(1);
+    el.ratio.textContent=(V/K).toFixed(3);
+    el.spd.textContent='×'+Math.sqrt(K/T0K).toFixed(2);
+    el.hits.textContent=S.hitRate;
+    var d=S.target-T;
+    if(d>0.4) el.status.textContent='🔥 가열 중: 온도 ↑ → 입자가 빨라짐 → 풍선 부피 ↑';
+    else if(d<-0.4) el.status.textContent='🧊 냉각 중: 온도 ↓ → 입자가 느려짐 → 풍선 부피 ↓';
+    else el.status.textContent='온도 '+T.toFixed(0)+'℃에서 안정 상태입니다. 온도를 바꿔 보세요.';
+    el.exNote.textContent=S.exag ? '※ 변화를 보기 쉽게 풍선 크기를 과장해 그렸어요. 부피 수치는 실제 값입니다.' : '실제 비율로 그린 풍선입니다. 점선과 비교해 보세요.';
+    el.microNote.textContent=S.showP ? '온도가 높을수록 입자가 빠르고 벽에 자주 부딪혀요.' : '입자 운동 표시를 켜면 확대 화면이 보여요.';
+  }
+
+  /* ---------- 조작 ---------- */
+  var slider=document.getElementById('slider'), presetBtns=document.querySelectorAll('.pre');
+  function setTarget(t){
+    S.target=clamp(t,T_MIN,T_MAX); slider.value=S.target; el.sliderVal.textContent=Math.round(S.target)+'℃';
+    for(var i=0;i<presetBtns.length;i++){ presetBtns[i].classList.toggle('active', Number(presetBtns[i].dataset.t)===Math.round(S.target)); }
+  }
+  for(var bi=0;bi<presetBtns.length;bi++){
+    presetBtns[bi].addEventListener('click',function(){ setTarget(Number(this.dataset.t)); });
+  }
+  slider.addEventListener('input',function(){ setTarget(Number(slider.value)); });
+
+  function bindToggle(id,key,onLabel){
+    var b=document.getElementById(id);
+    b.addEventListener('click',function(){
+      S[key]=!S[key]; b.classList.toggle('on',S[key]); b.setAttribute('aria-pressed',S[key]);
+      b.querySelector('b').textContent=S[key]?'ON':'OFF';
+    });
+    return b;
+  }
+  var tgP=bindToggle('tgP','showP'), tgV=bindToggle('tgV','showV'), tgX=bindToggle('tgX','exag');
+
+  function setToggle(btn,key,val){ S[key]=val; btn.classList.toggle('on',val); btn.setAttribute('aria-pressed',val); btn.querySelector('b').textContent=val?'ON':'OFF'; }
+  document.getElementById('reset').addEventListener('click',function(){
+    S.T=20; setTarget(20); S.trail=[]; S.hitCount=0; S.hitRate=0; S.hitTimer=0;
+    setToggle(tgP,'showP',true); setToggle(tgV,'showV',false); setToggle(tgX,'exag',true);
+    initParticles();
+  });
+
+  /* ---------- 메인 루프 ---------- */
+  var last=0;
+  function frame(ts){
+    var dt=Math.min(0.05,(ts-last)/1000||0.016); last=ts; S.t+=dt;
+    S.T+=(S.target-S.T)*(1-Math.exp(-dt*2.2));
+    if(Math.abs(S.target-S.T)<0.02) S.T=S.target;
+    var tr=S.trail, lastPt=tr[tr.length-1];
+    if(!lastPt || Math.abs(S.T-lastPt.T)>=0.4){ tr.push({T:S.T,V:volume(S.T)}); if(tr.length>800) tr.shift(); }
+    updateParticles(dt);
+    drawMacro(); drawMicro(); drawGraph(); updateText();
+    requestAnimationFrame(frame);
+  }
+  setTarget(20);
+  S.trail.push({T:S.T,V:volume(S.T)});
+  requestAnimationFrame(frame);
+})();
+</script>
+<script>/* 전자칠판 실행기 등 액자(iframe) 안에서는 서랍으로 돌아가기 링크를 숨겨요 */try{if(window.self!==window.top){var _b=document.querySelectorAll("a.back");for(var _i=0;_i<_b.length;_i++)_b[_i].style.display="none";}}catch(e){}</script>
+</body>
+</html>

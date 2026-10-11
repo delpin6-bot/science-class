@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="중3 별과 우주: 허블의 은하 4대 분류 3D 관찰, 안드로메다 거리 측정, 은하 감별사 미션을 직접 조작하며 배우는 가상실험실">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1230">
+<meta property="og:type" content="website">
+<meta property="og:title" content="외부 은하 가상실험실 - 중3 별과 우주">
+<meta property="og:description" content="허블의 은하 분류, 안드로메다 거리 측정, 감별사 미션과 퀴즈">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1230'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='10' fill='%23b9cdff' fill-opacity='.8' transform='rotate(-25 32 32)'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23ffcf6a'/%3E%3C/svg%3E">
+<title>외부 은하 가상실험실 - 중3 별과 우주</title>
+<style>
+
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1d2b3a; --sub:#5b6b7c; --line:#d6e0ea;
+    --blue:#2b7de9; --red:#e5533d; --green:#22a06b; --amber:#f0a020; --navy:#0b1230;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;}
+  input,textarea{-webkit-user-select:text; user-select:text; font-family:inherit;}
+  header{display:flex; align-items:center; gap:14px; padding:10px 20px 2px; flex-wrap:wrap;}
+  header h1{margin:0; font-size:24px;}
+  header p{margin:0; color:var(--sub); font-size:15px;}
+  .back{margin-left:auto; min-height:48px; display:inline-flex; align-items:center; padding:0 16px; border-radius:12px;
+    background:#42576b; color:#fff; font-size:16px; font-weight:800; text-decoration:none;}
+  .back:active{background:#2c3b49;}
+  .tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:8px 20px 4px;}
+  .tabbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:18px; font-weight:800; border:0; cursor:pointer; padding:0 8px; line-height:1.2;}
+  .tabbtn.on{background:var(--navy); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .panel{display:none; padding:8px 20px 20px;}
+  .panel.on{display:block;}
+  .stage{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:14px; align-items:start;}
+  .cv{background:#060914; border-radius:18px; padding:8px; box-shadow:0 2px 10px rgba(30,60,100,.18);}
+  canvas{display:block; width:100%; height:auto; border-radius:12px; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .hint{color:#aab8cc; font-size:14px; padding:6px 6px 2px; min-height:24px;}
+  .card{background:var(--card); border-radius:18px; box-shadow:0 2px 10px rgba(30,60,100,.10); padding:12px 14px; margin-bottom:12px;}
+  .card h2{margin:0 0 8px; font-size:18px;}
+  button{font-family:inherit; cursor:pointer; border:0;}
+  .seg{display:grid; grid-template-columns:1fr; gap:8px;}
+  .sbtn{min-height:52px; border-radius:14px; font-size:17px; font-weight:800; color:#fff; text-align:left; padding:0 14px;
+    box-shadow:0 3px 0 rgba(0,0,0,.18); outline:4px solid transparent; transition:outline-color .1s;}
+  .sbtn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .sbtn.active{outline-color:#1d2b3a66;}
+  .sbtn.em{background:#d8453f;} .sbtn.re{background:#3a6fd8;} .sbtn.dk{background:#3b3f4a;}
+  .sbtn.op{background:#2f89b8;} .sbtn.gl{background:#c9702f;}
+  .sl{margin-top:12px;}
+  .sl label{display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-bottom:2px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:12px; border-radius:999px; background:#cfd9e6; outline:none; margin:12px 0 8px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:48px; height:48px; border-radius:50%;
+    background:#fff; border:5px solid #0b1230; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; background:#fff; border:5px solid #0b1230;}
+  input.tempR{background:linear-gradient(90deg,#ff8a55,#fff0c8 40%,#a8c4ff 80%,#94b4ff);}
+  .tg{min-height:52px; width:100%; border-radius:14px; background:#e6edf4; color:#42576b; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:8px; text-align:left; margin-top:8px;}
+  .tg b{min-width:64px; text-align:center; padding:6px 8px; border-radius:999px; background:#9fb1c3; color:#fff; font-size:14px;}
+  .tg.on{background:#dff3e8; color:#14633f;} .tg.on b{background:var(--green);}
+  .tg.off{opacity:.45;}
+  .mini{min-height:52px; width:100%; border-radius:14px; background:#42576b; color:#fff; font-size:16px; font-weight:800; margin-top:8px;}
+  .mini:active{background:#2c3b49;}
+  .info h3{margin:0 0 4px; font-size:19px;}
+  .info .ex{font-size:14px; color:var(--sub); margin-bottom:6px;}
+  .info p{margin:0; font-size:15px; line-height:1.5;}
+  .meter{margin-top:10px;}
+  .meter .lab{display:flex; justify-content:space-between; font-size:14px; font-weight:700; margin-bottom:4px;}
+  .bar{height:16px; border-radius:999px; background:#e3eaf2; overflow:hidden;}
+  .bar i{display:block; height:100%; width:0; border-radius:999px; background:#d8453f; transition:width .15s;}
+  .tip{margin-top:10px; padding:9px 12px; border-radius:12px; background:#fff6e0; font-size:15px; font-weight:700; line-height:1.4; min-height:40px;}
+  table.cmp{width:100%; border-collapse:collapse; font-size:14px;}
+  .cmp th,.cmp td{border:1px solid var(--line); padding:6px 5px; text-align:center; line-height:1.3;}
+  .cmp th{background:#f1f5fa; color:var(--sub);}
+  .cmp .hl{background:#fff1c9; font-weight:800;}
+  .sub{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .subbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:17px; font-weight:800;}
+  .subbtn.on{background:#2b7de9; color:#fff;}
+  .shapes{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+  .shp{min-height:64px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:15px; font-weight:800; line-height:1.25; padding:4px;}
+  .shp span{display:block; font-size:22px;}
+  .shp.on{background:#0b1230; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start;}
+  .field{margin-top:10px;} .field label{display:block; font-size:15px; font-weight:800; margin-bottom:5px;}
+  .field input,.field textarea{width:100%; border:2px solid #c5d2e0; border-radius:12px; padding:10px 12px; font-size:18px; min-height:52px; background:#fff; color:var(--ink);}
+  .field textarea{min-height:104px; resize:none; line-height:1.4;}
+  .count{font-size:13px; color:var(--sub); text-align:right;}
+  .big{min-height:58px; width:100%; border-radius:14px; background:#22a06b; color:#fff; font-size:19px; font-weight:800; margin-top:12px; box-shadow:0 3px 0 rgba(0,0,0,.18);}
+  .big:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .big.blue{background:#2b7de9;}
+  .msg{margin-top:8px; font-size:15px; font-weight:700; color:#b3361f; min-height:22px;}
+  .cardcv{border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.25); background:#0b1230;}
+  .quiz .prog{display:flex; justify-content:space-between; font-size:16px; font-weight:800; margin-bottom:8px;}
+  .quiz .secTag{display:inline-block; padding:4px 12px; border-radius:999px; background:#0b1230; color:#fff; font-size:14px; font-weight:800; margin-bottom:8px;}
+  .quiz .q{font-size:22px; font-weight:800; line-height:1.5; margin:6px 0 14px;}
+  .opts{display:grid; gap:10px;}
+  .opts.ox{grid-template-columns:1fr 1fr;}
+  .opt{min-height:62px; border-radius:14px; background:#e9eff6; color:var(--ink); font-size:19px; font-weight:700; text-align:left; padding:8px 16px; line-height:1.35; border:3px solid transparent;}
+  .opts.ox .opt{text-align:center; font-size:30px; font-weight:900;}
+  .opt:active{background:#d9e3ef;}
+  .opt.right{background:#d9f5e5; border-color:#22a06b; color:#0f5a38;}
+  .opt.wrong{background:#fde1dc; border-color:#e5533d; color:#8e2316;}
+  .opt.dim{opacity:.55;}
+  .fb{margin-top:12px; padding:12px 14px; border-radius:12px; font-size:17px; line-height:1.55; display:none;}
+  .fb.ok{display:block; background:#e6f7ee; color:#0f5a38;} .fb.no{display:block; background:#fdeceb; color:#8e2316;}
+  .nextb{margin-top:12px; min-height:56px; padding:0 28px; border-radius:14px; background:#2b7de9; color:#fff; font-size:18px; font-weight:800; display:none;}
+  .nextb.show{display:inline-block;}
+  .result h3{font-size:26px; margin:4px 0 8px;}
+  .result .row{display:flex; justify-content:space-between; padding:8px 12px; border-radius:10px; background:#f3f7fb; margin-bottom:6px; font-size:17px; font-weight:700;}
+  @media (max-width:1000px){
+    .stage{grid-template-columns:1fr;}
+    .two{grid-template-columns:1fr;}
+    .panel,.tabs{padding-left:12px; padding-right:12px;}
+  }
+  @media (max-width:640px){
+    header h1{font-size:20px;}
+    .tabbtn{font-size:15px;}
+    .shapes{grid-template-columns:repeat(3,1fr);}
+  }
+
+  .badges{display:flex; gap:8px; flex-wrap:wrap; padding:2px 4px 8px;}
+  .bd{background:#16204a; color:#cfe0ff; border-radius:999px; padding:6px 14px; font-size:15px; font-weight:800;}
+  .bd.gold{background:#8a6a12; color:#fff3c4; display:none;}
+  .bd.gold.show{display:inline-block;}
+  .sbtn.te{background:#c9702f;} .sbtn.ts{background:#2f89b8;} .sbtn.tb{background:#6a5acd;} .sbtn.ti{background:#3b8f5a;}
+  .seg2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .verdict{margin-top:10px; padding:12px 14px; border-radius:12px; background:#fff6e0; font-size:17px; font-weight:800; line-height:1.5; min-height:60px;}
+  .verdict.ok{background:#e1f6ea; color:#0f5a38;} .verdict.in{background:#fde6e3; color:#8e2316;} .verdict.far{background:#eaf1ff; color:#1c3f86;}
+  .bigNum{font-size:38px; font-weight:900; text-align:center; line-height:1.15;}
+  .bigNum small{font-size:16px; color:var(--sub); font-weight:700;}
+  .tl{margin:6px 0 0; padding-left:20px; font-size:15px; line-height:1.6;}
+  .ans{min-height:64px; font-size:19px;}
+  .mhint{display:none;}
+  .mhint.show{display:block;}
+  .cmpT th,.cmpT td{font-size:13px;}
+  @media (max-width:640px){ .seg2{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌠 외부 은하 가상실험실</h1>
+  <p>중3 과학 Ⅶ. 별과 우주</p>
+  <a class="back" href="./가상실험실_서랍.html">← 서랍으로</a>
+</header>
+
+<nav class="tabs">
+  <button class="tabbtn on" data-tab="t1">🌀 실험 1<br>허블의 은하 모양 4대 분류</button>
+  <button class="tabbtn" data-tab="t2">📏 실험 2<br>허블의 안드로메다 거리 측정</button>
+  <button class="tabbtn" data-tab="t3">🔭 활동 3<br>은하 감별사 미션 &amp; 퀴즈</button>
+</nav>
+
+<!-- ============ 탭 1 ============ -->
+<section id="t1" class="panel on">
+  <div class="stage">
+    <div class="cv">
+      <div class="badges"><span class="bd" id="b1m">✨ 막대 나선 은하 (SB)</span><span class="bd gold show" id="b1g">🌌 우리은하가 속한 유형!</span><span class="bd" id="b1t">기울기 60°</span><span class="bd" id="b1y">자전 6°/초</span></div>
+      <canvas id="c1" width="900" height="600"></canvas>
+      <div class="hint">캔버스를 끌면 은하를 입체로 돌려 볼 수 있어요. 좌우: 회전 · 위아래: 기울기(위 90° ~ 옆 0°)</div>
+    </div>
+    <aside>
+      <div class="card">
+        <h2>은하 모양 고르기</h2>
+        <div class="seg2">
+          <button class="sbtn te" data-type="E">🥚 타원 은하<br>(E)</button>
+          <button class="sbtn ts" data-type="S">🌀 정상 나선<br>은하 (S)</button>
+          <button class="sbtn tb active" data-type="SB">✨ 막대 나선<br>은하 (SB)</button>
+          <button class="sbtn ti" data-type="Irr">💥 불규칙 은하<br>(Irr)</button>
+        </div>
+        <div class="sl"><label><span id="l1m">나선팔 감김 정도</span><span id="v1m">보통</span></label>
+          <input type="range" id="s1m" min="0" max="100" step="1" value="60"></div>
+        <div class="sl"><label><span>은하 자전 속도</span><span id="v1s">6°/초</span></label>
+          <input type="range" id="s1s" min="0" max="20" step="1" value="6"></div>
+        <div class="sl"><label><span>시점 기울기</span><span id="v1p">60°</span></label>
+          <input type="range" id="s1p" min="0" max="90" step="1" value="60"></div>
+        <button class="tg on" id="lb1"><span>구조 이름표 보기</span><b>ON</b></button>
+        <button class="mini" id="r1">↺ 처음 상태로</button>
+      </div>
+      <div class="card info">
+        <h3 id="i1t">✨ 막대 나선 은하 (SB)</h3>
+        <p id="i1p"></p>
+        <div class="ex" style="margin-top:6px" id="i1e"></div>
+        <table class="cmp cmpT" style="margin-top:8px">
+          <tr><th>나눔 기준</th><th>분류</th></tr>
+          <tr id="r_E"><td>나선팔 없음, 타원체</td><td>타원 은하 (E)</td></tr>
+          <tr id="r_S"><td>나선팔 O, 중심 막대 X</td><td>정상 나선 은하 (S)</td></tr>
+          <tr id="r_SB"><td>나선팔 O, 중심 막대 O</td><td>막대 나선 은하 (SB)</td></tr>
+          <tr id="r_Irr"><td>규칙적인 모양 없음</td><td>불규칙 은하 (Irr)</td></tr>
+        </table>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 탭 2 ============ -->
+<section id="t2" class="panel">
+  <div class="stage">
+    <div class="cv">
+      <div class="badges"><span class="bd" id="b2m">📏 안드로메다까지의 거리</span><span class="bd" id="b2d">260 kpc</span></div>
+      <canvas id="c2" width="900" height="600"></canvas>
+      <div class="hint">※ 거리는 같은 축척으로 그렸어요. 은하의 크기는 모식도예요. (1 kpc ≈ 3,260광년)</div>
+    </div>
+    <aside>
+      <div class="card">
+        <h2>안드로메다은하까지의 거리</h2>
+        <div class="seg">
+          <button class="sbtn ti" id="pre2a">🤔 허블 이전의 생각 (가까운 가스 성운)</button>
+          <button class="sbtn tb active" id="pre2b">🔭 허블의 측정값 (260 kpc)</button>
+        </div>
+        <div class="sl"><label><span>거리 조절</span><span id="v2d">260 kpc</span></label>
+          <input type="range" id="s2d" min="15" max="300" step="1" value="260"></div>
+        <div class="ticks"><span>15</span><span>100</span><span>200</span><span>300 kpc</span></div>
+        <button class="tg on" id="rl2"><span>우리은하 지름 자 (30 kpc)</span><b>ON</b></button>
+      </div>
+      <div class="card">
+        <div class="bigNum"><span id="n2">8.7</span>배 <small>우리은하 지름(30 kpc) 기준</small></div>
+        <div class="ex" style="text-align:center;margin-top:4px" id="ly2">약 85만 광년</div>
+        <div class="verdict" id="vd2"></div>
+      </div>
+      <div class="card info">
+        <h3>🏅 세상을 빛낸 과학자: 허블</h3>
+        <ul class="tl">
+          <li>20세기 초까지 안드로메다는 우리은하 안의 <b>가스 성운</b>이라고 생각했어요.</li>
+          <li>1920년대 허블이 거리를 측정했더니 약 <b>260 kpc</b>!</li>
+          <li>우리은하 지름(약 30 kpc)의 <b>8.7배 이상</b> → 우리은하 밖의 <b>독립된 외부 은하</b></li>
+          <li>인류의 우주관이 크게 넓어졌어요.</li>
+        </ul>
+        <div class="ex" style="margin-top:6px">더 알아보기: 오늘날 측정값은 약 780 kpc(약 250만 광년)로, 허블 시대의 값보다 더 멀어요.</div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 탭 3 ============ -->
+<section id="t3" class="panel">
+  <div class="sub">
+    <button class="subbtn on" data-sub="s31">🔭 은하 감별사 미션</button>
+    <button class="subbtn" data-sub="s32">✅ 스스로 확인하기 퀴즈</button>
+  </div>
+  <div id="s31">
+    <div class="stage">
+      <div class="cv">
+        <div class="badges"><span class="bd" id="b3m">🔭 망원경에 은하가 잡혔어요!</span></div>
+        <canvas id="c3" width="640" height="520"></canvas>
+        <div class="hint">끌어서 돌려 보며 관찰해 보세요. 어떤 모양의 은하일까요?</div>
+      </div>
+      <aside>
+        <div class="card" id="mplay">
+          <h2>🔭 은하 감별사 미션</h2>
+          <div class="prog"><span id="mrd">문제 1 / 8</span><span id="msc">점수 0</span></div>
+          <div class="bar" style="margin-bottom:12px"><i id="mbar" style="width:0%;background:#2b7de9"></i></div>
+          <div class="opts" id="mopts">
+            <button class="opt ans" data-t="E">🥚 타원 은하</button>
+            <button class="opt ans" data-t="S">🌀 정상 나선 은하</button>
+            <button class="opt ans" data-t="SB">✨ 막대 나선 은하</button>
+            <button class="opt ans" data-t="Irr">💥 불규칙 은하</button>
+          </div>
+          <button class="mini" id="mh">💡 힌트 보기 (0/2)</button>
+          <div class="tip mhint" id="mhint"></div>
+          <div class="fb" id="mfb"></div>
+          <button class="nextb" id="mnx">다음 은하 ▶</button>
+        </div>
+        <div class="card result" id="mend" style="display:none"></div>
+      </aside>
+    </div>
+  </div>
+  <div id="s32" style="display:none"><div class="card quiz" id="quizBox"></div></div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+  var RAD=Math.PI/180;
+
+  /* ================= 공통 도구 ================= */
+  function $(id){ return document.getElementById(id); }
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function gauss(r){ var u=0; while(u===0) u=r(); var v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  function setup(id,W,H){
+    var el=$(id), c={el:el, ctx:el.getContext('2d'), W:W, H:H, s:1, dirty:true};
+    c.fit=function(){
+      var dpr=Math.min(2,window.devicePixelRatio||1), w=el.clientWidth||W;
+      var nw=Math.round(w*dpr), nh=Math.round(w*H/W*dpr);
+      if(el.width!==nw||el.height!==nh){ el.width=nw; el.height=nh; }
+      c.s=el.width/W; c.dirty=true;
+    };
+    c.pt=function(e){ var r=el.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; };
+    c.fit(); return c;
+  }
+  function setTog(btn,on,label){ btn.classList.toggle('on',on); btn.querySelector('b').textContent=label; }
+  function arrow(ctx,x0,y0,x1,y1,color,lw){
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw||2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    var a=Math.atan2(y1-y0,x1-x0);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1-13*Math.cos(a-0.4),y1-13*Math.sin(a-0.4)); ctx.lineTo(x1-13*Math.cos(a+0.4),y1-13*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+  }
+  function labelBox(ctx,text,x,y,color,size){
+    ctx.font='bold '+(size||16)+'px sans-serif'; var w=ctx.measureText(text).width+18;
+    ctx.fillStyle='rgba(6,10,28,0.82)'; ctx.fillRect(x-w/2,y-15,w,28);
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([]); ctx.strokeRect(x-w/2,y-15,w,28);
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(text,x,y+5);
+  }
+  function sprite(size,stops){
+    var cv=document.createElement('canvas'); cv.width=size; cv.height=size; var x=cv.getContext('2d');
+    var g=x.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
+    for(var i=0;i<stops.length;i++) g.addColorStop(stops[i][0],stops[i][1]);
+    x.fillStyle=g; x.fillRect(0,0,size,size); return cv;
+  }
+  var SPR={
+    pink:sprite(32,[[0,'rgba(255,110,150,0.95)'],[0.4,'rgba(230,60,110,0.45)'],[1,'rgba(230,60,110,0)']]),
+    blue:sprite(32,[[0,'rgba(130,170,255,0.95)'],[0.4,'rgba(80,120,240,0.45)'],[1,'rgba(80,120,240,0)']])
+  };
+
+  /* ================= 탭 전환 ================= */
+  var tabBtns=document.querySelectorAll('.tabbtn'), panels={t1:$('t1'),t2:$('t2'),t3:$('t3')}, curTab='t1';
+  function showTab(id){
+    curTab=id;
+    for(var i=0;i<tabBtns.length;i++) tabBtns[i].classList.toggle('on',tabBtns[i].dataset.tab===id);
+    for(var k in panels) panels[k].classList.toggle('on',k===id);
+    setTimeout(refit,0);
+  }
+  for(var ti=0;ti<tabBtns.length;ti++){ tabBtns[ti].addEventListener('click',function(){ showTab(this.dataset.tab); }); }
+
+  /* ================= 은하 생성·그리기 엔진 ================= */
+  var PAL=['rgba(185,205,255,0.85)','rgba(255,244,214,0.80)','rgba(255,205,140,0.80)','rgba(255,150,110,0.80)'];
+  function mkGal(type,m,seed){
+    var r=mulberry(seed), X=[],Y=[],Z=[],C=[],gx=[],gy=[],gz=[],gc=[],labels=[], i, th, rr, k, tp;
+    function add(x,y,z,c){ X.push(x); Y.push(y); Z.push(z); C.push(c); }
+    function gas(x,y,z,c){ gx.push(x); gy.push(y); gz.push(z); gc.push(c); }
+    function expR(r0,r1,h){ return r0-h*Math.log(1-r()*(1-Math.exp(-(r1-r0)/h))); }
+    if(type==='E'){
+      var f=m;
+      for(i=0;i<4500;i++){
+        var rad=11.5*Math.pow(r(),1.8), cz=2*r()-1, ph=r()*2*Math.PI, s=Math.sqrt(1-cz*cz);
+        add(rad*s*Math.cos(ph), rad*s*Math.sin(ph)*(1-0.35*f), rad*cz*(1-f), r()<0.55?3:(r()<0.6?2:1));
+      }
+      labels.push({t:'매끄러운 타원체 (나선팔 없음)',p:[6,0,2*(1-f)]},{t:'늙은 붉은 별',p:[-3.5,2.5,0]});
+    } else if(type==='S'){
+      tp=Math.tan(m*RAD);
+      for(i=0;i<1100;i++) add(gauss(r)*1.5,gauss(r)*1.5,gauss(r)*1.05,r()<0.6?2:(r()<0.5?1:3));
+      for(i=0;i<3100;i++){
+        rr=expR(2.2,12,3.8);
+        if(r()<0.78){ k=r()<0.5?0:1; th=k*Math.PI+Math.log(rr/2.2)/tp+gauss(r)*(0.5+0.04*rr)/rr; add(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.22,r()<0.65?0:1); }
+        else { th=r()*2*Math.PI; add(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.22,r()<0.6?1:2); }
+      }
+      for(i=0;i<110;i++){ rr=3+r()*9; k=r()<0.5?0:1; th=k*Math.PI+Math.log(rr/2.2)/tp+gauss(r)*0.3/rr; gas(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.12,r()<0.8?0:1); }
+      var ta=Math.log(8.5/2.2)/tp;
+      labels.push({t:'중심핵(Bulge)',p:[0,0,1.6]},{t:'나선팔 (둥근 중심부에서 바로 뻗음)',p:[8.5*Math.cos(ta),8.5*Math.sin(ta),0]});
+    } else if(type==='SB'){
+      tp=Math.tan(m*RAD); var Lb=4.2;
+      for(i=0;i<1700;i++) add(clamp(gauss(r)*2.1,-Lb,Lb),gauss(r)*0.5,gauss(r)*0.3,r()<0.6?2:(r()<0.5?1:3));
+      for(i=0;i<600;i++) add(gauss(r)*1.0,gauss(r)*1.0,gauss(r)*0.8,r()<0.6?2:1);
+      for(i=0;i<2900;i++){
+        rr=expR(Lb,12,3.5); k=r()<0.5?0:1; th=k*Math.PI+Math.log(rr/Lb)/tp+gauss(r)*(0.5+0.04*rr)/rr;
+        add(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.22,r()<0.65?0:1);
+      }
+      for(i=0;i<300;i++){ rr=expR(2,12,3.8); th=r()*2*Math.PI; add(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.22,r()<0.6?1:2); }
+      for(i=0;i<110;i++){ rr=Lb+0.3+r()*7.5; k=r()<0.5?0:1; th=k*Math.PI+Math.log(rr/Lb)/tp+gauss(r)*0.3/rr; gas(rr*Math.cos(th),rr*Math.sin(th),gauss(r)*0.12,r()<0.8?0:1); }
+      var tb=Math.log(8.5/Lb)/tp;
+      labels.push({t:'막대 구조',p:[2.2,0,0.5]},{t:'나선팔 (막대 끝에서 시작)',p:[8.5*Math.cos(tb+Math.PI),8.5*Math.sin(tb+Math.PI),0]},{t:'중심핵',p:[0,0,1.2]});
+    } else {
+      var sc=m, cl=[], tw=0;
+      for(k=0;k<9;k++){ var c={x:(r()-0.5)*14,y:(r()-0.5)*14,z:(r()-0.5)*3.5,s:(1.1+r()*1.1)*sc,w:0.5+r()}; tw+=c.w; cl.push(c); }
+      function pick(){ var u=r()*tw, a=0; for(var q=0;q<cl.length;q++){ a+=cl[q].w; if(u<=a) return cl[q]; } return cl[0]; }
+      for(i=0;i<4500;i++){
+        var u=r(), col=u<0.45?0:u<0.75?1:u<0.95?2:3;
+        if(r()<0.72){ var cc=pick(); add(cc.x+gauss(r)*cc.s,cc.y+gauss(r)*cc.s,cc.z+gauss(r)*cc.s*0.7,col); }
+        else add(gauss(r)*5*sc,gauss(r)*5*sc,gauss(r)*2.5*sc,col);
+      }
+      for(i=0;i<150;i++){ var c2=pick(); gas(c2.x+gauss(r)*c2.s*0.9,c2.y+gauss(r)*c2.s*0.9,c2.z+gauss(r)*c2.s*0.6,r()<0.75?0:1); }
+      labels.push({t:'규칙적인 모양·중심핵 없음',p:[0,0,3.4]},{t:'가스와 별 무리',p:[cl[0].x,cl[0].y,cl[0].z]});
+    }
+    var G={type:type,n:X.length,X:new Float32Array(X),Y:new Float32Array(Y),Z:new Float32Array(Z),idx:[[],[],[],[]],
+           gn:gx.length,GX:new Float32Array(gx),GY:new Float32Array(gy),GZ:new Float32Array(gz),GC:gc,labels:labels};
+    for(i=0;i<X.length;i++) G.idx[C[i]].push(i);
+    return G;
+  }
+  var OX=0, OY=0;
+  function drawGal(ctx,G,cx,cy,sc,yaw,pitch,o){
+    o=o||{};
+    var psi=yaw*RAD, e=pitch*RAD, cs=Math.cos(psi), sn=Math.sin(psi), se=Math.sin(e), ce=Math.cos(e), i, k, ci, list;
+    function pj(x,y,z){ var x1=x*cs-y*sn, y1=x*sn+y*cs; OX=cx+sc*x1; OY=cy-sc*(y1*se+z*ce); }
+    var gR=sc*(G.type==='E'?5.5:G.type==='Irr'?5:3.4), gcol=G.type==='E'?'255,170,110':G.type==='Irr'?'150,180,255':'255,210,130', ga=G.type==='Irr'?0.14:0.45;
+    ctx.globalCompositeOperation='lighter';
+    var gr=ctx.createRadialGradient(cx,cy,0,cx,cy,gR); gr.addColorStop(0,'rgba('+gcol+','+ga+')'); gr.addColorStop(0.5,'rgba('+gcol+','+(ga*0.35)+')'); gr.addColorStop(1,'rgba('+gcol+',0)');
+    ctx.fillStyle=gr; ctx.fillRect(cx-gR,cy-gR,gR*2,gR*2);
+    var sz=1.3+sc*0.02;
+    for(ci=0;ci<4;ci++){ ctx.fillStyle=PAL[ci]; list=G.idx[ci];
+      for(k=0;k<list.length;k++){ i=list[k]; pj(G.X[i],G.Y[i],G.Z[i]); ctx.fillRect(OX-sz/2,OY-sz/2,sz,sz); } }
+    var gs=sc*0.55;
+    for(i=0;i<G.gn;i++){ pj(G.GX[i],G.GY[i],G.GZ[i]); ctx.drawImage(G.GC[i]?SPR.blue:SPR.pink,OX-gs,OY-gs,gs*2,gs*2); }
+    ctx.globalCompositeOperation='source-over';
+    if(o.labels){
+      for(i=0;i<G.labels.length;i++){
+        var lb=G.labels[i]; pj(lb.p[0],lb.p[1],lb.p[2]);
+        var px=OX, py=OY, dx=(i%2===0)?40:-40, dy=(i%3===0)?-46:48;
+        var lx=clamp(px+dx*1.6,120,cx*2-120), ly=clamp(py+dy,24,o.h-24);
+        ctx.strokeStyle='#ffd24a'; ctx.lineWidth=2; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(lx,ly); ctx.stroke();
+        ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+        labelBox(ctx,lb.t,lx,ly,'#ffd24a',15);
+      }
+    }
+  }
+
+  /* ================= 탭 1: 은하 모양 4대 분류 ================= */
+  var c1=setup('c1',900,600);
+  var SEED={E:11,S:22,SB:33,Irr:44};
+  var T1={type:'SB',sv:{E:30,S:60,SB:60,Irr:100},spin:6,yaw:25,tpitch:60,pitch:60,drag:false,lx:0,ly:0,labels:true,gal:null};
+  function mOf(t,sv){ return (t==='E'||t==='Irr')?sv/100:35-27*sv/100; }
+  function vtext(t,sv){ return t==='E'?'E'+Math.round(sv/10)+' (편평도 '+sv+'%)':(t==='Irr'?sv+'%':(sv<33?'느슨하게 감김':sv>66?'꽉 감김':'보통')); }
+  var INFO1={
+    E:['🥚 타원 은하 (E)','나선팔이 없고 구형이나 타원체 모양이에요. 주로 나이 많은 붉은 별들로 이루어져 있어요.','예) M87 같은 거대 타원 은하'],
+    S:['🌀 정상 나선 은하 (S)','둥근 중심부(Bulge)에서 휘어진 나선팔이 직접 뻗어 나와요. 중심부를 가로지르는 막대가 없어요.','예) 안드로메다은하'],
+    SB:['✨ 막대 나선 은하 (SB)','은하 중심을 가로지르는 막대 구조가 있고, 그 막대 양 끝에서 나선팔이 휘어져 나와요.','우리은하가 여기에 속해요!'],
+    Irr:['💥 불규칙 은하 (Irr)','규칙적인 대칭이나 중심핵 모양이 없고, 가스와 별 무리가 비대칭으로 흩어져 있어요.','예) 대마젤란은하']
+  };
+  function rebuild1(){ T1.gal=mkGal(T1.type,mOf(T1.type,T1.sv[T1.type]),SEED[T1.type]); }
+  var typeBtns=document.querySelectorAll('#t1 .sbtn');
+  function setType(t){
+    T1.type=t; for(var i=0;i<typeBtns.length;i++) typeBtns[i].classList.toggle('active',typeBtns[i].dataset.type===t);
+    var sl=$('s1m');
+    if(t==='E'){ sl.min=0; sl.max=70; $('l1m').textContent='타원 편평도'; }
+    else if(t==='Irr'){ sl.min=50; sl.max=150; $('l1m').textContent='흩어짐 정도'; }
+    else { sl.min=0; sl.max=100; $('l1m').textContent='나선팔 감김 정도'; }
+    sl.value=T1.sv[t]; $('v1m').textContent=vtext(t,T1.sv[t]);
+    var inf=INFO1[t]; $('i1t').textContent=inf[0]; $('i1p').textContent=inf[1]; $('i1e').textContent=inf[2]; $('b1m').textContent=inf[0];
+    $('b1g').classList.toggle('show',t==='SB');
+    ['E','S','SB','Irr'].forEach(function(k){ $('r_'+k).className=(k===t)?'hl':''; });
+    rebuild1();
+  }
+  for(var bi=0;bi<typeBtns.length;bi++){ typeBtns[bi].addEventListener('click',function(){ setType(this.dataset.type); }); }
+  $('s1m').addEventListener('input',function(){ T1.sv[T1.type]=Number(this.value); $('v1m').textContent=vtext(T1.type,T1.sv[T1.type]); rebuild1(); });
+  $('s1s').addEventListener('input',function(){ T1.spin=Number(this.value); $('v1s').textContent=T1.spin+'°/초'; $('b1y').textContent='자전 '+T1.spin+'°/초'; });
+  $('s1p').addEventListener('input',function(){ T1.tpitch=Number(this.value); T1.pitch=T1.tpitch; syncPitch(); });
+  function syncPitch(){ $('s1p').value=Math.round(T1.tpitch); $('v1p').textContent=Math.round(T1.tpitch)+'°'; $('b1t').textContent='기울기 '+Math.round(T1.tpitch)+'°'; }
+  $('lb1').addEventListener('click',function(){ T1.labels=!T1.labels; setTog(this,T1.labels,T1.labels?'ON':'OFF'); });
+  $('r1').addEventListener('click',function(){
+    T1.sv={E:30,S:60,SB:60,Irr:100}; T1.spin=6; T1.yaw=25; T1.tpitch=60; T1.pitch=60; T1.labels=true;
+    $('s1s').value=6; $('v1s').textContent='6°/초'; $('b1y').textContent='자전 6°/초'; setTog($('lb1'),true,'ON'); syncPitch(); setType('SB');
+  });
+  c1.el.addEventListener('pointerdown',function(e){ e.preventDefault(); var p=c1.pt(e); T1.drag=true; T1.lx=p.x; T1.ly=p.y; try{ c1.el.setPointerCapture(e.pointerId); }catch(err){} });
+  c1.el.addEventListener('pointermove',function(e){
+    if(!T1.drag) return; e.preventDefault(); var p=c1.pt(e), dx=p.x-T1.lx, dy=p.y-T1.ly; T1.lx=p.x; T1.ly=p.y;
+    T1.yaw-=dx*0.4; T1.tpitch=clamp(T1.tpitch+dy*0.3,0,90); T1.pitch=T1.tpitch; syncPitch(); });
+  function endDrag1(){ T1.drag=false; }
+  c1.el.addEventListener('pointerup',endDrag1); c1.el.addEventListener('pointercancel',endDrag1);
+
+  function drawTab1(dt){
+    var c=c1, ctx=c.ctx;
+    if(!T1.drag) T1.yaw+=T1.spin*dt;
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.fillStyle='#02030a'; ctx.fillRect(0,0,900,600);
+    drawGal(ctx,T1.gal,450,318,21,T1.yaw,T1.pitch,{labels:T1.labels,h:600});
+  }
+
+  /* ================= 탭 2: 허블의 안드로메다 거리 측정 ================= */
+  var c2=setup('c2',900,600);
+  var T2={D:260,tD:260,ruler:true,t:0,key:''};
+  function galSprite(type,m,seed,yaw,pitch){
+    var cv=document.createElement('canvas'); cv.width=256; cv.height=256; var x=cv.getContext('2d');
+    drawGal(x,mkGal(type,m,seed),128,128,10,yaw,pitch,{}); return cv;
+  }
+  var spMW=galSprite('SB',18,33,30,62), spAN=galSprite('S',16,22,35,77);
+  var bgSt=[]; (function(){ var r=mulberry(808); for(var i=0;i<160;i++) bgSt.push({x:r()*900,y:r()*600,s:0.6+r()*1.4,a:0.25+0.6*r()}); })();
+  var PXK=2.4, X0=95;
+  function verdict(D){
+    var n=(D/30).toFixed(1);
+    if(D<=30) return {k:'in',t:'거리 '+D+' kpc: 우리은하 지름(30 kpc) 안쪽이에요. 이 정도 거리라면 우리은하 안의 가스 성운일 수도 있어요.'};
+    if(D<150) return {k:'',t:'우리은하 지름의 약 '+n+'배. 우리은하 가까이에 있다면 아직 우리은하의 일부인지 알기 어려워요.'};
+    if(D<250) return {k:'far',t:'우리은하 지름의 약 '+n+'배! 우리은하보다 훨씬 멀어요. 조금 더 멀면 확실해져요.'};
+    return {k:'ok',t:'우리은하 크기(30 kpc)의 약 '+n+'배 거리! ➔ 우리은하 내부 성운이 아닌 독립된 외부 은하임이 증명됨!'};
+  }
+  function setD(v){ T2.tD=clamp(v,15,300); $('s2d').value=T2.tD; $('pre2a').classList.toggle('active',T2.tD<=30); $('pre2b').classList.toggle('active',Math.abs(T2.tD-260)<1); }
+  $('s2d').addEventListener('input',function(){ setD(Number(this.value)); });
+  $('pre2a').addEventListener('click',function(){ setD(20); });
+  $('pre2b').addEventListener('click',function(){ setD(260); });
+  $('rl2').addEventListener('click',function(){ T2.ruler=!T2.ruler; setTog(this,T2.ruler,T2.ruler?'ON':'OFF'); });
+
+  function drawTab2(dt){
+    var c=c2, ctx=c.ctx, i, k; T2.t+=dt;
+    T2.D+=(T2.tD-T2.D)*(1-Math.exp(-dt*6)); if(Math.abs(T2.tD-T2.D)<0.05) T2.D=T2.tD;
+    var D=T2.D, xA=X0+D*PXK, yG=150, yL=238;
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.fillStyle='#02030a'; ctx.fillRect(0,0,900,600);
+    for(i=0;i<bgSt.length;i++){ var s=bgSt[i]; ctx.fillStyle='rgba(255,255,255,'+s.a+')'; ctx.fillRect(s.x,s.y,s.s,s.s); }
+    var gw=32*PXK;
+    // 은하 그림
+    ctx.drawImage(spMW,X0-gw/2,yG-gw/2,gw,gw);
+    ctx.strokeStyle='rgba(120,200,255,0.6)'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.arc(X0,yG,15*PXK,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.drawImage(spAN,xA-gw/2,yG-gw/2,gw,gw);
+    ctx.textAlign='center'; ctx.font='bold 16px sans-serif'; ctx.fillStyle='#8fd0ff'; ctx.fillText('우리은하',X0,yG-52); ctx.font='13px sans-serif'; ctx.fillText('지름 약 30 kpc',X0,yG-36);
+    ctx.font='bold 16px sans-serif'; ctx.fillStyle=D<=30?'#ff9a8a':'#ffd24a'; ctx.fillText(D<=30?'안드로메다 (가스 성운?)':'안드로메다은하',clamp(xA,80,820),yG-52);
+    // 거리 연결선
+    ctx.setLineDash([]); ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5; ctx.setLineDash([4,5]);
+    ctx.beginPath(); ctx.moveTo(X0,yG+20); ctx.lineTo(X0,yL); ctx.moveTo(xA,yG+20); ctx.lineTo(xA,yL); ctx.stroke(); ctx.setLineDash([]);
+    if(xA-X0>24){ arrow(ctx,(X0+xA)/2,yL,X0+2,yL,'#ffd24a',3); arrow(ctx,(X0+xA)/2,yL,xA-2,yL,'#ffd24a',3); }
+    labelBox(ctx,'거리 '+Math.round(D)+' kpc (약 '+Math.round(D*0.3262)+'만 광년)',clamp((X0+xA)/2,170,740),yL-26,'#ffd24a',16);
+    // 우리은하 지름 자
+    if(T2.ruler){
+      var ry=292, rh=26, full=Math.floor(D/30), part=D/30-full;
+      ctx.textAlign='left'; ctx.font='bold 14px sans-serif'; ctx.fillStyle='#cfe0ff'; ctx.fillText('우리은하 지름(30 kpc)으로 재어 보면',X0-30,ry-8);
+      for(k=0;k<=full;k++){
+        var w=(k<full?30:30*part)*PXK; if(w<1) continue;
+        ctx.fillStyle=(k%2===0)?'rgba(60,140,240,0.85)':'rgba(120,190,255,0.85)'; ctx.fillRect(X0+k*30*PXK,ry,w-1.5,rh);
+        if(k<full&&w>40){ ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 12px sans-serif'; ctx.fillText(String(k+1),X0+k*30*PXK+w/2,ry+17); }
+      }
+    }
+    // 막대 비교
+    var by=372;
+    ctx.textAlign='left'; ctx.font='bold 15px sans-serif'; ctx.fillStyle='#cfe0ff'; ctx.fillText('길이 비교 (같은 축척)',X0-30,by-22);
+    var g1=ctx.createLinearGradient(X0,0,X0+30*PXK,0); g1.addColorStop(0,'#2b7de9'); g1.addColorStop(1,'#5fb4ff');
+    ctx.fillStyle=g1; ctx.fillRect(X0,by,30*PXK,26); ctx.fillStyle='#fff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.fillText('우리은하 지름 30 kpc',X0+30*PXK+8,by+18);
+    var g2=ctx.createLinearGradient(X0,0,xA,0); g2.addColorStop(0,'#e08a1e'); g2.addColorStop(1,'#ffd24a');
+    ctx.fillStyle=g2; ctx.fillRect(X0,by+44,Math.max(2,D*PXK),26);
+    ctx.fillStyle='#fff'; ctx.fillText('안드로메다까지 거리 '+Math.round(D)+' kpc',Math.min(X0+D*PXK+8,640),by+62);
+    ctx.strokeStyle='#8a97a5'; ctx.fillStyle='#8a97a5'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(X0,by+88); ctx.lineTo(X0+300*PXK,by+88); ctx.stroke();
+    ctx.textAlign='center'; ctx.font='12px sans-serif';
+    for(k=0;k<=300;k+=50){ var tx=X0+k*PXK; ctx.beginPath(); ctx.moveTo(tx,by+84); ctx.lineTo(tx,by+92); ctx.stroke(); ctx.fillText(k+(k===300?' kpc':''),tx,by+108); }
+    ctx.fillStyle='#ffd24a'; ctx.font='bold 26px sans-serif'; ctx.textAlign='right'; ctx.fillText('우리은하 지름의 '+(D/30).toFixed(1)+'배',870,by+170);
+    // 숫자·배너 갱신
+    var v=verdict(Math.round(D)), key=v.k+'|'+Math.round(D);
+    if(key!==T2.key){
+      T2.key=key; $('n2').textContent=(D/30).toFixed(1); $('ly2').textContent='약 '+Math.round(D*0.3262)+'만 광년'; $('v2d').textContent=Math.round(D)+' kpc'; $('b2d').textContent=Math.round(D)+' kpc';
+      var vd=$('vd2'); vd.className='verdict '+v.k; vd.textContent=v.t;
+    }
+  }
+  setD(260); T2.D=260;
+
+  /* ================= 탭 3: 은하 감별사 미션 ================= */
+  var c3=setup('c3',640,520);
+  var TN={E:'🥚 타원 은하',S:'🌀 정상 나선 은하',SB:'✨ 막대 나선 은하',Irr:'💥 불규칙 은하'};
+  var HINT={
+    E:['나선팔이 보이나요? → 나선팔이 없어요.','매끄러운 타원체이고 붉은 늙은 별이 많아요.'],
+    S:['나선팔이 있어요.','중심에 막대는 없고, 둥근 중심부에서 나선팔이 바로 뻗어 나와요.'],
+    SB:['나선팔이 있어요.','중심을 가로지르는 막대 구조가 있고, 막대 끝에서 나선팔이 시작돼요.'],
+    Irr:['규칙적인 모양이 없어요.','뚜렷한 중심핵도 나선팔도 없이 비대칭으로 흩어져 있어요.']
+  };
+  var FB={E:'나선팔이 없는 매끄러운 타원체 → 타원 은하(E)예요.',S:'나선팔은 있지만 중심 막대가 없어요 → 정상 나선 은하(S)예요.',SB:'중심에 막대가 있고 막대 끝에서 나선팔이 뻗어 나와요 → 막대 나선 은하(SB)예요. (우리은하도 여기!)',Irr:'규칙적인 대칭이나 중심핵 모양이 없어요 → 불규칙 은하(Irr)예요.'};
+  var MS={round:0,total:8,score:0,deck:[],gal:null,type:'E',yaw:0,pitch:60,answered:false,hint:0,drag:false,lx:0,ly:0};
+  var tStars=[]; (function(){ var r=mulberry(909); for(var i=0;i<140;i++) tStars.push({x:r()*640,y:r()*520,s:0.6+r()*1.3,a:0.2+0.6*r()}); })();
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function newDeck(){ MS.deck=shuffle(['E','E','S','S','SB','SB','Irr','Irr']); MS.round=0; MS.score=0; }
+  function nextRound(){
+    if(MS.round>=MS.total){ endMission(); return; }
+    var t=MS.deck[MS.round], m, rnd=Math.random();
+    m = t==='E'?rnd*0.7 : t==='Irr'?0.6+rnd*0.9 : 10+rnd*22;
+    MS.type=t; MS.gal=mkGal(t,m,Math.floor(Math.random()*1e9)); MS.yaw=Math.random()*360; MS.pitch=48+Math.random()*30;
+    MS.answered=false; MS.hint=0; MS.round++;
+    $('mrd').textContent='문제 '+MS.round+' / '+MS.total; $('msc').textContent='점수 '+MS.score; $('mbar').style.width=Math.round((MS.round-1)/MS.total*100)+'%';
+    $('mh').textContent='💡 힌트 보기 (0/2)'; $('mhint').className='tip mhint'; $('mhint').textContent='';
+    var f=$('mfb'); f.className='fb'; f.textContent=''; $('mnx').className='nextb';
+    var ob=$('mopts').querySelectorAll('.opt'); for(var i=0;i<ob.length;i++) ob[i].className='opt ans';
+    $('b3m').textContent='🔭 망원경에 은하가 잡혔어요!'; c3.dirty=true;
+  }
+  function endMission(){
+    $('mplay').style.display='none'; var e=$('mend'); e.style.display='block';
+    e.innerHTML='<h3>🎉 미션 결과: '+MS.score+' / '+MS.total+'</h3><p style="font-size:17px;line-height:1.55;margin:6px 0 10px">'+
+      (MS.score===MS.total?'완벽해요! 허블처럼 은하의 모양을 정확히 구분하는 은하 감별사예요. 🌟':MS.score>=Math.ceil(MS.total*0.7)?'훌륭해요! 막대 구조가 있는지 한 번 더 살펴보면 더 정확해져요.':'실험 1에서 네 가지 은하를 돌려 보며 특징을 확인한 뒤 다시 도전해 보세요.')+
+      '</p><button class="nextb show" id="mretry">↺ 다시 도전</button>';
+    $('mretry').addEventListener('click',function(){ $('mend').style.display='none'; $('mplay').style.display='block'; newDeck(); nextRound(); });
+  }
+  var mBtns=$('mopts').querySelectorAll('.opt');
+  for(var mi=0;mi<mBtns.length;mi++){ mBtns[mi].addEventListener('click',function(){
+    if(MS.answered) return; MS.answered=true; var pick=this.dataset.t, ok=(pick===MS.type), all=$('mopts').querySelectorAll('.opt'), k;
+    if(ok) MS.score++;
+    for(k=0;k<all.length;k++){ if(all[k].dataset.t===MS.type) all[k].className='opt ans right'; else if(all[k]===this) all[k].className='opt ans wrong'; else all[k].className='opt ans dim'; }
+    var f=$('mfb'); f.className='fb '+(ok?'ok':'no'); f.innerHTML=(ok?'⭕ <b>정답이에요!</b> ':'❌ <b>아쉬워요. 정답은 '+TN[MS.type]+'</b> ')+FB[MS.type];
+    $('msc').textContent='점수 '+MS.score; $('mbar').style.width=Math.round(MS.round/MS.total*100)+'%'; $('mnx').className='nextb show';
+    $('mnx').textContent=(MS.round>=MS.total)?'결과 보기 ▶':'다음 은하 ▶'; $('b3m').textContent=ok?'⭕ 정답! '+TN[MS.type]:'❌ 정답: '+TN[MS.type]; c3.dirty=true;
+  }); }
+  $('mh').addEventListener('click',function(){
+    if(MS.answered||MS.hint>=2) return; MS.hint++; var h=$('mhint'); h.className='tip mhint show'; h.innerHTML='💡 '+HINT[MS.type].slice(0,MS.hint).join('<br>💡 ');
+    this.textContent='💡 힌트 보기 ('+MS.hint+'/2)';
+  });
+  $('mnx').addEventListener('click',function(){ nextRound(); });
+  c3.el.addEventListener('pointerdown',function(e){ e.preventDefault(); var p=c3.pt(e); MS.drag=true; MS.lx=p.x; MS.ly=p.y; try{ c3.el.setPointerCapture(e.pointerId); }catch(err){} });
+  c3.el.addEventListener('pointermove',function(e){ if(!MS.drag) return; e.preventDefault(); var p=c3.pt(e);
+    MS.yaw-=(p.x-MS.lx)*0.4; MS.pitch=clamp(MS.pitch+(p.y-MS.ly)*0.3,15,90); MS.lx=p.x; MS.ly=p.y; c3.dirty=true; });
+  function endDrag3(){ MS.drag=false; }
+  c3.el.addEventListener('pointerup',endDrag3); c3.el.addEventListener('pointercancel',endDrag3);
+
+  function drawTab3(){
+    var c=c3, ctx=c.ctx, i; if(!MS.gal) return;
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.fillStyle='#010206'; ctx.fillRect(0,0,640,520);
+    ctx.save(); ctx.beginPath(); ctx.arc(320,262,236,0,Math.PI*2); ctx.clip();
+    ctx.fillStyle='#03050d'; ctx.fillRect(0,0,640,520);
+    for(i=0;i<tStars.length;i++){ var s=tStars[i]; ctx.fillStyle='rgba(255,255,255,'+s.a+')'; ctx.fillRect(s.x,s.y,s.s,s.s); }
+    drawGal(ctx,MS.gal,320,262,16.5,MS.yaw,MS.pitch,{labels:MS.answered,h:520});
+    ctx.restore();
+    var rg=ctx.createRadialGradient(320,262,226,320,262,258); rg.addColorStop(0,'#6b7684'); rg.addColorStop(0.4,'#2c333d'); rg.addColorStop(1,'#10141a');
+    ctx.strokeStyle=rg; ctx.lineWidth=20; ctx.beginPath(); ctx.arc(320,262,246,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.font='bold 15px sans-serif'; ctx.textAlign='left'; ctx.fillText('망원경 시야',14,26);
+  }
+
+  /* ================= 퀴즈 엔진 ================= */
+  var NUM=['①','②','③','④'];
+  function makeQuiz(box,list,opts){
+    var Q={i:0,score:0,sec:{},answered:false};
+    function render(){
+      var q=list[Q.i], h='';
+      if(Q.i>=list.length){ result(); return; }
+      h+='<div class="prog"><span>문제 '+(Q.i+1)+' / '+list.length+'</span><span>점수 '+Q.score+'</span></div>';
+      h+='<div class="bar" style="margin-bottom:12px"><i style="width:'+Math.round(Q.i/list.length*100)+'%;background:#2b7de9"></i></div>';
+      h+='<span class="secTag">'+q.sec+(q.t==='ox'?' · O/X':' · 선택형')+'</span><div class="q">'+q.q+'</div>';
+      h+='<div class="opts '+(q.t==='ox'?'ox':'')+'">';
+      if(q.t==='ox'){ h+='<button class="opt" data-i="0">O</button><button class="opt" data-i="1">X</button>'; }
+      else { for(var i=0;i<q.o.length;i++) h+='<button class="opt" data-i="'+i+'">'+NUM[i]+' '+q.o[i]+'</button>'; }
+      h+='</div><div class="fb"></div><button class="nextb">'+(Q.i===list.length-1?'결과 보기 ▶':'다음 문제 ▶')+'</button>';
+      box.innerHTML=h; Q.answered=false;
+      var ob=box.querySelectorAll('.opt'), k;
+      for(k=0;k<ob.length;k++) ob[k].addEventListener('click',function(){ pick(Number(this.dataset.i)); });
+      box.querySelector('.nextb').addEventListener('click',function(){ Q.i++; render(); });
+    }
+    function pick(i){
+      if(Q.answered) return; Q.answered=true;
+      var q=list[Q.i], ok=(i===q.a), ob=box.querySelectorAll('.opt'), k;
+      if(!Q.sec[q.sec]) Q.sec[q.sec]=[0,0]; Q.sec[q.sec][1]++; if(ok){ Q.score++; Q.sec[q.sec][0]++; }
+      for(k=0;k<ob.length;k++){ if(k===q.a) ob[k].classList.add('right'); else if(k===i) ob[k].classList.add('wrong'); else ob[k].classList.add('dim'); }
+      var fb=box.querySelector('.fb'); fb.className='fb '+(ok?'ok':'no'); fb.innerHTML=(ok?'⭕ <b>정답이에요!</b> ':'❌ <b>아쉬워요.</b> ')+q.x;
+      box.querySelector('.nextb').classList.add('show');
+    }
+    function result(){
+      var h='<div class="result"><h3>🎉 결과: '+Q.score+' / '+list.length+'점</h3>';
+      for(var s in Q.sec){ h+='<div class="row"><span>'+s+'</span><span>'+Q.sec[s][0]+' / '+Q.sec[s][1]+'</span></div>'; }
+      h+='<p style="font-size:17px;line-height:1.5;margin:10px 0 0">'+(Q.score===list.length?opts.perfect:Q.score>=Math.ceil(list.length*0.7)?opts.good:opts.retry)+'</p>';
+      h+='<button class="nextb show" id="'+opts.id+'">↺ 다시 풀기</button></div>';
+      box.innerHTML=h; $(opts.id).addEventListener('click',function(){ Q.i=0; Q.score=0; Q.sec={}; Q.answered=false; render(); });
+    }
+    render();
+  }
+  makeQuiz($('quizBox'),[
+    {sec:'➊ 외부 은하',t:'mc',q:'우리은하 밖에 분포하는 수많은 별들의 집단을 무엇이라고 할까요?',o:['성단','성운','외부 은하','성간 물질'],a:2,x:'우리은하 밖에 있는 수많은 별들의 집단을 외부 은하라고 해요.'},
+    {sec:'➊ 외부 은하',t:'ox',q:'안드로메다은하는 우리은하 안에 있는 가스 성운이다.',a:1,x:'틀렸어요. 20세기 초까지는 그렇게 생각했지만, 허블이 거리를 재어 보니 우리은하 밖의 독립된 외부 은하였어요.'},
+    {sec:'➊ 외부 은하',t:'mc',q:'허블이 측정한 안드로메다까지의 거리(약 260 kpc)는 우리은하 지름(약 30 kpc)의 몇 배일까요?',o:['약 2배','약 8.7배','약 87배','거의 같다'],a:1,x:'260 ÷ 30 ≈ 8.7이므로 약 8.7배예요. 이렇게 멀어서 우리은하 안의 성운이 아니라고 결론 내렸어요.'},
+    {sec:'➋ 은하의 분류',t:'mc',q:'정상 나선 은하와 막대 나선 은하를 나누는 기준은 무엇일까요?',o:['나선팔의 개수','중심부 막대 구조의 유무','별의 색깔','은하의 크기'],a:1,x:'은하 중심부를 가로지르는 막대 구조가 있으면 막대 나선 은하, 없으면 정상 나선 은하예요.'},
+    {sec:'➋ 은하의 분류',t:'mc',q:'나선팔이 없고 구형이나 타원체 모양이며, 늙은 붉은 별이 많은 은하는?',o:['타원 은하','정상 나선 은하','막대 나선 은하','불규칙 은하'],a:0,x:'나선팔이 없는 구형·타원체 모양의 은하는 타원 은하예요.'},
+    {sec:'➋ 은하의 분류',t:'mc',q:'규칙적인 대칭이나 중심핵 모양이 없는 은하는?',o:['타원 은하','정상 나선 은하','막대 나선 은하','불규칙 은하'],a:3,x:'모양이 규칙적이지 않은 은하는 불규칙 은하예요. (예: 대마젤란은하)'},
+    {sec:'➋ 은하의 분류',t:'ox',q:'정상 나선 은하는 막대 양 끝에서 나선팔이 휘어져 나온다.',a:1,x:'틀렸어요. 막대 양 끝에서 나선팔이 나오는 것은 막대 나선 은하예요. 정상 나선 은하는 둥근 중심부에서 바로 나선팔이 뻗어요.'},
+    {sec:'➌ 우리은하와 예',t:'mc',q:'우리은하는 허블의 분류에서 어느 은하에 속할까요?',o:['타원 은하','정상 나선 은하','막대 나선 은하','불규칙 은하'],a:2,x:'우리은하는 중심에 막대 구조가 있는 막대 나선 은하(SB)예요.'},
+    {sec:'➌ 우리은하와 예',t:'mc',q:'다음 중 정상 나선 은하의 예는?',o:['대마젤란은하','안드로메다은하','우리은하','M87'],a:1,x:'안드로메다은하는 정상 나선 은하의 대표적인 예예요.'},
+    {sec:'➌ 우리은하와 예',t:'mc',q:'대마젤란은하는 어떤 은하로 분류될까요?',o:['타원 은하','정상 나선 은하','막대 나선 은하','불규칙 은하'],a:3,x:'대마젤란은하는 불규칙 은하예요.'}
+  ],{id:'qzRetry',perfect:'완벽해요! 외부 은하와 허블의 분류를 정확히 알고 있어요. 🌟',good:'잘했어요! 틀린 문제는 실험 1에서 은하를 돌려 보며 다시 확인해 보세요.',retry:'실험 1과 은하 감별사 미션으로 연습한 뒤 다시 도전해 보세요.'});
+
+  var subBtns=document.querySelectorAll('.subbtn');
+  for(var sbi=0;sbi<subBtns.length;sbi++){ subBtns[sbi].addEventListener('click',function(){
+    var id=this.dataset.sub; for(var i=0;i<subBtns.length;i++) subBtns[i].classList.toggle('on',subBtns[i]===this);
+    $('s31').style.display=id==='s31'?'block':'none'; $('s32').style.display=id==='s32'?'block':'none'; setTimeout(refit,0); }); }
+
+  /* ================= 시작/루프 ================= */
+  syncPitch(); setType('SB');
+  newDeck(); nextRound();
+  function refit(){ c1.fit(); c2.fit(); c3.fit(); }
+  if(window.ResizeObserver){ var ro=new ResizeObserver(refit); ro.observe(c1.el); ro.observe(c2.el); ro.observe(c3.el); }
+  else window.addEventListener('resize',refit);
+  var last=0;
+  function frame(ts){
+    var dt=Math.min(0.05,(ts-last)/1000||0.016); last=ts;
+    if(curTab==='t1') drawTab1(dt);
+    else if(curTab==='t2') drawTab2(dt);
+    else if(c3.dirty && $('s31').style.display!=='none'){ drawTab3(); c3.dirty=false; }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script>/* 전자칠판 실행기 등 액자(iframe) 안에서는 서랍으로 돌아가기 링크를 숨겨요 */try{if(window.self!==window.top){var _b=document.querySelectorAll("a.back");for(var _i=0;_i<_b.length;_i++)_b[_i].style.display="none";}}catch(e){}</script>
+</body>
+</html>

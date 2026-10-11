@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="중3 별과 우주: 우리은하의 3D 구조와 천체 분포, 계절별 은하수 관측을 직접 조작하며 배우는 가상실험실">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1230">
+<meta property="og:type" content="website">
+<meta property="og:title" content="우리은하 가상실험실 - 중3 별과 우주">
+<meta property="og:description" content="우리은하 3D 탐색, 계절별 은하수 관측, 교과서 탐구와 퀴즈">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1230'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='10' fill='%23b9cdff' fill-opacity='.8' transform='rotate(-25 32 32)'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23ffcf6a'/%3E%3C/svg%3E">
+<title>우리은하 가상실험실 - 중3 별과 우주</title>
+<style>
+
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1d2b3a; --sub:#5b6b7c; --line:#d6e0ea;
+    --blue:#2b7de9; --red:#e5533d; --green:#22a06b; --amber:#f0a020; --navy:#0b1230;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;}
+  input,textarea{-webkit-user-select:text; user-select:text; font-family:inherit;}
+  header{display:flex; align-items:center; gap:14px; padding:10px 20px 2px; flex-wrap:wrap;}
+  header h1{margin:0; font-size:24px;}
+  header p{margin:0; color:var(--sub); font-size:15px;}
+  .back{margin-left:auto; min-height:48px; display:inline-flex; align-items:center; padding:0 16px; border-radius:12px;
+    background:#42576b; color:#fff; font-size:16px; font-weight:800; text-decoration:none;}
+  .back:active{background:#2c3b49;}
+  .tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:8px 20px 4px;}
+  .tabbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:18px; font-weight:800; border:0; cursor:pointer; padding:0 8px; line-height:1.2;}
+  .tabbtn.on{background:var(--navy); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .panel{display:none; padding:8px 20px 20px;}
+  .panel.on{display:block;}
+  .stage{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:14px; align-items:start;}
+  .cv{background:#060914; border-radius:18px; padding:8px; box-shadow:0 2px 10px rgba(30,60,100,.18);}
+  canvas{display:block; width:100%; height:auto; border-radius:12px; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .hint{color:#aab8cc; font-size:14px; padding:6px 6px 2px; min-height:24px;}
+  .card{background:var(--card); border-radius:18px; box-shadow:0 2px 10px rgba(30,60,100,.10); padding:12px 14px; margin-bottom:12px;}
+  .card h2{margin:0 0 8px; font-size:18px;}
+  button{font-family:inherit; cursor:pointer; border:0;}
+  .seg{display:grid; grid-template-columns:1fr; gap:8px;}
+  .sbtn{min-height:52px; border-radius:14px; font-size:17px; font-weight:800; color:#fff; text-align:left; padding:0 14px;
+    box-shadow:0 3px 0 rgba(0,0,0,.18); outline:4px solid transparent; transition:outline-color .1s;}
+  .sbtn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .sbtn.active{outline-color:#1d2b3a66;}
+  .sbtn.em{background:#d8453f;} .sbtn.re{background:#3a6fd8;} .sbtn.dk{background:#3b3f4a;}
+  .sbtn.op{background:#2f89b8;} .sbtn.gl{background:#c9702f;}
+  .sl{margin-top:12px;}
+  .sl label{display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-bottom:2px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:12px; border-radius:999px; background:#cfd9e6; outline:none; margin:12px 0 8px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:48px; height:48px; border-radius:50%;
+    background:#fff; border:5px solid #0b1230; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; background:#fff; border:5px solid #0b1230;}
+  input.tempR{background:linear-gradient(90deg,#ff8a55,#fff0c8 40%,#a8c4ff 80%,#94b4ff);}
+  .tg{min-height:52px; width:100%; border-radius:14px; background:#e6edf4; color:#42576b; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:8px; text-align:left; margin-top:8px;}
+  .tg b{min-width:64px; text-align:center; padding:6px 8px; border-radius:999px; background:#9fb1c3; color:#fff; font-size:14px;}
+  .tg.on{background:#dff3e8; color:#14633f;} .tg.on b{background:var(--green);}
+  .tg.off{opacity:.45;}
+  .mini{min-height:52px; width:100%; border-radius:14px; background:#42576b; color:#fff; font-size:16px; font-weight:800; margin-top:8px;}
+  .mini:active{background:#2c3b49;}
+  .info h3{margin:0 0 4px; font-size:19px;}
+  .info .ex{font-size:14px; color:var(--sub); margin-bottom:6px;}
+  .info p{margin:0; font-size:15px; line-height:1.5;}
+  .meter{margin-top:10px;}
+  .meter .lab{display:flex; justify-content:space-between; font-size:14px; font-weight:700; margin-bottom:4px;}
+  .bar{height:16px; border-radius:999px; background:#e3eaf2; overflow:hidden;}
+  .bar i{display:block; height:100%; width:0; border-radius:999px; background:#d8453f; transition:width .15s;}
+  .tip{margin-top:10px; padding:9px 12px; border-radius:12px; background:#fff6e0; font-size:15px; font-weight:700; line-height:1.4; min-height:40px;}
+  table.cmp{width:100%; border-collapse:collapse; font-size:14px;}
+  .cmp th,.cmp td{border:1px solid var(--line); padding:6px 5px; text-align:center; line-height:1.3;}
+  .cmp th{background:#f1f5fa; color:var(--sub);}
+  .cmp .hl{background:#fff1c9; font-weight:800;}
+  .sub{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .subbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:17px; font-weight:800;}
+  .subbtn.on{background:#2b7de9; color:#fff;}
+  .shapes{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+  .shp{min-height:64px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:15px; font-weight:800; line-height:1.25; padding:4px;}
+  .shp span{display:block; font-size:22px;}
+  .shp.on{background:#0b1230; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start;}
+  .field{margin-top:10px;} .field label{display:block; font-size:15px; font-weight:800; margin-bottom:5px;}
+  .field input,.field textarea{width:100%; border:2px solid #c5d2e0; border-radius:12px; padding:10px 12px; font-size:18px; min-height:52px; background:#fff; color:var(--ink);}
+  .field textarea{min-height:104px; resize:none; line-height:1.4;}
+  .count{font-size:13px; color:var(--sub); text-align:right;}
+  .big{min-height:58px; width:100%; border-radius:14px; background:#22a06b; color:#fff; font-size:19px; font-weight:800; margin-top:12px; box-shadow:0 3px 0 rgba(0,0,0,.18);}
+  .big:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .big.blue{background:#2b7de9;}
+  .msg{margin-top:8px; font-size:15px; font-weight:700; color:#b3361f; min-height:22px;}
+  .cardcv{border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.25); background:#0b1230;}
+  .quiz .prog{display:flex; justify-content:space-between; font-size:16px; font-weight:800; margin-bottom:8px;}
+  .quiz .secTag{display:inline-block; padding:4px 12px; border-radius:999px; background:#0b1230; color:#fff; font-size:14px; font-weight:800; margin-bottom:8px;}
+  .quiz .q{font-size:22px; font-weight:800; line-height:1.5; margin:6px 0 14px;}
+  .opts{display:grid; gap:10px;}
+  .opts.ox{grid-template-columns:1fr 1fr;}
+  .opt{min-height:62px; border-radius:14px; background:#e9eff6; color:var(--ink); font-size:19px; font-weight:700; text-align:left; padding:8px 16px; line-height:1.35; border:3px solid transparent;}
+  .opts.ox .opt{text-align:center; font-size:30px; font-weight:900;}
+  .opt:active{background:#d9e3ef;}
+  .opt.right{background:#d9f5e5; border-color:#22a06b; color:#0f5a38;}
+  .opt.wrong{background:#fde1dc; border-color:#e5533d; color:#8e2316;}
+  .opt.dim{opacity:.55;}
+  .fb{margin-top:12px; padding:12px 14px; border-radius:12px; font-size:17px; line-height:1.55; display:none;}
+  .fb.ok{display:block; background:#e6f7ee; color:#0f5a38;} .fb.no{display:block; background:#fdeceb; color:#8e2316;}
+  .nextb{margin-top:12px; min-height:56px; padding:0 28px; border-radius:14px; background:#2b7de9; color:#fff; font-size:18px; font-weight:800; display:none;}
+  .nextb.show{display:inline-block;}
+  .result h3{font-size:26px; margin:4px 0 8px;}
+  .result .row{display:flex; justify-content:space-between; padding:8px 12px; border-radius:10px; background:#f3f7fb; margin-bottom:6px; font-size:17px; font-weight:700;}
+  @media (max-width:1000px){
+    .stage{grid-template-columns:1fr;}
+    .two{grid-template-columns:1fr;}
+    .panel,.tabs{padding-left:12px; padding-right:12px;}
+  }
+  @media (max-width:640px){
+    header h1{font-size:20px;}
+    .tabbtn{font-size:15px;}
+    .shapes{grid-template-columns:repeat(3,1fr);}
+  }
+
+  .badges{display:flex; gap:8px; flex-wrap:wrap; padding:2px 4px 8px;}
+  .bd{background:#16204a; color:#cfe0ff; border-radius:999px; padding:6px 14px; font-size:15px; font-weight:800;}
+  .bd.hot{background:#7a4a14; color:#ffe2b0;}
+  .duo{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:14px; align-items:start;}
+  .two2{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; margin-top:12px; align-items:start;}
+  .seasons{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .sea{min-height:60px; border-radius:14px; color:#fff; font-size:17px; font-weight:800; box-shadow:0 3px 0 rgba(0,0,0,.18); outline:4px solid transparent;}
+  .sea:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .sea.su{background:#e08a1e;} .sea.wi{background:#3a7bd5;} .sea.sp{background:#3fae7a;} .sea.au{background:#b5603a;}
+  .sea.active{outline-color:#1d2b3a66;}
+  .sbtn.vw1{background:#2f89b8;} .sbtn.vw2{background:#6a5acd;} .sbtn.vw3{background:#d8932f;}
+  .facts2{margin:8px 0 0; padding-left:20px; font-size:15px; line-height:1.55;}
+  .jump{margin-top:10px; min-height:52px; padding:0 18px; border-radius:14px; background:#6a5acd; color:#fff; font-size:17px; font-weight:800; display:none;}
+  .jump.show{display:inline-block;}
+  @media (max-width:1000px){ .duo,.two2{grid-template-columns:1fr;} }
+  @media (max-width:640px){ .seasons{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌌 우리은하 가상실험실</h1>
+  <p>중3 과학 Ⅶ. 별과 우주</p>
+  <a class="back" href="./가상실험실_서랍.html">← 서랍으로</a>
+</header>
+
+<nav class="tabs">
+  <button class="tabbtn on" data-tab="t1">🌀 실험 1<br>우리은하 3D 구조 탐색기</button>
+  <button class="tabbtn" data-tab="t2">🌙 실험 2<br>계절별 은하수 관측기</button>
+  <button class="tabbtn" data-tab="t3">📖 활동 3<br>교과서 탐구 &amp; 퀴즈</button>
+</nav>
+
+<!-- ============ 탭 1 ============ -->
+<section id="t1" class="panel on">
+  <div class="stage">
+    <div class="cv">
+      <div class="badges"><span class="bd" id="b1m">🌀 위에서 본 모습</span><span class="bd" id="b1t">기울기 90°</span><span class="bd" id="b1y">회전 0°</span></div>
+      <canvas id="c1" width="900" height="600"></canvas>
+      <div class="hint">캔버스를 끌어서 돌려 보세요. 좌우로 끌면 회전, 위아래로 끌면 기울기(위 90° ~ 옆 0°)가 바뀌어요.</div>
+    </div>
+    <aside>
+      <div class="card">
+        <h2>시점 고르기</h2>
+        <div class="seg">
+          <button class="sbtn vw1 active" data-view="top">🌀 위에서 본 모습</button>
+          <button class="sbtn vw2" data-view="side">🛸 옆에서 본 모습</button>
+          <button class="sbtn vw3" data-view="sun">☀️ 태양계 시점</button>
+        </div>
+        <div class="sl"><label><span>시점 기울기</span><span id="v1p">90°</span></label>
+          <input type="range" id="s1p" min="0" max="90" step="1" value="90"></div>
+        <div class="sl"><label><span>확대</span><span id="v1z">1.0×</span></label>
+          <input type="range" id="s1z" min="6" max="30" step="1" value="10"></div>
+        <button class="tg on" id="sp1"><span>자동 회전</span><b>ON</b></button>
+      </div>
+      <div class="card">
+        <h2>천체 분포 레이어</h2>
+        <button class="tg on" id="l1a"><span>🔵 나선팔(원반) 별</span><b>ON</b></button>
+        <button class="tg on" id="l1b"><span>🩷 산개 성단 &amp; 성운</span><b>ON</b></button>
+        <button class="tg on" id="l1c"><span>🟠 구상 성단 (헤일로)</span><b>ON</b></button>
+        <button class="tg on" id="l1d"><span>📏 크기 눈금 가이드</span><b>ON</b></button>
+        <button class="mini" id="r1">↺ 처음 상태로</button>
+      </div>
+      <div class="card info">
+        <h3 id="i1t">위에서 본 모습</h3>
+        <p id="i1p"></p>
+        <ul class="facts2">
+          <li>지름: 약 <b>30 kpc</b> (약 10만 광년)</li>
+          <li>중심 ~ 태양계: 약 <b>8.5 kpc</b> (약 3만 광년)</li>
+          <li>성운·산개 성단 → <b>나선팔(원반)</b></li>
+          <li>구상 성단 → <b>중심부와 헤일로</b></li>
+        </ul>
+        <div class="tip" id="tip1"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 탭 2 ============ -->
+<section id="t2" class="panel">
+  <div class="duo">
+    <div class="cv">
+      <div class="badges"><span class="bd" id="b2a">그림 가 · 위에서 본 우리은하</span></div>
+      <canvas id="c2" width="520" height="520"></canvas>
+      <div class="hint">지구의 밤(태양 반대쪽)이 향하는 방향이 시선 방향이에요. A는 은하 외곽, B는 은하 중심이에요.</div>
+    </div>
+    <div class="cv">
+      <div class="badges"><span class="bd" id="b2b">그림 나·다 · 지구에서 올려다본 한밤중 밤하늘</span></div>
+      <canvas id="c2b" width="640" height="520"></canvas>
+      <div class="hint">※ 은하수의 밝기와 폭은 은하 모형으로 계산한 모식도예요. (실제 밤하늘에서는 띠가 기울어져 보여요)</div>
+    </div>
+  </div>
+  <div class="two2">
+    <div class="card">
+      <h2>🌍 지구의 공전 위치(계절) 고르기</h2>
+      <div class="seasons">
+        <button class="sea su" data-season="summer">☀️ 여름철</button>
+        <button class="sea au" data-season="autumn">🍂 가을철</button>
+        <button class="sea wi" data-season="winter">❄️ 겨울철</button>
+        <button class="sea sp" data-season="spring">🌱 봄철</button>
+      </div>
+      <div class="sl"><label><span>공전 위치 (날짜)</span><span id="v2d">7월 5일</span></label>
+        <input type="range" id="s2d" min="0" max="364" step="1" value="185"></div>
+      <button class="tg" id="pl2"><span>공전 자동 재생</span><b>OFF</b></button>
+    </div>
+    <div class="card info">
+      <h3 id="i2t">여름철 한밤</h3>
+      <div class="meter"><div class="lab"><span>은하수의 밝기</span><span id="m2v">0%</span></div><div class="bar"><i id="m2b" style="background:#2b7de9"></i></div></div>
+      <div class="meter"><div class="lab"><span>은하수 띠의 폭</span><span id="w2v">0°</span></div><div class="bar"><i id="w2b" style="background:#22a06b"></i></div></div>
+      <div class="ex" style="margin-top:8px" id="l2v"></div>
+      <div class="tip" id="tip2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 탭 3 ============ -->
+<section id="t3" class="panel">
+  <div class="sub">
+    <button class="subbtn on" data-sub="s31">📖 교과서 탐구 (해 보기)</button>
+    <button class="subbtn" data-sub="s32">✅ 개념 확인 퀴즈</button>
+  </div>
+  <div id="s31"><div class="card quiz" id="hkBox"></div></div>
+  <div id="s32" style="display:none"><div class="card quiz" id="quizBox"></div></div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+  var RAD=Math.PI/180;
+
+  /* ================= 공통 도구 ================= */
+  function $(id){ return document.getElementById(id); }
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function gauss(r){ var u=0; while(u===0) u=r(); var v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function angDiff(a,b){ return ((a-b+540)%360)-180; }
+  function setup(id,W,H){
+    var el=$(id), c={el:el, ctx:el.getContext('2d'), W:W, H:H, s:1, dirty:true};
+    c.fit=function(){
+      var dpr=Math.min(2,window.devicePixelRatio||1), w=el.clientWidth||W;
+      var nw=Math.round(w*dpr), nh=Math.round(w*H/W*dpr);
+      if(el.width!==nw||el.height!==nh){ el.width=nw; el.height=nh; }
+      c.s=el.width/W; c.dirty=true;
+    };
+    c.pt=function(e){ var r=el.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; };
+    c.fit(); return c;
+  }
+  function setTog(btn,on,label){ btn.classList.toggle('on',on); btn.querySelector('b').textContent=label; }
+  function arrow(ctx,x0,y0,x1,y1,color,lw){
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw||2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    var a=Math.atan2(y1-y0,x1-x0);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1-13*Math.cos(a-0.4),y1-13*Math.sin(a-0.4)); ctx.lineTo(x1-13*Math.cos(a+0.4),y1-13*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+  }
+  function labelBox(ctx,text,x,y,color,size){
+    ctx.font='bold '+(size||16)+'px sans-serif'; var w=ctx.measureText(text).width+18;
+    ctx.fillStyle='rgba(6,10,28,0.80)'; ctx.fillRect(x-w/2,y-15,w,28);
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([]); ctx.strokeRect(x-w/2,y-15,w,28);
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(text,x,y+5);
+  }
+  function sprite(size,stops){
+    var cv=document.createElement('canvas'); cv.width=size; cv.height=size; var x=cv.getContext('2d');
+    var g=x.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
+    for(var i=0;i<stops.length;i++) g.addColorStop(stops[i][0],stops[i][1]);
+    x.fillStyle=g; x.fillRect(0,0,size,size); return cv;
+  }
+  var SPR={
+    pink:sprite(32,[[0,'rgba(255,110,150,0.95)'],[0.4,'rgba(230,60,110,0.45)'],[1,'rgba(230,60,110,0)']]),
+    blue:sprite(32,[[0,'rgba(130,170,255,0.95)'],[0.4,'rgba(80,120,240,0.45)'],[1,'rgba(80,120,240,0)']]),
+    glob:sprite(24,[[0,'rgba(255,235,160,1)'],[0.35,'rgba(255,190,80,0.6)'],[1,'rgba(255,170,60,0)']]),
+    sun:sprite(40,[[0,'rgba(255,240,150,1)'],[0.3,'rgba(255,200,60,0.65)'],[1,'rgba(255,190,40,0)']])
+  };
+
+  /* ================= 탭 전환 ================= */
+  var tabBtns=document.querySelectorAll('.tabbtn'), panels={t1:$('t1'),t2:$('t2'),t3:$('t3')}, curTab='t1';
+  function showTab(id){
+    curTab=id;
+    for(var i=0;i<tabBtns.length;i++) tabBtns[i].classList.toggle('on',tabBtns[i].dataset.tab===id);
+    for(var k in panels) panels[k].classList.toggle('on',k===id);
+    if(id==='t2') ensureSky();
+    setTimeout(refit,0);
+  }
+  for(var ti=0;ti<tabBtns.length;ti++){ tabBtns[ti].addEventListener('click',function(){ showTab(this.dataset.tab); }); }
+
+  /* ================= 우리은하 모형 데이터 ================= */
+  var TP=Math.tan(22*RAD), A0=-Math.log(8.5/3.5)/TP, BARANG=A0+Math.PI;   // 태양(8.5 kpc, 각 0)이 팔 위에 오도록
+  function armTh(k,r){ return A0+k*Math.PI/2+Math.log(r/3.5)/TP; }
+  var RG={disk:[0,5200],bulge:[5200,7000],open:[7000,7170],neb:[7170,7340],glob:[7340,7500]}, M=7500;
+  var GX=new Float32Array(M), GY=new Float32Array(M), GZ=new Float32Array(M), GC=new Uint8Array(M);
+  (function(){
+    var r=mulberry(2026), i, th, rr, k, col;
+    for(i=0;i<5200;i++){
+      rr=2-4.2*Math.log(1-r()*(1-Math.exp(-13/4.2)));
+      if(r()<0.7){ k=Math.floor(r()*4); th=armTh(k,rr)+gauss(r)*(0.55+0.04*rr)/rr; col=r()<0.6?0:1; }
+      else { th=r()*2*Math.PI; col=r()<0.7?1:2; }
+      if(rr<5&&col===0&&r()<0.5) col=1;
+      GX[i]=rr*Math.cos(th); GY[i]=rr*Math.sin(th); GZ[i]=gauss(r)*0.30; GC[i]=col;
+    }
+    var cb=Math.cos(BARANG), sb=Math.sin(BARANG);
+    for(i=5200;i<7000;i++){
+      var a=clamp(gauss(r)*1.5,-3.6,3.6), q=gauss(r)*0.5;
+      GX[i]=a*cb-q*sb; GY[i]=a*sb+q*cb; GZ[i]=gauss(r)*0.45; GC[i]=r()<0.75?2:1;
+    }
+    for(i=7000;i<7340;i++){
+      rr=4.5+Math.pow(r(),0.9)*9.5; k=Math.floor(r()*4); th=armTh(k,rr)+gauss(r)*(0.45/rr);
+      GX[i]=rr*Math.cos(th); GY[i]=rr*Math.sin(th); GZ[i]=gauss(r)*0.10; GC[i]=(i<7170)?0:(r()<0.78?0:1);
+    }
+    for(i=7340;i<7500;i++){
+      var rg=1/Math.sqrt(1-r()*(1-1/400)), cz=2*r()-1, ph=r()*2*Math.PI, sxy=Math.sqrt(1-cz*cz);
+      GX[i]=rg*sxy*Math.cos(ph); GY[i]=rg*sxy*Math.sin(ph); GZ[i]=rg*cz; GC[i]=0;
+    }
+  })();
+  var PAL=['rgba(185,205,255,0.85)','rgba(255,244,214,0.80)','rgba(255,205,140,0.80)'];
+  var IDX=[[],[],[]];
+  (function(){ for(var i=0;i<7000;i++) IDX[GC[i]].push(i); })();
+
+  /* ================= 탭 1: 3D 구조 탐색기 ================= */
+  var c1=setup('c1',900,600);
+  var V={yaw:20,pitch:90,zoom:1,px:0,tyaw:20,tpitch:90,tzoom:1,tpx:0,spin:true,mode:'top',drag:false,lx:0,ly:0};
+  var L={disk:true,young:true,glob:true,scale:true};
+  var CS=1,SN=0,SE=1,CE=0,SC=18.5,CXs=450,CYs=315,OX=0,OY=0;
+  function pj(x,y,z){ var x0=x-V.px, x1=x0*CS-y*SN, y1=x0*SN+y*CS; OX=CXs+SC*x1; OY=CYs-SC*(y1*SE+z*CE); }
+  var INFO1={
+    top:['🌀 위에서 본 모습','중심부의 막대 모양 구조와 여러 개의 나선팔이 보여요. 그래서 우리은하는 막대 나선 은하예요.'],
+    side:['🛸 옆에서 본 모습','중심부(팽대부)는 볼록하고, 나머지는 얇고 납작한 원반 모양이에요.'],
+    sun:['☀️ 태양계 시점','태양계는 은하 중심에서 약 8.5 kpc(약 3만 광년) 떨어진 나선팔에 있어요.'],
+    free:['🧭 자유 시점','캔버스를 끌어서 여러 각도에서 관찰해 보세요. 위에서 보면 나선팔, 옆에서 보면 원반이 잘 보여요.']
+  };
+  var el1={t:$('i1t'),p:$('i1p'),tip:$('tip1'),bm:$('b1m'),bt:$('b1t'),by:$('b1y'),vp:$('v1p'),vz:$('v1z')}, lastKey1='';
+
+  function drawTab1(dt){
+    var c=c1, ctx=c.ctx, i, k, ci, list;
+    V.tyaw+= (V.spin&&!V.drag)?dt*8:0;
+    var f=1-Math.exp(-dt*5);
+    V.yaw+=angDiff(V.tyaw,V.yaw)*f; V.pitch+=(V.tpitch-V.pitch)*f; V.zoom+=(V.tzoom-V.zoom)*f; V.px+=(V.tpx-V.px)*f;
+    ctx.setTransform(c.s,0,0,c.s,0,0);
+    ctx.fillStyle='#02030a'; ctx.fillRect(0,0,900,600);
+    var psi=V.yaw*RAD, e=V.pitch*RAD; CS=Math.cos(psi); SN=Math.sin(psi); SE=Math.sin(e); CE=Math.cos(e); SC=18.5*V.zoom;
+    var zr=Math.sqrt(V.zoom);
+
+    ctx.globalCompositeOperation='lighter';
+    if(L.disk){
+      pj(0,0,0); var gx=OX, gy=OY, gR=SC*3.4;
+      var gr=ctx.createRadialGradient(gx,gy,0,gx,gy,gR);
+      gr.addColorStop(0,'rgba(255,200,120,0.50)'); gr.addColorStop(0.5,'rgba(255,170,90,0.16)'); gr.addColorStop(1,'rgba(255,170,90,0)');
+      ctx.fillStyle=gr; ctx.fillRect(gx-gR,gy-gR,gR*2,gR*2);
+      var sz=1.2+0.5*zr;
+      for(ci=0;ci<3;ci++){ ctx.fillStyle=PAL[ci]; list=IDX[ci];
+        for(k=0;k<list.length;k++){ i=list[k]; pj(GX[i],GY[i],GZ[i]); if(OX<-4||OX>904||OY<-4||OY>604) continue; ctx.fillRect(OX-sz/2,OY-sz/2,sz,sz); } }
+    }
+    if(L.young){
+      var nr=9*zr;
+      for(i=RG.neb[0];i<RG.neb[1];i++){ pj(GX[i],GY[i],GZ[i]); if(OX<-20||OX>920||OY<-20||OY>620) continue; ctx.drawImage(GC[i]?SPR.blue:SPR.pink,OX-nr,OY-nr,nr*2,nr*2); }
+      ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle='rgba(120,235,255,0.95)'; ctx.fillStyle='rgba(200,250,255,0.95)'; ctx.lineWidth=1.8;
+      var orr=3.6*zr;
+      for(i=RG.open[0];i<RG.open[1];i++){ pj(GX[i],GY[i],GZ[i]); if(OX<-10||OX>910||OY<-10||OY>610) continue;
+        ctx.beginPath(); ctx.arc(OX,OY,orr,0,Math.PI*2); ctx.stroke(); ctx.fillRect(OX-1,OY-1,2,2); }
+      ctx.globalCompositeOperation='lighter';
+    }
+    if(L.glob){
+      var gs=6*zr; ctx.globalCompositeOperation='source-over';
+      pj(0,0,0); var hx=OX, hy=OY;
+      ctx.strokeStyle='rgba(255,190,90,0.55)'; ctx.lineWidth=2; ctx.setLineDash([10,8]);
+      ctx.beginPath(); ctx.arc(hx,hy,18*SC,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.globalCompositeOperation='lighter';
+      for(i=RG.glob[0];i<RG.glob[1];i++){ pj(GX[i],GY[i],GZ[i]); if(OX<-20||OX>920||OY<-20||OY>620) continue; ctx.drawImage(SPR.glob,OX-gs,OY-gs,gs*2,gs*2); }
+      ctx.globalCompositeOperation='source-over';
+      var ly=clamp(hy-18*SC-8,18,590); labelBox(ctx,'구형 헤일로 (구상 성단 분포)',clamp(hx,150,750),ly,'#ffbe5a',15);
+    }
+    ctx.globalCompositeOperation='source-over';
+
+    /* 크기 눈금 가이드 */
+    if(L.scale){
+      var j, n=96;
+      ctx.strokeStyle='rgba(150,190,255,0.5)'; ctx.lineWidth=1.5; ctx.setLineDash([6,7]); ctx.beginPath();
+      for(j=0;j<=n;j++){ var a=j/n*Math.PI*2; pj(15*Math.cos(a),15*Math.sin(a),0); if(j===0) ctx.moveTo(OX,OY); else ctx.lineTo(OX,OY); }
+      ctx.stroke(); ctx.setLineDash([]);
+      pj(-15,-2.6,-2); var ax=OX, ay=OY; pj(15,-2.6,-2); var bx=OX, by=OY;
+      arrow(ctx,(ax+bx)/2,(ay+by)/2,ax,ay,'#8fd0ff',2.5); arrow(ctx,(ax+bx)/2,(ay+by)/2,bx,by,'#8fd0ff',2.5);
+      labelBox(ctx,'지름 약 30 kpc (약 10만 광년)',(ax+bx)/2,(ay+by)/2-20,'#8fd0ff',15);
+      pj(0,0,0); var ox0=OX, oy0=OY; pj(8.5,0,0); var sx0=OX, sy0=OY;
+      ctx.strokeStyle='#ffd24a'; ctx.lineWidth=3; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(ox0,oy0); ctx.lineTo(sx0,sy0); ctx.stroke();
+      labelBox(ctx,'중심~태양계 8.5 kpc (약 3만 광년)',(ox0+sx0)/2,(oy0+sy0)/2+26,'#ffd24a',15);
+    }
+    /* 태양계 */
+    pj(8.5,0,0); var sx=OX, sy=OY, sr=16;
+    ctx.globalCompositeOperation='lighter'; ctx.drawImage(SPR.sun,sx-sr,sy-sr,sr*2,sr*2); ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle='#fff7c2'; ctx.beginPath(); ctx.arc(sx,sy,4.5,0,Math.PI*2); ctx.fill();
+    ctx.font='bold 16px sans-serif'; ctx.textAlign='left'; ctx.fillStyle='#ffe27a'; ctx.fillText('☀ 태양계',sx+12,sy-10);
+
+    /* 배지·설명 */
+    var mode=V.mode, inf=INFO1[mode], key=mode+'|'+Math.round(V.pitch)+'|'+Math.round(((V.yaw%360)+360)%360)+'|'+L.disk+L.young+L.glob+L.scale;
+    if(key!==lastKey1){
+      lastKey1=key; el1.bm.textContent=inf[0]; el1.t.textContent=inf[0]; el1.p.textContent=inf[1];
+      el1.bt.textContent='기울기 '+Math.round(V.pitch)+'°'; el1.by.textContent='회전 '+Math.round(((V.yaw%360)+360)%360)+'°';
+      var tip='';
+      if(!L.disk&&!L.young&&!L.glob) tip='레이어가 모두 꺼져 있어요. 켜서 천체 분포를 확인해 보세요.';
+      else if(L.glob&&V.pitch<20) tip='옆에서 보면 구상 성단이 원반 위아래의 구형 공간(헤일로)에도 퍼져 있는 것이 보여요.';
+      else if(L.young&&V.pitch>70) tip='성운과 산개 성단은 나선팔을 따라 모여 있어요. 구상 성단 레이어를 꺼서 비교해 보세요.';
+      else tip='레이어를 하나씩 켜고 꺼서 천체가 어디에 분포하는지 비교해 보세요.';
+      el1.tip.textContent=tip;
+    }
+  }
+
+  /* 탭 1 조작 */
+  var viewBtns=document.querySelectorAll('#t1 .sbtn');
+  function syncSliders1(){ $('s1p').value=Math.round(V.tpitch); el1.vp.textContent=Math.round(V.tpitch)+'°'; $('s1z').value=Math.round(V.tzoom*10); el1.vz.textContent=V.tzoom.toFixed(1)+'×'; }
+  function setView(v){
+    V.mode=v; for(var i=0;i<viewBtns.length;i++) viewBtns[i].classList.toggle('active',viewBtns[i].dataset.view===v);
+    if(v==='top'){ V.tpitch=90; V.tzoom=1; V.tpx=0; }
+    else if(v==='side'){ V.tpitch=0; V.tzoom=1; V.tpx=0; }
+    else { V.tpitch=55; V.tzoom=2.4; V.tpx=8.5; V.tyaw=-90; V.spin=false; setTog($('sp1'),false,'OFF'); }
+    syncSliders1();
+  }
+  for(var vi=0;vi<viewBtns.length;vi++){ viewBtns[vi].addEventListener('click',function(){ setView(this.dataset.view); }); }
+  function setFree(){ V.mode='free'; for(var i=0;i<viewBtns.length;i++) viewBtns[i].classList.remove('active'); }
+  $('s1p').addEventListener('input',function(){ V.tpitch=Number(this.value); V.pitch=V.tpitch; setFree(); syncSliders1(); });
+  $('s1z').addEventListener('input',function(){ V.tzoom=Number(this.value)/10; syncSliders1(); });
+  $('sp1').addEventListener('click',function(){ V.spin=!V.spin; setTog(this,V.spin,V.spin?'ON':'OFF'); });
+  [['l1a','disk'],['l1b','young'],['l1c','glob'],['l1d','scale']].forEach(function(p){
+    $(p[0]).addEventListener('click',function(){ L[p[1]]=!L[p[1]]; setTog(this,L[p[1]],L[p[1]]?'ON':'OFF'); lastKey1=''; }); });
+  $('r1').addEventListener('click',function(){
+    V.yaw=20; V.tyaw=20; V.spin=true; setTog($('sp1'),true,'ON');
+    L.disk=L.young=L.glob=L.scale=true; ['l1a','l1b','l1c','l1d'].forEach(function(id){ setTog($(id),true,'ON'); });
+    setView('top'); lastKey1='';
+  });
+  c1.el.addEventListener('pointerdown',function(e){ e.preventDefault(); var p=c1.pt(e); V.drag=true; V.lx=p.x; V.ly=p.y; try{ c1.el.setPointerCapture(e.pointerId); }catch(err){} });
+  c1.el.addEventListener('pointermove',function(e){
+    if(!V.drag) return; e.preventDefault(); var p=c1.pt(e), dx=p.x-V.lx, dy=p.y-V.ly; V.lx=p.x; V.ly=p.y;
+    V.tyaw-=dx*0.4; V.yaw=V.tyaw; V.tpitch=clamp(V.tpitch+dy*0.3,0,90); V.pitch=V.tpitch; setFree(); syncSliders1(); });
+  function endDrag1(){ V.drag=false; }
+  c1.el.addEventListener('pointerup',endDrag1); c1.el.addEventListener('pointercancel',endDrag1);
+  syncSliders1();
+
+  /* ================= 탭 2: 계절별 은하수 관측기 ================= */
+  var c2=setup('c2',520,520), c2b=setup('c2b',640,520);
+  var S2={day:185,play:false}, SK={ready:false,tab:null,NL:180,NB:61};
+  var MLEN=[31,28,31,30,31,30,31,31,30,31,30,31];
+  function dateText(day){ var d=Math.floor(day)%365, m=0; while(d>=MLEN[m]){ d-=MLEN[m]; m++; } return (m+1)+'월 '+(d+1)+'일'; }
+  function lNight(day){ return (((360*(day-172)/365)%360)+360)%360; }   // 6월 하순 한밤: 은하 중심 방향
+  function seasonOf(day){ return (day>=152&&day<243)?'여름철':(day>=243&&day<335)?'가을철':(day>=60&&day<152)?'봄철':'겨울철'; }
+
+  /* 시선 방향(l, b)의 별빛 누적 밝기 (원반+팽대부, 먼지에 의한 흡수 포함) */
+  function ray(ldeg,bdeg){
+    var l=ldeg*RAD, b=bdeg*RAD, dx=-Math.cos(b)*Math.cos(l), dy=-Math.cos(b)*Math.sin(l), dz=Math.sin(b);
+    var tot=0, tau=0, ds=0.2, s=0.1;
+    while(s<30){
+      var x=8.5+s*dx, y=s*dy, z=s*dz, R=Math.sqrt(x*x+y*y), az=Math.abs(z);
+      var nd=Math.exp(-(R-8.5)/3.0)*(0.92*Math.exp(-az/0.2)+0.08*Math.exp(-az/0.9));
+      var rb=Math.sqrt(x*x+y*y+(z/0.6)*(z/0.6)), nb=40*Math.exp(-Math.pow(rb/1.3,1.5));
+      var dust=Math.exp(-(R-8.5)/4.0)*Math.exp(-az/0.12);
+      tot+=(nd+nb)*Math.exp(-tau)*ds; tau+=0.3*dust*ds; s+=ds;
+    }
+    return tot;
+  }
+  function buildSky(){
+    var NL=SK.NL, NB=SK.NB, t=new Float32Array(NL*NB), i, j, mx=0;
+    for(i=0;i<NL;i++) for(j=0;j<NB;j++){ var v=ray(i*2,-45+j*1.5); t[i*NB+j]=v; if(v>mx) mx=v; }
+    for(i=0;i<t.length;i++) t[i]/=mx;
+    SK.tab=t; SK.ready=true;
+  }
+  function ensureSky(){ if(!SK.ready){ buildSky(); } S2.dirty=true; c2.dirty=true; c2b.dirty=true; }
+  function skyI(l,b){
+    l=((l%360)+360)%360; var fl=l/2, i0=Math.floor(fl)%SK.NL, i1=(i0+1)%SK.NL, tl=fl-Math.floor(fl);
+    var fb=clamp((b+45)/1.5,0,SK.NB-1), j0=Math.floor(fb), j1=Math.min(SK.NB-1,j0+1), tb=fb-j0, T=SK.tab, NB=SK.NB;
+    var a=T[i0*NB+j0]*(1-tb)+T[i0*NB+j1]*tb, c=T[i1*NB+j0]*(1-tb)+T[i1*NB+j1]*tb;
+    return a*(1-tl)+c*tl;
+  }
+  var sky=document.createElement('canvas'); sky.width=200; sky.height=130; var skyCtx=sky.getContext('2d'), skyImg=skyCtx.createImageData(200,130);
+  var skyStars=[]; (function(){ var r=mulberry(404); for(var i=0;i<420;i++) skyStars.push({x:r()*640,y:r()*440,s:0.6+r()*1.6,a:0.3+0.6*r()}); })();
+
+  function renderSky(lN){
+    var d=skyImg.data, SW=200, SH=130, i, j, FL=150, FB=97;
+    for(j=0;j<SH;j++){
+      var b=(0.5-j/(SH-1))*FB;
+      for(i=0;i<SW;i++){
+        var l=lN+(i/(SW-1)-0.5)*FL, I=skyI(l,b), v=clamp(Math.pow(I,0.55)*1.15,0,1);
+        var dl=Math.abs(angDiff(l,0)), w=Math.exp(-(dl/40)*(dl/40));
+        var n=0.85+0.3*((((i*73856093)^(j*19349663))>>>0)%1000)/1000;
+        var o=(j*SW+i)*4, bg=4+10*(j/SH);
+        d[o]=clamp(bg+(175+80*w)*v*n,0,255); d[o+1]=clamp(bg+(195+25*w)*v*n,0,255); d[o+2]=clamp(bg+14+(245-85*w)*v*n,0,255); d[o+3]=255;
+      }
+    }
+    skyCtx.putImageData(skyImg,0,0);
+  }
+  function skyStats(lN){
+    var pk=0, b, v;
+    for(b=-6;b<=6;b+=1.5){ v=skyI(lN,b); if(v>pk) pk=v; }
+    var half=0; for(b=0;b<=44;b+=1.5){ var dv=Math.max(skyI(lN,b),skyI(lN,-b)); if(clamp(Math.pow(dv,0.55)*1.15,0,1)>=0.22) half=b+1.5; }
+    return {peak:pk, width:2*half};
+  }
+
+  function drawTab2a(){
+    var c=c2, ctx=c.ctx, i, CXg=260, CYg=262, K=16;
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.fillStyle='#02030a'; ctx.fillRect(0,0,520,520);
+    ctx.globalCompositeOperation='lighter';
+    var gr=ctx.createRadialGradient(CXg,CYg,0,CXg,CYg,K*3.4); gr.addColorStop(0,'rgba(255,200,120,0.5)'); gr.addColorStop(1,'rgba(255,170,90,0)');
+    ctx.fillStyle=gr; ctx.fillRect(CXg-K*3.4,CYg-K*3.4,K*6.8,K*6.8);
+    for(var ci=0;ci<3;ci++){ ctx.fillStyle=PAL[ci]; var list=IDX[ci]; for(i=0;i<list.length;i+=2){ var q=list[i]; ctx.fillRect(CXg+K*GX[q]-0.7,CYg-K*GY[q]-0.7,1.4,1.4); } }
+    ctx.globalCompositeOperation='source-over';
+    ctx.strokeStyle='rgba(150,190,255,0.35)'; ctx.lineWidth=1.5; ctx.setLineDash([6,7]); ctx.beginPath(); ctx.arc(CXg,CYg,15*K,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+    var sunX=CXg+8.5*K, sunY=CYg, lN=lNight(S2.day), d=[-Math.cos(lN*RAD),-Math.sin(lN*RAD)];
+    // A, B 방향선
+    ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=2; ctx.setLineDash([4,6]);
+    ctx.beginPath(); ctx.moveTo(sunX,sunY); ctx.lineTo(CXg,CYg); ctx.moveTo(sunX,sunY); ctx.lineTo(CXg+15*K,CYg); ctx.stroke(); ctx.setLineDash([]);
+    labelBox(ctx,'B 은하 중심 방향',CXg-6,CYg-34,'#ffcf6a',15);
+    labelBox(ctx,'A 은하 외곽 방향',CXg+14*K-12,CYg-34,'#8fd0ff',15);
+    // 태양과 지구 공전 궤도
+    ctx.globalCompositeOperation='lighter'; ctx.drawImage(SPR.sun,sunX-20,sunY-20,40,40); ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle='#fff3b0'; ctx.beginPath(); ctx.arc(sunX,sunY,7,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(120,200,255,0.75)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(sunX,sunY,40,0,Math.PI*2); ctx.stroke();
+    var ex=sunX+40*d[0], ey=sunY-40*d[1];
+    // 지구의 밤 방향 화살표
+    var toC=-d[0]*1, toA=d[0], col='#7fd0ff', msg='';
+    if(toC>Math.cos(28*RAD)){ col='#ffd24a'; msg='시선이 은하 중심(B)을 향해요'; } else if(toA>Math.cos(28*RAD)){ col='#9ad0ff'; msg='시선이 은하 외곽(A)을 향해요'; }
+    arrow(ctx,ex+d[0]*12,ey-d[1]*12,ex+d[0]*140,ey-d[1]*140,col,4);
+    // 지구 (낮/밤)
+    ctx.fillStyle='#10243a'; ctx.beginPath(); ctx.arc(ex,ey,10,0,Math.PI*2); ctx.fill();
+    var sa=Math.atan2(d[1],-d[0]);   // 태양 쪽 각(캔버스 좌표)
+    ctx.fillStyle='#5fb4ff'; ctx.beginPath(); ctx.arc(ex,ey,10,sa-Math.PI/2,sa+Math.PI/2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#cfe8ff'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(ex,ey,10,0,Math.PI*2); ctx.stroke();
+    labelBox(ctx,'지구의 밤 쪽 → 시선 방향',clamp(ex+d[0]*120,110,430),clamp(ey-d[1]*120+(d[1]>0?-24:24),28,500),col,14);
+    ctx.font='bold 14px sans-serif'; ctx.fillStyle='#ffe27a'; ctx.textAlign='left'; ctx.fillText('☀ 태양계',sunX-24,sunY+66);
+    ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='bold 17px sans-serif'; ctx.fillText(dateText(S2.day)+' · '+seasonOf(S2.day),14,28);
+    if(msg){ labelBox(ctx,msg,260,500,col,16); }
+    ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font='13px sans-serif'; ctx.textAlign='right'; ctx.fillText('※ 지구 공전 궤도는 크게 확대해 그렸어요',506,28);
+  }
+
+  function drawTab2b(){
+    if(!SK.ready) return;
+    var c=c2b, ctx=c.ctx, i, lN=lNight(S2.day);
+    renderSky(lN);
+    ctx.setTransform(c.s,0,0,c.s,0,0); ctx.fillStyle='#02030a'; ctx.fillRect(0,0,640,520);
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,640,470); ctx.clip();
+    ctx.translate(320,235); ctx.rotate(-0.30); ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(sky,-470,-330,940,660);
+    ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,640,470); ctx.clip();
+    for(i=0;i<skyStars.length;i++){ var s=skyStars[i]; ctx.fillStyle='rgba(255,255,255,'+s.a+')'; ctx.fillRect(s.x,s.y,s.s,s.s); }
+    ctx.restore();
+    // 지평선 실루엣
+    ctx.fillStyle='#040508'; ctx.beginPath(); ctx.moveTo(0,520); ctx.lineTo(0,478);
+    for(i=0;i<=32;i++){ var x=i*20; ctx.lineTo(x,470+10*Math.sin(i*0.9)+6*Math.sin(i*2.3)); }
+    ctx.lineTo(640,520); ctx.closePath(); ctx.fill();
+    for(i=0;i<9;i++){ var tx=40+i*74+(i%3)*9, th=34+(i*17)%26; ctx.beginPath(); ctx.moveTo(tx-12,486); ctx.lineTo(tx,486-th); ctx.lineTo(tx+12,486); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.font='bold 17px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('🌙 '+dateText(S2.day)+' 한밤중, 지구의 밤 쪽 하늘',14,28);
+    var nearC=Math.cos(lN*RAD);
+    if(nearC>Math.cos(40*RAD)) labelBox(ctx,'은하 중심(궁수자리) 방향 → 별이 빽빽해요',320,448,'#ffcf6a',16);
+    else if(nearC<-Math.cos(40*RAD)) labelBox(ctx,'은하 외곽 방향 → 별이 적어요',320,448,'#8fd0ff',16);
+  }
+
+  var el2={t:$('i2t'),mv:$('m2v'),mb:$('m2b'),wv:$('w2v'),wb:$('w2b'),lv:$('l2v'),tip:$('tip2'),d:$('v2d'),sl:$('s2d')};
+  function updateUI2(){
+    var lN=lNight(S2.day), st=SK.ready?skyStats(lN):{peak:0,width:0}, bright=Math.round(100*Math.sqrt(st.peak)), wd=Math.round(st.width);
+    var cosl=Math.cos(lN*RAD), season=seasonOf(S2.day);
+    el2.d.textContent=dateText(S2.day); el2.sl.value=Math.round(S2.day);
+    el2.t.textContent=season+' 한밤 ('+dateText(S2.day)+')';
+    el2.mv.textContent=bright+'%'; el2.mb.style.width=bright+'%'; el2.wv.textContent='약 '+wd+'°'; el2.wb.style.width=clamp(wd/60*100,0,100)+'%';
+    el2.lv.textContent='시선 방향: 은하 중심에서 '+Math.round(Math.abs(angDiff(lN,0)))+'° 떨어진 방향';
+    el2.tip.textContent = cosl>Math.cos(40*RAD) ? '✔ 지구의 밤이 별이 빽빽한 은하 중심(B) 쪽을 향해서 은하수가 밝고 폭이 넓고 두꺼워요.'
+                         : cosl<-Math.cos(40*RAD) ? '✔ 지구의 밤이 별이 적은 은하 외곽(A) 쪽을 향해서 은하수가 희미하고 폭이 좁아요.'
+                         : '시선이 은하 중심과 외곽의 중간 방향이에요. 여름철·겨울철 버튼과 비교해 보세요.';
+    var sb=document.querySelectorAll('.sea'); var ref={summer:184,autumn:276,winter:3,spring:93}, i;
+    for(i=0;i<sb.length;i++) sb[i].classList.toggle('active',Math.abs(ref[sb[i].dataset.season]-S2.day)<1);
+    S2.dirty=false; c2.dirty=true; c2b.dirty=true;
+  }
+  var SEA={summer:184,autumn:276,winter:3,spring:93};
+  var seaBtns=document.querySelectorAll('.sea');
+  function setSeason(n){ S2.day=SEA[n]; S2.dirty=true; }
+  for(var si=0;si<seaBtns.length;si++){ seaBtns[si].addEventListener('click',function(){ setSeason(this.dataset.season); }); }
+  $('s2d').addEventListener('input',function(){ S2.day=Number(this.value); S2.dirty=true; });
+  $('pl2').addEventListener('click',function(){ S2.play=!S2.play; setTog(this,S2.play,S2.play?'ON':'OFF'); });
+  S2.dirty=true;
+
+  /* ================= 탭 3: 퀴즈 엔진 ================= */
+  var NUM=['①','②','③','④'];
+  function makeQuiz(box,list,opts){
+    var Q={i:0,score:0,sec:{},answered:false};
+    function render(){
+      var q=list[Q.i], h='';
+      if(Q.i>=list.length){ result(); return; }
+      h+='<div class="prog"><span>문제 '+(Q.i+1)+' / '+list.length+'</span><span>점수 '+Q.score+'</span></div>';
+      h+='<div class="bar" style="margin-bottom:12px"><i style="width:'+Math.round(Q.i/list.length*100)+'%;background:#2b7de9"></i></div>';
+      h+='<span class="secTag">'+q.sec+(q.t==='ox'?' · O/X':' · 선택형')+'</span><div class="q">'+q.q+'</div>';
+      h+='<div class="opts '+(q.t==='ox'?'ox':'')+'">';
+      if(q.t==='ox'){ h+='<button class="opt" data-i="0">O</button><button class="opt" data-i="1">X</button>'; }
+      else { for(var i=0;i<q.o.length;i++) h+='<button class="opt" data-i="'+i+'">'+NUM[i]+' '+q.o[i]+'</button>'; }
+      h+='</div><div class="fb"></div>';
+      if(q.jump) h+='<button class="jump">🌙 실험 2에서 직접 확인하기</button><br>';
+      h+='<button class="nextb">'+(Q.i===list.length-1?'결과 보기 ▶':'다음 문제 ▶')+'</button>';
+      box.innerHTML=h; Q.answered=false;
+      var ob=box.querySelectorAll('.opt'), k;
+      for(k=0;k<ob.length;k++) ob[k].addEventListener('click',function(){ pick(Number(this.dataset.i)); });
+      var nb=box.querySelector('.nextb'); nb.addEventListener('click',function(){ Q.i++; render(); });
+      var jb=box.querySelector('.jump'); if(jb) jb.addEventListener('click',function(){ setSeason(q.jump); showTab('t2'); });
+    }
+    function pick(i){
+      if(Q.answered) return; Q.answered=true;
+      var q=list[Q.i], ok=(i===q.a), ob=box.querySelectorAll('.opt'), k;
+      if(!Q.sec[q.sec]) Q.sec[q.sec]=[0,0]; Q.sec[q.sec][1]++; if(ok){ Q.score++; Q.sec[q.sec][0]++; }
+      for(k=0;k<ob.length;k++){ if(k===q.a) ob[k].classList.add('right'); else if(k===i) ob[k].classList.add('wrong'); else ob[k].classList.add('dim'); }
+      var fb=box.querySelector('.fb'); fb.className='fb '+(ok?'ok':'no'); fb.innerHTML=(ok?'⭕ <b>정답이에요!</b> ':'❌ <b>아쉬워요.</b> ')+q.x;
+      box.querySelector('.nextb').classList.add('show'); var jb=box.querySelector('.jump'); if(jb) jb.classList.add('show');
+    }
+    function result(){
+      var h='<div class="result"><h3>🎉 결과: '+Q.score+' / '+list.length+'점</h3>';
+      for(var s in Q.sec){ h+='<div class="row"><span>'+s+'</span><span>'+Q.sec[s][0]+' / '+Q.sec[s][1]+'</span></div>'; }
+      h+='<p style="font-size:17px;line-height:1.5;margin:10px 0 0">'+(Q.score===list.length?opts.perfect:Q.score>=Math.ceil(list.length*0.7)?opts.good:opts.retry)+'</p>';
+      h+='<button class="nextb show" id="'+opts.id+'">↺ 다시 풀기</button></div>';
+      box.innerHTML=h; $(opts.id).addEventListener('click',function(){ Q.i=0; Q.score=0; Q.sec={}; Q.answered=false; render(); });
+    }
+    render();
+  }
+  makeQuiz($('hkBox'),[
+    {sec:'해 보기 Q1',t:'mc',q:'여름철과 겨울철 중, 은하수가 더 밝고 두껍게 보이는 계절은?',o:['여름철','겨울철','두 계절이 똑같다'],a:0,jump:'summer',
+     x:'여름철이에요. 여름철 한밤에는 지구의 밤 쪽이 별이 빽빽하게 모여 있는 은하 중심 방향(궁수자리)을 향해서 은하수가 밝고 폭이 넓고 두꺼워 보여요.'},
+    {sec:'해 보기 Q2',t:'mc',q:'여름철 은하수는 태양계에서 A, B 중 어느 방향을 본 모습일까요? (A: 은하 외곽 방향, B: 은하 중심 방향)',o:['A (은하 외곽 방향)','B (은하 중심 방향)'],a:1,jump:'summer',
+     x:'B 방향이에요. 여름철 밤에는 은하 중심(B) 쪽을 보게 되어 별이 많아요. 겨울철에는 별이 적은 은하 외곽(A) 쪽을 봐서 은하수가 희미하고 폭이 좁아요.'},
+    {sec:'해 보기 Q3',t:'mc',q:'겨울철 은하수가 여름철보다 희미하고 폭이 좁은 까닭은?',o:['겨울에는 별이 사라지기 때문에','지구의 밤 쪽이 별이 적은 은하 외곽을 향하기 때문에','태양계가 은하 중심으로 이동하기 때문에'],a:1,jump:'winter',
+     x:'겨울철에는 지구의 밤 쪽이 별이 적은 은하 외곽(A) 방향을 향해요. 별이 적게 겹쳐 보이니 은하수가 희미하고 좁아요.'}
+  ],{id:'hkRetry',perfect:'교과서 탐구를 모두 맞혔어요! 🌟 실험 2에서 계절을 바꿔 한 번 더 확인해 보세요.',good:'잘했어요! 틀린 문제는 실험 2에서 다시 확인해 보세요.',retry:'실험 2에서 여름철과 겨울철 버튼을 눌러 비교한 뒤 다시 도전해 보세요.'});
+  makeQuiz($('quizBox'),[
+    {sec:'➊ 은하의 모양과 크기',t:'mc',q:'우리은하를 위에서 내려다본 모습은 어떤 은하와 같을까요?',o:['타원 은하','막대 나선 은하','불규칙 은하','렌즈형 은하'],a:1,x:'우리은하는 중심부에 막대 구조가 있고 나선팔이 감겨 있는 막대 나선 은하예요.'},
+    {sec:'➊ 은하의 모양과 크기',t:'ox',q:'우리은하를 옆에서 보면 중심부가 볼록한 납작한 원반 모양이다.',a:0,x:'맞아요. 중심부(팽대부)는 볼록하고 나머지는 얇고 납작한 원반 모양이에요.'},
+    {sec:'➊ 은하의 모양과 크기',t:'mc',q:'우리은하의 지름은 약 얼마일까요?',o:['약 3 kpc','약 30 kpc (약 10만 광년)','약 300 kpc','약 3 Mpc'],a:1,x:'우리은하의 지름은 약 30 kpc, 즉 약 10만 광년이에요.'},
+    {sec:'➋ 태양계 위치와 은하수',t:'mc',q:'태양계는 우리은하 중심에서 얼마나 떨어진 곳에 있을까요?',o:['0 kpc (중심)','약 8.5 kpc (약 3만 광년)','약 15 kpc (약 5만 광년)','약 30 kpc (약 10만 광년)'],a:1,x:'태양계는 중심에서 약 8.5 kpc(약 3만 광년) 떨어진 나선팔에 있어요.'},
+    {sec:'➋ 태양계 위치와 은하수',t:'mc',q:'은하수가 밤하늘을 가로지르는 띠 모양으로 보이는 까닭은?',o:['은하가 띠 모양으로 생겼기 때문','태양계가 은하 원반 안에 있어서 원반 방향으로 별이 많이 보이기 때문','은하수가 지구를 둘러싸고 있기 때문','달빛이 하늘에 퍼지기 때문'],a:1,x:'태양계가 은하 원반 안쪽에 있어서, 원반 방향을 바라보면 별이 많이 겹쳐 띠 모양으로 보여요.'},
+    {sec:'➋ 태양계 위치와 은하수',t:'ox',q:'겨울철 은하수가 희미한 것은 지구의 밤 쪽이 별이 적은 은하 외곽을 향하기 때문이다.',a:0,x:'맞아요. 겨울철 한밤에는 은하 외곽 방향을 보게 되어 은하수가 희미하고 폭이 좁아요.'},
+    {sec:'➌ 천체 분포',t:'mc',q:'성간 물질, 성운, 산개 성단은 주로 어디에 분포할까요?',o:['은하 중심부의 헤일로','나선팔(원반)','은하 바깥의 빈 공간','태양 주변에만'],a:1,x:'성간 물질, 성운, 산개 성단은 주로 은하의 나선팔(원반)에 집중되어 있어요.'},
+    {sec:'➌ 천체 분포',t:'mc',q:'구상 성단은 주로 어디에 분포할까요?',o:['나선팔에만','은하 중심부와 원반을 둘러싼 구형 공간(헤일로)','원반의 바깥 가장자리에만','지구 주변'],a:1,x:'구상 성단은 은하 중심부와 은하 원반을 둘러싼 구형 공간(헤일로)에 비교적 고르게 분포해요.'},
+    {sec:'➌ 천체 분포',t:'ox',q:'구상 성단은 주로 은하의 나선팔 위에 모여 있다.',a:1,x:'틀렸어요. 나선팔에 모여 있는 것은 성운과 산개 성단이고, 구상 성단은 중심부와 헤일로에 분포해요.'},
+    {sec:'➌ 천체 분포',t:'mc',q:'우리은하의 나선팔에 집중 분포하는 것끼리 짝지은 것은?',o:['성간 물질, 성운, 산개 성단','구상 성단, 헤일로의 별','성운, 구상 성단','산개 성단, 구상 성단'],a:0,x:'성간 물질·성운·산개 성단이 나선팔에 집중되어 있고, 구상 성단은 헤일로와 중심부에 있어요.'}
+  ],{id:'qzRetry',perfect:'완벽해요! 우리은하의 구조와 천체 분포를 정확히 알고 있어요. 🌟',good:'잘했어요! 틀린 문제는 실험 1에서 레이어를 켜고 끄며 다시 확인해 보세요.',retry:'실험 1과 실험 2를 한 번 더 조작해 보고 다시 도전해 보세요.'});
+
+  var subBtns=document.querySelectorAll('.subbtn');
+  for(var bi=0;bi<subBtns.length;bi++){ subBtns[bi].addEventListener('click',function(){
+    var id=this.dataset.sub; for(var i=0;i<subBtns.length;i++) subBtns[i].classList.toggle('on',subBtns[i]===this);
+    $('s31').style.display=id==='s31'?'block':'none'; $('s32').style.display=id==='s32'?'block':'none'; }); }
+
+  /* ================= 공통 루프 ================= */
+  function refit(){ c1.fit(); c2.fit(); c2b.fit(); }
+  if(window.ResizeObserver){ var ro=new ResizeObserver(refit); ro.observe(c1.el); ro.observe(c2.el); ro.observe(c2b.el); }
+  else window.addEventListener('resize',refit);
+
+  var last=0;
+  function frame(ts){
+    var dt=Math.min(0.05,(ts-last)/1000||0.016); last=ts;
+    if(curTab==='t1') drawTab1(dt);
+    else if(curTab==='t2'){
+      if(S2.play){ S2.day=(S2.day+dt*24)%365; S2.dirty=true; }
+      if(S2.dirty) updateUI2();
+      if(c2.dirty){ drawTab2a(); c2.dirty=false; }
+      if(c2b.dirty){ drawTab2b(); c2b.dirty=false; }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script>/* 전자칠판 실행기 등 액자(iframe) 안에서는 서랍으로 돌아가기 링크를 숨겨요 */try{if(window.self!==window.top){var _b=document.querySelectorAll("a.back");for(var _i=0;_i<_b.length;_i++)_b[_i].style.display="none";}}catch(e){}</script>
+</body>
+</html>

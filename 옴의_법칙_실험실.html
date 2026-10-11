@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="중2 전기와 자기: 전압·전류·저항 MBL 그래프 타점, 니크롬선 길이 비교, 옴의 법칙 삼각 공식을 직접 조작하는 가상실험실">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1230">
+<meta property="og:type" content="website">
+<meta property="og:title" content="옴의 법칙 가상실험실 - 중2 전기와 자기">
+<meta property="og:description" content="전압-전류 그래프 기록, 니크롬선 저항 비교, 데이터 표와 퀴즈">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1230'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='10' fill='%23b9cdff' fill-opacity='.8' transform='rotate(-25 32 32)'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23ffcf6a'/%3E%3C/svg%3E">
+<title>옴의 법칙 가상실험실 - 중2 전기와 자기</title>
+<style>
+
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1d2b3a; --sub:#5b6b7c; --line:#d6e0ea;
+    --blue:#2b7de9; --red:#e5533d; --green:#22a06b; --amber:#f0a020; --navy:#0b1230;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;}
+  input,textarea{-webkit-user-select:text; user-select:text; font-family:inherit;}
+  header{display:flex; align-items:center; gap:14px; padding:10px 20px 2px; flex-wrap:wrap;}
+  header h1{margin:0; font-size:24px;}
+  header p{margin:0; color:var(--sub); font-size:15px;}
+  .back{margin-left:auto; min-height:48px; display:inline-flex; align-items:center; padding:0 16px; border-radius:12px;
+    background:#42576b; color:#fff; font-size:16px; font-weight:800; text-decoration:none;}
+  .back:active{background:#2c3b49;}
+  .tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:8px 20px 4px;}
+  .tabbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:18px; font-weight:800; border:0; cursor:pointer; padding:0 8px; line-height:1.2;}
+  .tabbtn.on{background:var(--navy); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .panel{display:none; padding:8px 20px 20px;}
+  .panel.on{display:block;}
+  .stage{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:14px; align-items:start;}
+  .cv{background:#060914; border-radius:18px; padding:8px; box-shadow:0 2px 10px rgba(30,60,100,.18);}
+  canvas{display:block; width:100%; height:auto; border-radius:12px; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .hint{color:#aab8cc; font-size:14px; padding:6px 6px 2px; min-height:24px;}
+  .card{background:var(--card); border-radius:18px; box-shadow:0 2px 10px rgba(30,60,100,.10); padding:12px 14px; margin-bottom:12px;}
+  .card h2{margin:0 0 8px; font-size:18px;}
+  button{font-family:inherit; cursor:pointer; border:0;}
+  .seg{display:grid; grid-template-columns:1fr; gap:8px;}
+  .sbtn{min-height:52px; border-radius:14px; font-size:17px; font-weight:800; color:#fff; text-align:left; padding:0 14px;
+    box-shadow:0 3px 0 rgba(0,0,0,.18); outline:4px solid transparent; transition:outline-color .1s;}
+  .sbtn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .sbtn.active{outline-color:#1d2b3a66;}
+  .sbtn.em{background:#d8453f;} .sbtn.re{background:#3a6fd8;} .sbtn.dk{background:#3b3f4a;}
+  .sbtn.op{background:#2f89b8;} .sbtn.gl{background:#c9702f;}
+  .sl{margin-top:12px;}
+  .sl label{display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-bottom:2px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:12px; border-radius:999px; background:#cfd9e6; outline:none; margin:12px 0 8px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:48px; height:48px; border-radius:50%;
+    background:#fff; border:5px solid #0b1230; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; background:#fff; border:5px solid #0b1230;}
+  input.tempR{background:linear-gradient(90deg,#ff8a55,#fff0c8 40%,#a8c4ff 80%,#94b4ff);}
+  .tg{min-height:52px; width:100%; border-radius:14px; background:#e6edf4; color:#42576b; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:8px; text-align:left; margin-top:8px;}
+  .tg b{min-width:64px; text-align:center; padding:6px 8px; border-radius:999px; background:#9fb1c3; color:#fff; font-size:14px;}
+  .tg.on{background:#dff3e8; color:#14633f;} .tg.on b{background:var(--green);}
+  .tg.off{opacity:.45;}
+  .mini{min-height:52px; width:100%; border-radius:14px; background:#42576b; color:#fff; font-size:16px; font-weight:800; margin-top:8px;}
+  .mini:active{background:#2c3b49;}
+  .info h3{margin:0 0 4px; font-size:19px;}
+  .info .ex{font-size:14px; color:var(--sub); margin-bottom:6px;}
+  .info p{margin:0; font-size:15px; line-height:1.5;}
+  .meter{margin-top:10px;}
+  .meter .lab{display:flex; justify-content:space-between; font-size:14px; font-weight:700; margin-bottom:4px;}
+  .bar{height:16px; border-radius:999px; background:#e3eaf2; overflow:hidden;}
+  .bar i{display:block; height:100%; width:0; border-radius:999px; background:#d8453f; transition:width .15s;}
+  .tip{margin-top:10px; padding:9px 12px; border-radius:12px; background:#fff6e0; font-size:15px; font-weight:700; line-height:1.4; min-height:40px;}
+  table.cmp{width:100%; border-collapse:collapse; font-size:14px;}
+  .cmp th,.cmp td{border:1px solid var(--line); padding:6px 5px; text-align:center; line-height:1.3;}
+  .cmp th{background:#f1f5fa; color:var(--sub);}
+  .cmp .hl{background:#fff1c9; font-weight:800;}
+  .sub{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .subbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:17px; font-weight:800;}
+  .subbtn.on{background:#2b7de9; color:#fff;}
+  .shapes{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+  .shp{min-height:64px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:15px; font-weight:800; line-height:1.25; padding:4px;}
+  .shp span{display:block; font-size:22px;}
+  .shp.on{background:#0b1230; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start;}
+  .field{margin-top:10px;} .field label{display:block; font-size:15px; font-weight:800; margin-bottom:5px;}
+  .field input,.field textarea{width:100%; border:2px solid #c5d2e0; border-radius:12px; padding:10px 12px; font-size:18px; min-height:52px; background:#fff; color:var(--ink);}
+  .field textarea{min-height:104px; resize:none; line-height:1.4;}
+  .count{font-size:13px; color:var(--sub); text-align:right;}
+  .big{min-height:58px; width:100%; border-radius:14px; background:#22a06b; color:#fff; font-size:19px; font-weight:800; margin-top:12px; box-shadow:0 3px 0 rgba(0,0,0,.18);}
+  .big:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .big.blue{background:#2b7de9;}
+  .msg{margin-top:8px; font-size:15px; font-weight:700; color:#b3361f; min-height:22px;}
+  .cardcv{border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.25); background:#0b1230;}
+  .quiz .prog{display:flex; justify-content:space-between; font-size:16px; font-weight:800; margin-bottom:8px;}
+  .quiz .secTag{display:inline-block; padding:4px 12px; border-radius:999px; background:#0b1230; color:#fff; font-size:14px; font-weight:800; margin-bottom:8px;}
+  .quiz .q{font-size:22px; font-weight:800; line-height:1.5; margin:6px 0 14px;}
+  .opts{display:grid; gap:10px;}
+  .opts.ox{grid-template-columns:1fr 1fr;}
+  .opt{min-height:62px; border-radius:14px; background:#e9eff6; color:var(--ink); font-size:19px; font-weight:700; text-align:left; padding:8px 16px; line-height:1.35; border:3px solid transparent;}
+  .opts.ox .opt{text-align:center; font-size:30px; font-weight:900;}
+  .opt:active{background:#d9e3ef;}
+  .opt.right{background:#d9f5e5; border-color:#22a06b; color:#0f5a38;}
+  .opt.wrong{background:#fde1dc; border-color:#e5533d; color:#8e2316;}
+  .opt.dim{opacity:.55;}
+  .fb{margin-top:12px; padding:12px 14px; border-radius:12px; font-size:17px; line-height:1.55; display:none;}
+  .fb.ok{display:block; background:#e6f7ee; color:#0f5a38;} .fb.no{display:block; background:#fdeceb; color:#8e2316;}
+  .nextb{margin-top:12px; min-height:56px; padding:0 28px; border-radius:14px; background:#2b7de9; color:#fff; font-size:18px; font-weight:800; display:none;}
+  .nextb.show{display:inline-block;}
+  .result h3{font-size:26px; margin:4px 0 8px;}
+  .result .row{display:flex; justify-content:space-between; padding:8px 12px; border-radius:10px; background:#f3f7fb; margin-bottom:6px; font-size:17px; font-weight:700;}
+  @media (max-width:1000px){
+    .stage{grid-template-columns:1fr;}
+    .two{grid-template-columns:1fr;}
+    .panel,.tabs{padding-left:12px; padding-right:12px;}
+  }
+  @media (max-width:640px){
+    header h1{font-size:20px;}
+    .tabbtn{font-size:15px;}
+    .shapes{grid-template-columns:repeat(3,1fr);}
+  }
+
+
+
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1d2b3a; --sub:#5b6b7c; --line:#d6e0ea;
+    --blue:#2b7de9; --red:#e5533d; --green:#22a06b; --amber:#f0a020; --navy:#0b1230;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;}
+  input,textarea{-webkit-user-select:text; user-select:text; font-family:inherit;}
+  header{display:flex; align-items:center; gap:14px; padding:10px 20px 2px; flex-wrap:wrap;}
+  header h1{margin:0; font-size:24px;}
+  header p{margin:0; color:var(--sub); font-size:15px;}
+  .back{margin-left:auto; min-height:48px; display:inline-flex; align-items:center; padding:0 16px; border-radius:12px;
+    background:#42576b; color:#fff; font-size:16px; font-weight:800; text-decoration:none;}
+  .back:active{background:#2c3b49;}
+  .tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:8px 20px 4px;}
+  .tabbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:18px; font-weight:800; border:0; cursor:pointer; padding:0 8px; line-height:1.2;}
+  .tabbtn.on{background:var(--navy); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .panel{display:none; padding:8px 20px 20px;}
+  .panel.on{display:block;}
+  .stage{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:14px; align-items:start;}
+  .cv{background:#060914; border-radius:18px; padding:8px; box-shadow:0 2px 10px rgba(30,60,100,.18);}
+  canvas{display:block; width:100%; height:auto; border-radius:12px; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .hint{color:#aab8cc; font-size:14px; padding:6px 6px 2px; min-height:24px;}
+  .card{background:var(--card); border-radius:18px; box-shadow:0 2px 10px rgba(30,60,100,.10); padding:12px 14px; margin-bottom:12px;}
+  .card h2{margin:0 0 8px; font-size:18px;}
+  button{font-family:inherit; cursor:pointer; border:0;}
+  .seg{display:grid; grid-template-columns:1fr; gap:8px;}
+  .sbtn{min-height:52px; border-radius:14px; font-size:17px; font-weight:800; color:#fff; text-align:left; padding:0 14px;
+    box-shadow:0 3px 0 rgba(0,0,0,.18); outline:4px solid transparent; transition:outline-color .1s;}
+  .sbtn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .sbtn.active{outline-color:#1d2b3a66;}
+  .sbtn.em{background:#d8453f;} .sbtn.re{background:#3a6fd8;} .sbtn.dk{background:#3b3f4a;}
+  .sbtn.op{background:#2f89b8;} .sbtn.gl{background:#c9702f;}
+  .sl{margin-top:12px;}
+  .sl label{display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-bottom:2px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:12px; border-radius:999px; background:#cfd9e6; outline:none; margin:12px 0 8px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:48px; height:48px; border-radius:50%;
+    background:#fff; border:5px solid #0b1230; box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  input[type=range]::-moz-range-thumb{width:38px; height:38px; border-radius:50%; background:#fff; border:5px solid #0b1230;}
+  input.tempR{background:linear-gradient(90deg,#ff8a55,#fff0c8 40%,#a8c4ff 80%,#94b4ff);}
+  .tg{min-height:52px; width:100%; border-radius:14px; background:#e6edf4; color:#42576b; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:8px; text-align:left; margin-top:8px;}
+  .tg b{min-width:64px; text-align:center; padding:6px 8px; border-radius:999px; background:#9fb1c3; color:#fff; font-size:14px;}
+  .tg.on{background:#dff3e8; color:#14633f;} .tg.on b{background:var(--green);}
+  .tg.off{opacity:.45;}
+  .mini{min-height:52px; width:100%; border-radius:14px; background:#42576b; color:#fff; font-size:16px; font-weight:800; margin-top:8px;}
+  .mini:active{background:#2c3b49;}
+  .info h3{margin:0 0 4px; font-size:19px;}
+  .info .ex{font-size:14px; color:var(--sub); margin-bottom:6px;}
+  .info p{margin:0; font-size:15px; line-height:1.5;}
+  .meter{margin-top:10px;}
+  .meter .lab{display:flex; justify-content:space-between; font-size:14px; font-weight:700; margin-bottom:4px;}
+  .bar{height:16px; border-radius:999px; background:#e3eaf2; overflow:hidden;}
+  .bar i{display:block; height:100%; width:0; border-radius:999px; background:#d8453f; transition:width .15s;}
+  .tip{margin-top:10px; padding:9px 12px; border-radius:12px; background:#fff6e0; font-size:15px; font-weight:700; line-height:1.4; min-height:40px;}
+  table.cmp{width:100%; border-collapse:collapse; font-size:14px;}
+  .cmp th,.cmp td{border:1px solid var(--line); padding:6px 5px; text-align:center; line-height:1.3;}
+  .cmp th{background:#f1f5fa; color:var(--sub);}
+  .cmp .hl{background:#fff1c9; font-weight:800;}
+  .sub{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .subbtn{min-height:56px; border-radius:14px; background:#dfe7f1; color:#42576b; font-size:17px; font-weight:800;}
+  .subbtn.on{background:#2b7de9; color:#fff;}
+  .shapes{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+  .shp{min-height:64px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:15px; font-weight:800; line-height:1.25; padding:4px;}
+  .shp span{display:block; font-size:22px;}
+  .shp.on{background:#0b1230; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start;}
+  .field{margin-top:10px;} .field label{display:block; font-size:15px; font-weight:800; margin-bottom:5px;}
+  .field input,.field textarea{width:100%; border:2px solid #c5d2e0; border-radius:12px; padding:10px 12px; font-size:18px; min-height:52px; background:#fff; color:var(--ink);}
+  .field textarea{min-height:104px; resize:none; line-height:1.4;}
+  .count{font-size:13px; color:var(--sub); text-align:right;}
+  .big{min-height:58px; width:100%; border-radius:14px; background:#22a06b; color:#fff; font-size:19px; font-weight:800; margin-top:12px; box-shadow:0 3px 0 rgba(0,0,0,.18);}
+  .big:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .big.blue{background:#2b7de9;}
+  .msg{margin-top:8px; font-size:15px; font-weight:700; color:#b3361f; min-height:22px;}
+  .cardcv{border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.25); background:#0b1230;}
+  .quiz .prog{display:flex; justify-content:space-between; font-size:16px; font-weight:800; margin-bottom:8px;}
+  .quiz .secTag{display:inline-block; padding:4px 12px; border-radius:999px; background:#0b1230; color:#fff; font-size:14px; font-weight:800; margin-bottom:8px;}
+  .quiz .q{font-size:22px; font-weight:800; line-height:1.5; margin:6px 0 14px;}
+  .opts{display:grid; gap:10px;}
+  .opts.ox{grid-template-columns:1fr 1fr;}
+  .opt{min-height:62px; border-radius:14px; background:#e9eff6; color:var(--ink); font-size:19px; font-weight:700; text-align:left; padding:8px 16px; line-height:1.35; border:3px solid transparent;}
+  .opts.ox .opt{text-align:center; font-size:30px; font-weight:900;}
+  .opt:active{background:#d9e3ef;}
+  .opt.right{background:#d9f5e5; border-color:#22a06b; color:#0f5a38;}
+  .opt.wrong{background:#fde1dc; border-color:#e5533d; color:#8e2316;}
+  .opt.dim{opacity:.55;}
+  .fb{margin-top:12px; padding:12px 14px; border-radius:12px; font-size:17px; line-height:1.55; display:none;}
+  .fb.ok{display:block; background:#e6f7ee; color:#0f5a38;} .fb.no{display:block; background:#fdeceb; color:#8e2316;}
+  .nextb{margin-top:12px; min-height:56px; padding:0 28px; border-radius:14px; background:#2b7de9; color:#fff; font-size:18px; font-weight:800; display:none;}
+  .nextb.show{display:inline-block;}
+  .result h3{font-size:26px; margin:4px 0 8px;}
+  .result .row{display:flex; justify-content:space-between; padding:8px 12px; border-radius:10px; background:#f3f7fb; margin-bottom:6px; font-size:17px; font-weight:700;}
+  @media (max-width:1000px){
+    .stage{grid-template-columns:1fr;}
+    .two{grid-template-columns:1fr;}
+    .panel,.tabs{padding-left:12px; padding-right:12px;}
+  }
+  @media (max-width:640px){
+    header h1{font-size:20px;}
+    .tabbtn{font-size:15px;}
+    .shapes{grid-template-columns:repeat(3,1fr);}
+  }
+
+  .badges{display:flex; gap:8px; flex-wrap:wrap; padding:2px 4px 8px;}
+  .bd{background:#16204a; color:#cfe0ff; border-radius:999px; padding:6px 14px; font-size:15px; font-weight:800;}
+  .bd.done{background:#1c6b45; color:#e6fff1;}
+  .bd.cur{background:#8a6a12; color:#fff3c4;}
+  .guide{margin:8px 4px 2px; padding:10px 14px; border-radius:12px; background:#fff6e0; color:#1d2b3a; font-size:17px; font-weight:800; line-height:1.5; min-height:56px;}
+  .sbtn.m1{background:#2f89b8; text-align:center; padding:0 8px; font-size:16px;}
+  .sbtn.m2{background:#c9702f; text-align:center; padding:0 8px; font-size:16px;}
+  .sbtn.m3{background:#3b3f4a; text-align:center; padding:0 8px; font-size:16px;}
+  .g2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .pre{min-height:48px; border-radius:14px; background:#e6edf4; color:#42576b; font-size:15px; font-weight:800; line-height:1.25; padding:4px;}
+  .pre.on{background:#0b1230; color:#fff;}
+  .row3{display:flex; justify-content:space-between; gap:8px; font-size:15px; padding:7px 0; border-bottom:1px solid var(--line); align-items:center;}
+  .row3 b{text-align:right; font-size:16px;}
+  .pos{color:#c2342b;} .neg{color:#1d5fd0;}
+  .verdict2{margin-top:8px; padding:10px 12px; border-radius:12px; background:#e1f6ea; color:#0f5a38; font-size:15px; font-weight:800; line-height:1.5;}
+  .legend{font-size:13px; color:var(--sub); line-height:1.5; margin-top:6px;}
+  .big2{min-height:52px; width:100%; border-radius:14px; background:#6a5acd; color:#fff; font-size:18px; font-weight:800; margin-top:8px; box-shadow:0 3px 0 rgba(0,0,0,.18);}
+  .modal{position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(5,10,30,.72); display:none; align-items:center; justify-content:center; z-index:30; padding:14px;}
+  .modal.on{display:flex;}
+  .mcard{background:#fff; border-radius:20px; max-width:780px; width:100%; max-height:94vh; overflow:auto; padding:16px 18px;}
+  .mtop{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .mtop h2{margin:0; font-size:21px;}
+  .xbtn{min-width:48px; min-height:48px; border-radius:14px; background:#42576b; color:#fff; font-size:20px; font-weight:800;}
+  .warn{margin-top:8px; padding:10px 12px; border-radius:12px; background:#fff0c9; color:#7a3a00; border:3px solid #f0a020; font-weight:800;}
+  .nuc{display:inline-block; font-size:28px; animation:shk .35s linear 4;}
+  @keyframes shk{0%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}
+  .g3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .sbtn.w1{background:#c9702f; text-align:center; padding:0 4px; line-height:1.25;}
+  .sbtn.w2{background:#2f6fb8; text-align:center; padding:0 4px; line-height:1.25;}
+  .sbtn.tv{background:#7a4cc2; text-align:center; padding:0 4px; font-size:15px;} .sbtn.ti{background:#c2392f; text-align:center; padding:0 4px; font-size:15px;} .sbtn.tr{background:#2f8a5a; text-align:center; padding:0 4px; font-size:15px;}
+  .tblWrap{overflow:auto; max-height:300px;}
+  table.dt{width:100%; border-collapse:collapse; font-size:17px; min-width:520px;}
+  .dt th,.dt td{border:1px solid var(--line); padding:8px 6px; text-align:center;}
+  .dt th{background:#f1f5fa; color:#42576b; position:sticky; top:0;}
+  .dt tr.last td{background:#fff6cf; font-weight:800;}
+  .dt .s5{color:#c2392f; font-weight:800;} .dt .l10{color:#1f5fc7; font-weight:800;}
+  .big.rec{background:#c2392f;}
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 옴의 법칙 가상실험실 (MBL)</h1>
+  <p>중2 과학 · 전기와 자기 — 전압·전류·저항의 관계</p>
+  <a class="back" href="./가상실험실_서랍.html">← 서랍으로</a>
+</header>
+
+<section class="panel on" style="margin-top:6px">
+  <div class="stage">
+    <div class="cv">
+      <div class="badges"><span class="bd gold" id="bW">짧은 니크롬선 (5 Ω)</span><span class="bd" id="bV">전압 0.0 V</span><span class="bd" id="bI">전류 0 mA</span><span class="bd" id="bN">기록한 점 0개</span></div>
+      <canvas id="c1" width="900" height="340"></canvas>
+      <div class="guide" id="guide"></div>
+      <div class="hint" style="padding-bottom:8px">왼쪽 전원 장치의 다이얼을 돌리거나 오른쪽 슬라이더로 전압을 바꾸고, 아래쪽 니크롬선 거치대를 눌러 선을 바꿀 수 있어요.</div>
+      <canvas id="c3" width="900" height="380"></canvas>
+      <div class="hint" id="gh">[측정값 기록]을 누르면 현재 (전압, 전류) 위치에 점이 찍혀요.</div>
+    </div>
+    <aside>
+      <div class="card">
+        <h2>🔬 니크롬선 속 확대 (충돌 관찰)</h2>
+        <canvas id="c2" width="330" height="270" style="border-radius:12px; background:#0b1230"></canvas>
+        <div class="row3"><span>원자핵 수 (이 창 안)</span><b id="mN">12개</b></div>
+        <div class="row3"><span>전자 1개당 충돌 횟수</span><b id="mC">0.0 회/초</b></div>
+        <div class="legend">🟠 <b>원자핵(+)</b>은 제자리에서 떨기만 해요 · 🔵 <b>전자(−)</b>는 전압이 만든 전기력으로 오른쪽(+극 쪽)으로 가속되다가 원자핵과 부딪히면 속도를 잃고 다시 흩어져요. 선이 길수록 지나가야 할 원자핵이 많아요.</div>
+      </div>
+      <div class="card">
+        <h2>🎛️ 실험 조작</h2>
+        <div class="sl" style="margin-top:0"><label><span>전원 장치 전압</span><span id="vV">0.0 V</span></label>
+          <input type="range" id="sV" min="0" max="100" step="5" value="0"></div>
+        <div class="g2">
+          <button class="sbtn w1 active" data-w="S">짧은 선<br>5 Ω</button>
+          <button class="sbtn w2" data-w="L">긴 선 (2배)<br>10 Ω</button>
+        </div>
+        <button class="big" id="bRec" style="margin-top:10px">📍 측정값 기록 (타점)</button>
+        <div class="g2" style="margin-top:8px">
+          <button class="mini" id="bAuto" style="margin-top:0">🤖 자동 측정<br>(2·4·6·8·10 V)</button>
+          <button class="mini" id="bClr" style="margin-top:0">🗑 표·그래프<br>초기화</button>
+        </div>
+        <button class="tg" id="tTrend"><span>📐 추세선 그리기</span><b>OFF</b></button>
+      </div>
+      <div class="card">
+        <h2>📟 실시간 HUD</h2>
+        <div class="row3"><span>걸린 전압 V</span><b id="hV">0.0 V</b></div>
+        <div class="row3"><span>연결된 저항 R</span><b id="hR">5 Ω</b></div>
+        <div class="row3"><span>흐르는 전류 I</span><b id="hI">0 mA (0.000 A)</b></div>
+        <div class="row3"><span>발열 P = V × I</span><b id="hP">0.0 W</b></div>
+      </div>
+      <div class="card">
+        <h2>🔺 옴의 법칙 삼각 공식</h2>
+        <canvas id="c4" width="330" height="190" style="border-radius:12px; background:#f6f9fd"></canvas>
+        <div class="g3" style="margin-top:8px">
+          <button class="sbtn tv" data-t="V">V 구하기</button>
+          <button class="sbtn ti active" data-t="I">I 구하기</button>
+          <button class="sbtn tr" data-t="R">R 구하기</button>
+        </div>
+        <div class="verdict2" id="fx" style="margin-top:8px"></div>
+        <button class="big2" id="bQuiz">🧠 스스로 확인하기 퀴즈</button>
+      </div>
+    </aside>
+  </div>
+  <div class="card" style="margin-top:2px">
+    <h2>📋 데이터 테이블 (자동 기록)</h2>
+    <div class="tblWrap" id="tbl"></div>
+  </div>
+</section>
+
+<div class="modal" id="modal">
+  <div class="mcard">
+    <div class="mtop"><h2>🧠 스스로 확인하기</h2><button class="xbtn" id="mx">✕</button></div>
+    <div class="quiz" id="quizBox"></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var RAD=Math.PI/180;
+  function $(id){ return document.getElementById(id); }
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function setup(id,W,H){
+    var el=$(id), c={el:el, ctx:el.getContext('2d'), W:W, H:H, s:1};
+    c.fit=function(){
+      var dpr=Math.min(2,window.devicePixelRatio||1), w=el.clientWidth||W;
+      var nw=Math.round(w*dpr), nh=Math.round(w*H/W*dpr);
+      if(el.width!==nw||el.height!==nh){ el.width=nw; el.height=nh; }
+      c.s=el.width/W;
+    };
+    c.pt=function(e){ var r=el.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; };
+    c.fit(); return c;
+  }
+  function setTog(btn,on,label){ btn.classList.toggle('on',on); btn.querySelector('b').textContent=label; }
+  function arrow(ctx,x0,y0,x1,y1,color,lw){
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw||2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    var a=Math.atan2(y1-y0,x1-x0);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1-15*Math.cos(a-0.4),y1-15*Math.sin(a-0.4)); ctx.lineTo(x1-15*Math.cos(a+0.4),y1-15*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+  }
+  function labelBox(ctx,text,x,y,color,size){
+    ctx.font='bold '+(size||16)+'px sans-serif'; var w=ctx.measureText(text).width+18;
+    ctx.fillStyle='rgba(6,10,28,0.85)'; ctx.fillRect(x-w/2,y-15,w,28);
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([]); ctx.strokeRect(x-w/2,y-15,w,28);
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(text,x,y+5);
+  }
+  var SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+  function sup(n){ var s=String(n), o='', i; for(i=0;i<s.length;i++) o+=SUP[s[i]]||s[i]; return o; }
+  function sci(x){ if(x<=0) return '0'; var e=Math.floor(Math.log(x)/Math.LN10+1e-9), m=x/Math.pow(10,e); return m.toFixed(1)+'×10'+sup(e); }
+  function setText(id,v){ var el=$(id); if(el._v!==v){ el._v=v; el.textContent=v; } }
+
+  /* ================= 상태 ================= */
+  var C1=setup('c1',900,340), C2=setup('c2',330,270), C3=setup('c3',900,380), C4=setup('c4',330,190);
+  var V=0, W='S', trend=false, tri='I', PTS=[], heatS=0, flowOff=0, lastRec=-1;
+  var RS={S:5,L:10}, LEN={S:150,L:300}, NAME={S:'짧은 니크롬선 (5 Ω)',L:'긴 니크롬선 (10 Ω)'}, COLW={S:'#e5533d',L:'#2b7de9'};
+  function R(){ return RS[W]; }
+  function I(){ return V/R(); }          // A
+  function IMA(){ return I()*1000; }
+  var ROWY={S:205,L:275}, X0W=520;
+
+  /* ================= 경로(전류 점) ================= */
+  var path=[], plen=0, psegs=[];
+  function buildPath(){
+    var ry=ROWY[W], rx=X0W+LEN[W];
+    path=[[270,110],[X0W,110],[X0W,ry],[rx,ry],[860,ry],[860,322],[270,322],[270,260]]; psegs=[]; plen=0;
+    for(var i=0;i<path.length-1;i++){ var dx=path[i+1][0]-path[i][0], dy=path[i+1][1]-path[i][1], l=Math.sqrt(dx*dx+dy*dy); psegs.push({l:l,tx:dx/l,ty:dy/l,x:path[i][0],y:path[i][1]}); plen+=l; }
+  }
+  function posAt(s){
+    s=((s%plen)+plen)%plen; for(var i=0;i<psegs.length;i++){ var g=psegs[i]; if(s<=g.l) return {x:g.x+g.tx*s,y:g.y+g.ty*s}; s-=g.l; }
+    return {x:path[0][0],y:path[0][1]};
+  }
+
+  /* ================= 포인터: 다이얼·거치대 ================= */
+  var DC={x:110,y:205,r:52}, dialHeld=false;
+  function setV(v){ V=clamp(Math.round(v*2)/2,0,10); $('sV').value=Math.round(V*10); }
+  function dialFromPt(p){
+    var dx=p.x-DC.x, dy=p.y-DC.y, deg=Math.atan2(dy,dx)/RAD; if(deg<0) deg+=360;
+    var rel=(deg-135+360)%360, f; if(rel<=270) f=rel/270; else f=(rel>315)?0:1;
+    setV(f*10);
+  }
+  C1.el.addEventListener('pointerdown',function(e){
+    var p=C1.pt(e), dd=Math.sqrt((p.x-DC.x)*(p.x-DC.x)+(p.y-DC.y)*(p.y-DC.y));
+    if(dd<DC.r+26){ dialHeld=true; dialFromPt(p); if(C1.el.setPointerCapture){ try{ C1.el.setPointerCapture(e.pointerId); }catch(er){} } e.preventDefault(); return; }
+    if(p.x>X0W-30&&p.x<880){ if(Math.abs(p.y-ROWY.S)<30) setWire('S'); else if(Math.abs(p.y-ROWY.L)<30) setWire('L'); }
+  });
+  C1.el.addEventListener('pointermove',function(e){ if(dialHeld){ dialFromPt(C1.pt(e)); e.preventDefault(); } });
+  function relD(){ dialHeld=false; }
+  C1.el.addEventListener('pointerup',relD); C1.el.addEventListener('pointercancel',relD);
+
+  /* ================= 회로 그리기 ================= */
+  function heatCol(t){
+    var r,g,b; if(t<0.5){ var f=t/0.5; r=199+(255-199)*f; g=204+(150-204)*f; b=211+(40-211)*f; } else { var f2=(t-0.5)/0.5; r=255; g=150+(60-150)*f2; b=40+(30-40)*f2; }
+    return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
+  }
+  function coil(ctx,x0,y,len,col,lw){
+    ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x0,y);
+    for(var x=0;x<=len;x+=2){ ctx.lineTo(x0+x,y+Math.sin(x/12*Math.PI)*7); }
+    ctx.stroke();
+  }
+  function clip(ctx,x,y,col,left){
+    ctx.fillStyle=col; ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.beginPath(); ctx.rect(x-12,y-14,24,28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ddd'; for(var k=-1;k<=1;k++){ ctx.fillRect(x-8,y-9+k*9+2,16,4); }
+  }
+  function lcd(ctx,x,y,w,h,txt,col){
+    ctx.fillStyle='#07140d'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#4a5565'; ctx.lineWidth=3; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle=col||'#8ff0b0'; ctx.font='bold '+Math.round(h*0.56)+'px monospace'; ctx.textAlign='center'; ctx.fillText(txt,x+w/2,y+h*0.72);
+  }
+  function drawCircuit(tm){
+    var ctx=C1.ctx; ctx.setTransform(C1.s,0,0,C1.s,0,0);
+    var bg=ctx.createLinearGradient(0,0,0,340); bg.addColorStop(0,'#10193a'); bg.addColorStop(1,'#1b2750'); ctx.fillStyle=bg; ctx.fillRect(0,0,900,340);
+    var ry=ROWY[W], rx=X0W+LEN[W], heat=heatS, k, s, p;
+    // 케이블
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#d1493f'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(270,110); ctx.lineTo(330,110); ctx.moveTo(450,110); ctx.lineTo(X0W,110); ctx.lineTo(X0W,ry); ctx.stroke();
+    ctx.strokeStyle='#22262d'; ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(860,ry); ctx.lineTo(860,322); ctx.lineTo(270,322); ctx.lineTo(270,260); ctx.stroke();
+    // 거치대 (두 선)
+    var ids=['S','L'];
+    for(k=0;k<2;k++){ var id=ids[k], y=ROWY[id], sel=(id===W);
+      ctx.fillStyle='rgba(255,255,255,'+(sel?0.10:0.05)+')'; ctx.fillRect(X0W-36,y-26,LEN[id]+72,52);
+      ctx.strokeStyle=sel?'#ffd23f':'rgba(255,255,255,0.3)'; ctx.lineWidth=sel?3:1.5; ctx.setLineDash(sel?[]:[6,5]); ctx.strokeRect(X0W-36,y-26,LEN[id]+72,52); ctx.setLineDash([]);
+      if(sel&&heat>0.12){ var gg=ctx.createRadialGradient(X0W+LEN[id]/2,y,5,X0W+LEN[id]/2,y,LEN[id]*0.65); gg.addColorStop(0,'rgba(255,120,30,'+(0.55*heat)+')'); gg.addColorStop(1,'rgba(255,90,20,0)'); ctx.fillStyle=gg; ctx.fillRect(X0W-60,y-60,LEN[id]+120,120); }
+      coil(ctx,X0W,y,LEN[id],sel?heatCol(heat):'rgba(190,196,205,0.55)',5);
+      ctx.fillStyle=sel?'#ffe9a8':'rgba(220,230,250,0.65)'; ctx.font='bold 14px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(NAME[id]+(sel?'  ◀ 연결됨':'  (눌러서 교체)'),X0W-30,y-32);
+    }
+    clip(ctx,X0W,ry,'#d1493f'); clip(ctx,rx,ry,'#2b2f38');
+    // 전압 센서 (병렬)
+    ctx.strokeStyle='#ff5a5a'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(640,86); ctx.quadraticCurveTo(560,100,X0W+8,ry-16); ctx.stroke();
+    ctx.strokeStyle='#333'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(730,86); ctx.quadraticCurveTo(780,130,rx+10,ry-16); ctx.stroke();
+    ctx.fillStyle='#303846'; ctx.fillRect(610,12,150,76); ctx.strokeStyle='#8fa0b8'; ctx.lineWidth=2; ctx.strokeRect(610,12,150,76);
+    ctx.fillStyle='#cfe0ff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center'; ctx.fillText('전압 센서 (병렬)',685,29);
+    lcd(ctx,620,36,130,40,V.toFixed(2)+' V','#8fd0ff');
+    ctx.fillStyle='#ff5a5a'; ctx.beginPath(); ctx.arc(640,86,6,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(730,86,6,0,Math.PI*2); ctx.fill();
+    // 전류 센서 (직렬)
+    ctx.fillStyle='#303846'; ctx.fillRect(330,70,120,80); ctx.strokeStyle='#8fa0b8'; ctx.lineWidth=2; ctx.strokeRect(330,70,120,80);
+    ctx.fillStyle='#cfe0ff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center'; ctx.fillText('전류 센서 (직렬)',390,87);
+    lcd(ctx,338,94,104,44,IMA().toFixed(0)+' mA','#8ff0b0');
+    // 전류 방향 점
+    if(V>0){ var n=Math.floor(plen/46), sp=plen/n; ctx.fillStyle='#ffd23f';
+      for(k=0;k<n;k++){ p=posAt(k*sp+flowOff); if(p.x>324&&p.x<456&&p.y<150) continue; ctx.beginPath(); ctx.arc(p.x,p.y,4.5,0,Math.PI*2); ctx.fill(); } }
+    // 전원 장치
+    var g=ctx.createLinearGradient(24,0,270,0); g.addColorStop(0,'#3a4558'); g.addColorStop(1,'#283143'); ctx.fillStyle=g; ctx.fillRect(24,26,246,296); ctx.strokeStyle='#8fa0b8'; ctx.lineWidth=3; ctx.strokeRect(24,26,246,296);
+    ctx.fillStyle='#cfe0ff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText('DC 전원 장치',147,50);
+    lcd(ctx,50,60,150,50,V.toFixed(1)+' V','#ffd86b');
+    // 다이얼
+    ctx.fillStyle='#1b2230'; ctx.beginPath(); ctx.arc(DC.x,DC.y,DC.r+10,0,Math.PI*2); ctx.fill();
+    for(k=0;k<=20;k++){ var a=(135+270*k/20)*RAD, big=(k%2===0), r1=DC.r+4, r2=DC.r+(big?14:9);
+      ctx.strokeStyle=big?'#e8eefc':'#8fa0b8'; ctx.lineWidth=big?3:1.5; ctx.beginPath(); ctx.moveTo(DC.x+Math.cos(a)*r1,DC.y+Math.sin(a)*r1); ctx.lineTo(DC.x+Math.cos(a)*r2,DC.y+Math.sin(a)*r2); ctx.stroke(); }
+    ctx.fillStyle='#e8eefc'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('0',DC.x-48,DC.y+DC.r+22); ctx.fillText('10',DC.x+48,DC.y+DC.r+22); ctx.fillText('5',DC.x,DC.y-DC.r-18);
+    var kg=ctx.createRadialGradient(DC.x-12,DC.y-12,4,DC.x,DC.y,DC.r); kg.addColorStop(0,'#f2f4f8'); kg.addColorStop(1,'#8b95a5'); ctx.fillStyle=kg; ctx.beginPath(); ctx.arc(DC.x,DC.y,DC.r,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#4a5565'; ctx.lineWidth=3; ctx.stroke();
+    var ka=(135+270*V/10)*RAD; ctx.strokeStyle='#d62828'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(DC.x,DC.y); ctx.lineTo(DC.x+Math.cos(ka)*(DC.r-8),DC.y+Math.sin(ka)*(DC.r-8)); ctx.stroke();
+    ctx.fillStyle='#d62828'; ctx.beginPath(); ctx.arc(DC.x,DC.y,8,0,Math.PI*2); ctx.fill();
+    // 단자
+    ctx.fillStyle='#d1493f'; ctx.beginPath(); ctx.arc(270,110,14,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ctx.fillStyle='#fff'; ctx.font='bold 20px sans-serif'; ctx.fillText('+',270,117);
+    ctx.fillStyle='#22262d'; ctx.beginPath(); ctx.arc(270,260,14,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.fillStyle='#fff'; ctx.fillText('−',270,267);
+    if(heat>0.55){ labelBox(ctx,'🔥 줄열 발생! 니크롬선이 달아올라요',rx-60<X0W?X0W+LEN[W]/2:X0W+LEN[W]/2,ry+62>330?ry-62:ry+62,'#ff8a3c',14); }
+  }
+
+  /* ================= 그래프 ================= */
+  var GX=80, GY=330, GW=780, GH=280;
+  function gx(v){ return GX+GW*v/10; } function gy(i){ return GY-GH*i/2000; }
+  function lsSlope(w){ var sv=0, sx=0, i; for(i=0;i<PTS.length;i++){ if(PTS[i].w!==w) continue; sv+=PTS[i].V*PTS[i].I; sx+=PTS[i].V*PTS[i].V; } return sx>0?sv/sx:null; }
+  function drawGraph(tm){
+    var ctx=C3.ctx, i; ctx.setTransform(C3.s,0,0,C3.s,0,0);
+    ctx.fillStyle='#0b1230'; ctx.fillRect(0,0,900,380);
+    ctx.fillStyle='#e8eefc'; ctx.font='bold 17px sans-serif'; ctx.textAlign='left'; ctx.fillText('전압 – 전류 그래프 (MBL)',GX,30);
+    ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1; ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    for(i=0;i<=10;i++){ ctx.beginPath(); ctx.moveTo(gx(i),GY); ctx.lineTo(gx(i),GY-GH); ctx.stroke(); ctx.fillText(String(i),gx(i),GY+18); }
+    ctx.textAlign='right'; for(i=0;i<=4;i++){ ctx.beginPath(); ctx.moveTo(GX,gy(i*500)); ctx.lineTo(GX+GW,gy(i*500)); ctx.stroke(); ctx.fillText(String(i*500),GX-8,gy(i*500)+5); }
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(GX,GY-GH); ctx.lineTo(GX,GY); ctx.lineTo(GX+GW,GY); ctx.stroke();
+    ctx.fillStyle='#cfe0ff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText('전압 V (V)',GX+GW/2,GY+42);
+    ctx.save(); ctx.translate(22,GY-GH/2); ctx.rotate(-Math.PI/2); ctx.fillText('전류 I (mA)',0,0); ctx.restore();
+    // 추세선
+    if(trend){
+      var ws=['S','L'], k;
+      for(k=0;k<2;k++){ var sl=lsSlope(ws[k]); if(sl===null) continue; var vend=Math.min(10,2/sl);
+        ctx.strokeStyle=COLW[ws[k]]; ctx.lineWidth=4; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(gx(0),gy(0)); ctx.lineTo(gx(vend),gy(sl*vend*1000)); ctx.stroke();
+        var lx=gx(Math.min(vend,k===0?4.6:9.0)), ly=gy(sl*Math.min(vend,k===0?4.6:9.0)*1000);
+        labelBox(ctx,RS[ws[k]]+' Ω: 기울기 = 1/R = '+(sl*1000).toFixed(0)+' mA/V',clamp(lx+10,170,760),ly-26,COLW[ws[k]],13);
+      }
+      var s5=lsSlope('S'), s10=lsSlope('L');
+      if(s5&&s10){ labelBox(ctx,'기울기가 클수록 저항이 작아요 (5 Ω선 : 10 Ω선 = '+(s5/s10).toFixed(1)+' : 1)',GX+GW/2,64,'#ffd23f',14); }
+    }
+    // 데이터 점
+    for(i=0;i<PTS.length;i++){ var q=PTS[i]; ctx.fillStyle=COLW[q.w]; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      ctx.beginPath(); if(q.w==='S') ctx.arc(gx(q.V),gy(q.I),8,0,Math.PI*2); else ctx.rect(gx(q.V)-7,gy(q.I)-7,14,14); ctx.fill(); ctx.stroke(); }
+    // 현재값 마커
+    var cx=gx(V), cy=gy(clamp(IMA(),0,2000)), pul=3+Math.sin(tm*5)*2;
+    ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(cx,GY); ctx.lineTo(cx,cy); ctx.lineTo(GX,cy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle=COLW[W]; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,11+pul,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#e8eefc'; ctx.font='bold 13px sans-serif'; ctx.textAlign=(V>8?'right':'left'); ctx.fillText('('+V.toFixed(1)+' V, '+IMA().toFixed(0)+' mA)',cx+(V>8?-18:18),cy-(IMA()>1500?-24:14));
+    // 범례
+    ctx.textAlign='left'; ctx.font='bold 13px sans-serif';
+    ctx.fillStyle=COLW.S; ctx.beginPath(); ctx.arc(GX+GW-250,22,7,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#e8eefc'; ctx.fillText('짧은 선 5 Ω',GX+GW-238,27);
+    ctx.fillStyle=COLW.L; ctx.fillRect(GX+GW-130,15,14,14); ctx.fillStyle='#e8eefc'; ctx.fillText('긴 선 10 Ω',GX+GW-110,27);
+  }
+
+  /* ================= 옴 삼각형 ================= */
+  function drawTri(){
+    var ctx=C4.ctx; ctx.setTransform(C4.s,0,0,C4.s,0,0);
+    ctx.fillStyle='#f6f9fd'; ctx.fillRect(0,0,330,190);
+    var P0=[165,14], P1=[40,176], P2=[290,176];
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#42576b'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(P0[0],P0[1]); ctx.lineTo(P1[0],P1[1]); ctx.lineTo(P2[0],P2[1]); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(102,95); ctx.lineTo(228,95); ctx.stroke(); ctx.beginPath(); ctx.moveTo(165,95); ctx.lineTo(165,176); ctx.stroke();
+    var spots={V:[165,68],I:[104,142],R:[226,142]}, cols={V:'#7a4cc2',I:'#c2392f',R:'#2f8a5a'}, k;
+    ctx.textAlign='center'; ctx.font='bold 34px sans-serif';
+    for(k in spots){ var sel=(k===tri);
+      if(sel){ ctx.fillStyle='rgba(255,210,63,0.55)'; ctx.beginPath(); ctx.arc(spots[k][0],spots[k][1]-10,30,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle=cols[k]; ctx.fillText(sel?'?':k,spots[k][0],spots[k][1]); }
+    ctx.fillStyle='#42576b'; ctx.font='bold 14px sans-serif'; ctx.fillText(tri==='V'?'V = I × R':tri==='I'?'I = V ÷ R':'R = V ÷ I',165,92-18+2-0);
+  }
+  function fxText(){
+    var r=R(), v=V, i=I();
+    if(tri==='V') return 'V = I × R = '+i.toFixed(3)+' A × '+r+' Ω = '+(i*r).toFixed(1)+' V';
+    if(tri==='I') return 'I = V ÷ R = '+v.toFixed(1)+' V ÷ '+r+' Ω = '+i.toFixed(3)+' A ('+(i*1000).toFixed(0)+' mA)';
+    return 'R = V ÷ I = '+v.toFixed(1)+' V ÷ '+i.toFixed(3)+' A = '+(i>0?(v/i).toFixed(1):'—')+' Ω';
+  }
+
+  /* ================= 미시 창: 충돌 ================= */
+  var NUC=[], EL2=[], SPK=[], colHist=[], mrr=mulberry(33), RN=9, RE=6, k2;
+  function buildNuc(){
+    NUC=[]; var cols=(W==='S')?4:8, rows=3, i, j, x0=(W==='S')?52:30, dx=(W==='S')?80:38;
+    for(j=0;j<rows;j++) for(i=0;i<cols;i++) NUC.push({x:x0+dx*i+(j%2?dx*0.0:0),y:96+54*j});
+    $('mN').textContent=NUC.length+'개';
+  }
+  for(k2=0;k2<14;k2++){ var aa=mrr()*6.283; EL2.push({x:20+mrr()*290,y:80+mrr()*150,vx:Math.cos(aa)*80,vy:Math.sin(aa)*80,cd:0}); }
+  function updMicro(dt,tm){
+    var A=14*V, i, j, e, n, dx, dy, dd, hit=0, shake=1+4*heatS;
+    for(i=0;i<EL2.length;i++){
+      e=EL2[i]; e.vx+=A*dt; e.x+=e.vx*dt; e.y+=e.vy*dt; e.cd-=dt;
+      if(e.x>324) e.x-=316; if(e.x<8) e.x+=316;
+      if(e.y<78){ e.y=78; e.vy=Math.abs(e.vy); } if(e.y>228){ e.y=228; e.vy=-Math.abs(e.vy); }
+      for(j=0;j<NUC.length;j++){
+        n=NUC[j]; dx=e.x-n.x; dy=e.y-n.y; dd=Math.sqrt(dx*dx+dy*dy);
+        if(dd<RN+RE){
+          var nx=dx/(dd||1), ny=dy/(dd||1), base=Math.atan2(ny,nx), a=base+(Math.random()-0.5)*2.4, sp=60+Math.random()*50;
+          e.x=n.x+nx*(RN+RE+0.5); e.y=n.y+ny*(RN+RE+0.5); e.vx=Math.cos(a)*sp; e.vy=Math.sin(a)*sp;
+          if(e.cd<=0){ colHist.push(tm); SPK.push({x:n.x+nx*RN,y:n.y+ny*RN,t:0}); e.cd=0.06; }
+          break;
+        }
+      }
+    }
+    for(i=SPK.length-1;i>=0;i--){ SPK[i].t+=dt*3; if(SPK[i].t>=1) SPK.splice(i,1); }
+    while(colHist.length&&colHist[0]<tm-3) colHist.shift();
+  }
+  function drawMicro(tm){
+    var ctx=C2.ctx, i; ctx.setTransform(C2.s,0,0,C2.s,0,0);
+    ctx.fillStyle='#0b1230'; ctx.fillRect(0,0,330,270);
+    var hc=heatS; ctx.fillStyle='rgba('+Math.round(150+105*hc)+','+Math.round(150-60*hc)+','+Math.round(160-110*hc)+',0.30)'; ctx.fillRect(4,62,322,178);
+    ctx.strokeStyle=heatCol(hc); ctx.lineWidth=3; ctx.strokeRect(4,62,322,178);
+    ctx.fillStyle='#e8eefc'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left'; ctx.fillText(NAME[W]+' 전체를 확대한 모습',8,54);
+    for(i=0;i<NUC.length;i++){ var n=NUC[i], x=n.x+Math.sin(tm*12+i*1.9)*(0.8+2.4*heatS+0.4), y=n.y+Math.cos(tm*10+i*2.3)*(0.8+2.4*heatS+0.4);
+      ctx.fillStyle='#f08a3a'; ctx.beginPath(); ctx.arc(x,y,RN,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle='#4a1d00'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('+',x,y+5); }
+    for(i=0;i<SPK.length;i++){ ctx.strokeStyle='rgba(255,230,120,'+(1-SPK[i].t)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(SPK[i].x,SPK[i].y,5+16*SPK[i].t,0,Math.PI*2); ctx.stroke(); }
+    for(i=0;i<EL2.length;i++){ var e=EL2[i]; ctx.fillStyle='#4aa8ff'; ctx.beginPath(); ctx.arc(e.x,e.y,RE+1,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.2; ctx.stroke(); ctx.fillStyle='#06304f'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('−',e.x,e.y+4); }
+    ctx.font='bold 12px sans-serif'; ctx.textAlign='left'; ctx.fillStyle='#8fbcff'; ctx.fillText('◀ (−)극 쪽',8,258); ctx.textAlign='right'; ctx.fillStyle='#ff9a9a'; ctx.fillText('(+)극 쪽 ▶',324,258);
+    arrow(ctx,40,22,40+Math.min(230,V*23),22,'#3d8bff',4); ctx.fillStyle='#8fbcff'; ctx.textAlign='left'; ctx.font='bold 12px sans-serif'; ctx.fillText(V>0?'전자의 이동 방향·가속':'전압 0 V: 한쪽으로 가속되지 않음',46,14);
+  }
+
+  /* ================= 표 · 기록 ================= */
+  function record(){
+    if(V<=0){ return false; }
+    var ima=Math.round(IMA()*10)/10, i;
+    for(i=0;i<PTS.length;i++){ if(PTS[i].w===W&&PTS[i].V===V){ PTS[i].I=ima; return true; } }
+    if(PTS.length>=60) PTS.shift();
+    PTS.push({w:W,V:V,I:ima}); lastRec=PTS.length-1; return true;
+  }
+  function buildTbl(){
+    var h='<table class="dt"><tr><th>번호</th><th>니크롬선</th><th>전압 V (V)</th><th>전류 I (mA)</th><th>저항 R = V ÷ I (Ω)</th></tr>', i;
+    if(PTS.length===0) h+='<tr><td colspan="5" style="color:#5b6b7c">아직 기록이 없어요. [측정값 기록]을 눌러 보세요.</td></tr>';
+    for(i=0;i<PTS.length;i++){ var q=PTS[i];
+      h+='<tr'+(i===PTS.length-1?' class="last"':'')+'><td>'+(i+1)+'</td><td class="'+(q.w==='S'?'s5':'l10')+'">'+(q.w==='S'?'짧은 선':'긴 선 (2배)')+'</td><td>'+q.V.toFixed(1)+'</td><td>'+q.I.toFixed(0)+'</td><td>'+(q.V/(q.I/1000)).toFixed(1)+'</td></tr>'; }
+    h+='</table>'; $('tbl').innerHTML=h; $('bN').textContent='기록한 점 '+PTS.length+'개';
+  }
+  $('bRec').addEventListener('click',function(){ if(!record()){ $('gh').textContent='⚠ 전압을 0 V보다 크게 올린 뒤 기록해 주세요.'; return; } $('gh').textContent='📍 기록했어요! 전압이 2배, 3배가 될 때 전류가 어떻게 변하는지 점의 위치를 살펴보세요.'; buildTbl(); });
+  $('bAuto').addEventListener('click',function(){ var keep=V, vs=[2,4,6,8,10], i; for(i=0;i<vs.length;i++){ V=vs[i]; record(); } V=keep; $('gh').textContent='🤖 2·4·6·8·10 V에서 자동 측정했어요. [추세선 그리기]를 켜 보세요.'; buildTbl(); });
+  $('bClr').addEventListener('click',function(){ PTS=[]; lastRec=-1; buildTbl(); $('gh').textContent='표와 그래프를 초기화했어요.'; });
+  $('tTrend').addEventListener('click',function(){ trend=!trend; setTog(this,trend,trend?'ON':'OFF'); });
+
+  /* ================= HUD · 컨트롤 ================= */
+  function setText(id,v){ var el=$(id); if(el._v!==v){ el._v=v; el.textContent=v; } }
+  function updHUD(){
+    var r=R(), i=I(), ima=IMA();
+    setText('bW',NAME[W]); setText('bV','전압 '+V.toFixed(1)+' V'); setText('bI','전류 '+ima.toFixed(0)+' mA');
+    setText('vV',V.toFixed(1)+' V'); setText('hV',V.toFixed(1)+' V'); setText('hR',r+' Ω'); setText('hI',ima.toFixed(0)+' mA ('+i.toFixed(3)+' A)'); setText('hP',(V*i).toFixed(1)+' W');
+    setText('mC',(colHist.length/3/EL2.length).toFixed(1)+' 회/초');
+    setText('fx',fxText());
+    var g;
+    if(V<=0) g='전압이 0 V라서 전류도 0이에요. 다이얼을 돌려 전압을 올려 보세요!';
+    else if(W==='S') g='짧은 선(R = 5 Ω): 전압이 2배, 3배가 되면 전류도 2배, 3배가 돼요(비례). 지금 I = V ÷ R = '+V.toFixed(1)+' ÷ 5 = '+ima.toFixed(0)+' mA.';
+    else g='긴 선(R = 10 Ω, 길이 2배): 같은 전압에서 짧은 선의 절반 전류가 흘러요(저항 클수록 전류 작음). 지금 I = '+V.toFixed(1)+' ÷ 10 = '+ima.toFixed(0)+' mA.';
+    setText('guide',g);
+  }
+  function setWire(w){
+    if(W===w) return; W=w; buildPath(); buildNuc();
+    var b=document.querySelectorAll('.sbtn.w1,.sbtn.w2'); for(var k=0;k<b.length;k++) b[k].classList.toggle('active',b[k].dataset.w===w);
+  }
+  $('sV').addEventListener('input',function(){ setV(Number(this.value)/10); });
+  var wBtns=document.querySelectorAll('.sbtn.w1,.sbtn.w2');
+  for(var wi=0;wi<wBtns.length;wi++){ wBtns[wi].addEventListener('click',function(){ setWire(this.dataset.w); }); }
+  var tBtns=document.querySelectorAll('.sbtn.tv,.sbtn.ti,.sbtn.tr');
+  for(var ti2=0;ti2<tBtns.length;ti2++){ tBtns[ti2].addEventListener('click',function(){ tri=this.dataset.t; for(var k=0;k<tBtns.length;k++) tBtns[k].classList.toggle('active',tBtns[k]===this); }); }
+  /* ================= 퀴즈 ================= */
+  var NUM=['①','②','③','④'];
+  function makeQuiz(box,list,opts){
+    var Q={i:0,score:0,sec:{},answered:false};
+    function render(){
+      var q=list[Q.i], h='';
+      if(Q.i>=list.length){ result(); return; }
+      h+='<div class="prog"><span>문제 '+(Q.i+1)+' / '+list.length+'</span><span>점수 '+Q.score+'</span></div>';
+      h+='<div class="bar" style="margin-bottom:12px"><i style="width:'+Math.round(Q.i/list.length*100)+'%;background:#2b7de9"></i></div>';
+      h+='<span class="secTag">'+q.sec+(q.t==='ox'?' · O/X':' · 선택형')+'</span><div class="q">'+q.q+'</div>';
+      h+='<div class="opts '+((q.t==='ox'||q.o.length===2)?'ox':'')+'">';
+      if(q.t==='ox'){ h+='<button class="opt" data-i="0">O</button><button class="opt" data-i="1">X</button>'; }
+      else { for(var i=0;i<q.o.length;i++) h+='<button class="opt" data-i="'+i+'">'+(q.o.length===2?'':NUM[i]+' ')+q.o[i]+'</button>'; }
+      h+='</div><div class="fb"></div><button class="nextb">'+(Q.i===list.length-1?'결과 보기 ▶':'다음 문제 ▶')+'</button>';
+      box.innerHTML=h; Q.answered=false;
+      var ob=box.querySelectorAll('.opt'), k;
+      for(k=0;k<ob.length;k++) ob[k].addEventListener('click',function(){ pick(Number(this.dataset.i)); });
+      box.querySelector('.nextb').addEventListener('click',function(){ Q.i++; render(); });
+    }
+    function pick(i){
+      if(Q.answered) return; Q.answered=true;
+      var q=list[Q.i], ok=(i===q.a), ob=box.querySelectorAll('.opt'), k;
+      if(!Q.sec[q.sec]) Q.sec[q.sec]=[0,0]; Q.sec[q.sec][1]++; if(ok){ Q.score++; Q.sec[q.sec][0]++; }
+      for(k=0;k<ob.length;k++){ if(k===q.a) ob[k].classList.add('right'); else if(k===i) ob[k].classList.add('wrong'); else ob[k].classList.add('dim'); }
+      var fb=box.querySelector('.fb'); fb.className='fb '+(ok?'ok':'no'); fb.innerHTML=(ok?'⭕ <b>정답이에요!</b> ':'❌ <b>아쉬워요.</b> ')+q.x+((!ok&&q.xw)?q.xw:'');
+      box.querySelector('.nextb').classList.add('show');
+    }
+    function result(){
+      var h='<div class="result"><h3>🎉 결과: '+Q.score+' / '+list.length+'점</h3>';
+      for(var s in Q.sec){ h+='<div class="row"><span>'+s+'</span><span>'+Q.sec[s][0]+' / '+Q.sec[s][1]+'</span></div>'; }
+      h+='<p style="font-size:17px;line-height:1.5;margin:10px 0 0">'+(Q.score===list.length?opts.perfect:Q.score>=Math.ceil(list.length*0.7)?opts.good:opts.retry)+'</p>';
+      h+='<button class="nextb show" id="'+opts.id+'">↺ 다시 풀기</button></div>';
+      box.innerHTML=h; $(opts.id).addEventListener('click',function(){ Q.i=0; Q.score=0; Q.sec={}; Q.answered=false; render(); });
+    }
+    render();
+  }
+
+  makeQuiz($('quizBox'),[
+    {sec:'Q1 전압과 저항',t:'mc',q:'같은 니크롬선에 걸어 준 전압을 2배로 올리면 저항의 크기도 2배가 될까요?',o:['저항도 2배가 되고 전류는 그대로이다','저항은 변하지 않고, 전류가 2배로 증가한다','저항이 절반이 되고 전류가 2배가 된다','저항과 전류 모두 변하지 않는다'],a:1,
+      x:'저항은 니크롬선의 길이와 굵기 같은 도선 자체의 성질로 정해지는 값이라 전압이 변해도 변하지 않아요. 전류만 전압에 비례해서 2배로 늘어요. (R = V ÷ I 에서 V와 I가 같은 비율로 변하므로 R은 일정)'},
+    {sec:'Q2 길이와 전류',t:'mc',q:'길이가 2배 긴 니크롬선에 같은 전압을 걸었을 때 전류는 어떻게 될까요?',o:['2배로 늘어난다','변하지 않는다','절반(1/2)으로 줄어든다','0이 된다'],a:2,
+      x:'길이가 2배면 저항이 2배(원자핵과의 충돌이 2배)가 돼요. 같은 전압에서 전류는 저항에 반비례하므로 1/2로 줄어요.'},
+    {sec:'Q3 그래프 읽기',t:'mc',q:'전압–전류 그래프에서 직선의 기울기가 더 가파른 쪽은 저항이 어떨까요?',o:['저항이 더 작다','저항이 더 크다','저항은 같다','저항을 알 수 없다'],a:0,x:'기울기는 I ÷ V = 1/R 이에요. 기울기가 클수록 R이 작아요. 그래서 5 Ω선이 10 Ω선보다 가팔라요.'},
+    {sec:'Q3 그래프 읽기',t:'ox',q:'저항이 일정할 때 전압–전류 그래프는 원점을 지나는 직선이다.',a:0,x:'맞아요! 저항이 일정하면 전류는 전압에 비례해서 원점을 지나는 직선이 돼요(옴의 법칙).'},
+    {sec:'Q4 물질의 분류',t:'mc',q:'다음 중 저항이 매우 커서 전류가 거의 흐르지 않는 물질은 무엇일까요?',o:['구리 (도체)','플라스틱 (부도체)','철 (도체)','알루미늄 (도체)'],a:1,x:'전류가 잘 흐르는 물질을 도체, 거의 흐르지 않는 물질을 부도체라고 해요. 플라스틱은 부도체예요. (반도체는 조건에 따라 도체가 되기도 해요)'}
+  ],{id:'qzRetry',perfect:'완벽해요! 옴의 법칙을 정확히 이해했어요. 📈',good:'잘했어요! 틀린 문제는 그래프와 표로 다시 확인해 보세요.',retry:'전압과 니크롬선을 바꿔 가며 그래프와 표를 다시 관찰한 뒤 도전해 보세요.'});
+  $('bQuiz').addEventListener('click',function(){ $('modal').classList.add('on'); });
+  $('mx').addEventListener('click',function(){ $('modal').classList.remove('on'); });
+
+  /* ================= 메인 루프 ================= */
+  function refit(){ C1.fit(); C2.fit(); C3.fit(); C4.fit(); }
+  if(window.ResizeObserver){ try{ new ResizeObserver(refit).observe(document.body); }catch(e){} }
+  window.addEventListener('resize',refit);
+  var lastT=0;
+  function frame(ts){
+    var dt=Math.min(0.05,(ts-lastT)/1000||0.016), tm=ts/1000; lastT=ts;
+    var P=V*I(), tgt=clamp(P/20,0,1); heatS+=(tgt-heatS)*Math.min(1,dt*1.6);
+    flowOff+=I()*130*dt;
+    updMicro(dt,tm); drawCircuit(tm); drawGraph(tm); drawMicro(tm); drawTri(); updHUD();
+    requestAnimationFrame(frame);
+  }
+  buildPath(); buildNuc(); buildTbl(); setV(0); refit();
+  requestAnimationFrame(frame);
+})();
+</script>
+<script>/* 전자칠판 실행기 등 액자(iframe) 안에서는 서랍으로 돌아가기 링크를 숨겨요 */try{if(window.self!==window.top){var _b=document.querySelectorAll("a.back");for(var _i=0;_i<_b.length;_i++)_b[_i].style.display="none";}}catch(e){}</script>
+</body>
+</html>
