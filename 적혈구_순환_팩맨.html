@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>적혈구 순환 팩맨 - 심장과 혈액 순환</title>
+<style>
+:root{--bg:#0a0e1a;--gold:#ffd54a;--ink:#f3f6fb}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+#hud{flex:0 0 auto;height:max(38px,6vh);display:flex;align-items:center;justify-content:space-between;
+  padding:0 max(10px,1.2vw);background:#05070f;border-bottom:1px solid #1b2440;font-size:clamp(14px,2.6vh,26px);font-weight:800}
+#hud .grp{display:flex;align-items:center;gap:clamp(12px,2vw,34px)}
+#hud .lbl{color:#8a97b5;font-weight:600;margin-right:.4em}
+#hScore{color:var(--gold);font-variant-numeric:tabular-nums;min-width:4ch;display:inline-block}
+.gauge{display:inline-flex;align-items:center;gap:.4em}
+.bar{width:clamp(70px,11vw,180px);height:clamp(10px,2vh,20px);border-radius:999px;background:#1a2342;border:2px solid #34426e;overflow:hidden}
+.bar>i{display:block;height:100%;width:50%;transition:width .2s}
+#fO2{background:linear-gradient(90deg,#ff6b5a,#ff2f45)}
+#fCO2{background:linear-gradient(90deg,#9a6bff,#6a3fd0)}
+.ib{width:max(34px,4.8vh);height:max(34px,4.8vh);border-radius:9px;border:1px solid #2a3558;background:#101830;color:var(--ink);
+  font-size:clamp(14px,2.5vh,24px);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;touch-action:manipulation}
+.ib:active{background:#1d2850}.ib.warn{border-color:var(--gold);color:var(--gold)}
+#stage{flex:1 1 auto;position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas{display:block;background:var(--bg);touch-action:none}
+#modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,5,12,.76);z-index:5}
+#modal.on{display:flex}
+.card{width:min(900px,93%);max-height:95%;overflow:auto;background:#0f1630;border:2px solid #2d3b70;border-radius:22px;word-break:keep-all;
+  padding:clamp(16px,3vh,36px) clamp(18px,3.2vw,44px);box-shadow:0 20px 70px #000a}
+.card h1{margin:0 0 .25em;font-size:clamp(24px,4.6vh,48px);line-height:1.15}
+.card h2{margin:.2em 0 .4em;font-size:clamp(15px,2.4vh,24px);color:var(--gold)}
+.card .sub{color:#aebbdd;font-size:clamp(15px,2.4vh,24px);margin:0 0 .7em}
+.card ul{margin:0 0 .9em;padding:0;list-style:none;font-size:clamp(16px,2.8vh,29px);line-height:1.5}
+.card li{margin:.4em 0;padding-left:1.7em;position:relative}
+.card li b.n{position:absolute;left:0;top:0;color:var(--gold)}
+.route{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:.3em 0 .8em;font-size:clamp(14px,2.4vh,24px);font-weight:800}
+.chip{padding:.2em .6em;border-radius:999px;color:#fff;white-space:nowrap}
+.chip.r{background:#d93a4a}.chip.b{background:#4a6bd9}.chip.p{background:#8a52c9}.chip.l{background:#2d9ac8}
+.arrow{color:#8a97b5}
+.btn{display:block;width:100%;min-height:max(60px,9vh);margin-top:.5em;border:0;border-radius:16px;font-size:clamp(19px,3.2vh,32px);font-weight:800;
+  color:#08101f;background:linear-gradient(180deg,#ffe27a,#ffbf2e);cursor:pointer;touch-action:manipulation}
+.btn:active{filter:brightness(.9)}
+.stars{font-size:clamp(28px,6vh,60px);letter-spacing:.15em;color:var(--gold);text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="grp">
+      <span><span class="lbl">점수</span><span id="hScore">1000</span></span>
+      <span class="gauge"><span class="lbl" style="margin:0">O₂</span><span class="bar"><i id="fO2"></i></span></span>
+      <span class="gauge"><span class="lbl" style="margin:0">CO₂</span><span class="bar"><i id="fCO2"></i></span></span>
+      <span><span class="lbl">STAGE</span><span id="hStage">1/3</span></span>
+    </div>
+    <div class="grp" style="gap:8px">
+      <button class="ib" id="bPause" title="일시정지 (P)">❚❚</button>
+      <button class="ib" id="bRestart" title="처음부터 (두 번 누르기)">↻</button>
+      <button class="ib" id="bMute" title="소리">♪</button>
+      <button class="ib" id="bFull" title="전체화면 (F)">⛶</button>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="modal"><div class="card" id="card"></div></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const W=1280,H=720,T=32,MC=40,MR=19,STRIP_Y=618;
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),stageEl=$('stage'),modal=$('modal'),card=$('card');
+const FONT='"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+
+/* ===================== 미로(순환 경로) 정의 ===================== */
+const floor=Array.from({length:MR},()=>new Array(MC).fill(false));
+const zone=Array.from({length:MR},()=>new Array(MC).fill(-1));
+function rect(c1,r1,c2,r2,z){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){floor[r][c]=true;if(z!==undefined)zone[r][c]=z;}}
+/* 구간(zone) 번호: 0 좌심실 1 대동맥 2 온몸 모세혈관 3 대정맥 4 우심방 5 우심실 6 폐동맥 7 폐 8 폐정맥 9 좌심방 */
+const ZN=['좌심실','대동맥','온몸 모세혈관','대정맥','우심방','우심실','폐동맥','폐','폐정맥','좌심방'];
+rect(22,4,25,6,0);                   // 좌심실
+rect(26,5,29,5,1);                   // 대동맥
+rect(30,2,30,8,2);rect(37,2,37,8,2); // 모세혈관 동맥쪽/정맥쪽 줄기
+for(const r of[2,4,6,8])rect(30,r,37,r,2);
+rect(33,2,33,8,2);
+rect(37,9,37,12,3);rect(26,12,36,12,3);   // 대정맥
+rect(22,11,25,13,4);                 // 우심방
+rect(18,12,21,12,5);rect(14,11,17,13,5);  // (삼첨판 통로)+우심실
+rect(10,12,13,12,6);                 // 폐동맥
+rect(9,10,9,16,7);rect(2,10,2,16,7); // 폐 모세혈관
+for(const r of[10,12,14,16])rect(2,r,9,r,7);
+rect(5,10,5,16,7);
+rect(3,5,13,5,8);rect(2,5,2,9,8);    // 폐정맥
+rect(14,4,17,6,9);rect(18,5,21,5,9); // 좌심방(+승모판 통로)
+// 판막: dir = 흐르는 방향. gate = 열리는 조건
+const VALVES={
+  '5,27':{dx:1,dy:0,gate:null,name:'대동맥판막'},
+  '12,33':{dx:-1,dy:0,gate:'body',name:'정맥 판막'},
+  '12,20':{dx:-1,dy:0,gate:null,name:'삼첨판'},
+  '12,12':{dx:-1,dy:0,gate:null,name:'폐동맥판막'},
+  '5,20':{dx:1,dy:0,gate:null,name:'승모판'},
+  '5,6':{dx:1,dy:0,gate:'lung',name:'폐정맥 판막'}
+};
+const valveAt=(c,r)=>VALVES[r+','+c]||null;
+const isFloor=(c,r)=>c>=0&&r>=0&&c<MC&&r<MR&&floor[r][c];
+
+/* 구간별 색 (산소가 많은 혈액=빨강, 적은 혈액=파랑) */
+const ZCOL=['#7a2230','#8a2a38','#5a2a5e','#243a7a','#2a3f86','#2a3f86','#2b4388','#4a2a6a','#8a2a38','#7a2230'];
+const ZEDGE=['#ff6b7d','#ff6b7d','#c58aff','#6f8fff','#6f8fff','#6f8fff','#6f8fff','#c58aff','#ff6b7d','#ff6b7d'];
+
+/* 학습 순서: 좌심실→대동맥→온몸→대정맥→우심방→우심실→폐동맥→폐→폐정맥→좌심방→좌심실 */
+const SEQ=[0,1,2,3,4,5,6,7,8,9,0];
+
+const STAGES=[
+  {title:'체순환(온몸 순환)',from:0,to:4,start:[23,5],o2:100,co2:0,ghosts:{body:3,lung:0},gs:.78,need:12,
+   goal:'좌심실에서 출발해 <b>온몸 모세혈관의 세포 12개에 산소</b>를 전달하고, 대정맥을 지나 <b>우심방</b>까지 가세요.',
+   sum:['<b>체순환</b>: 좌심실 → 대동맥 → 온몸의 모세혈관 → 대정맥 → 우심방','모세혈관에서 <b>산소(O₂)를 세포에 주고</b> 이산화탄소(CO₂)를 받아 와요.','<b>판막</b>은 혈액이 한 방향으로만 흐르게 해서 <b>역류를 막아요.</b>']},
+  {title:'폐순환',from:4,to:10,start:[23,12],o2:30,co2:70,ghosts:{body:0,lung:3},gs:.85,need:0,
+   goal:'우심방에서 출발해 우심실 → 폐동맥 → <b>폐에서 산소를 다시 채운 뒤</b> 폐정맥 → 좌심방 → 좌심실로 가세요. (O₂ 90 이상이어야 판막이 열려요)',
+   sum:['<b>폐순환</b>: 우심실 → 폐동맥 → 폐 → 폐정맥 → 좌심방 → 좌심실','폐동맥에는 <b>산소가 적은 혈액</b>이 흐르고, 폐정맥에는 <b>산소가 많은 혈액</b>이 흘러요. (동맥 = 항상 산소 많음이 아니에요!)','폐에서 CO₂를 내보내고 O₂를 받아 <b>다시 산소가 풍부</b>해져요.']},
+  {title:'한 바퀴 완주',from:0,to:10,start:[23,5],o2:100,co2:0,ghosts:{body:3,lung:3},gs:.9,need:12,
+   goal:'<b>체순환과 폐순환을 모두</b> 거쳐 좌심실로 돌아오세요. 노폐물 유령이 더 빨라요!',
+   sum:['혈액은 심장을 중심으로 <b>체순환과 폐순환</b>이 이어져 <b>한 바퀴</b>를 돌아요.','심장은 <b>2심방 2심실</b>이고 사이사이 판막이 역류를 막아요.','혈액이 산소를 전달하고(체순환) <b>다시 채우는(폐순환)</b> 과정이 계속 반복돼요.']}
+];
+
+/* ===================== 사운드 ===================== */
+let AC=null,muted=false,noiseBuf=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,type='sine',v=.12,to=null,delay=0){
+  if(muted)return;const a=ac();if(!a)return;
+  const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03);
+}
+function noise(d,v=.12,hp=800){
+  if(muted)return;const a=ac();if(!a)return;
+  if(!noiseBuf){noiseBuf=a.createBuffer(1,a.sampleRate*.5,a.sampleRate);const b=noiseBuf.getChannelData(0);for(let i=0;i<b.length;i++)b[i]=Math.random()*2-1;}
+  const t=a.currentTime,s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+  s.buffer=noiseBuf;f.type='highpass';f.frequency.value=hp;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t);s.stop(t+d+.02);
+}
+let dotPitch=0;
+const SFX={
+  cell(){dotPitch=(dotPitch+1)%6;tone(520+dotPitch*60,.09,'triangle',.12,700+dotPitch*60);},       // 산소 전달
+  alveoli(){dotPitch=(dotPitch+1)%6;tone(700+dotPitch*50,.1,'sine',.11,1100+dotPitch*50);noise(.04,.05,3000);}, // 산소 충전
+  block(){tone(130,.18,'square',.14,70);noise(.1,.12,300);},                                       // 판막이 막음
+  gate(){tone(330,.12,'sine',.1,260);},
+  ghost(){tone(200,.3,'sawtooth',.13,70);noise(.15,.1,500);},
+  zone(){tone(660,.1,'triangle',.12);tone(990,.16,'triangle',.12,null,.09);},
+  open(){tone(440,.1,'triangle',.1);tone(660,.1,'triangle',.1,null,.08);tone(880,.15,'triangle',.1,null,.16);},
+  clear(){[523,659,784,1046].forEach((f,i)=>tone(f,.28,'triangle',.13,null,i*.11));},
+  beat(){tone(62,.12,'sine',.12,45);tone(52,.14,'sine',.1,40,.17);}
+};
+
+/* ===================== 게임 상태 ===================== */
+let stageIdx=0,state='menu';
+let score=1000,o2=100,co2=0,delivered=0,penalties={reverse:0,ghost:0};
+let next=0,cp=[23,5],stageStart=0;
+let dots=[],ghosts=[],floats=[],rings=[];
+let tNow=0,invuln=0,shake=0,blockCool={};
+const player={c:23,r:5,tc:23,tr:5,prog:0,moving:false,dx:0,dy:0,wx:0,wy:0,face:0};
+
+const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+function gateOpen(v){
+  if(!v||!v.gate)return true;
+  if(v.gate==='body')return delivered>=STAGES[stageIdx].need;
+  if(v.gate==='lung')return o2>=90;
+  return true;
+}
+/* 이동 가능 판정: 판막은 정해진 방향으로만 통과(역류 불가) */
+function moveCheck(c,r,dx,dy){
+  const nc=c+dx,nr=r+dy;
+  if(!isFloor(nc,nr))return{ok:false,why:'wall'};
+  const cur=valveAt(c,r);
+  if(cur&&(cur.dx!==dx||cur.dy!==dy))return{ok:false,why:'reverse',v:cur,vc:c,vr:r};
+  const v=valveAt(nc,nr);
+  if(v){
+    if(v.dx!==dx||v.dy!==dy)return{ok:false,why:'reverse',v,vc:nc,vr:nr};
+    if(!gateOpen(v))return{ok:false,why:'closed',v,vc:nc,vr:nr};
+  }
+  return{ok:true};
+}
+
+function setupStage(i){
+  stageIdx=i;const S=STAGES[i];
+  o2=S.o2;co2=S.co2;delivered=0;penalties={reverse:0,ghost:0};score=1000;
+  next=SEQ.indexOf(SEQ[S.from]);next=S.from+1;      // 다음에 도달해야 할 SEQ 인덱스
+  floats=[];rings=[];blockCool={};invuln=0;
+  dots=Array.from({length:MR},()=>new Array(MC).fill(0));
+  for(const r of[2,4,6,8])for(let c=31;c<=36;c++)dots[r][c]=1;     // 세포(산소 전달 대상)
+  for(const r of[10,12,14,16])for(let c=3;c<=8;c++)dots[r][c]=2;   // 폐포(산소 충전)
+  cp=[S.start[0],S.start[1]];
+  placePlayer(cp[0],cp[1]);
+  ghosts=[];
+  for(let k=0;k<S.ghosts.body;k++)spawnGhost('body',k);
+  for(let k=0;k<S.ghosts.lung;k++)spawnGhost('lung',k);
+  stageStart=tNow;updateHUD();
+}
+function placePlayer(c,r){Object.assign(player,{c,r,tc:c,tr:r,prog:0,moving:false,dx:0,dy:0,wx:0,wy:0});}
+function spawnGhost(kind,k){
+  const z=kind==='body'?2:7;const cells=[];
+  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++)if(zone[r][c]===z&&!(kind==='body'&&c<32)&&!(kind==='lung'&&c>7))cells.push([c,r]);
+  const p=cells[Math.floor((k+.5)/3*cells.length)%cells.length];
+  ghosts.push({c:p[0],r:p[1],tc:p[0],tr:p[1],prog:0,moving:false,dx:0,dy:0,z,hue:k});
+}
+
+/* ===================== 갱신 ===================== */
+function zoneOf(c,r){return zone[r][c];}
+function onArrive(){
+  const c=player.c,r=player.r;
+  const d=dots[r][c];
+  if(d===1){dots[r][c]=0;if(o2>0){o2=Math.max(0,o2-4);co2=Math.min(100,co2+4);delivered++;score+=10;SFX.cell();
+      floats.push({x:c*T+16,y:r*T,t:40,s:'O₂ 전달',c:'#ff9a9a'});ring(c*T+16,r*T+16,'#ff9a9a');}
+    else{dots[r][c]=1;}}
+  else if(d===2){dots[r][c]=0;o2=Math.min(100,o2+5);co2=Math.max(0,co2-5);score+=10;SFX.alveoli();
+      floats.push({x:c*T+16,y:r*T,t:40,s:'O₂ 충전',c:'#8fe8ff'});ring(c*T+16,r*T+16,'#8fe8ff');}
+  if(d)updateHUD();
+  const z=zoneOf(c,r),S=STAGES[stageIdx];
+  if(z>=0&&next<=S.to&&z===SEQ[next]){
+    next++;cp=[c,r];score+=50;SFX.zone();ring(c*T+16,r*T+16,'#ffd54a',70);
+    floats.push({x:c*T+16,y:r*T-6,t:60,s:'✔ '+ZN[z],c:'#ffd54a'});
+    if(next>S.to){state='modal';setTimeout(stageClear,700);}
+    updateHUD();
+  }
+  // 열린 판막 알림
+}
+function ring(x,y,c){rings.push({x,y,r:6,max:50,t:22,life:22,c});}
+function tryStart(){
+  const p=player;
+  const cand=[];
+  if(p.wx||p.wy)cand.push([p.wx,p.wy]);
+  if(p.dx||p.dy)cand.push([p.dx,p.dy]);
+  for(let i=0;i<cand.length;i++){
+    const[dx,dy]=cand[i],m=moveCheck(p.c,p.r,dx,dy);
+    if(m.ok){p.dx=dx;p.dy=dy;p.tc=p.c+dx;p.tr=p.r+dy;p.prog=0;p.moving=true;return true;}
+    if(i===0&&m.why!=='wall')feedback(m);   // 원하는 방향이 판막에 막힘
+  }
+  p.moving=false;return false;
+}
+function feedback(m){
+  const key=m.vr+','+m.vc;
+  if(blockCool[key]>tNow)return;blockCool[key]=tNow+70;
+  const x=m.vc*T+16,y=m.vr*T+16;
+  if(m.why==='reverse'){
+    penalties.reverse++;score=Math.max(0,score-30);SFX.block();shake=8;
+    floats.push({x,y:y-26,t:60,s:'역류 불가! −30',c:'#ff6b7d'});
+    rings.push({x,y,r:6,max:46,t:20,life:20,c:'#ff4a5e'});
+  }else if(m.why==='closed'){
+    SFX.gate();
+    const v=m.v;
+    floats.push({x,y:y-26,t:70,s:v.gate==='body'?'세포에 산소를 더 전달!':'폐에서 산소를 더 채우세요!',c:'#ffd54a'});
+  }
+  updateHUD();
+}
+function stepEntity(e,speed,decide){
+  if(!e.moving){decide(e);if(!e.moving)return;}
+  e.prog+=speed;
+  while(e.prog>=1){
+    e.prog-=1;e.c=e.tc;e.r=e.tr;e.moving=false;
+    if(e===player)onArrive();
+    if(state!=='play')return;
+    decide(e);if(!e.moving){e.prog=0;break;}
+  }
+}
+function ghostDecide(g){
+  const opts=[];
+  for(const[dx,dy]of dirs){
+    const nc=g.c+dx,nr=g.r+dy;
+    if(!isFloor(nc,nr)||zone[nr][nc]!==g.z)continue;
+    if(valveAt(nc,nr))continue;
+    if(nc<(g.z===2?31:0)||(g.z===7&&nc>8))continue;
+    opts.push([dx,dy]);
+  }
+  if(!opts.length){g.moving=false;return;}
+  let pick;
+  const filtered=opts.filter(o=>!(o[0]===-g.dx&&o[1]===-g.dy));
+  const use=filtered.length?filtered:opts;
+  const dist=Math.abs(player.c-g.c)+Math.abs(player.r-g.r);
+  if(dist<=8&&zone[player.r][player.c]===g.z&&Math.random()<.65){
+    let best=null,bd=1e9;
+    for(const o of use){const d=Math.abs(player.c-(g.c+o[0]))+Math.abs(player.r-(g.r+o[1]));if(d<bd){bd=d;best=o;}}
+    pick=best;
+  }else pick=use[Math.floor(Math.random()*use.length)];
+  g.dx=pick[0];g.dy=pick[1];g.tc=g.c+g.dx;g.tr=g.r+g.dy;g.prog=0;g.moving=true;
+}
+const PSPEED=5.4/60;
+function step(){
+  tNow++;
+  if(shake>0)shake--;
+  for(const f of floats){f.t--;f.y-=.4;}floats=floats.filter(f=>f.t>0);
+  for(const o of rings){o.t--;o.r=o.max*(1-o.t/o.life);}rings=rings.filter(o=>o.t>0);
+  if(state!=='play')return;
+  if(tNow%62===0)SFX.beat();
+  if(invuln>0)invuln--;
+  // 반대 방향 입력은 즉시 U턴
+  const p=player;
+  if(p.moving&&(p.wx===-p.dx&&p.wy===-p.dy)&&(p.wx||p.wy)){
+    const m=moveCheck(p.tc,p.tr,p.wx,p.wy);
+    // 이동 중 되돌아가기: 현재 출발 타일로 복귀(출발 타일에서 판막 규칙 확인)
+    const back=moveCheck(p.tc,p.tr,p.wx,p.wy);
+    if(back.ok){const oc=p.c,or=p.r;p.c=p.tc;p.r=p.tr;p.tc=oc;p.tr=or;p.prog=1-p.prog;p.dx=p.wx;p.dy=p.wy;}
+  }
+  stepEntity(p,PSPEED,()=>tryStart());
+  if(state!=='play')return;
+  const S=STAGES[stageIdx];
+  for(const g of ghosts)stepEntity(g,PSPEED*S.gs*.92,ghostDecide);
+  // 유령 충돌
+  if(invuln===0){
+    const px=(p.c+(p.tc-p.c)*p.prog)*T+16,py=(p.r+(p.tr-p.r)*p.prog)*T+16;
+    for(const g of ghosts){
+      const gx=(g.c+(g.tc-g.c)*g.prog)*T+16,gy=(g.r+(g.tr-g.r)*g.prog)*T+16;
+      if(Math.hypot(px-gx,py-gy)<22){hitGhost(px,py);break;}
+    }
+  }
+}
+function hitGhost(x,y){
+  penalties.ghost++;score=Math.max(0,score-100);o2=Math.max(0,o2-6);invuln=120;shake=12;SFX.ghost();
+  floats.push({x,y:y-24,t:70,s:'노폐물 접촉! −100',c:'#ff6b7d'});
+  rings.push({x,y,r:6,max:70,t:24,life:24,c:'#b46bff'});
+  placePlayer(cp[0],cp[1]);updateHUD();
+}
+
+/* ===================== 그리기 ===================== */
+let scale=1;
+function resize(){
+  const bw=stageEl.clientWidth,bh=stageEl.clientHeight;
+  const s=Math.min(bw/W,bh/H),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.width=W*s+'px';cv.style.height=H*s+'px';cv.width=Math.round(W*s*dpr);cv.height=Math.round(H*s*dpr);scale=cv.width/W;
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+function drawMap(){
+  const beat=(Math.sin(tNow*Math.PI/31)+1)/2;
+  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
+    if(!floor[r][c])continue;const z=zone[r][c],x=c*T,y=r*T;
+    const chamber=(z===0||z===4||z===9||(z===5&&c<18));
+    ctx.fillStyle=ZCOL[z];ctx.fillRect(x,y,T,T);
+    if(chamber){ctx.fillStyle=`rgba(255,255,255,${.04+beat*.05})`;ctx.fillRect(x,y,T,T);}
+  }
+  ctx.lineWidth=4;
+  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
+    if(!floor[r][c])continue;ctx.strokeStyle=ZEDGE[zone[r][c]];
+    const x=c*T,y=r*T;ctx.beginPath();
+    if(!isFloor(c,r-1)){ctx.moveTo(x,y+2);ctx.lineTo(x+T,y+2);}
+    if(!isFloor(c,r+1)){ctx.moveTo(x,y+T-2);ctx.lineTo(x+T,y+T-2);}
+    if(!isFloor(c-1,r)){ctx.moveTo(x+2,y);ctx.lineTo(x+2,y+T);}
+    if(!isFloor(c+1,r)){ctx.moveTo(x+T-2,y);ctx.lineTo(x+T-2,y+T);}
+    ctx.stroke();
+  }
+  // 라벨
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 21px '+FONT;
+  const lab=(s,c,r,col='#fff')=>{ctx.lineWidth=5;ctx.strokeStyle='rgba(5,8,20,.85)';ctx.fillStyle=col;ctx.strokeText(s,c*T,r*T);ctx.fillText(s,c*T,r*T);};
+  lab('좌심실',24,5.5);lab('우심방',24,12.6);lab('우심실',16,12.6);lab('좌심방',16,5.5);
+  ctx.font='800 17px '+FONT;
+  lab('대동맥',28,4.35,'#ffb0ba');lab('대정맥',31.5,11.35,'#aebfff');lab('폐동맥',11.5,11.35,'#aebfff');lab('폐정맥',8,4.35,'#ffb0ba');
+  lab('온몸 모세혈관',33.5,1.1,'#e3c4ff');lab('폐 (폐포)',5.5,9.2,'#e3c4ff');
+  ctx.restore();
+}
+function drawValves(){
+  for(const k in VALVES){
+    const v=VALVES[k],[r,c]=k.split(',').map(Number),x=c*T,y=r*T,open=gateOpen(v);
+    ctx.save();ctx.translate(x+16,y+16);
+    ctx.fillStyle=v.gate?(open?'#1d7a45':'#8a1d2a'):'#222a55';ctx.strokeStyle=v.gate?(open?'#6dffa8':'#ff6b7d'):'#9fb4ff';ctx.lineWidth=3;
+    rr(-15,-15,30,30,6);ctx.fill();ctx.stroke();
+    ctx.rotate(Math.atan2(v.dy,v.dx));
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-4,-9);ctx.lineTo(-4,-3);ctx.lineTo(-11,-3);ctx.lineTo(-11,3);ctx.lineTo(-4,3);ctx.lineTo(-4,9);ctx.closePath();ctx.fill();
+    ctx.restore();
+  }
+  // 조건 진행 표시
+  const S=STAGES[stageIdx];ctx.save();ctx.textAlign='center';ctx.font='900 18px '+FONT;ctx.lineWidth=5;
+  if(S.need>0&&S.to>=3){const s=`산소 전달 ${Math.min(delivered,S.need)}/${S.need}`;ctx.strokeStyle='rgba(5,8,20,.9)';ctx.fillStyle=gateOpen(VALVES['12,33'])?'#6dffa8':'#ffd54a';ctx.strokeText(s,33*T+16,13.4*T);ctx.fillText(s,33*T+16,13.4*T);}
+  if(S.to>=7||S.from>=4){const s=`O₂ ${Math.round(o2)}/90`;ctx.strokeStyle='rgba(5,8,20,.9)';ctx.fillStyle=o2>=90?'#6dffa8':'#ffd54a';ctx.strokeText(s,6*T+16,3.9*T);ctx.fillText(s,6*T+16,3.9*T);}
+  ctx.restore();
+}
+function drawDots(){
+  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
+    const d=dots[r][c];if(!d)continue;const x=c*T+16,y=r*T+16;
+    ctx.save();
+    if(d===1){ctx.fillStyle='#ff9fb5';ctx.strokeStyle='#d6456b';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,7,0,6.283);ctx.fill();ctx.stroke();ctx.fillStyle='#d6456b';ctx.beginPath();ctx.arc(x,y,2.5,0,6.283);ctx.fill();}
+    else{ctx.fillStyle='rgba(143,232,255,.85)';ctx.strokeStyle='#e8fbff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,6.5,0,6.283);ctx.fill();ctx.stroke();ctx.fillStyle='#e8fbff';ctx.beginPath();ctx.arc(x-2,y-2,2,0,6.283);ctx.fill();}
+    ctx.restore();
+  }
+}
+function entityXY(e){return[(e.c+(e.tc-e.c)*e.prog)*T+16,(e.r+(e.tr-e.r)*e.prog)*T+16];}
+function drawPlayer(){
+  const[x,y]=entityXY(player);
+  if(invuln>0&&Math.floor(tNow/6)%2)return;
+  const f=o2/100,col=mix([110,58,170],[255,59,74],f).map(Math.round);
+  ctx.save();ctx.translate(x,y);ctx.rotate(tNow*.03);
+  ctx.shadowColor=`rgb(${col})`;ctx.shadowBlur=18;
+  ctx.fillStyle=`rgb(${col})`;ctx.strokeStyle='#fff';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(0,0,13,0,6.283);ctx.fill();ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle=`rgba(0,0,0,.28)`;ctx.beginPath();ctx.ellipse(0,0,7,4.5,0,0,6.283);ctx.fill();
+  ctx.restore();
+}
+function drawGhost(g){
+  const[x,y]=entityXY(g);
+  const hue=[285,320,255][g.hue%3];
+  ctx.save();ctx.translate(x,y);
+  ctx.shadowColor=`hsl(${hue},70%,60%)`;ctx.shadowBlur=14;ctx.fillStyle=`hsl(${hue},55%,45%)`;ctx.strokeStyle='#e8d8ff';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(0,-2,13,Math.PI,0);ctx.lineTo(13,12);
+  for(let i=0;i<4;i++){const wx=13-(i+1)*6.5;ctx.lineTo(wx+3.25,i%2?12:7);ctx.lineTo(wx,12);}
+  ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-5,-3,4,0,6.283);ctx.arc(5,-3,4,0,6.283);ctx.fill();
+  const[px,py]=entityXY(player),a=Math.atan2(py-y,px-x);
+  ctx.fillStyle='#2a1050';ctx.beginPath();ctx.arc(-5+Math.cos(a)*1.8,-3+Math.sin(a)*1.8,2,0,6.283);ctx.arc(5+Math.cos(a)*1.8,-3+Math.sin(a)*1.8,2,0,6.283);ctx.fill();
+  ctx.restore();
+}
+function drawStrip(){
+  const S=STAGES[stageIdx];
+  ctx.fillStyle='#070b1a';ctx.fillRect(0,STRIP_Y-6,W,H-STRIP_Y+6);
+  ctx.strokeStyle='#1b2440';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,STRIP_Y-6);ctx.lineTo(W,STRIP_Y-6);ctx.stroke();
+  const idxs=[];for(let i=S.from;i<=S.to;i++)idxs.push(i);
+  const n=idxs.length,gap=26,w=Math.min(150,(W-60-(n-1)*gap)/n),total=n*w+(n-1)*gap,x0=(W-total)/2,y=STRIP_Y+22,h=54;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  idxs.forEach((si,k)=>{
+    const z=SEQ[si],x=x0+k*(w+gap),done=si<next||si===S.from,cur=si===next;
+    ctx.save();
+    ctx.fillStyle=done?'#1d7a45':cur?'#3a2f10':'#151c3a';ctx.strokeStyle=done?'#6dffa8':cur?'#ffd54a':'#34426e';ctx.lineWidth=cur?4:3;
+    if(cur){ctx.shadowColor='#ffd54a';ctx.shadowBlur=10+Math.sin(tNow*.12)*8;}
+    rr(x,y,w,h,14);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle=done?'#eafff2':cur?'#ffe9a0':'#7f8cb2';ctx.font='800 '+(w<110?15:19)+'px '+FONT;
+    ctx.fillText(ZN[z],x+w/2,y+h/2+1);
+    if(k<n-1){ctx.fillStyle=si<next?'#6dffa8':'#4a5a90';ctx.font='900 22px '+FONT;ctx.fillText('›',x+w+gap/2,y+h/2);}
+    ctx.restore();
+  });
+}
+function draw(){
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.fillStyle='#0a0e1a';ctx.fillRect(0,0,W,H);
+  if(state==='menu')return;
+  ctx.save();
+  if(shake>0)ctx.translate(Math.sin(shake*2.2)*3,0);
+  drawMap();drawDots();drawValves();
+  for(const g of ghosts)drawGhost(g);
+  drawPlayer();
+  for(const o of rings){ctx.save();ctx.globalAlpha=o.t/o.life;ctx.strokeStyle=o.c;ctx.lineWidth=4;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,6.283);ctx.stroke();ctx.restore();}
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 18px '+FONT;ctx.lineWidth=5;
+  for(const f of floats){ctx.globalAlpha=Math.min(1,f.t/25);ctx.strokeStyle='rgba(5,8,20,.9)';ctx.strokeText(f.s,f.x,f.y);ctx.fillStyle=f.c;ctx.fillText(f.s,f.x,f.y);}
+  ctx.globalAlpha=1;ctx.restore();
+  drawStrip();
+  if(state==='paused'){
+    ctx.fillStyle='rgba(3,5,12,.62)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.font='900 72px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('❚❚ 일시정지',W/2,H/2-10);ctx.font='600 28px system-ui';ctx.fillStyle='#aebbdd';ctx.fillText('화면을 탭하면 계속',W/2,H/2+50);
+  }
+}
+
+/* ===================== HUD / 모달 ===================== */
+function updateHUD(){
+  $('hScore').textContent=score;$('fO2').style.width=o2+'%';$('fCO2').style.width=co2+'%';
+  $('hStage').textContent=(stageIdx+1)+'/'+STAGES.length;
+}
+function showModal(h){card.innerHTML=h;modal.classList.add('on');}
+function hideModal(){modal.classList.remove('on');}
+function routeChips(from,to){
+  const col=z=>[0,1,8,9].includes(z)?'r':[2,7].includes(z)?'p':'b';
+  let out='';for(let i=from;i<=to;i++){const z=SEQ[i];out+=`<span class="chip ${col(z)}">${ZN[z]}</span>`+(i<to?'<span class="arrow">›</span>':'');}
+  return `<div class="route">${out}</div>`;
+}
+function showStart(){
+  state='menu';
+  showModal(`<h1>🩸 적혈구 순환 팩맨</h1>
+    <p class="sub">적혈구가 되어 심장과 혈관의 길을 따라 한 바퀴 돌아요!</p>
+    <ul>
+      <li><b class="n">👆</b>화면을 <b>손가락으로 밀면</b> 그 방향으로 이동해요. (방향키도 가능)</li>
+      <li><b class="n">🚪</b><b>판막(화살표 문)</b>은 한 방향으로만 통과! 거꾸로 가면 <b>막혀서 감점</b>이에요.</li>
+      <li><b class="n">👾</b><b>노폐물 유령</b>에 닿으면 감점! 세포에 <b>산소(O₂)를 주고</b>, 폐에서 <b>다시 채워요.</b></li>
+    </ul>
+    <button class="btn" id="mStart">시작하기 ▶</button>`);
+  $('mStart').onclick=()=>{ac();showIntro(0);};
+}
+function showIntro(i){
+  state='intro';const S=STAGES[i];setupStage(i);
+  showModal(`<h1>STAGE ${i+1} · ${S.title}</h1>${routeChips(S.from,S.to)}
+    <ul><li><b class="n">🎯</b>${S.goal}</li></ul>
+    <button class="btn" id="mGo">출발 ▶</button>`);
+  $('mGo').onclick=()=>{ac();hideModal();state='play';};
+}
+function stageClear(){
+  SFX.clear();
+  const S=STAGES[stageIdx],last=stageIdx===STAGES.length-1,bonus=200;score+=bonus;updateHUD();
+  const pen=penalties.reverse+penalties.ghost,stars=pen===0?3:pen<=3?2:1;
+  showModal(`<h1>STAGE ${stageIdx+1} 클리어! 🎉</h1><h2>${S.title}</h2>${routeChips(S.from,S.to)}
+    <div class="stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <ul>${S.sum.map((t,i)=>`<li><b class="n">${i+1}</b>${t}</li>`).join('')}</ul>
+    <p class="sub">점수 ${score} · 역류 시도 ${penalties.reverse}번 · 노폐물 접촉 ${penalties.ghost}번</p>
+    <button class="btn" id="mNext">${last?'결과 보기':'다음 스테이지 ▶'}</button>`);
+  $('mNext').onclick=()=>{ac();if(last)allClear();else showIntro(stageIdx+1);};
+}
+function allClear(){
+  showModal(`<h1>한 바퀴 완주! 🏆</h1>
+    <ul><li><b class="n">✔</b><b>체순환</b>: 산소를 온몸 세포에 전달하고 이산화탄소를 받아 와요.</li>
+    <li><b class="n">✔</b><b>폐순환</b>: 폐에서 이산화탄소를 내보내고 산소를 다시 채워요.</li>
+    <li><b class="n">✔</b><b>판막</b>이 있어서 혈액은 <b>거꾸로 흐르지 않아요.</b></li></ul>
+    <button class="btn" id="mAgain">처음부터 다시 ▶</button>`);
+  $('mAgain').onclick=()=>{ac();showIntro(0);};
+}
+
+/* ===================== 입력 ===================== */
+let ptr=null;
+cv.addEventListener('pointerdown',e=>{
+  ac();if(state==='paused'){togglePause();return;}
+  cv.setPointerCapture(e.pointerId);ptr={id:e.pointerId,x:e.clientX,y:e.clientY};
+});
+cv.addEventListener('pointermove',e=>{
+  if(!ptr||ptr.id!==e.pointerId)return;
+  const dx=e.clientX-ptr.x,dy=e.clientY-ptr.y;
+  if(Math.hypot(dx,dy)<20)return;
+  if(Math.abs(dx)>Math.abs(dy)){player.wx=dx>0?1:-1;player.wy=0;}else{player.wx=0;player.wy=dy>0?1:-1;}
+  ptr.x=e.clientX;ptr.y=e.clientY;
+});
+const endP=e=>{if(ptr&&ptr.id===e.pointerId)ptr=null;};
+cv.addEventListener('pointerup',endP);cv.addEventListener('pointercancel',endP);
+['touchmove','touchstart'].forEach(n=>document.addEventListener(n,e=>{if(!e.target.closest('.card,#hud'))e.preventDefault();},{passive:false}));
+['gesturestart','gesturechange','contextmenu','dblclick'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
+const KEYS={ArrowRight:[1,0],ArrowLeft:[-1,0],ArrowDown:[0,1],ArrowUp:[0,-1],KeyD:[1,0],KeyA:[-1,0],KeyS:[0,1],KeyW:[0,-1]};
+window.addEventListener('keydown',e=>{
+  if(KEYS[e.code]){e.preventDefault();player.wx=KEYS[e.code][0];player.wy=KEYS[e.code][1];}
+  else if(e.code==='KeyP'||e.code==='Escape')togglePause();
+  else if(e.code==='KeyF')toggleFull();
+});
+function togglePause(){
+  if(state==='play'){state='paused';$('bPause').textContent='▶';}
+  else if(state==='paused'){state='play';$('bPause').textContent='❚❚';}
+}
+$('bPause').onclick=togglePause;
+let rsT=0;
+$('bRestart').onclick=()=>{
+  const b=$('bRestart');
+  if(b.classList.contains('warn')){clearTimeout(rsT);b.classList.remove('warn');ac();$('bPause').textContent='❚❚';showStart();}
+  else{b.classList.add('warn');rsT=setTimeout(()=>b.classList.remove('warn'),2200);}
+};
+$('bMute').onclick=()=>{muted=!muted;$('bMute').textContent=muted?'✕':'♪';$('bMute').style.opacity=muted?.5:1;};
+function toggleFull(){
+  const d=document,el=d.documentElement;
+  try{if(!(d.fullscreenElement||d.webkitFullscreenElement)){(el.requestFullscreen||el.webkitRequestFullscreen||(()=>{})).call(el);}
+      else{(d.exitFullscreen||d.webkitExitFullscreen||(()=>{})).call(d);}}catch(err){}
+}
+$('bFull').onclick=toggleFull;
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')togglePause();});
+window.addEventListener('resize',resize);
+document.addEventListener('fullscreenchange',()=>setTimeout(resize,60));
+document.addEventListener('webkitfullscreenchange',()=>setTimeout(resize,60));
+
+/* ===================== 루프 ===================== */
+let last=performance.now(),acc=0;
+function frame(now){
+  const dt=Math.min(100,now-last);last=now;
+  if(state!=='paused'&&state!=='menu'){acc+=dt;let n=0;while(acc>=16.667&&n<5){step();acc-=16.667;n++;}if(n>=5)acc=0;}else acc=0;
+  draw();requestAnimationFrame(frame);
+}
+window.__pc={get state(){return state},get score(){return score},get o2(){return o2},get co2(){return co2},get delivered(){return delivered},get next(){return next},
+  get penalties(){return penalties},player,ghosts:()=>ghosts,dots:()=>dots,STAGES,SEQ,floor,zone,moveCheck,isFloor,valveAt,step,showIntro,
+  start:i=>{showIntro(i);hideModal();state='play';},setGhostsOff:()=>{ghosts.length=0;},get stage(){return stageIdx}};
+resize();updateHUD();showStart();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

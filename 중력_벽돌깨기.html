@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>운동과 힘 벽돌깨기 - 중력과 가속도</title>
+<style>
+:root{--bg:#0a0e1a;--gold:#ffd54a;--ink:#f3f6fb}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+#hud{flex:0 0 auto;height:max(34px,5vh);display:flex;align-items:center;justify-content:space-between;
+  padding:0 max(10px,1.2vw);background:#05070f;border-bottom:1px solid #1b2440;font-size:clamp(14px,2.6vh,26px);font-weight:700;letter-spacing:.02em}
+#hud .grp{display:flex;align-items:center;gap:clamp(12px,2vw,32px)}
+#hud .lbl{color:#8a97b5;font-weight:600;margin-right:.35em}
+#hud .score{color:var(--gold);font-variant-numeric:tabular-nums;min-width:4.5ch;display:inline-block}
+#hud .lives{color:#ff7d9a;letter-spacing:.1em}
+#hud .pol{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.6em;padding:0 .3em;border-radius:.9em;
+  font-weight:900;color:#06101e;box-shadow:0 0 10px currentColor}
+.ib{width:max(30px,4.2vh);height:max(30px,4.2vh);border-radius:8px;border:1px solid #2a3558;background:#101830;color:var(--ink);
+  font-size:clamp(14px,2.4vh,24px);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;touch-action:manipulation}
+.ib:active{background:#1d2850}
+.ib.warn{border-color:var(--gold);color:var(--gold)}
+#stage{flex:1 1 auto;position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas{display:block;background:var(--bg);touch-action:none}
+#modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,5,12,.72);z-index:5}
+#modal.on{display:flex}
+.card{width:min(860px,92%);max-height:94%;overflow:auto;background:#0f1630;border:2px solid #2d3b70;border-radius:22px;word-break:keep-all;
+  padding:clamp(18px,3.5vh,40px) clamp(20px,3.5vw,48px);text-align:left;box-shadow:0 20px 70px #000a}
+.card h1{margin:0 0 .3em;font-size:clamp(26px,5vh,52px);line-height:1.15}
+.card h2{margin:.2em 0 .5em;font-size:clamp(16px,2.6vh,26px);color:var(--gold)}
+.card ul{margin:0 0 1em;padding:0;list-style:none;font-size:clamp(17px,3vh,32px);line-height:1.5}
+.card li{margin:.45em 0;padding-left:1.7em;position:relative}
+.card li b.n{position:absolute;left:0;top:0;color:var(--gold)}
+.card .sub{color:#aebbdd;font-size:clamp(15px,2.4vh,24px);margin:0 0 .8em}
+.card .big{font-size:clamp(20px,3.4vh,36px);color:var(--gold);margin:.2em 0 .6em}
+.btn{display:block;width:100%;min-height:max(60px,9vh);margin-top:.4em;border:0;border-radius:16px;font-size:clamp(20px,3.4vh,34px);font-weight:800;
+  color:#08101f;background:linear-gradient(180deg,#ffe27a,#ffbf2e);cursor:pointer;touch-action:manipulation}
+.btn:active{filter:brightness(.9)}
+.chip{display:inline-block;padding:0 .45em;border-radius:.5em;font-weight:900;color:#06101e}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="grp">
+      <span><span class="lbl">점수</span><span class="score" id="hScore">0</span></span>
+      <span><span class="lbl">기회</span><span class="lives" id="hLives">♥♥♥</span></span>
+      <span><span class="lbl">STAGE</span><span id="hStage">1/3</span></span>
+      <span><span class="lbl" id="hLabel">공</span><span class="pol" id="hPol">+</span></span>
+    </div>
+    <div class="grp" style="gap:8px">
+      <button class="ib" id="bPause" title="일시정지 (P)">❚❚</button>
+      <button class="ib" id="bRestart" title="다시 시작 (두 번 누르기)">↻</button>
+      <button class="ib" id="bMute" title="소리">♪</button>
+      <button class="ib" id="bFull" title="전체화면 (F)">⛶</button>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="modal"><div class="card" id="card"></div></div>
+  </div>
+</div>
+<script>
+(()=>{
+'use strict';
+/* ===================== 공통 엔진 ===================== */
+const W=1280,H=720;
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),stageEl=$('stage'),modal=$('modal'),card=$('card');
+const BW=84,BH=34,GAP=8,COLS=12,X0=(W-(COLS*BW+(COLS-1)*GAP))/2,Y0=64;
+const GAME={};                 // 단원 모듈이 채우는 객체
+
+/* ---- 사운드 ---- */
+let AC=null,muted=false,noiseBuf=null;
+function ac(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(AC&&AC.state==='suspended')AC.resume();
+  return AC;
+}
+function tone(f,d,type='sine',v=.14,to=null,delay=0){
+  if(muted)return;const a=ac();if(!a)return;
+  const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);
+  if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03);
+}
+function noise(d,v=.18,hp=1800){
+  if(muted)return;const a=ac();if(!a)return;
+  if(!noiseBuf){noiseBuf=a.createBuffer(1,a.sampleRate*.5,a.sampleRate);const b=noiseBuf.getChannelData(0);for(let i=0;i<b.length;i++)b[i]=Math.random()*2-1;}
+  const t=a.currentTime,s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+  s.buffer=noiseBuf;f.type='highpass';f.frequency.value=hp;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t);s.stop(t+d+.02);
+}
+const SFX={
+  brick(){noise(.16,.2,2500);tone(880,.18,'triangle',.13,1500);tone(1320,.14,'sine',.07,1980,.05);},
+  hit(){noise(.07,.12,3000);tone(520,.1,'triangle',.12,700);},
+  paddle(){tone(420,.09,'triangle',.14,520);},
+  wall(){tone(260,.05,'sine',.08);},
+  lose(){tone(440,.5,'sawtooth',.12,90);},
+  clear(){[523,659,784,1046].forEach((f,i)=>tone(f,.28,'triangle',.13,null,i*.11));}
+};
+
+/* ---- 상태 ---- */
+const G={stage:0,score:0,lives:3,state:'menu',readyT:0,bricks:[],flash:0,flashColor:'#fff',prev:null};
+const ball={x:W/2,y:600,px:0,py:0,vx:0,vy:0,r:11,boost:0,trail:[],mode:0,power:1,ax:0,ay:0};
+const pad={x:W/2,y:H-62,w:170,h:18,target:W/2,tilt:0};
+let parts=[],rings=[];
+let tNow=0;
+
+function mkBrick(c,r,hp=1,extra){
+  return Object.assign({x:X0+c*(BW+GAP),y:Y0+r*(BH+GAP),w:BW,h:BH,hp,max:hp,alive:true,flash:0},extra||{});
+}
+function grid(rows,fn){
+  const out=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<COLS;c++){const o=fn(r,c);if(o)out.push(mkBrick(c,r,o.hp||1,o));}
+  return out;
+}
+function burst(x,y,colors,n,sp=4,life=34){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*6.283,v=(.3+Math.random())*sp;
+    parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:life*(.6+Math.random()*.6),max:life,c:colors[i%colors.length],s:2+Math.random()*3.5});
+  }
+}
+function ring(x,y,color,max=70,life=22){rings.push({x,y,r:6,max,life,t:life,c:color});}
+function remaining(){return G.bricks.reduce((n,b)=>n+(b.alive&&!b.wall?1:0),0);}
+function killBrick(b){
+  b.alive=false;b.flash=0;G.score+=100*(G.stage+1);updateHUD();
+  if(remaining()===0)stageClear();
+}
+function damageBrick(b,d){
+  b.hp-=d;
+  if(b.hp<=0){killBrick(b);return true;}
+  b.flash=14;return false;
+}
+function launchSpeed(){return STAGE().base;}
+const STAGE=()=>GAME.STAGES[G.stage];
+
+function startStage(i){
+  G.stage=i;G.bricks=GAME.build(i);
+  pad.x=pad.target=W/2;pad.tilt=0;parts=[];rings=[];
+  ball.trail.length=0;ball.vx=ball.vy=0;ball.boost=0;
+  GAME.ballReset();
+  ball.x=pad.x;ball.y=pad.y-ball.r-2;
+  G.state='intro';updateHUD();showIntro();
+}
+function showIntro(){
+  const S=STAGE();
+  showModal(`<h1>STAGE ${G.stage+1} · ${S.title}</h1><p class="sub">${GAME.text.stageLabel||'오늘의 도전'}</p>
+    <ul><li><b class="n">🎯</b>${S.tip}</li></ul>
+    <button class="btn" id="mGo">시작 ▶</button>`);
+  $('mGo').onclick=()=>{ac();hideModal();resetBall();};
+}
+function resetBall(){
+  ball.trail.length=0;ball.boost=0;ball.vx=ball.vy=0;GAME.ballReset();
+  ball.x=pad.x;ball.y=pad.y-ball.r-2;G.readyT=75;G.state='ready';updateHUD();
+}
+function newGame(){G.score=0;G.lives=3;startStage(0);}
+function launch(){
+  const a=(Math.random()*.5-.25),s=STAGE().base;
+  ball.vx=Math.sin(a)*s;ball.vy=-Math.cos(a)*s;G.state='play';
+}
+/* 패들 접촉 시 기본 속도 설정 (위치에 따라 각도 조절) */
+function paddleAim(speed){
+  const hit=Math.max(-1,Math.min(1,(ball.x-pad.x)/(pad.w/2)));let a=hit*1.05;
+  if(remaining()<=5){                       // 마지막 벽돌 보조: 가장 가까운 벽돌 쪽으로 살짝 유도
+    let best=null,bd=1e9;
+    for(const b of G.bricks)if(b.alive&&!b.wall){const d=Math.hypot(b.x+b.w/2-ball.x,b.y-ball.y);if(d<bd){bd=d;best=b;}}
+    if(best){const at=Math.atan2(best.x+best.w/2-ball.x,ball.y-best.y);a=Math.max(-1.1,Math.min(1.1,a*.45+at*.55));}
+  }
+  ball.vx=Math.sin(a)*speed;ball.vy=-Math.cos(a)*speed;
+}
+/* 속도 조절(너무 수평 방지 + 속력 범위) */
+function regulate(lo,hi,ease){
+  const base=STAGE().base;
+  ball.boost*=.975;
+  let sp=Math.hypot(ball.vx,ball.vy)||base;
+  if(ease)sp+=(base+ball.boost-sp)*ease;
+  sp=Math.max(base*lo,Math.min(base*hi,sp));
+  const cur=Math.hypot(ball.vx,ball.vy)||1;
+  ball.vx*=sp/cur;ball.vy*=sp/cur;
+}
+function minVertical(k){
+  const sp=Math.hypot(ball.vx,ball.vy),min=sp*k;
+  if(Math.abs(ball.vy)<min){
+    ball.vy=(ball.vy<0||(ball.vy===0&&Math.random()<.5)?-1:1)*min;
+    const rest=Math.sqrt(Math.max(0,sp*sp-ball.vy*ball.vy));
+    ball.vx=(ball.vx<0?-1:1)*rest;
+  }
+}
+
+function substep(dt){
+  ball.px=ball.x;ball.py=ball.y;
+  ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+  const r=ball.r;
+  if(ball.x<r){ball.x=r;ball.vx=Math.abs(ball.vx);SFX.wall();}
+  if(ball.x>W-r){ball.x=W-r;ball.vx=-Math.abs(ball.vx);SFX.wall();}
+  if(ball.y<r){ball.y=r;ball.vy=Math.abs(ball.vy);SFX.wall();}
+  if(GAME.move)GAME.move();
+  if(ball.vy>0&&ball.y+r>=pad.y&&ball.y-r<=pad.y+pad.h&&Math.abs(ball.x-pad.x)<=pad.w/2+r*.6){
+    ball.y=pad.y-r;GAME.onPaddle();ring(ball.x,pad.y,'#ffffff',40,12);SFX.paddle();
+  }
+  for(const b of G.bricks){
+    if(!b.alive)continue;
+    const cx=Math.max(b.x,Math.min(ball.x,b.x+b.w)),cy=Math.max(b.y,Math.min(ball.y,b.y+b.h));
+    const dx=ball.x-cx,dy=ball.y-cy,d2=dx*dx+dy*dy;
+    if(d2<r*r){
+      let d=Math.sqrt(d2),nx,ny;
+      if(d<.001){nx=0;ny=ball.vy>0?-1:1;}else{nx=dx/d;ny=dy/d;}
+      const dot=ball.vx*nx+ball.vy*ny;
+      if(dot<0){ball.vx-=2*dot*nx;ball.vy-=2*dot*ny;}
+      ball.x=cx+nx*(r+.5);ball.y=cy+ny*(r+.5);
+      GAME.onBrick(b,nx,ny);
+      break;
+    }
+  }
+  if(ball.y>H+r*2)loseBall();
+}
+function loseBall(){
+  SFX.lose();G.lives--;G.flash=14;G.flashColor='#ff3b5c';
+  if(G.lives<=0){gameOver();return;}
+  resetBall();
+}
+function step(){
+  tNow++;
+  pad.x+=(pad.target-pad.x)*.55;
+  pad.x=Math.max(pad.w/2,Math.min(W-pad.w/2,pad.x));
+  const tt=Math.max(-.5,Math.min(.5,(pad.target-pad.x)*.02));
+  pad.tilt+=(tt-pad.tilt)*.25;
+  for(const b of G.bricks)if(b.flash>0)b.flash--;
+  if(G.flash>0)G.flash--;
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vx*=.96;p.vy*=.96;p.life--;}
+  parts=parts.filter(p=>p.life>0);
+  for(const o of rings){o.t--;o.r=o.max*(1-o.t/o.life);}
+  rings=rings.filter(o=>o.t>0);
+  if(GAME.tick)GAME.tick();
+  if(G.state==='ready'){
+    ball.x=pad.x;ball.y=pad.y-ball.r-2;
+    if(--G.readyT<=0)launch();
+  }else if(G.state==='play'){
+    GAME.physics();
+    ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>34)ball.trail.shift();
+    substep(.5);if(G.state==='play')substep(.5);
+  }
+}
+
+/* ---- 그리기 ---- */
+let scale=1;
+function resize(){
+  const bw=stageEl.clientWidth,bh=stageEl.clientHeight;
+  const s=Math.min(bw/W,bh/H),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.width=W*s+'px';cv.style.height=H*s+'px';
+  cv.width=Math.round(W*s*dpr);cv.height=Math.round(H*s*dpr);
+  scale=cv.width/W;
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawTrail(){
+  const t=ball.trail;if(t.length<2)return;
+  const c=GAME.trailColor?GAME.trailColor():GAME.ballColor();
+  ctx.save();ctx.lineCap='round';
+  for(let i=1;i<t.length;i++){
+    const k=i/t.length;
+    ctx.globalAlpha=k*.55;ctx.strokeStyle=c;ctx.lineWidth=2+k*6;
+    ctx.beginPath();ctx.moveTo(t[i-1].x,t[i-1].y);ctx.lineTo(t[i].x,t[i].y);ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawBallDefault(){
+  const c=GAME.ballColor();
+  ctx.save();ctx.shadowColor=c;ctx.shadowBlur=26;
+  ctx.fillStyle=c;ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r+2,0,6.283);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(ball.x,ball.y,Math.max(2,ball.r-3),0,6.283);ctx.fill();
+  const s=GAME.ballSym&&GAME.ballSym();
+  if(s){ctx.fillStyle=c;ctx.font='900 '+Math.round(ball.r*1.4)+'px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,ball.x,ball.y+1);}
+  ctx.restore();
+}
+function drawPaddleDefault(){
+  ctx.save();
+  ctx.fillStyle='rgba(120,150,255,.06)';rr(pad.x-pad.w*.75,pad.y-pad.h*2.5,pad.w*1.5,pad.h*6.5,16);ctx.fill();
+  ctx.shadowColor='#9fc4ff';ctx.shadowBlur=14;
+  const g=ctx.createLinearGradient(0,pad.y,0,pad.y+pad.h);g.addColorStop(0,'#f4f8ff');g.addColorStop(1,'#8aa8e8');
+  ctx.fillStyle=g;rr(pad.x-pad.w/2,pad.y,pad.w,pad.h,9);ctx.fill();
+  ctx.restore();
+}
+function drawFx(){
+  for(const o of rings){ctx.save();ctx.globalAlpha=o.t/o.life;ctx.strokeStyle=o.c;ctx.lineWidth=4;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,6.283);ctx.stroke();ctx.restore();}
+  for(const p of parts){ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,6.283);ctx.fill();}
+  ctx.globalAlpha=1;
+}
+function drawArrow(x1,y1,x2,y2,color,w=3,alpha=.8){
+  const a=Math.atan2(y2-y1,x2-x1);
+  ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.4)*13,y2-Math.sin(a-.4)*13);ctx.lineTo(x2-Math.cos(a+.4)*13,y2-Math.sin(a+.4)*13);ctx.closePath();ctx.fill();ctx.restore();
+}
+function draw(){
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.fillStyle='#0a0e1a';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(120,140,200,.05)';ctx.lineWidth=1;ctx.beginPath();
+  for(let x=0;x<=W;x+=64){ctx.moveTo(x,0);ctx.lineTo(x,H);}
+  for(let y=0;y<=H;y+=64){ctx.moveTo(0,y);ctx.lineTo(W,y);}
+  ctx.stroke();
+  if(G.flash>0){ctx.fillStyle=G.flashColor;ctx.globalAlpha=G.flash/40;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
+  if(G.state==='menu')return;
+  GAME.drawBack();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(const b of G.bricks)if(b.alive)GAME.drawBrick(b);
+  drawTrail();GAME.drawFront();drawFx();
+  if(GAME.drawPaddle)GAME.drawPaddle();else drawPaddleDefault();
+  if(GAME.drawBall)GAME.drawBall();else drawBallDefault();
+  if(G.state==='ready'){
+    const k=G.readyT/75;
+    ctx.save();ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=4;
+    ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r+8+k*14,-1.57,-1.57+6.283*(1-k));ctx.stroke();ctx.restore();
+  }
+  if(G.state==='paused'){
+    ctx.fillStyle='rgba(3,5,12,.6)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff';ctx.font='900 72px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('❚❚ 일시정지',W/2,H/2-10);
+    ctx.font='600 28px system-ui,sans-serif';ctx.fillStyle='#aebbdd';ctx.fillText('화면을 탭하면 계속',W/2,H/2+50);
+  }
+}
+
+/* ---- HUD / 모달 ---- */
+function updateHUD(){
+  $('hScore').textContent=G.score;
+  $('hLives').textContent='♥'.repeat(Math.max(0,G.lives))+'♡'.repeat(Math.max(0,3-G.lives));
+  $('hStage').textContent=(G.stage+1)+'/'+GAME.STAGES.length;
+  const h=GAME.hud();$('hLabel').textContent=h.label;
+  const p=$('hPol');p.style.background=h.color;p.style.color=h.color;p.innerHTML='<span style="color:#06101e">'+h.sym+'</span>';
+}
+function showModal(html){card.innerHTML=html;modal.classList.add('on');}
+function hideModal(){modal.classList.remove('on');}
+function stageClear(){
+  G.state='modal';SFX.clear();
+  burst(W/2,H/2,['#ff5d5d','#4aa8ff','#ffd54a','#fff'],60,8,50);
+  const S=STAGE(),last=G.stage===GAME.STAGES.length-1;
+  setTimeout(()=>{
+    showModal(`<h1>STAGE ${G.stage+1} 클리어! 🎉</h1>
+      <h2>방금 체험한 원리 · ${S.title}</h2>
+      <ul>${S.sum.map((t,i)=>`<li><b class="n">${i+1}</b>${t}</li>`).join('')}</ul>
+      <button class="btn" id="mNext">${last?'결과 보기':'다음 스테이지 ▶'}</button>`);
+    $('mNext').onclick=()=>{ac();if(last)allClear();else startStage(G.stage+1);};
+  },700);
+}
+function allClear(){
+  showModal(`<h1>전체 클리어! 🏆</h1><p class="big">최종 점수 ${G.score}점</p>
+    <ul>${GAME.text.all.map(t=>`<li><b class="n">✔</b>${t}</li>`).join('')}</ul>
+    <button class="btn" id="mAgain">처음부터 다시 ▶</button>`);
+  $('mAgain').onclick=()=>{ac();newGame();};
+}
+function gameOver(){
+  G.state='modal';
+  showModal(`<h1>기회를 모두 사용했어요</h1><p class="big">점수 ${G.score}점 · STAGE ${G.stage+1}</p>
+    <p class="sub">${GAME.text.hint}</p><button class="btn" id="mRetry">이 스테이지 다시 도전 ▶</button>`);
+  $('mRetry').onclick=()=>{ac();G.lives=3;startStage(G.stage);};
+}
+function showStart(){
+  G.state='menu';
+  showModal(`<h1>${GAME.text.title}</h1><p class="sub">${GAME.text.sub}</p>
+    <ul>${GAME.text.controls.map(t=>`<li>${t}</li>`).join('')}</ul>
+    <button class="btn" id="mStart">시작하기 ▶</button>`);
+  $('mStart').onclick=()=>{ac();newGame();};
+}
+
+/* ---- 입력 ---- */
+function toWorldX(cx){const r=cv.getBoundingClientRect();return (cx-r.left)/r.width*W;}
+function toWorldY(cy){const r=cv.getBoundingClientRect();return (cy-r.top)/r.height*H;}
+function toggle(){
+  if(G.state==='paused'){togglePause();return;}
+  if(G.state!=='play'&&G.state!=='ready')return;
+  GAME.toggle();updateHUD();
+}
+let ptr=null;
+cv.addEventListener('pointerdown',e=>{
+  ac();cv.setPointerCapture(e.pointerId);
+  const x=toWorldX(e.clientX),y=toWorldY(e.clientY);
+  const inHit=Math.abs(x-pad.x)<=pad.w*.75&&y>=pad.y-pad.h*2.5&&y<=pad.y+pad.h*4;   // 패들 터치 판정 1.5배 이상
+  ptr={id:e.pointerId,sx:x,sy:y,t:performance.now(),moved:false,off:inHit?pad.x-x:0,type:e.pointerType};
+  if(!inHit&&e.pointerType!=='mouse')pad.target=x;
+});
+cv.addEventListener('pointermove',e=>{
+  const x=toWorldX(e.clientX),y=toWorldY(e.clientY);
+  if(ptr&&ptr.id===e.pointerId){
+    if(Math.hypot(x-ptr.sx,y-ptr.sy)>16)ptr.moved=true;
+    pad.target=x+ptr.off;
+  }else if(e.pointerType==='mouse'){pad.target=x;}
+});
+cv.addEventListener('pointerup',e=>{
+  if(!ptr||ptr.id!==e.pointerId)return;
+  if(!ptr.moved&&performance.now()-ptr.t<350)toggle();
+  ptr=null;
+});
+cv.addEventListener('pointercancel',()=>{ptr=null;});
+['touchmove','touchstart'].forEach(n=>document.addEventListener(n,e=>{if(!e.target.closest('.card,#hud'))e.preventDefault();},{passive:false}));
+['gesturestart','gesturechange','contextmenu','dblclick'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
+const keys={};
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();ac();if(!e.repeat)toggle();}
+  else if(e.code==='KeyP'||e.code==='Escape')togglePause();
+  else if(e.code==='KeyF')toggleFull();
+  else keys[e.code]=true;
+});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+setInterval(()=>{
+  if(G.state==='play'||G.state==='ready'){
+    const d=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
+    if(d)pad.target=Math.max(0,Math.min(W,pad.target+d*22));
+  }
+},16);
+function togglePause(){
+  if(G.state==='play'||G.state==='ready'){G.prev=G.state;G.state='paused';$('bPause').textContent='▶';}
+  else if(G.state==='paused'){G.state=G.prev||'play';$('bPause').textContent='❚❚';}
+}
+$('bPause').onclick=togglePause;
+let rsT=0;
+$('bRestart').onclick=()=>{
+  const b=$('bRestart');
+  if(b.classList.contains('warn')){clearTimeout(rsT);b.classList.remove('warn');ac();newGame();$('bPause').textContent='❚❚';}
+  else{b.classList.add('warn');rsT=setTimeout(()=>b.classList.remove('warn'),2200);}
+};
+$('bMute').onclick=()=>{muted=!muted;$('bMute').textContent=muted?'✕':'♪';$('bMute').style.opacity=muted?.5:1;};
+function toggleFull(){
+  const d=document,el=d.documentElement;
+  try{
+    if(!(d.fullscreenElement||d.webkitFullscreenElement)){(el.requestFullscreen||el.webkitRequestFullscreen||(()=>{})).call(el);}
+    else{(d.exitFullscreen||d.webkitExitFullscreen||(()=>{})).call(d);}
+  }catch(err){}
+}
+$('bFull').onclick=toggleFull;
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.state==='play')togglePause();});
+window.addEventListener('resize',resize);
+document.addEventListener('fullscreenchange',()=>setTimeout(resize,60));
+document.addEventListener('webkitfullscreenchange',()=>setTimeout(resize,60));
+
+/* ---- 메인 루프 ---- */
+let last=performance.now(),acc=0;
+function frame(now){
+  const dt=Math.min(100,now-last);last=now;
+  if(G.state!=='paused'&&G.state!=='menu'){
+    acc+=dt;let n=0;
+    while(acc>=16.667&&n<5){step();acc-=16.667;n++;}
+    if(n>=5)acc=0;
+  }else acc=0;
+  draw();requestAnimationFrame(frame);
+}
+function boot(){
+  window.__game={G,ball,pad,GAME,step,startStage,newGame,toggle,killBrick,damageBrick};
+  resize();GAME.init&&GAME.init();updateHUD();showStart();requestAnimationFrame(frame);
+}
+
+/* ===================== 단원 모듈: 운동과 힘 (중력, F=ma) ===================== */
+const MASS=[{m:1,r:10,color:'#5fe3a1',sym:'1'},{m:3,r:15,color:'#b48cff',sym:'3'}];
+const G_UNI=.08;                                  // S1: 균일한 중력 가속도(질량과 무관)
+const PLANETS=[{x:380,y:390,r:42,gm:8500,c:'#ffb35a'},{x:900,y:410,r:58,gm:14500,c:'#ff7a9a'}];
+const WIND={x:200,y:330,w:880,h:190,F:.17};        // S3: 일정한 힘(질량에 따라 가속도 달라짐)
+Object.assign(GAME,{
+ text:{
+  title:'🪐 운동과 힘 벽돌깨기',
+  sub:'무거운 공이 더 빨리 떨어질까? 같은 힘을 주면 어느 공이 더 많이 휠까? 직접 확인해 봐요!',
+  stageLabel:'오늘의 도전',
+  controls:[
+   '<b class="n">👆</b><b>드래그</b> : 패들 이동 &nbsp;/&nbsp; <b>화면 탭 · 스페이스</b> : 공의 질량 <span class="chip" style="background:#5fe3a1">1</span><span class="chip" style="background:#b48cff">3</span> 바꾸기',
+   '<b class="n">🏹</b>주황색 화살표는 공이 받는 <b>가속도</b>예요. 길이를 비교해 보세요!',
+   '<b class="n">🎯</b>3개 스테이지를 모두 깨 보세요. (기회 3번)'],
+  hint:'힌트: 단단한(두 겹) 벽돌은 무거운 공이 한 번에 깰 수 있어요. 탭으로 질량을 바꿔 보세요!',
+  all:['<b>중력</b>은 질량이 달라도 <b>같은 가속도</b>를 만든다. 무거운 물체가 더 빨리 떨어지지 않는다.','천체의 중력은 가까울수록 세서 물체의 경로를 <b>곡선</b>으로 휘게 한다.','같은 힘이면 <b>질량이 클수록 가속도가 작다.</b> (F = ma, 관성)']
+ },
+ STAGES:[
+  {title:'중력과 낙하',base:11,tip:'아래로 <b>중력</b>이 작용해요. 탭으로 질량을 바꿔도 공의 <b>경로가 같은지</b> 관찰해 보세요. 단단한 벽돌은 무거운 공으로!',
+   sum:['질량이 달라도 <b>중력 가속도는 같아서</b> 가벼운 공과 무거운 공의 낙하 경로가 똑같았다.','중력은 속력을 계속 바꿔(올라갈 땐 느려지고 내려올 땐 빨라짐) <b>포물선</b> 경로를 만든다.','질량이 큰 공은 충돌 효과(운동량)가 커서 <b>단단한 벽돌을 한 번에</b> 깼다.']},
+  {title:'행성의 중력',base:7,tip:'두 행성이 공을 <b>끌어당겨요</b>. 가까울수록 더 세게! 궤도가 휘는 모습을 보세요.',
+   sum:['중력은 <b>거리가 가까울수록 세져서</b> 행성 근처에서 공의 경로가 곡선으로 휘었다.','<b>질량이 큰 행성</b>(큰 행성)이 더 강하게 끌어당긴다.','천체의 중력은 공의 질량과 관계없이 <b>같은 경로</b>를 만들었다.']},
+  {title:'힘과 가속도',base:7,tip:'오른쪽으로 <b>같은 크기의 바람(힘)</b>이 불어요. 질량 1과 질량 3, 어느 공이 더 많이 밀릴까요?',
+   sum:['같은 크기의 힘을 받아도 <b>질량이 작은 공이 더 많이 휘었다.</b> (가속도 = 힘 ÷ 질량)','질량이 큰 물체는 운동 상태를 바꾸기 어렵다. 이것이 <b>관성</b>이다.','중력은 질량에 비례하는 힘이라 가속도가 같지만, 일정한 바람은 질량에 따라 가속도가 달랐다.']}
+ ],
+ init(){},
+ build(i){
+  if(i===0)return grid(4,(r,c)=>({hp:(r+c)%3===0?2:1}));
+  if(i===1)return grid(4,(r,c)=>({hp:(r*5+c)%4===0?2:1}));
+  return grid(4,(r,c)=>({hp:(c%4===1||c%4===2)&&r%2===1?2:1}));
+ },
+ ballReset(){ball.mode=0;ball.r=MASS[0].r;ball.ax=ball.ay=0;},
+ hud(){const m=MASS[ball.mode];return {label:'질량',color:m.color,sym:m.sym};},
+ ballColor(){return MASS[ball.mode].color;},
+ ballSym(){return MASS[ball.mode].sym;},
+ toggle(){
+  ball.mode=1-ball.mode;ball.r=MASS[ball.mode].r;
+  tone(ball.mode?220:660,.14,'square',.08,ball.mode?160:900);
+  ring(ball.x,ball.y,MASS[ball.mode].color,70,18);G.flash=5;G.flashColor=MASS[ball.mode].color;
+ },
+ physics(){
+  const m=MASS[ball.mode].m;let ax=0,ay=0;
+  if(G.stage===0){ay=G_UNI;}                       // 중력: F=mg → a=g (질량 무관)
+  else if(G.stage===1){
+    for(const p of PLANETS){
+      const dx=p.x-ball.x,dy=p.y-ball.y,d2=dx*dx+dy*dy,d=Math.sqrt(d2);
+      if(d>420)continue;
+      const f=Math.min(.45,p.gm/(d2+2500)),k=f/d;   // 중력: a=GM/r² (질량 무관)
+      ax+=dx*k;ay+=dy*k;
+    }
+  }else{
+    if(ball.x>WIND.x&&ball.x<WIND.x+WIND.w&&ball.y>WIND.y&&ball.y<WIND.y+WIND.h){ax=WIND.F/m;} // a=F/m
+  }
+  ball.vx+=ax;ball.vy+=ay;ball.ax=ax;ball.ay=ay;
+  if(G.stage>0){regulate(.75,1.6,.012);minVertical(.35);}
+  else{                                              // 낙하 중 지나치게 빠르지 않도록 상한만
+    const sp=Math.hypot(ball.vx,ball.vy);if(sp>16){ball.vx*=16/sp;ball.vy*=16/sp;}
+    if(ball.y<200&&ball.vy<0&&Math.abs(ball.vy)<.2)ball.vy=.2;
+  }
+ },
+ move(){
+  if(G.stage!==1)return;
+  for(const p of PLANETS){                           // 행성 표면 충돌
+    const dx=ball.x-p.x,dy=ball.y-p.y,d=Math.hypot(dx,dy),R=p.r+ball.r;
+    if(d<R){
+      const nx=dx/d,ny=dy/d,dot=ball.vx*nx+ball.vy*ny;
+      if(dot<0){ball.vx-=2*dot*nx;ball.vy-=2*dot*ny;}
+      ball.x=p.x+nx*(R+1);ball.y=p.y+ny*(R+1);
+      ring(ball.x,ball.y,p.c,60,16);tone(180,.12,'triangle',.1,120);
+    }
+  }
+ },
+ onPaddle(){paddleAim(STAGE().base);},
+ onBrick(b,nx,ny){
+  const dmg=MASS[ball.mode].m>1?2:1;
+  const dead=damageBrick(b,dmg);
+  if(dead){burst(b.x+b.w/2,b.y+b.h/2,[MASS[ball.mode].color,'#ffffff','#ffd54a'],ball.mode?34:22,ball.mode?7:5);ring(b.x+b.w/2,b.y+b.h/2,MASS[ball.mode].color,100,24);SFX.brick();G.flash=ball.mode?7:4;G.flashColor=MASS[ball.mode].color;}
+  else{ring(ball.x,ball.y,'#ffb84a',55,14);SFX.hit();}
+ },
+ drawBack(){
+  if(G.stage===0){                                   // 중력 방향 표시
+    ctx.save();ctx.globalAlpha=.25;ctx.strokeStyle='#ffb84a';ctx.lineWidth=4;
+    for(let k=0;k<4;k++){const y=250+((tNow*1.2+k*90)%360);ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(40,y+34);ctx.moveTo(30,y+24);ctx.lineTo(40,y+36);ctx.lineTo(50,y+24);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(W-40,y);ctx.lineTo(W-40,y+34);ctx.moveTo(W-50,y+24);ctx.lineTo(W-40,y+36);ctx.lineTo(W-30,y+24);ctx.stroke();}
+    ctx.restore();
+  }else if(G.stage===1){
+    for(const p of PLANETS){
+      ctx.save();
+      const g=ctx.createRadialGradient(p.x,p.y,p.r*.2,p.x,p.y,p.r*4);g.addColorStop(0,'rgba(255,180,100,.22)');g.addColorStop(1,'rgba(255,180,100,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r*4,0,6.283);ctx.fill();
+      ctx.strokeStyle='rgba(255,200,140,.18)';ctx.lineWidth=2;ctx.setLineDash([6,8]);
+      for(const k of [1.8,2.8]){ctx.beginPath();ctx.arc(p.x,p.y,p.r*k,0,6.283);ctx.stroke();}
+      ctx.setLineDash([]);
+      const b=ctx.createRadialGradient(p.x-p.r*.3,p.y-p.r*.3,p.r*.1,p.x,p.y,p.r);b.addColorStop(0,'#fff3d6');b.addColorStop(.4,p.c);b.addColorStop(1,'#3a1a10');
+      ctx.fillStyle=b;ctx.shadowColor=p.c;ctx.shadowBlur=24;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill();
+      ctx.restore();
+    }
+  }else{
+    const w=WIND;ctx.save();
+    ctx.fillStyle='rgba(255,170,70,.07)';rr(w.x,w.y,w.w,w.h,14);ctx.fill();
+    ctx.strokeStyle='rgba(255,170,70,.45)';ctx.lineWidth=2.5;ctx.setLineDash([10,8]);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(255,190,100,.5)';ctx.lineWidth=3;
+    for(let r=0;r<4;r++)for(let c=0;c<6;c++){
+      const x=w.x+30+((c*140+tNow*2.2+r*47)%(w.w-60)),y=w.y+28+r*44;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+34,y);ctx.moveTo(x+24,y-7);ctx.lineTo(x+36,y);ctx.lineTo(x+24,y+7);ctx.stroke();
+    }
+    ctx.restore();
+  }
+ },
+ drawBrick(b){
+  const two=b.max>=2,c=two?'#ffb84a':'#4aa8ff';
+  ctx.save();ctx.shadowColor=c;ctx.shadowBlur=b.flash?30:8;
+  ctx.fillStyle=b.flash?'#ffffff':(two?'#4a3210':'#173556');rr(b.x,b.y,b.w,b.h,7);ctx.fill();
+  ctx.shadowBlur=0;ctx.strokeStyle=c;ctx.lineWidth=two?4:2.5;ctx.stroke();
+  if(two){ctx.strokeStyle=c;ctx.lineWidth=1.5;rr(b.x+6,b.y+6,b.w-12,b.h-12,4);ctx.stroke();
+    for(let k=0;k<b.hp;k++){ctx.fillStyle=c;ctx.beginPath();ctx.arc(b.x+b.w/2-8+k*16,b.y+b.h/2,4.5,0,6.283);ctx.fill();}}
+  ctx.restore();
+ },
+ drawFront(){
+  if(G.state==='play'){                              // 가속도 화살표
+    const a=Math.hypot(ball.ax,ball.ay);
+    if(a>.012){const k=260;drawArrow(ball.x,ball.y,ball.x+ball.ax*k,ball.y+ball.ay*k,'#ffb84a',4,.95);}
+  }
+ }
+});
+
+boot();
+})();
+</script>
+</body>
+</html>

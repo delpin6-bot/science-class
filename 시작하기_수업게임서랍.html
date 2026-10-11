@@ -519,6 +519,8 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 18px;
 }
 .modal-header h2 { margin: 0; font-size: 20px; font-weight: 900; color: #0f172a; }
+.btn-game-qr{min-height:44px;margin-top:8px;width:100%;border-radius:12px;border:2px solid #38bdf8;background:#f0f9ff;color:#0369a1;font-weight:800;font-size:15px;cursor:pointer}
+.btn-game-qr:active{transform:scale(.98)}
 .qr-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; }
 #qrCanvas { background:#fff; border:1.5px solid var(--line-strong); border-radius:14px; padding:14px; width:min(78vw,52vh,440px); height:auto; image-rendering:pixelated; }
 .qr-cap { font-size:16px; font-weight:800; color:var(--ink); text-align:center; }
@@ -588,8 +590,9 @@ a { text-decoration: none; color: inherit; }
       </a>
       <!-- 몰입 모드 버튼 -->
       <button class="btn-header-action" id="btnImm" title="게임 화면을 전체화면으로 크게 열기"><span>🖥 몰입 모드 : 켬</span></button>
+      <a class="btn-header-action" href="./QR코드_만들기.html" title="게임·차시별 학생용 QR코드 만들기(교사용)" style="text-decoration:none;"><span>🧾 차시 QR 만들기</span></a>
       <!-- QR 접속 버튼 -->
-      <button class="btn-header-action" onclick="openQrModal()" title="학생 접속 QR코드 보기">
+      <button class="btn-header-action" onclick="qrGame=null;openQrModal()" title="학생 접속 QR코드 보기">
         <span>📱 학생 접속 QR</span>
       </button>
       <!-- 3. 인지과학가이드 버튼 -->
@@ -3213,6 +3216,18 @@ const GAMES_DATA = [
     units: ["전체", "중1·중2·중3 전단원(22개)", "과학과 인류의 지속가능한 삶", "생물의 구성과 다양성", "열", "물질의 상태 변화", "힘의 작용", "기체의 성질", "태양계", "물질의 특성", "지권의 변화", "빛과 파동", "물질의 구성", "식물과 에너지", "동물과 에너지", "전기와 자기", "별과 우주", "화학 반응의 규칙과 에너지 변화", "기권과 날씨", "운동과 에너지", "자극과 반응", "생식과 유전", "에너지 전환과 보존"]
   },
   {
+    id: "g-shoot-speedy",
+    ic: "⚡",
+    nm: "개념 격추 · 스피디",
+    file: "과학_퍼즐_개념격추.html",
+    ds: "스피디 모드! 10단계 레벨에 도전하며 떨어지는 설명 방울에 맞는 개념만 골라 격추. 마구 누르면 감점·터치 패드 잠금, 목표를 채우면 별을 받고 다음 레벨이 열려요",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#3B5BDB",
+    badgeClass: "badge-tag-blue",
+    units: ["전체", "과학과 인류의 지속가능한 삶", "생물의 구성과 다양성", "열", "물질의 상태 변화", "힘의 작용", "기체의 성질", "태양계", "물질의 특성", "지권의 변화", "빛과 파동", "물질의 구성", "식물과 에너지", "동물과 에너지", "전기와 자기", "별과 우주", "화학 반응의 규칙과 에너지 변화", "기권과 날씨", "운동과 에너지", "자극과 반응", "생식과 유전", "에너지 전환과 보존"]
+  },
+  {
     id: "g-defend",
     ic: "🛡️",
     nm: "개념 수비대",
@@ -3403,6 +3418,78 @@ const GAMES_DATA = [
     c: "#10b981",
     badgeClass: "badge-tag-green",
     units: ["전체", "중1·중2·중3 전단원(22개)", "기체의 성질", "물질의 상태 변화", "태양계", "전기와 자기", "빛과 파동", "물질의 특성", "물질의 구성", "식물과 에너지", "동물과 에너지", "별과 우주", "자극과 반응", "생식과 유전", "운동과 에너지", "에너지 전환과 보존"]
+  },
+  {
+    id: "g-brick-charge",
+    ic: "🧲",
+    nm: "전하 벽돌깨기",
+    file: "전하_벽돌깨기.html",
+    ds: "공의 전하(±)를 바꿔 인력·척력, 정전기 유도, 자기장 속 운동을 벽돌깨기로 체험",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#3B5BDB",
+    badgeClass: "badge-tag-blue",
+    units: ["전체", "전기와 자기"]
+  },
+  {
+    id: "g-brick-light",
+    ic: "🔦",
+    nm: "빛 벽돌깨기",
+    file: "빛_벽돌깨기.html",
+    ds: "평면·볼록·오목 거울과 물속 굴절로 빛의 반사·굴절 원리를 벽돌깨기로 체험",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#F08C00",
+    badgeClass: "badge-tag-amber",
+    units: ["전체", "빛과 파동"]
+  },
+  {
+    id: "g-brick-gravity",
+    ic: "🪐",
+    nm: "중력 벽돌깨기",
+    file: "중력_벽돌깨기.html",
+    ds: "질량·중력·행성·바람을 조절하며 힘과 가속도를 벽돌깨기로 체험",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#0CA678",
+    badgeClass: "badge-tag-green",
+    units: ["전체", "여러 가지 힘", "운동과 에너지"]
+  },
+  {
+    id: "g-btb-shooter",
+    ic: "🫧",
+    nm: "BTB 중화 버블 슈터",
+    file: "BTB_중화_버블슈터.html",
+    ds: "H⁺와 OH⁻ 버블을 쏘아 1:1로 중화시키는 버블 슈터 (화학·암석 모드)",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#D6336C",
+    badgeClass: "badge-tag-pink",
+    units: ["전체", "화학 반응의 규칙과 에너지 변화"]
+  },
+  {
+    id: "g-pac-blood",
+    ic: "🩸",
+    nm: "적혈구 순환 팩맨",
+    file: "적혈구_순환_팩맨.html",
+    ds: "판막과 혈관을 따라 체순환·폐순환 경로를 역류 없이 완주하며 산소를 전달",
+    tag: "개념 익히기",
+    stage: "LEARN",
+    c: "#d93a4a",
+    badgeClass: "badge-tag-pink",
+    units: ["전체", "동물과 에너지"]
+  },
+  {
+    id: "g-pac-mindmap",
+    ic: "🧠",
+    nm: "마인드맵 팩맨",
+    file: "마인드맵_팩맨.html",
+    ds: "중1~중3 22개 단원 67개 차시 내장! 4개 가지의 낱말 펠릿을 모아 마인드맵을 완성하고 오개념 몬스터를 정화",
+    tag: "복습·정리",
+    stage: "ORG",
+    c: "#0CA678",
+    badgeClass: "badge-tag-green",
+    units: ["전체", "물질의 구성", "전기와 자기", "기체의 성질", "식물과 에너지", "동물과 에너지", "생식과 유전", "자극과 반응", "여러 가지 힘", "운동과 에너지"]
   }
 ];
 
@@ -3538,6 +3625,7 @@ function render() {
         <a href="${gameHref(g)}" class="btn-play-game" title="${g.nm} 시작하기">
           <span>🚀 게임 시작하기</span>
         </a>
+        <button type="button" class="btn-game-qr" onclick="openGameQr('${g.id}')" title="${g.nm} 학생 접속 QR코드">📱 QR</button>
       </div>
     `;
 
@@ -3579,12 +3667,17 @@ function drawQr(text){
     return true;
   } catch(e){ qrMsg("주소가 너무 길어 QR을 만들 수 없어요."); return false; }
 }
+let qrGame=null;
+function qrDerive(u){ if(!qrGame||!u) return u; try{ return new URL("./"+encodeURI(qrGame.file), u).href; }catch(e){ return u; } }
+function openGameQr(id){ const g=GAMES_DATA.find(x=>x.id===id); if(!g) return; qrGame=g; openQrModal(); }
 function openQrModal(){
   const inp=document.getElementById("qrUrl"), url=qrDefaultUrl();
   inp.value=url;
+  const h=document.querySelector("#qrModal h2"); if(h) h.textContent=qrGame?("📱 학생 접속 QR · "+qrGame.nm):"📱 학생 접속 QR코드";
+  const cp=document.querySelector("#qrModal .qr-cap"); if(cp) cp.innerHTML=qrGame?("휴대폰·태블릿 카메라로 찍으면 <span style=\"color:#d97706;\">"+qrGame.nm+"</span> 게임이 바로 열려요"):"휴대폰·태블릿 카메라로 찍으면 <span style=\"color:#d97706;\">수업 게임 서랍</span>이 열려요";
   document.getElementById("qrNote").style.display = isLocalUrl(String(location.href)) ? "block" : "none";
   document.getElementById("qrModal").classList.add("show");
-  drawQr(url);
+  drawQr(qrDerive(url));
 }
 function closeQrModal(e){
   if (e && e.target !== document.getElementById("qrModal") && !e.target.classList.contains("btn-close")) return;
@@ -3593,7 +3686,7 @@ function closeQrModal(e){
 function makeQr(){
   const inp=document.getElementById("qrUrl"); let u=inp.value.trim();
   if (u && !/^https?:\/\//i.test(u)){ u="https://"+u; inp.value=u; }
-  if (drawQr(u)){ try{ localStorage.setItem(LS_QR,u); }catch(e){} if(isLocalUrl(u)) qrMsg("이 주소는 같은 컴퓨터에서만 열려요. 인터넷 주소를 넣어 주세요."); }
+  if (drawQr(qrDerive(u))){ try{ localStorage.setItem(LS_QR,u); }catch(e){} if(isLocalUrl(u)) qrMsg("이 주소는 같은 컴퓨터에서만 열려요. 인터넷 주소를 넣어 주세요."); }
 }
 function copyQrUrl(){
   const inp=document.getElementById("qrUrl"), v=inp.value.trim(); if(!v) return;
