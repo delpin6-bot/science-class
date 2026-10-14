@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>지구계 탐구 가상실험실 (5대 권역·분류·상호작용)</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+#top{flex-wrap:nowrap}#vbars{overflow:hidden}.vb span b:first-child{white-space:nowrap}@media (max-width:980px){#top{flex-wrap:wrap}}
+#m1 .stagewrap{background:#02040a;border-color:#1e293b}
+.hint1{position:absolute;left:10px;bottom:8px;color:#94a3b8;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(15,23,42,.7);padding:4px 10px;border-radius:10px;pointer-events:none}
+.zbar{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.zbar button{width:52px;height:52px;border-radius:14px;border:2px solid #475569;background:rgba(15,23,42,.82);color:#e2e8f0;font-size:22px;font-weight:900}
+.zbar button.on{background:#fde68a;color:#1f2937;border-color:#fde68a}
+.lay{display:flex;align-items:center;gap:10px;min-height:64px;padding:6px 12px;border-radius:14px;border:3px solid var(--line);background:#fff;font-weight:900;text-align:left;width:100%;font-size:clamp(15px,1.4vw,22px)}
+.lay .ic{font-size:1.7em;line-height:1}
+.lay small{display:block;font-size:.62em;color:var(--mut);font-weight:700}
+.lay.on{color:#fff}
+.lay .sw{margin-left:auto;font-size:.7em;font-weight:900;padding:2px 10px;border-radius:99px;background:#e2e8f0;color:#475569}
+.lay.on .sw{background:rgba(255,255,255,.28);color:#fff}
+.lbanner{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.55;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.3vw,21px);min-height:5.2em}
+.vb{position:relative;flex:1 1 0;min-width:0;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;display:flex;align-items:center;padding:0 8px;font-weight:900;font-size:clamp(12px,1.05vw,16px)}
+.vb i{position:absolute;left:0;top:0;bottom:0;opacity:.38;transition:width .5s}
+.vb span{position:relative;display:flex;justify-content:space-between;gap:6px;width:100%}
+#m2.mode.on{grid-template-columns:minmax(0,1fr)}
+.tray{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.pcard{min-height:clamp(88px,12vh,118px);border:3px solid var(--line);border-radius:16px;background:linear-gradient(#fff,#f1f5f9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:900;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.3vw,21px);padding:4px}
+.pcard .em{font-size:clamp(34px,4.2vw,56px);line-height:1}
+.pcard small{font-size:.66em;color:var(--mut);font-weight:700}
+.pcard.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.pcard.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.08) rotate(-4deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.pcard.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.pcard.gone{display:none}
+.baskets{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.bk{border:4px dashed #94a3b8;border-radius:18px;background:#f8fafc;min-height:clamp(120px,19vh,180px);padding:6px 8px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.bk h3{font-size:clamp(17px,1.7vw,26px);display:flex;align-items:center;gap:6px}
+.bk p{font-size:clamp(11px,.95vw,15px);color:var(--mut);font-weight:700;line-height:1.35}
+.bk.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}
+.bk .in{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.bk .in span{background:#fff;border:2px solid #86efac;border-radius:10px;padding:1px 6px;font-weight:800;font-size:clamp(12px,1.05vw,16px)}
+#m3 .stagewrap{min-height:330px}#m3 .ctl .btn{min-height:48px;padding:0 10px;font-size:clamp(13px,1.15vw,18px)}#m3 .rp{display:flex;flex-direction:column;gap:8px}
+.pb{display:flex;align-items:center;gap:6px;min-height:52px}
+.st3{display:flex;gap:8px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:6px 10px;background:#f8fafc;font-weight:800;line-height:1.45;margin-top:6px;font-size:clamp(13px,1.2vw,19px)}
+.st3>b:first-child{flex:0 0 auto;background:#2563eb;color:#fff;border-radius:50%;width:1.7em;height:1.7em;display:inline-flex;align-items:center;justify-content:center}
+</style></head><body>
+<header>
+  <h1>🌍 지구계 탐구 가상실험실<small>5대 권역 · 분류 · 상호작용</small></h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 3D 지구본</button>
+    <button class="tab" id="tab2">② 사진 카드 분류</button>
+    <button class="tab" id="tab3">③ 상호작용 네트워크</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 스스로 확인하기</button>
+  <button class="hb" id="btnReset">↺ 전체 리셋</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="vbars" style="flex:1 1 0;min-width:0;display:flex;gap:6px"></div>
+  <button class="btn" id="vmode" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">🔢 로그 눈금</button>
+  <div class="pseg" id="scoreChip" style="flex:0 0 auto;min-width:120px;white-space:nowrap">🃏 0 / 12</div>
+  <button class="btn dng" id="btnAgain" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">🃏 다시 풀기</button>
+</div>
+
+<main>
+<!-- ① 지구본 -->
+<section class="mode on g2" id="m1">
+  <div class="col">
+    <div class="card stagewrap"><canvas id="c1" style="touch-action:none;cursor:grab"></canvas><div class="toast" id="toast1"></div>
+      <div class="zbar"><button id="zIn" aria-label="확대">＋</button><button id="zOut" aria-label="축소">－</button><button id="zRot" class="on" aria-label="자동 회전">⟳</button><button id="zHome" aria-label="처음 시점">⌖</button></div>
+      <div class="hint1">👆 드래그: 지구본 돌리기 · 두 손가락/휠: 확대·축소</div></div>
+  </div>
+  <div class="col" style="overflow:auto">
+    <div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-weight:900">🔍 5대 권역 투시 레이어 (여러 개를 함께 켤 수 있어요)</div>
+      <div id="lays" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="row"><button class="btn" id="allOn">✨ 모두 켜기</button><button class="btn" id="allOff">🚫 모두 끄기</button></div>
+    </div>
+    <div class="lbanner" id="lbanner">오른쪽 권역 버튼을 눌러 지구본을 투시해 보세요!</div>
+    <div style="font-size:.8em;color:var(--mut);font-weight:700;line-height:1.5">※ 위쪽 막대는 지권을 100%로 놓은 교육용 어림값이에요(기권: 고도 약 100 km까지, 생물권: 생물이 차지하는 부피). 단면의 지각은 보이도록 두껍게 그렸어요.</div>
+  </div>
+</section>
+
+<!-- ② 카드 분류 -->
+<section class="mode" id="m2">
+  <div class="col" style="overflow:auto">
+    <div class="card"><div style="font-weight:900;margin-bottom:6px">🃏 사진 카드를 끌어서 알맞은 권역 바구니에 넣어요 <span style="font-weight:700;color:var(--mut)">(카드를 눌러 선택 → 바구니를 눌러도 돼요)</span></div><div class="tray" id="tray"></div></div>
+    <div class="baskets" id="baskets"></div>
+    <div class="fb" id="fb2">12장의 카드를 지권·수권·기권·생물권·외권 바구니에 분류해 보세요.</div>
+  </div>
+</section>
+
+<!-- ③ 네트워크 -->
+<section class="mode g2" id="m3">
+  <div class="col">
+    <div class="card stagewrap" style="background:linear-gradient(#f8fafc,#e2e8f0)"><canvas id="c3"></canvas></div>
+    <div class="card ctl"><div style="font-weight:900">🎬 대표 자연 현상을 눌러 보세요</div><div class="row" id="phBtns"></div></div>
+  </div>
+  <div class="col rp" style="overflow:auto">
+    <div class="card"><div class="pb"><b style="font-size:1.1em">🔎 무슨 일이 일어날까?</b><span class="sp"></span><span class="badge" id="seen3">탐색 0 / 7</span></div><div id="steps3"><div class="fb">왼쪽 아래 현상 버튼을 누르면 권역 사이로 물질·에너지가 이동하는 모습이 나와요.</div></div>
+      <div class="row" style="margin-top:8px"><button class="btn pre" id="rep3">▶ 다시 재생</button><button class="btn" id="clr3">🧹 지우기</button></div></div>
+    <div class="card"><div style="font-weight:900;margin-bottom:4px">📚 권역을 눌러 관련 현상 찾기</div><div id="rel3" class="fb" style="min-height:0">그림 속 권역(동그라미)을 눌러 보세요.</div></div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 스스로 확인하기</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const DEG=Math.PI/180,RAD=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3);
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)})}
+$('#tab1').onclick=()=>setMode(1);$('#tab2').onclick=()=>setMode(2);$('#tab3').onclick=()=>setMode(3);
+
+/* ═════════ HUD: 부피 막대 ═════════ */
+const VOL=[{k:'geo',n:'지권',v:1.083e12,c:'#ea580c'},{k:'atm',n:'기권',v:5.0e10,c:'#38bdf8'},{k:'hyd',n:'수권',v:1.386e9,c:'#2563eb'},{k:'bio',n:'생물권',v:2.0e3,c:'#16a34a'}];
+let volLog=false;
+function pctTxt(v){const p=v/1.083e12*100;return p>=10?p.toFixed(0)+'%':p>=1?p.toFixed(1)+'%':p>=0.01?p.toFixed(2)+'%':'≈0%'}
+function renderVol(){
+  $('#vbars').innerHTML=VOL.map((o,i)=>{const w=volLog?(Math.log10(o.v)-2)/(12.1-2)*100:Math.max(o.v/1.083e12*100,1.2);
+    return `<div class="vb" title="${o.n} 부피 ≈ ${o.v.toExponential(1)} km³"><i style="width:${w}%;background:${o.c}"></i><span><b>${i===0?'🥇 ':''}${o.n}</b><b>${pctTxt(o.v)}</b></span></div>`}).join('');
+  $('#vmode').textContent=volLog?'📏 실제 비율':'🔢 로그 눈금'}
+$('#vmode').onclick=()=>{volLog=!volLog;renderVol()};
+
+/* ═════════ 모드 ①: 3D 지구본 ═════════ */
+const TW=1024,TH=512,CW=512,CH=256;
+const LAND=[
+ [[-168,66],[-162,70],[-140,70],[-125,70],[-110,73],[-95,72],[-82,69],[-80,63],[-94,58],[-90,52],[-80,52],[-78,58],[-70,60],[-62,57],[-56,52],[-66,45],[-70,42],[-75,38],[-76,34],[-81,31],[-80,25],[-83,29],[-90,30],[-97,27],[-97,21],[-92,18],[-90,21],[-87,21],[-88,16],[-84,15],[-83,10],[-79,9],[-78,8],[-80,7],[-85,10],[-88,13],[-92,15],[-96,16],[-101,18],[-105,20],[-108,25],[-112,30],[-115,31],[-117,32],[-121,35],[-124,40],[-124,47],[-128,51],[-134,57],[-141,60],[-150,60],[-158,57],[-165,55],[-160,59],[-165,62],[-166,66]],
+ [[-73,78],[-60,82],[-30,83],[-20,80],[-20,72],[-25,68],[-40,64],[-44,60],[-50,62],[-54,68],[-58,75]],
+ [[-78,8],[-72,12],[-62,10],[-52,5],[-50,0],[-44,-2],[-35,-6],[-38,-13],[-41,-22],[-48,-26],[-53,-34],[-58,-38],[-65,-41],[-66,-47],[-69,-52],[-72,-54],[-75,-50],[-74,-40],[-71,-30],[-70,-18],[-76,-14],[-81,-6],[-80,-1],[-77,4]],
+ [[-9,37],[-9,43],[-1,46],[-4,48],[2,51],[8,54],[10,57],[8,58],[5,60],[5,62],[14,68],[25,71],[32,70],[40,67],[44,68],[60,69],[70,73],[80,73],[100,77],[115,74],[130,72],[145,72],[160,70],[170,70],[180,68],[180,65],[170,60],[163,58],[156,51],[155,59],[143,59],[137,54],[141,48],[135,43],[130,42],[129,36],[127,34.5],[126,37],[125,40],[122,40],[121,37],[118,39],[122,30],[119,25],[110,21],[108,18],[109,12],[105,9],[100,13],[100,7],[103,1],[98,8],[98,16],[94,17],[91,22],[87,21],[80,15],[77,8],[73,18],[72,22],[67,25],[57,25],[56,27],[50,30],[48,30],[51,25],[56,24],[59,22],[53,17],[44,12],[40,20],[35,28],[34,31],[36,36],[30,36],[27,37],[26,40],[29,41],[23,40],[21,38],[22,36],[19,41],[14,45],[12,44],[16,41],[18,40],[16,38],[12,42],[9,44],[3,43],[-1,38],[-5,36]],
+ [[-17,21],[-10,30],[-6,36],[10,37],[11,33],[20,31],[32,31],[34,28],[38,20],[43,12],[51,12],[48,5],[40,-3],[39,-10],[41,-15],[35,-24],[32,-29],[27,-34],[19,-35],[15,-27],[12,-17],[13,-8],[9,-1],[9,4],[5,6],[-4,5],[-8,4],[-13,8],[-17,14]],
+ [[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+ [[114,-22],[122,-18],[130,-12],[137,-12],[141,-12],[142,-18],[146,-19],[153,-26],[151,-34],[146,-39],[140,-38],[135,-34],[130,-32],[123,-34],[115,-34],[113,-26]],
+ [[-5,50],[1,51],[0,54],[-3,58],[-6,57],[-5,54]],
+ [[130,31],[132,34],[136,35],[140,38],[142,42],[140,41],[136,37],[131,33]],
+ [[95,5],[100,3],[106,-6],[102,-4]],[[109,1],[117,7],[119,1],[116,-4],[110,-3]],[[131,-1],[141,-3],[150,-10],[141,-9],[137,-5]],
+ [[172,-35],[178,-38],[174,-41],[172,-44],[168,-46],[170,-41]],
+ [[-24,64],[-14,64],[-14,66],[-22,66]],
+ [[-95,72],[-85,74],[-75,72],[-80,69]],[[-120,74],[-105,76],[-100,72],[-115,70]],
+ [[-62,67],[-70,68],[-65,63],[-72,65]]
+];
+const ICEPOLY=[LAND[1],[[-180,-72],[-60,-70],[-60,-64],[-58,-63],[-62,-67],[-70,-72],[-180,-72]]];
+const KIND=new Uint8Array(TW*TH),CR=new Uint8Array(TW*TH),CG=new Uint8Array(TW*TH),CB=new Uint8Array(TW*TH),RIV=new Uint8Array(TW*TH),CLD=new Float32Array(CW*CH);
+function hash(i,j){const x=Math.sin(i*127.1+j*311.7)*43758.5453;return x-Math.floor(x)}
+function pn(x,y,P){const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
+  const w=i=>((i%P)+P)%P;const a=hash(w(x0),y0),b=hash(w(x0+1),y0),c=hash(w(x0),y0+1),d=hash(w(x0+1),y0+1);return lerp(lerp(a,b,sx),lerp(c,d,sx),sy)}
+function fbm(x,y,P){let v=0,a=.5,f=1,s=0;for(let o=0;o<4;o++){v+=a*pn(x*f,y*f,P*f);s+=a;a*=.5;f*=2}return v/s}
+function buildTex(){
+  const mk=()=>{const c=document.createElement('canvas');c.width=TW;c.height=TH;return c};
+  const X=lon=>(lon+180)/360*TW,Y=lat=>(90-lat)/180*TH;
+  const fillP=(g,pts)=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.closePath();g.fill()};
+  const lc=mk(),ic=mk(),rc=mk(),lg=lc.getContext('2d'),ig=ic.getContext('2d'),rg=rc.getContext('2d');
+  lg.fillStyle='#fff';LAND.forEach(p=>fillP(lg,p));lg.fillRect(0,Y(-72),TW,TH-Y(-72));
+  ig.fillStyle='#fff';ICEPOLY.forEach(p=>fillP(ig,p));ig.fillRect(0,Y(-72),TW,TH-Y(-72));
+  rg.strokeStyle='#fff';rg.lineWidth=1.8;rg.lineJoin='round';
+  [[[-50,-1],[-55,-2],[-60,-3],[-67,-4],[-72,-4],[-75,-5]],[[31,31],[32,25],[33,19],[33,15],[32,10],[31,3]],[[-90,29],[-91,35],[-90,41],[-93,45]],[[121,31],[115,30],[110,30],[105,29],[100,28]],[[89,22],[85,26],[80,28],[78,31]],[[12,-6],[17,-3],[21,0],[25,1]],[[29,45],[22,44],[17,48],[10,48]],[[68,46],[75,50],[84,52]],[[104,50],[115,54],[125,53],[135,53]]].forEach(pl=>{rg.beginPath();pl.forEach((p,i)=>i?rg.lineTo(X(p[0]),Y(p[1])):rg.moveTo(X(p[0]),Y(p[1])));rg.stroke()});
+  const L=lg.getImageData(0,0,TW,TH).data,I=ig.getImageData(0,0,TW,TH).data,Rv=rg.getImageData(0,0,TW,TH).data;
+  for(let ty=0;ty<TH;ty++){const lat=90-(ty+.5)/TH*180;for(let tx=0;tx<TW;tx++){const k=ty*TW+tx,lon=(tx+.5)/TW*360-180;
+    const nz=fbm(tx/TW*46,ty/TH*23,46)-.5;let kind=0,r,g,b;
+    if(I[k*4+3]>110||(lat>79&&L[k*4+3]<=110)){kind=2;const v=232+nz*30;r=v;g=v+8;b=250}
+    else if(L[k*4+3]>110){kind=1;const al=Math.abs(lat);
+      const bw=(l0,l1,a0,a1,sf)=>clamp(Math.min(lon-l0,l1-lon,lat-a0,a1-lat)/sf,0,1);
+      const dz=Math.max(bw(-17,58,12,34,8)*(lon>30&&lon<48&&lat>28?0:1),bw(119,141,-33,-17,6),bw(85,110,35,46,6),bw(-72,-66,-26,-18,3));
+      const dd=clamp(dz*(.55+1.3*(nz+.5)-.4),0,1);
+      let br,bg,bb;
+      if(al<12){br=28+nz*40;bg=118+nz*60;bb=52+nz*30}
+      else if(al<32){br=70+nz*50;bg=150+nz*50;bb=70+nz*30}
+      else if(al<56){br=96+nz*50;bg=150+nz*40;bb=76+nz*30}
+      else {br=112+nz*40;bg=148+nz*30;bb=104+nz*30}
+      r=lerp(br,214+nz*50,dd);g=lerp(bg,178+nz*40,dd);b=lerp(bb,108+nz*30,dd)}
+    else{const sh=.5+Math.sin(lat*.12)*.1;r=14+nz*30;g=70+nz*60+sh*10;b=150+nz*50}
+    KIND[k]=kind;CR[k]=clamp(r,0,255);CG[k]=clamp(g,0,255);CB[k]=clamp(b,0,255);RIV[k]=(Rv[k*4+3]>60&&kind===1)?1:0}}
+  for(let cy=0;cy<CH;cy++){const lat=90-(cy+.5)/CH*180,al=Math.abs(lat);
+    const band=.62+.5*Math.exp(-(lat/9)*(lat/9))+.42*Math.exp(-((al-50)/12)*((al-50)/12))-.38*Math.exp(-((al-26)/8)*((al-26)/8));
+    for(let cx=0;cx<CW;cx++){const lon=(cx+.5)/CW*360-180;let v=fbm(cx/CW*8,cy/CH*4+3.1,8)*band;
+      [[-60,38,1],[140,-28,-1],[-150,-12,-1]].forEach(([sl,sa,hem])=>{let dx=lon-sl;if(dx>180)dx-=360;if(dx<-180)dx+=360;const dy=lat-sa,r=Math.hypot(dx,dy);
+        if(r<16){const th=Math.atan2(dy,dx*hem);v+=Math.exp(-r/9)*(.12+.3*Math.max(0,Math.cos(2*th+r*.45)))}});
+      CLD[cy*CW+cx]=clamp((v-.5)/.22,0,1)}}}
+buildTex();
+const L={geo:0,hyd:0,atm:0,bio:0,exo:0},T={geo:0,hyd:0,atm:0,bio:0,exo:0};
+const P={lon:128,lat:18},HOME={lon:128,lat:18};let Zu=1,autoRot=true,idleT=0,vel={x:0,y:0};
+const LAYERS=[
+ {k:'geo',e:'🪨',n:'지권',s:'Geosphere · 단면 투시',c:'#ea580c',info:'🪨 <b>지권</b> — 지각·맨틀·외핵·내핵. <b style="color:#c2410c">지구 부피의 99% 이상을 차지하는 최대 부피 권역!</b> 바다가 표면의 70%를 덮어도, 지구 내부까지 포함하는 지권이 부피로는 압도적 1위예요.'},
+ {k:'hyd',e:'🌊',n:'수권',s:'Hydrosphere · 바다·강·빙하',c:'#2563eb',info:'🌊 <b>수권</b> — 지구에 있는 모든 물(해수 97.2%, 담수 2.8%). 남극·북극의 하얀 <b>빙하</b>는 단단해도 물이 언 것이므로 수권이고, 육지 담수 중 가장 많은 양을 차지해요.'},
+ {k:'atm',e:'🌬️',n:'기권',s:'Atmosphere · 대기층·구름',c:'#0ea5e9',info:'🌬️ <b>기권</b> — 지구를 둘러싼 대기층(질소 약 78%, 산소 약 21% 등). 구름·바람·비 같은 기상 현상이 일어나는 곳이에요.'},
+ {k:'bio',e:'🌳',n:'생물권',s:'Biosphere · 생태계 핀',c:'#16a34a',info:'🌳 <b>생물권</b> — 지권·수권·기권 곳곳에 살고 있는 모든 생물(사람·동식물·미생물). 솟아오른 <b>초록 핀</b>을 눌러 대표 생태계를 만나 보세요!'},
+ {k:'exo',e:'🌌',n:'외권',s:'Exosphere · 태양과 달',c:'#7c3aed',info:'🌌 <b>외권</b> — 기권 바깥의 우주 공간. 태양이 복사 에너지를 공급하고 달의 인력이 밀물·썰물(조석)을 일으켜 지구계에 결정적인 영향을 줘요.'}];
+function renderLays(){$('#lays').innerHTML=LAYERS.map(o=>`<button class="lay ${T[o.k]?'on':''}" data-k="${o.k}" style="${T[o.k]?`background:${o.c};border-color:${o.c}`:''}"><span class="ic">${o.e}</span><span>${o.n}<small>${o.s}</small></span><span class="sw">${T[o.k]?'ON':'OFF'}</span></button>`).join('');
+  $$('.lay').forEach(b=>b.onclick=()=>{const k=b.dataset.k;T[k]=T[k]?0:1;if(T[k]){$('#lbanner').innerHTML=LAYERS.find(o=>o.k===k).info;sOK()}renderLays()})}
+$('#allOn').onclick=()=>{LAYERS.forEach(o=>T[o.k]=1);$('#lbanner').innerHTML='5대 권역을 모두 켰어요! 지구계는 서로 영향을 주고받는 하나의 큰 계예요. 🌍';renderLays()};
+$('#allOff').onclick=()=>{LAYERS.forEach(o=>T[o.k]=0);renderLays()};
+const PINS=[{lon:-62,lat:-4,e:'🌴',n:'아마존 열대우림',t:'전 세계 생물 종의 10%가 사는 생명의 보물창고'},{lon:35,lat:-3,e:'🦁',n:'아프리카 초원',t:'얼룩말·사자 등 수많은 동물이 사는 사바나'},{lon:147,lat:-18,e:'🐠',n:'산호초 군락',t:'바다 면적의 1%도 안 되지만 해양 생물 1/4이 사는 곳'},{lon:127,lat:37,e:'🌲',n:'한반도의 숲',t:'우리가 사는 곳! 사계절 변하는 온대림'},{lon:-100,lat:55,e:'🌲',n:'북아메리카 침엽수림',t:'추운 지방에 넓게 펼쳐진 숲'},{lon:92,lat:62,e:'🦌',n:'시베리아 타이가',t:'세계에서 가장 넓은 침엽수림'}];
+const STARS=Array.from({length:130},(_,i)=>({x:hash(i,1),y:hash(i,2),r:.5+hash(i,3)*1.4,p:hash(i,4)*6.28}));
+const GC=document.createElement('canvas');let GI=null;
+function coreColor(r,th,t){
+  const ln=(b)=>Math.abs(r-b)<.007;
+  if(ln(.19)||ln(.546)||ln(.93))return[70,30,10];
+  if(r>.93)return[132,86,46];
+  if(r>.546){const u=(r-.546)/.384,s=.5+.5*Math.sin(th*5+t*1.4+u*6);return[lerp(255,198,u)+s*10,lerp(122,64,u)+s*10,lerp(30,26,u)]}
+  if(r>.19){const s=.5+.5*Math.sin(th*7-t*2+r*10);return[255,176+s*20,50+s*20]}
+  return[255,244,170]}
+function drawGlobe(g,cx,cy,R,t){
+  const RES=clamp(Math.round(2*R),48,400);if(GC.width!==RES){GC.width=GC.height=RES;GI=null}
+  const gg=GC.getContext('2d');if(!GI)GI=gg.createImageData(RES,RES);const d=GI.data;
+  const cp=Math.cos(P.lat*DEG),sp=Math.sin(P.lat*DEG),lon0=P.lon,cut=L.geo,hy=L.hyd,at=L.atm,bi=L.bio;
+  const cOff=t*3.2;const LX=-.45,LY=.5,LZ=.74;
+  for(let j=0;j<RES;j++){const ny=1-(j+.5)/RES*2;
+    for(let i=0;i<RES;i++){const nx=(i+.5)/RES*2-1,r2=nx*nx+ny*ny,k=(j*RES+i)*4;
+      if(r2>=1.02){d[k+3]=0;continue}
+      const r=Math.sqrt(r2),al=clamp((1-r)*RES*.5,0,1)*255;let R_,G_,B_;
+      if(cut>0.001&&nx>0&&ny>0&&Math.atan2(ny,nx)<cut*1.5708){
+        const c=coreColor(Math.min(r,.999),Math.atan2(ny,nx),t);R_=c[0];G_=c[1];B_=c[2];const e=Math.max(0,r-.9)*3;R_*=1-e*.5;G_*=1-e*.5;B_*=1-e*.5}
+      else{
+        const rc=Math.min(r,.9999),nz=Math.sqrt(1-rc*rc);
+        const y1=clamp(ny*cp+nz*sp,-1,1),z1=-ny*sp+nz*cp;
+        const lat=Math.asin(y1)*RAD,lon=lon0+Math.atan2(nx,z1)*RAD;
+        const tx=(((Math.floor((lon+180)/360*TW))%TW)+TW)%TW,ty=clamp(Math.floor((90-lat)/180*TH),0,TH-1),k2=ty*TW+tx,kind=KIND[k2];
+        R_=CR[k2];G_=CG[k2];B_=CB[k2];
+        if(kind===0){const s=.5+.5*Math.sin(t*1.6+lon*.09)*Math.sin(lat*.13-t*1.1);R_+=hy*8*s;G_+=hy*(34+22*s);B_+=hy*(48+24*s)}
+        else if(kind===2){const gl=.5+.5*Math.sin(t*4+lon*.2),m=hy*(.45+.4*gl);R_=lerp(R_,190,m);G_=lerp(G_,245,m);B_=lerp(B_,255,m);if(hy>.3&&((tx*7+ty*13+Math.floor(t*7))%19)===0){R_+=70*hy;G_+=70*hy;B_+=70*hy}}
+        else{const dm=1-.38*hy;R_*=dm;G_*=dm;B_*=dm;G_+=16*bi}
+        if(RIV[k2]){const m=.3+.7*hy;R_=lerp(R_,60,m);G_=lerp(G_,205,m);B_=lerp(B_,255,m)}
+        const diff=nx*LX+ny*LY+nz*LZ,dp=Math.max(0,diff),li=.4+.72*dp;
+        R_*=li;G_*=li;B_*=li;
+        if(kind===0){const s=Math.pow(Math.max(0,-nx*.246+ny*.273+nz*.93),40);R_+=110*s;G_+=110*s;B_+=110*s}
+        if(at>.01){const fx=(lon+cOff+180)/360*CW-.5,fy=clamp((90-lat)/180*CH-.5,0,CH-1.001),x0=Math.floor(fx),y0=Math.floor(fy),ax=fx-x0,ay=fy-y0,xa=((x0%CW)+CW)%CW,xb=(xa+1)%CW;let cl=lerp(lerp(CLD[y0*CW+xa],CLD[y0*CW+xb],ax),lerp(CLD[(y0+1)*CW+xa],CLD[(y0+1)*CW+xb],ax),ay)*at;
+          const w=(.62+.5*dp)*255;R_=lerp(R_,w,cl*.92);G_=lerp(G_,w,cl*.92);B_=lerp(B_,w,cl*.94)}
+        const rim=Math.pow(1-nz,3)*(.18+.9*at);R_+=30*rim;G_+=75*rim;B_+=130*rim}
+      d[k]=R_;d[k+1]=G_;d[k+2]=B_;d[k+3]=al}}
+  gg.putImageData(GI,0,0);g.imageSmoothingEnabled=true;g.drawImage(GC,cx-R*1.01,cy-R*1.01,R*2.02,R*2.02)}
+function proj(lon,lat,cx,cy,R){const cl=Math.cos(lat*DEG),dl=(lon-P.lon)*DEG,x1=cl*Math.sin(dl),y1=Math.sin(lat*DEG),z1=cl*Math.cos(dl),cp=Math.cos(P.lat*DEG),sp=Math.sin(P.lat*DEG),y2=y1*cp-z1*sp,z2=y1*sp+z1*cp;return{x:cx+x1*R,y:cy-y2*R,z:z2}}
+let PINPOS=[];
+function ellipse(g,cx,cy,a,b,T,m0,m1){g.beginPath();for(let s=0;s<=40;s++){const m=lerp(m0,m1,s/40),ex=a*Math.cos(m),ey=b*Math.sin(m),x=cx+ex*Math.cos(T)-ey*Math.sin(T),y=cy+ex*Math.sin(T)+ey*Math.cos(T);s?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
+function scene1(dt,t){
+  const {g,w,h}=fit($('#c1'));
+  for(const k in L)L[k]+=(T[k]-L[k])*Math.min(1,dt*4);
+  const zEff=Zu*(1-.42*L.exo),R=Math.min(w*.46,h*.43)*zEff,cx=w/2,cy=h/2;
+  const bg=g.createRadialGradient(cx,cy,R*.2,cx,cy,Math.max(w,h)*.75);bg.addColorStop(0,'#0b1430');bg.addColorStop(1,'#02040a');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  STARS.forEach(s=>{g.globalAlpha=(.35+.4*Math.sin(t*1.5+s.p))*(.55+.45*L.exo);g.fillStyle='#fff';g.beginPath();g.arc(s.x*w,s.y*h,s.r,0,6.28);g.fill()});g.globalAlpha=1;
+  const ex=L.exo,orb=t*.4,sunX=w*.1,sunY=h*.26;
+  if(ex>.01){
+    g.globalAlpha=ex;g.strokeStyle='rgba(203,213,225,.55)';g.lineWidth=2;g.setLineDash([6,6]);ellipse(g,cx,cy,R*2.3,R*.8,-.28,Math.PI,2*Math.PI);g.setLineDash([]);
+    if(Math.sin(orb)<0)drawMoon(g,cx,cy,R,orb);g.globalAlpha=1}
+  if(L.atm>.01){const ag=g.createRadialGradient(cx,cy,R*.97,cx,cy,R*1.26);ag.addColorStop(0,`rgba(140,205,255,${.62*L.atm})`);ag.addColorStop(.35,`rgba(90,160,255,${.26*L.atm})`);ag.addColorStop(1,'rgba(60,120,255,0)');g.fillStyle=ag;g.beginPath();g.arc(cx,cy,R*1.26,0,6.28);g.fill()}
+  drawGlobe(g,cx,cy,R,t);
+  if(ex>.01){
+    g.globalAlpha=ex;g.strokeStyle='rgba(203,213,225,.55)';g.lineWidth=2;g.setLineDash([6,6]);ellipse(g,cx,cy,R*2.3,R*.8,-.28,0,Math.PI);g.setLineDash([]);
+    if(Math.sin(orb)>=0)drawMoon(g,cx,cy,R,orb);
+    const sg=g.createRadialGradient(sunX,sunY,4,sunX,sunY,70);sg.addColorStop(0,'#fff7c2');sg.addColorStop(.3,'#fde047');sg.addColorStop(1,'rgba(250,204,21,0)');g.fillStyle=sg;g.beginPath();g.arc(sunX,sunY,70,0,6.28);g.fill();
+    g.strokeStyle='rgba(253,224,71,.9)';g.lineWidth=4;g.setLineDash([16,10]);g.lineDashOffset=-t*50;
+    for(let q=-2;q<=2;q++){const sx=sunX+50,sy=sunY+q*20,tx=cx-R*1.05,ty=cy-R*.45+q*R*.28;g.beginPath();g.moveTo(sx,sy);g.lineTo(tx,ty);g.stroke()}
+    g.setLineDash([]);g.fillStyle='#fde047';g.font='900 '+Math.max(14,Math.round(w/45))+'px sans-serif';g.textAlign='left';g.fillText('☀️ 태양 복사 에너지(빛·열)',Math.max(8,sunX-40),sunY+92);
+    const mp=moonPos(cx,cy,R,orb);g.textAlign='right';g.fillStyle='#e2e8f0';g.fillText('🌙 달의 공전 궤도 · 달의 인력 → 밀물·썰물(조석)',w-12,h-14);g.globalAlpha=1}
+  PINPOS=[];
+  if(L.bio>.02){PINPOS=PINS.map(p=>{const q=proj(p.lon,p.lat,cx,cy,R);return{p,x:q.x,y:q.y,z:q.z}});
+    PINPOS.forEach(o=>{if(o.z<.12)return;const a=L.bio,hh=Math.max(34,R*.2)*a,fs=Math.round(Math.max(13,R*.085));
+      g.globalAlpha=Math.min(1,a*1.4);g.strokeStyle='#bbf7d0';g.lineWidth=3;g.beginPath();g.moveTo(o.x,o.y);g.lineTo(o.x,o.y-hh);g.stroke();
+      g.fillStyle='#22c55e';g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(o.x,o.y-hh,fs*.95,0,6.28);g.fill();g.stroke();
+      g.font=fs+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';g.fillText(o.p.e,o.x,o.y-hh+1);
+      g.fillStyle='#052e16';g.beginPath();g.arc(o.x,o.y,3,0,6.28);g.fill();o.hy=o.y-hh;o.hr=fs*1.2});g.globalAlpha=1;g.textBaseline='alphabetic'}
+  if(cut(L.geo)>.4){const a=cut(L.geo),fs=Math.max(13,Math.round(R*.075)),lab=[['내핵',.09,'#fff4b0'],['외핵',.37,'#ffd27a'],['맨틀',.74,'#ffb48a'],['지각',.965,'#d9b48a']];
+    g.globalAlpha=a;g.font='900 '+fs+'px sans-serif';g.textAlign='left';
+    lab.forEach(([n,rr_,col],i)=>{const ang=(18+i*17)*DEG,px=cx+Math.cos(ang)*rr_*R,py=cy-Math.sin(ang)*rr_*R,tx=Math.min(cx+R*1.06,w-fs*5.2),ty=cy-R*(.12+i*.2);
+      g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=1.8;g.beginPath();g.moveTo(px,py);g.lineTo(tx-4,ty);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(px,py,3.5,0,6.28);g.fill();
+      g.fillStyle='rgba(15,23,42,.82)';rr(g,tx-4,ty-fs*.95,fs*5,fs*1.5,8);g.fill();g.fillStyle=col;g.fillText(n,tx+4,ty+fs*.1)});
+    g.fillStyle='#fdba74';g.font='800 '+Math.round(fs*.85)+'px sans-serif';g.textAlign='center';g.fillText('※ 지각은 실제로는 훨씬 얇아요 (보이도록 두껍게 그렸어요)',w/2,h-40);g.globalAlpha=1}
+  if(autoRot&&!drag1.on){idleT+=dt;if(idleT>1.2)P.lon+=dt*(L.geo>.5?5:9)}
+  if(!drag1.on&&(Math.abs(vel.x)>.01||Math.abs(vel.y)>.01)){P.lon+=vel.x;P.lat=clamp(P.lat+vel.y,-85,85);vel.x*=.93;vel.y*=.93}
+  P.lon=((P.lon+540)%360)-180}
+function cut(v){return v}
+function moonPos(cx,cy,R,m){const a=R*2.3,b=R*.8,T=-.28,ex=a*Math.cos(m),ey=b*Math.sin(m);return{x:cx+ex*Math.cos(T)-ey*Math.sin(T),y:cy+ex*Math.sin(T)+ey*Math.cos(T)}}
+function drawMoon(g,cx,cy,R,m){const p=moonPos(cx,cy,R,m),r=Math.max(9,R*.13);const gr=g.createRadialGradient(p.x-r*.3,p.y-r*.3,r*.1,p.x,p.y,r);gr.addColorStop(0,'#f1f5f9');gr.addColorStop(1,'#94a3b8');g.fillStyle=gr;g.beginPath();g.arc(p.x,p.y,r,0,6.28);g.fill();g.fillStyle='rgba(71,85,105,.4)';[[.3,-.2,.25],[-.3,.25,.18],[.1,.4,.12]].forEach(([a,b,c])=>{g.beginPath();g.arc(p.x+a*r,p.y+b*r,c*r,0,6.28);g.fill()})}
+/* 지구본 입력 */
+const drag1={on:false,x:0,y:0,moved:0},ptrs=new Map();let pinch0=0,zu0=1;
+const cv1=$('#c1');
+cv1.addEventListener('pointerdown',e=>{cv1.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});idleT=-2;
+  if(ptrs.size===1){drag1.on=true;drag1.x=e.clientX;drag1.y=e.clientY;drag1.moved=0;vel={x:0,y:0}}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);zu0=Zu}});
+cv1.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});idleT=-2;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const dd=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0)Zu=clamp(zu0*dd/pinch0,.6,2.4);return}
+  if(!drag1.on)return;const dx=e.clientX-drag1.x,dy=e.clientY-drag1.y;drag1.x=e.clientX;drag1.y=e.clientY;drag1.moved+=Math.abs(dx)+Math.abs(dy);
+  const r=cv1.getBoundingClientRect(),R=Math.min(r.width*.46,r.height*.43)*Zu*(1-.42*L.exo),k=57/R;
+  P.lon-=dx*k;P.lat=clamp(P.lat+dy*k,-85,85);vel={x:-dx*k*.5,y:dy*k*.5}});
+const endp=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);
+  if(ptrs.size===0){drag1.on=false;if(drag1.moved<8&&e.type==='pointerup'){const r=cv1.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+      for(const o of PINPOS){if(o.z<.12||o.hy===undefined)continue;if(Math.hypot(x-o.x,y-o.hy)<Math.max(26,o.hr)+8){toast('#toast1',o.p.e+' '+o.p.n+' — '+o.p.t,4200);sOK();break}}}}
+  else if(ptrs.size===1){const v=[...ptrs.values()][0];drag1.x=v.x;drag1.y=v.y;drag1.moved=99}};
+cv1.addEventListener('pointerup',endp);cv1.addEventListener('pointercancel',endp);
+cv1.addEventListener('wheel',e=>{e.preventDefault();Zu=clamp(Zu*Math.exp(-e.deltaY*.0012),.6,2.4)},{passive:false});
+$('#zIn').onclick=()=>{Zu=clamp(Zu*1.2,.6,2.4)};$('#zOut').onclick=()=>{Zu=clamp(Zu/1.2,.6,2.4)};
+$('#zRot').onclick=()=>{autoRot=!autoRot;$('#zRot').classList.toggle('on',autoRot)};
+$('#zHome').onclick=()=>{P.lon=HOME.lon;P.lat=HOME.lat;Zu=1;vel={x:0,y:0}};
+
+/* ═════════ 모드 ②: 카드 분류 ═════════ */
+const BK=[{k:'geo',n:'지권',e:'🪨',d:'암석·토양, 지구 내부(지각·맨틀·핵)'},{k:'hyd',n:'수권',e:'🌊',d:'지구에 있는 모든 물(바다·빙하·지하수)'},{k:'atm',n:'기권',e:'🌬️',d:'지구를 둘러싼 공기(대기)와 기상 현상'},{k:'bio',n:'생물권',e:'🌳',d:'지구에 살고 있는 모든 생물'},{k:'exo',n:'외권',e:'🌌',d:'기권 바깥의 우주 공간(태양·달)'}];
+const CARDS=[
+ {id:'sea',e:'🌊',n:'바다',a:'hyd',ok:'정답! 바다는 지구 물의 약 97.2%를 차지하는 수권이에요.',h:{geo:'바다는 암석이나 흙이 아니라 물이에요. 지구에 있는 모든 물은 수권!'}},
+ {id:'soil',e:'🟫',n:'토양',s:'(흙)',a:'geo',ok:'정답! 암석이 부서져 만들어진 토양(흙)은 지권이에요.',h:{bio:'흙 속에 미생물이 살지만, 토양 자체는 생물이 아니라 암석 부스러기예요. 지권으로!',hyd:'흙은 물이 아니에요. 암석이 풍화된 것이므로 지권!'}},
+ {id:'glacier',e:'🧊',n:'빙하',a:'hyd',ok:'정답! 빙하는 단단하지만 물이 언 것이므로 수권에 속하며, 담수의 대부분을 차지합니다!',h:{geo:'오답 힌트: 얼음은 흙이나 돌이 아니라 물의 고체 상태입니다. 수권으로 다시 분류해 보세요!'}},
+ {id:'air',e:'🌬️',n:'공기',s:'(바람)',a:'atm',ok:'정답! 지구를 둘러싼 공기(대기)와 바람은 기권이에요.',h:{exo:'공기는 지구를 둘러싼 대기층에 있어요. 우주 공간(외권)이 아니라 기권!'}},
+ {id:'sun',e:'☀️',n:'태양',a:'exo',ok:'정답! 태양은 기권 바깥 우주 공간(외권)에 있어요. 태양 복사 에너지로 지구계에 결정적인 영향을 줘요.',h:{atm:'태양은 지구 대기 속이 아니라 기권 바깥 우주에 있어요 → 외권!'}},
+ {id:'tree',e:'🌳',n:'나무',a:'bio',ok:'정답! 나무는 살아 있는 생물이므로 생물권이에요.',h:{geo:'나무는 땅에 뿌리를 내리지만 살아 있는 생물이므로 생물권이에요.'}},
+ {id:'cat',e:'🐱',n:'고양이',a:'bio',ok:'정답! 동물도 생물권의 구성원이에요.',h:{geo:'고양이는 땅 위에 살지만 살아 있는 생물이므로 생물권이에요.'}},
+ {id:'rock',e:'🪨',n:'바위',a:'geo',ok:'정답! 암석(바위)은 지권을 이루는 대표 물질이에요.',h:{bio:'바위는 살아 있지 않아요. 암석은 지권!'}},
+ {id:'gw',e:'💧',n:'지하수',s:'(땅속 물)',a:'hyd',ok:'정답! 땅속에 있어도 물이므로 수권(담수)이에요.',h:{geo:'지하수는 땅속에 있지만 흙이나 암석이 아니라 \'물\'이에요. 수권!'}},
+ {id:'moon',e:'🌙',n:'달',a:'exo',ok:'정답! 달은 기권 바깥 우주 공간의 천체(외권)이고, 인력으로 조석(밀물·썰물)을 일으켜요.',h:{geo:'달도 암석으로 이루어져 있지만 지구의 땅이 아니라 우주 공간(외권)의 천체예요.'}},
+ {id:'fossil',e:'🦴',n:'화석',s:'(암석 속)',a:'geo',ok:'정답! 화석은 과거 생물의 흔적이 지층(암석) 속에 남은 것이라 지권에 속해요. (생물이 화석이 되는 과정은 생물권↔지권 상호작용!)',h:{bio:'화석은 지금 살아 있는 생물이 아니에요. 암석 속에 남은 흔적이므로 지권!'}},
+ {id:'cloud',e:'☁️',n:'구름',a:'atm',ok:'정답! 구름은 대기 중에서 생기는 기상 현상이므로 기권이에요.',h:{hyd:'구름은 작은 물방울이 모인 것이지만, 하늘(대기)에서 생기는 기상 현상이라 기권에 분류해요.'}}];
+let C2;
+function cInit(){C2={tries:{},placed:{},score:0,sel:null,order:CARDS.map(c=>c.id).sort((a,b)=>hash(a.length+a.charCodeAt(0),a.charCodeAt(1))-hash(b.length+b.charCodeAt(0),b.charCodeAt(1)))};renderCards();fb2('12장의 카드를 지권·수권·기권·생물권·외권 바구니에 분류해 보세요.');updScore()}
+function fb2(m,c){const el=$('#fb2');el.className='fb '+(c||'');el.innerHTML=m}
+function updScore(){const n=Object.keys(C2.placed).length;$('#scoreChip').textContent='🃏 정답 '+C2.score+' / 12'+(n<12?' · 배치 '+n:'');$('#scoreChip').classList.toggle('ok',n===12)}
+function renderCards(){
+  $('#tray').innerHTML=C2.order.map(id=>{const c=CARDS.find(x=>x.id===id);return `<div class="pcard ${C2.placed[id]?'gone':''} ${C2.sel===id?'sel':''}" data-id="${id}"><span class="em">${c.e}</span><span>${c.n}</span>${c.s?`<small>${c.s}</small>`:'<small>&nbsp;</small>'}</div>`}).join('');
+  $('#baskets').innerHTML=BK.map(b=>`<div class="bk" data-k="${b.k}"><h3>${b.e} ${b.n}</h3><p>${b.d}</p><div class="in">${CARDS.filter(c=>C2.placed[c.id]===b.k).map(c=>`<span>${c.e} ${c.n}</span>`).join('')}</div></div>`).join('');
+  $$('.pcard').forEach(bindCard);$$('.bk').forEach(b=>b.onclick=()=>{if(C2.sel)place(C2.sel,b.dataset.k)})}
+function place(id,bk){
+  const c=CARDS.find(x=>x.id===id);if(!c||C2.placed[id])return;const first=!(C2.tries[id]>0);C2.tries[id]=(C2.tries[id]||0)+1;
+  if(bk===c.a){C2.placed[id]=bk;if(first)C2.score++;C2.sel=null;sOK();renderCards();fb2('✅ '+c.ok,'good');updScore();
+    if(Object.keys(C2.placed).length===12){setTimeout(()=>{fb2('🎉 12장 분류 완료! 첫 시도 정답 '+C2.score+' / 12. 지구계는 5개 권역으로 이루어져 있어요. 다음은 ③에서 권역들이 어떻게 영향을 주고받는지 알아봐요!','good');sOK()},350)}}
+  else{sNO();C2.sel=null;const bn=BK.find(b=>b.k===bk);fb2('❌ '+(c.h&&c.h[bk]?c.h[bk]:`오답 힌트: ${c.n}은(는) '${bn.n}(${bn.d})'에 어울리지 않아요. 특징을 다시 생각해 봐요!`),'bad');
+    renderCards();const el=$('.pcard[data-id="'+id+'"]');if(el){el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),500)}}}
+function bkAt(x,y){return document.elementsFromPoint(x,y).map(e=>e.closest&&e.closest('.bk')).find(Boolean)||null}
+function bindCard(el){const id=el.dataset.id;let sx,sy,dx,dy,drag=false,pid=null;
+  el.addEventListener('pointerdown',e=>{pid=e.pointerId;el.setPointerCapture(pid);sx=e.clientX;sy=e.clientY;const r=el.getBoundingClientRect();dx=e.clientX-r.left;dy=e.clientY-r.top;drag=false});
+  el.addEventListener('pointermove',e=>{if(pid!==e.pointerId)return;if(!drag&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){drag=true;const r=el.getBoundingClientRect();el.style.width=r.width+'px';el.classList.add('drag')}
+    if(drag){el.style.left=(e.clientX-dx)+'px';el.style.top=(e.clientY-dy)+'px';const b=bkAt(e.clientX,e.clientY);$$('.bk').forEach(x=>x.classList.toggle('hot',x===b))}});
+  const end=e=>{if(pid!==e.pointerId)return;pid=null;$$('.bk').forEach(x=>x.classList.remove('hot'));
+    if(drag){const b=bkAt(e.clientX,e.clientY);el.classList.remove('drag');el.style.cssText='';drag=false;if(b)place(id,b.dataset.k)}
+    else{C2.sel=C2.sel===id?null:id;$$('.pcard').forEach(x=>x.classList.toggle('sel',x.dataset.id===C2.sel))}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',e=>{if(pid===e.pointerId){pid=null;drag=false;el.classList.remove('drag');el.style.cssText=''}})}
+$('#btnAgain').onclick=()=>{cInit();setMode(2)};
+
+/* ═════════ 모드 ③: 상호작용 네트워크 ═════════ */
+const NODES={exo:{n:'외권',e:'🌌',c:'#7c3aed',a:-90},atm:{n:'기권',e:'🌬️',c:'#0ea5e9',a:-18},hyd:{n:'수권',e:'🌊',c:'#2563eb',a:54},geo:{n:'지권',e:'🪨',c:'#ea580c',a:126},bio:{n:'생물권',e:'🌳',c:'#16a34a',a:198}};
+const PH=[
+ {k:'wave',e:'🌊',n:'바람에 의한 파도',g:[[{f:'atm',t:'hyd',l:'바람'}]],m:['기권의 <b>바람</b>이 수권(바다) 표면을 밀어 <b>파도</b>가 생겨요. (기권 → 수권)']},
+ {k:'volc',e:'🌋',n:'화산 폭발',g:[[{f:'geo',t:'atm',l:'화산 가스·재'}],[{f:'atm',t:'bio',l:'햇빛 차단·낙하'}]],m:['지권의 <b>화산</b>이 폭발해 화산 가스와 화산재가 기권으로 뿜어져 나와요. (지권 → 기권)','화산재가 햇빛을 가리고 내려앉아 <b>식물이 피해</b>를 입어요. (기권 → 생물권)']},
+ {k:'photo',e:'🌿',n:'식물의 광합성',g:[[{f:'atm',t:'bio',l:'이산화탄소'},{f:'hyd',t:'bio',l:'물'},{f:'exo',t:'bio',l:'햇빛'}],[{f:'bio',t:'atm',l:'산소'}]],m:['기권의 <b>이산화 탄소</b> + 수권의 <b>물</b> + 외권(태양)의 <b>햇빛</b> → 생물권의 식물이 <b>포도당</b>을 만들어요.','광합성 결과 <b>산소</b>가 기권으로 나와요. (생물권 → 기권)']},
+ {k:'nut',e:'🪴',n:'식물의 양분 흡수',g:[[{f:'geo',t:'bio',l:'무기 양분'}]],m:['식물이 지권의 <b>토양</b>에서 영양분(무기 양분)을 흡수해요. (지권 → 생물권)']},
+ {k:'fossil',e:'🦴',n:'화석 형성',g:[[{f:'bio',t:'geo',l:'생물의 유해'}]],m:['죽은 <b>생물</b>의 몸이 퇴적물에 묻혀 지층 속에서 <b>화석</b>이 돼요. (생물권 → 지권)']},
+ {k:'tide',e:'🌙',n:'조석(밀물·썰물)',g:[[{f:'exo',t:'hyd',l:'달의 인력'}]],m:['외권의 <b>달(과 태양)의 인력</b>이 바닷물을 끌어당겨 밀물과 썰물이 생겨요. (외권 → 수권)']},
+ {k:'sunw',e:'☀️',n:'태양 에너지와 날씨',g:[[{f:'exo',t:'atm',l:'태양 에너지'},{f:'exo',t:'hyd',l:'태양 에너지'}],[{f:'hyd',t:'atm',l:'수증기'}]],m:['외권의 <b>태양 복사 에너지</b>가 기권과 수권을 데워요.','바닷물이 증발해 <b>수증기</b>가 기권으로 올라가 구름·비 같은 날씨 현상이 생겨요. (수권 → 기권)']}];
+let N3;
+function nInit(){N3={ph:null,t0:0,seen:new Set(),sel:null,gi:-1};$('#steps3').innerHTML='<div class="fb">아래 현상 버튼을 누르면 권역 사이로 물질·에너지가 이동하는 모습이 나와요.</div>';$('#rel3').innerHTML='그림 속 권역(동그라미)을 눌러 보세요.';updSeen()}
+function updSeen(){$('#seen3').textContent='탐색 '+N3.seen.size+' / '+PH.length;$('#seen3').classList.toggle('on',N3.seen.size===PH.length);$('#seen3').style.background=N3.seen.size===PH.length?'#16a34a':'';$('#seen3').style.borderColor=N3.seen.size===PH.length?'#16a34a':''}
+function renderPh(){$('#phBtns').innerHTML=PH.map(p=>`<button class="btn ${N3.ph===p.k?'on':''}" data-p="${p.k}">${p.e} ${p.n}${N3.seen.has(p.k)?' ✅':''}</button>`).join('');$$('[data-p]').forEach(b=>b.onclick=()=>play3(b.dataset.p))}
+function play3(k){N3.ph=k;N3.t0=performance.now()/1000;N3.gi=-1;N3.sel=null;$('#steps3').innerHTML='';renderPh();sOK()}
+$('#rep3').onclick=()=>{if(N3.ph)play3(N3.ph)};$('#clr3').onclick=()=>{N3.ph=null;N3.gi=-1;$('#steps3').innerHTML='<div class="fb">아래 현상 버튼을 눌러 보세요.</div>';renderPh()};
+function nodePos(w,h){const cx=w/2,cy=h*.52,rad=Math.min(w*.36,h*.37),nr=Math.min(w,h)*.082,o={};for(const k in NODES){const a=NODES[k].a*DEG;o[k]={x:cx+Math.cos(a)*rad,y:cy+Math.sin(a)*rad,r:nr}}return{o,cx,cy,rad,nr}}
+function curvePt(A,B,cx,cy,u){const mx=(A.x+B.x)/2,my=(A.y+B.y)/2,dx=B.x-A.x,dy=B.y-A.y,sg=(A.x*1000+A.y<B.x*1000+B.y)?1:-1,qx=mx-dy*.2*sg,qy=my+dx*.2*sg,v=1-u;return{x:v*v*A.x+2*v*u*qx+u*u*B.x,y:v*v*A.y+2*v*u*qy+u*u*B.y}}
+function scene3(dt,t){
+  const {g,w,h}=fit($('#c3'));const NP=nodePos(w,h),{o,cx,cy,nr}=NP;
+  g.clearRect(0,0,w,h);
+  const keys=Object.keys(NODES);g.strokeStyle='rgba(100,116,139,.28)';g.lineWidth=2;g.setLineDash([5,7]);
+  for(let i=0;i<5;i++)for(let j=i+1;j<5;j++){g.beginPath();g.moveTo(o[keys[i]].x,o[keys[i]].y);g.lineTo(o[keys[j]].x,o[keys[j]].y);g.stroke()}g.setLineDash([]);
+  g.textAlign='center';g.fillStyle='#64748b';g.font='900 '+Math.round(nr*.34)+'px sans-serif';g.fillText('지구계',cx,cy-4);
+  const act={};let gi=-1;
+  if(N3.ph){const ph=PH.find(p=>p.k===N3.ph),el=performance.now()/1000-N3.t0,STEP=2;gi=Math.min(ph.g.length-1,Math.floor(el/STEP));
+    if(gi!==N3.gi){N3.gi=gi;const html=ph.m.slice(0,gi+1).map((m,i)=>`<div class="st3"><b>${i+1}</b><span>${m}</span></div>`).join('');$('#steps3').innerHTML=html;sOK2()}
+    if(el>ph.g.length*STEP+.2&&!N3.seen.has(ph.k)){N3.seen.add(ph.k);renderPh();updSeen();if(N3.seen.size===PH.length){$('#steps3').innerHTML+='<div class="fb good" style="margin-top:8px">🏆 7가지 현상을 모두 탐색했어요! 지구계의 권역들은 서로 끊임없이 영향을 주고받아요.</div>'}}
+    ph.g.forEach((arr,idx)=>{if(idx>gi)return;const p=idx<gi?1:clamp((el-idx*STEP)/1.1,0,1);arr.forEach(s=>{(act[s.f]=act[s.f]||[]).push(1);drawArrow(g,o[s.f],o[s.t],cx,cy,p,t,s.l,NODES[s.f].c,nr);act[s.t]=act[s.t]||[];act[s.t].push(1)})})}
+  keys.forEach(k=>{const q=o[k],nd=NODES[k],on=!!act[k],sel=N3.sel===k;
+    if(on||sel){g.fillStyle=nd.c+'33';g.beginPath();g.arc(q.x,q.y,q.r*(1.35+.12*Math.sin(t*6)),0,6.28);g.fill()}
+    const gr=g.createRadialGradient(q.x-q.r*.3,q.y-q.r*.3,q.r*.1,q.x,q.y,q.r);gr.addColorStop(0,'#fff');gr.addColorStop(1,nd.c+'cc');g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,q.r,0,6.28);g.fill();
+    g.lineWidth=on||sel?6:3;g.strokeStyle=nd.c;g.stroke();g.font=Math.round(q.r*1.0)+'px sans-serif';g.textBaseline='middle';g.fillStyle='#000';g.fillText(nd.e,q.x,q.y-q.r*.08);g.textBaseline='alphabetic';
+    g.font='900 '+Math.max(14,Math.round(q.r*.36))+'px sans-serif';g.fillStyle='#0f172a';g.fillText(nd.n,q.x,q.y+q.r+Math.max(16,q.r*.42))})}
+function sOK2(){beep(660,880,.12)}
+function edgePts(A,B,cx,cy){const a=curvePt(A,B,cx,cy,0),a2=curvePt(A,B,cx,cy,.02);return a}
+function drawArrow(g,A,B,cx,cy,p,t,label,col,nr){
+  const u0=A.r/(Math.hypot(B.x-A.x,B.y-A.y)*1.02),u1=1-B.r/(Math.hypot(B.x-A.x,B.y-A.y)*1.02)-.02;const ue=lerp(u0,u1,p);
+  g.strokeStyle=col;g.lineWidth=Math.max(5,nr*.12);g.lineCap='round';g.beginPath();for(let s=0;s<=24;s++){const q=curvePt(A,B,cx,cy,lerp(u0,ue,s/24));s?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}g.stroke();
+  if(p>=1){for(let k=0;k<4;k++){const u=lerp(u0,u1,((t*.6+k/4)%1)),q=curvePt(A,B,cx,cy,u);g.fillStyle='#fff';g.beginPath();g.arc(q.x,q.y,Math.max(3,nr*.07),0,6.28);g.fill()}}
+  const e=curvePt(A,B,cx,cy,ue),e0=curvePt(A,B,cx,cy,Math.max(u0,ue-.03)),ang=Math.atan2(e.y-e0.y,e.x-e0.x),hs=Math.max(14,nr*.3);
+  g.fillStyle=col;g.beginPath();g.moveTo(e.x+Math.cos(ang)*hs*.6,e.y+Math.sin(ang)*hs*.6);g.lineTo(e.x+Math.cos(ang+2.5)*hs,e.y+Math.sin(ang+2.5)*hs);g.lineTo(e.x+Math.cos(ang-2.5)*hs,e.y+Math.sin(ang-2.5)*hs);g.closePath();g.fill();
+  if(p>.4){const m=curvePt(A,B,cx,cy,(u0+u1)/2),fs=Math.max(13,Math.round(nr*.32));g.font='900 '+fs+'px sans-serif';const tw=g.measureText(label).width+14;g.globalAlpha=Math.min(1,(p-.4)*3);g.fillStyle='#fff';rr(g,m.x-tw/2,m.y-fs*.8,tw,fs*1.6,fs*.5);g.fill();g.strokeStyle=col;g.lineWidth=2.5;g.stroke();g.fillStyle='#0f172a';g.textAlign='center';g.fillText(label,m.x,m.y+fs*.35);g.globalAlpha=1}
+  g.lineCap='butt'}
+$('#c3').addEventListener('pointerdown',e=>{const r=$('#c3').getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,NP=nodePos(r.width,r.height);
+  for(const k in NP.o){const q=NP.o[k];if(Math.hypot(x-q.x,y-q.y)<q.r*1.25){N3.sel=k;const rel=PH.filter(p=>p.g.some(a=>a.some(s=>s.f===k||s.t===k)));
+    $('#rel3').innerHTML=`<div style="margin-bottom:6px"><b>${NODES[k].e} ${NODES[k].n}</b>이(가) 관련된 현상 ${rel.length}가지</div><div class="row">`+rel.map(p=>`<button class="btn" data-q="${p.k}">${p.e} ${p.n}</button>`).join('')+'</div>';
+    $$('[data-q]').forEach(b=>b.onclick=()=>play3(b.dataset.q));sOK2();return}}
+  N3.sel=null});
+
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'지구에서 가장 큰 부피를 차지하고 있는 지구계 구성 요소는 수권일까, 지권일까?',o:['수권 — 바다가 지구 표면의 70%를 덮고 있으니까','지권 — 지구 내부(맨틀과 핵)까지 포함하기 때문에','수권과 지권의 부피는 거의 같다'],a:1,
+  e:'겉보기에는 바다가 지구 표면의 70%를 덮고 있어 수권이 커 보이지만, 지권은 깊은 지구 내부(맨틀과 핵)까지 포함하므로 부피와 질량은 지권이 압도적으로 가장 커요! (① 지구본의 지권 투시)'},
+ {q:'남극과 북극의 단단한 얼음 덩어리인 \'빙하\'는 지권에 속할까, 수권에 속할까?',o:['지권 — 돌처럼 단단한 고체니까','수권 — 고체 상태이지만 물이 얼어 만들어진 것이니까','기권 — 하늘에서 내린 눈이 쌓인 것이니까'],a:1,
+  e:'빙하는 고체 상태이지만 물이 얼어 만들어진 것이므로 수권에 속하며, 육지 담수 중 가장 많은 양을 차지해요! (② 카드 분류의 빙하)'},
+ {q:'기권 바깥의 우주인 \'외권\'은 지구와 아무 상관이 없는 별개의 공간일까?',o:['그렇다. 외권은 지구계와 관계없는 공간이다','아니다. 지구계의 구성 요소로 태양 에너지·달의 인력으로 영향을 준다','외권은 기권에 포함되어 따로 구분하지 않는다'],a:1,
+  e:'외권의 태양으로부터 에너지를 공급받아 지구의 기상 현상과 생명 활동이 유지되고, 달의 인력으로 밀물과 썰물이 생기므로 밀접하게 상호작용하는 지구계의 구성 요소예요! (③ 네트워크의 광합성·조석)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 전체 ═════════ */
+function resetAll(){for(const k in T){T[k]=0}P.lon=HOME.lon;P.lat=HOME.lat;Zu=1;vel={x:0,y:0};$('#lbanner').textContent='오른쪽 권역 버튼을 눌러 지구본을 투시해 보세요!';renderLays();cInit();nInit();renderPh();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===3)scene3(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+renderVol();renderLays();cInit();nInit();renderPh();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

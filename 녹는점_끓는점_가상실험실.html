@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>녹는점·끓는점 가상실험실 (가열 곡선과 외부 압력)</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌡️ 녹는점·끓는점 가상실험실<small>물질의 특성</small></h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 고체의 녹는점</button>
+    <button class="tab" id="tab2">② 액체의 끓는점</button>
+    <button class="tab" id="tab3">③ 끓는점과 압력</button>
+  </div>
+  <span class="sp"></span>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <button class="hb life" id="btnLife">🌍 생활 속 활용</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+
+<main>
+<!-- 공통 레이아웃: 모드 1·2·3 모두 같은 구조를 쓰고 내용만 바뀝니다 -->
+<section class="mode on" id="mm">
+  <div class="col">
+    <div class="card stagewrap"><canvas id="sc"></canvas><div class="toast" id="toast"></div></div>
+    <div class="card ctl" id="ctl"></div>
+  </div>
+  <div class="col">
+    <div class="card graphwrap"><canvas id="gr"></canvas><div class="legend" id="legend"></div></div>
+    <div class="hudtop">
+      <div class="hc"><span>가열 시간</span><b id="h-time">0.0분</b></div>
+      <div class="hc"><span id="h-l2">현재 압력</span><b id="h-v2">1.0기압</b></div>
+      <div class="hc"><span>배속</span><b id="h-sp">1×</b></div>
+    </div>
+    <div class="runs" id="runs"></div>
+    <div class="sum idle" id="sum">시료를 고르고 ▶ 가열 시작을 눌러 보세요.</div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<div class="modal" id="modal2"><div class="qbox">
+  <h2>🌍 생활 속 녹는점·끓는점</h2>
+  <div class="lgrid">
+    <div class="lc"><div class="big">약 30℃</div><b>🖐 갈륨 (녹는점)</b><small>체온(36.5℃)보다 낮아서 손바닥 위에서 녹아요.</small></div>
+    <div class="lc"><div class="big">1455~1538℃</div><b>🔧 니켈·철 (녹는점)</b><small>녹는점이 매우 높아 엔진·조리기구 재료로 써요.</small></div>
+    <div class="lc"><div class="big">약 70℃</div><b>🔫 글루건 접착제</b><small>낮은 녹는점! 가열해 녹인 뒤 식히면 굳어 붙어요.</small></div>
+    <div class="lc"><div class="big">−196℃</div><b>🧊 액체 질소 (끓는점)</b><small>끓는점이 매우 낮아 강력한 냉각제로 써요.</small></div>
+    <div class="lc"><div class="big">높은 끓는점</div><b>🛢 윤활유</b><small>고온의 엔진 안에서도 쉽게 끓어 증발하지 않아요.</small></div>
+    <div class="lc"><div class="big">120.5℃ / 70℃</div><b>🍚 압력솥 / 에베레스트</b><small>외부 압력이 높으면 끓는점↑ (2기압), 낮으면 끓는점↓ (0.3기압)</small></div>
+  </div>
+  <div class="qfoot"><button class="btn" id="lclose">닫기 ✕</button></div>
+</div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function rnd(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2300)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+
+/* ═════════ 물질 자료 ═════════
+   열량·시간은 교육용으로 축척한 값이에요. (수평 구간의 '온도'는 실제 값 그대로)  */
+const MAT={
+  lauric:{n:'로르산',col:'#2563eb',Tx:43.8,cLow:2.0,cHigh:2.2,L:45,T0:25,kind:'melt',P:30},
+  palm:{n:'팔미트산',col:'#dc2626',Tx:62.5,cLow:2.0,cHigh:2.2,L:60,T0:25,kind:'melt',P:30},
+  gallium:{n:'갈륨',col:'#475569',Tx:29.8,cLow:0.4,cHigh:0.4,L:80,T0:20,kind:'melt',hand:true,Th:36.5,k:5},
+  water:{n:'물',col:'#2563eb',Tx:100,cLow:4.18,cHigh:2.0,L:300,T0:20,kind:'boil',P:4200,liq:'rgba(96,165,250,.55)'},
+  ethanol:{n:'에탄올',col:'#ea580c',Tx:78,cLow:2.44,cHigh:1.4,L:250,T0:20,kind:'boil',P:4200,liq:'rgba(196,181,253,.6)'}
+};
+/* 압력(기압) → 물의 끓는점(℃) */
+const TBP=[[0.05,32.9],[0.073,40],[0.1,45.8],[0.2,60.1],[0.3,70],[0.5,81.3],[0.7,89.9],[1,100],[1.5,111.7],[2,120.5],[3,133]];
+function tb(P){P=clamp(P,0.05,3);for(let i=0;i<TBP.length-1;i++){const a=TBP[i],b=TBP[i+1];if(P<=b[0])return lerp(a[1],b[1],(P-a[0])/(b[0]-a[0]))}return 133}
+
+/* ═════════ 실험 엔진 ═════════ */
+let mode=1,sub='A',playing=false,speed=1,simT=0,runs=[],xmax=10,ctxInfo={};
+const SPEEDS=[0.5,1,2,4];
+function mkRun(key,m,opt={}){
+  const M=MAT[key],r={key,m,mat:M,label:(opt.label||M.n+' '+m+'g'),col:opt.col||M.col,T:M.T0,phase:'low',frac:0,t:0,pts:[[0,M.T0]],lastPt:0,t0:null,t1:null,done:false,
+    Tx:opt.Tx||M.Tx,P:M.P,hand:!!M.hand,k:M.k,Th:M.Th,cLow:M.cLow,cHigh:M.cHigh,L:M.L,kind:M.kind,endFrac:opt.endFrac||0.5,bub:[],steam:[],atm:opt.atm||1,type:opt.type||'',alerted:false};
+  if(r.kind==='boil'&&opt.P)r.P=opt.P;return r}
+function stepRun(r,h){
+  if(r.done)return;
+  r.t+=h;
+  let q=r.hand?r.k*(r.Th-r.T)*h:r.P*h;
+  if(r.phase==='low'){const cs=r.cLow*r.m,need=(r.Tx-r.T)*cs;
+    if(q<need){r.T+=q/cs;q=0}else{q-=need;r.T=r.Tx;r.phase='trans';r.t0=r.t}}
+  if(q>0&&r.phase==='trans'){const need=(1-r.frac)*r.m*r.L,lim=r.kind==='boil'?(r.endFrac-r.frac)*r.m*r.L:need;
+    if(q<lim){r.frac+=q/(r.m*r.L);q=0}else{q-=lim;r.frac+=lim/(r.m*r.L);r.t1=r.t;
+      if(r.kind==='boil'){r.phase='done';r.done=true}else{r.frac=1;r.phase='high'}}}
+  if(q>0&&r.phase==='high'){r.T+=q/(r.cHigh*r.m);
+    const stop=r.hand?r.Th-0.35:r.Tx+12;if(r.T>=stop){r.done=true;r.phase='done'}}
+  if(r.phase==='trans'&&!r.t1){/* 진행 중 */}
+  if(r.t-r.lastPt>=0.04||r.done){r.pts.push([r.t,r.T]);r.lastPt=r.t}
+}
+function estEnd(r0){const r=mkRun(r0.key,r0.m,{Tx:r0.Tx,P:r0.P,endFrac:r0.endFrac,label:'',atm:r0.atm});r.pts=null;
+  let n=0;while(!r.done&&n<20000){stepRun2(r);n++}return r.t}
+function stepRun2(r){const o=r.pts;r.pts=[];stepRun(r,0.02);r.pts=o}
+
+function buildRuns(){
+  runs=[];simT=0;playing=false;
+  if(mode===1){
+    if(ctxInfo.gal)runs=[mkRun('gallium',3,{label:'갈륨 3g (손바닥 36.5℃)'})];
+    else(ctxInfo.sel1||[]).forEach(id=>{const [k,m]=id.split(':');runs.push(mkRun(k,+m,{col:colFor(k,+m)}))});
+  }else if(mode===2){
+    (ctxInfo.sel2||[]).forEach(id=>{const [k,m]=id.split(':');runs.push(mkRun(k,+m,{col:colFor(k,+m),endFrac:0.5}))});
+  }else if(sub==='A'){
+    (ctxInfo.sel3||[]).forEach(id=>{const o=PRS[id];const P=id==='free'?ctxInfo.free:o.P;
+      runs.push(mkRun('water',60,{label:(id==='free'?'직접 '+P.toFixed(1)+'기압':o.n+' '+P+'기압'),col:o.col,Tx:tb(P),atm:P,type:id,endFrac:0.4}))});
+  }
+  const mx=Math.max(0,...runs.map(estEnd));
+  xmax=niceMax(Math.max(mx*1.12,3));
+  updateRunsUI();updateHeadHud();updateLegend();
+  $('#sum').className='sum idle';$('#sum').textContent=runs.length?'▶ 가열 시작을 눌러 보세요.':'시료를 하나 이상 골라 주세요.';
+  syncPlayBtn()}
+function niceMax(v){const st=v<8?1:v<20?2:5;return Math.ceil(v/st)*st}
+function colFor(k,m){const base=MAT[k].col;return m===1||m===50?base:(k==='lauric'?'#0ea5e9':k==='palm'?'#f97316':k==='water'?'#0891b2':'#d946ef')}
+const PRS={flat:{n:'평지 냄비',P:1,col:'#2563eb'},cooker:{n:'압력솥',P:2,col:'#dc2626'},everest:{n:'에베레스트',P:0.3,col:'#059669'},free:{n:'직접',P:1,col:'#7c3aed'}};
+
+/* ═════════ 모드 ③-B : 감압 펌프 ═════════ */
+const B={T:40,P:1,pump:0,foam:0,bub:[],steam:[],inT:40};
+function stepB(dt){
+  if(B.pump>0)B.P=Math.max(0.05,B.P-0.35*dt*speed);else if(B.pump<0)B.P=Math.min(1,B.P+1.2*dt*speed);
+  const Tb=tb(B.P),ex=B.T-Tb;
+  B.inten=ex>0.05?clamp(ex/8,0.15,1):0;
+  if(ex>0.05){B.T-=Math.min(ex,(0.5+ex*0.5)*dt*speed*1.4)}   // 끓으면서 증발열을 빼앗겨 식어요
+  else B.T=Math.max(20,B.T-0.02*dt*speed);                      // 아주 천천히 식음
+  const rate=B.inten*120*dt;let n=Math.floor(rate)+(Math.random()<rate%1?1:0);
+  for(let i=0;i<n&&B.bub.length<260;i++)B.bub.push({u:Math.random(),y:.95,r:2+Math.random()*5,v:.25+Math.random()*.35,ph:Math.random()*6.28});
+  B.bub.forEach(b=>{b.y-=b.v*dt*(0.7+b.r/6);b.ph+=dt*6});B.bub=B.bub.filter(b=>b.y>0);
+}
+
+/* ═════════ 컨트롤 UI ═════════ */
+function chip(id,txt,on,extra=''){return `<button class="btn ${on?'on':''}" data-id="${id}" ${extra}>${txt}</button>`}
+function ctlCommon(){return `<div class="row"><button class="btn go" id="play">▶ 가열 시작</button><button class="btn dng" id="reset">↺ 리셋</button><span class="sp"></span>
+  <span class="lab" style="min-width:auto">배속</span>${SPEEDS.map(s=>`<button class="btn ${s===speed?'on':''}" data-sp="${s}">${s===0.5?'🐢 0.5×':s+'×'}</button>`).join('')}</div>`}
+function renderCtl(){
+  let h='';
+  if(mode===1){
+    h=`<div class="row"><span class="lab">비교 실험</span>
+      <button class="btn pre" data-pre="amt1">양 비교 · 로르산 1g vs 2g</button>
+      <button class="btn pre" data-pre="mat1">물질 비교 · 로르산 vs 팔미트산</button>
+      <button class="btn pre" data-pre="gal">🖐 갈륨 손바닥 녹이기</button></div>
+    <div class="row"><span class="lab">직접 고르기</span>`+
+    [['lauric:1','로르산 1g'],['lauric:2','로르산 2g'],['palm:1','팔미트산 1g'],['palm:2','팔미트산 2g']].map(([id,t])=>chip(id,t,!ctxInfo.gal&&ctxInfo.sel1.includes(id))).join('')+'</div>'+ctlCommon();
+  }else if(mode===2){
+    h=`<div class="row"><span class="lab">비교 실험</span>
+      <button class="btn pre" data-pre="amt2">양 비교 · 물 50g vs 100g</button>
+      <button class="btn pre" data-pre="mat2">물질 비교 · 물 vs 에탄올</button>
+      <button class="btn pre" data-pre="all2">4가지 모두</button></div>
+    <div class="row"><span class="lab">직접 고르기</span>`+
+    [['water:50','물 50g'],['water:100','물 100g'],['ethanol:50','에탄올 50g'],['ethanol:100','에탄올 100g']].map(([id,t])=>chip(id,t,ctxInfo.sel2.includes(id))).join('')+'</div>'+ctlCommon();
+  }else{
+    h=`<div class="row"><span class="lab">실험</span><button class="btn ${sub==='A'?'on':''}" data-sub="A">A. 압력에 따른 끓는점</button><button class="btn ${sub==='B'?'on':''}" data-sub="B">B. 감압 펌프 (불 끈 물 끓이기)</button></div>`;
+    if(sub==='A'){
+      h+=`<div class="row"><span class="lab">냄비 고르기</span>`+
+      [['flat','🍲 평지 1기압'],['cooker','♨️ 압력솥 2기압'],['everest','⛰ 에베레스트 0.3기압'],['free','🎚 직접 설정']].map(([id,t])=>chip(id,t,ctxInfo.sel3.includes(id))).join('')+
+      `<button class="btn pre" data-pre="all3">3가지 비교</button></div>
+      <div class="row"><span class="lab">외부 압력</span><span style="font-size:1.2em">⬇️</span><input type="range" id="pr" min="0.2" max="2" step="0.05" value="${ctxInfo.free}"><span style="font-size:1.2em">⬆️</span><span class="tval" id="pv">${ctxInfo.free.toFixed(2)}기압</span></div>`+ctlCommon();
+    }else{
+      h+=`<div class="row"><span class="lab">물의 온도</span>`+[40,50,60].map(t=>`<button class="btn ${Math.abs(B.inT-t)<1?'on':''}" data-bt="${t}">${t}℃ 물</button>`).join('')+`</div>
+      <div class="row"><span class="lab">공기 빼기</span><button class="btn hold" id="pump">🔧 펌프 누르고 있기 (감압)</button><button class="btn" id="vent">💨 공기 넣기 (1기압)</button></div>
+      <div class="row"><span class="lab">내부 압력</span><span style="font-size:1.2em">⬇️</span><input type="range" id="pr" min="0.05" max="1" step="0.01" value="${B.P}"><span style="font-size:1.2em">⬆️</span><span class="tval" id="pv">${B.P.toFixed(2)}기압</span></div>
+      <div class="row"><button class="btn dng" id="reset">↺ 새 물로 다시</button><span class="sp"></span>${SPEEDS.map(s=>`<button class="btn ${s===speed?'on':''}" data-sp="${s}">${s===0.5?'🐢 0.5×':s+'×'}</button>`).join('')}</div>`;
+    }
+  }
+  $('#ctl').innerHTML=h;bindCtl();syncPlayBtn()}
+function bindCtl(){
+  $$('#ctl [data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id;
+    if(mode===1){ctxInfo.gal=false;toggle(ctxInfo.sel1,id)}else if(mode===2)toggle(ctxInfo.sel2,id);else{toggle(ctxInfo.sel3,id)}
+    renderCtl();buildRuns()});
+  $$('#ctl [data-pre]').forEach(b=>b.onclick=()=>{const p=b.dataset.pre;
+    if(p==='amt1'){ctxInfo.gal=false;ctxInfo.sel1=['lauric:1','lauric:2']}
+    if(p==='mat1'){ctxInfo.gal=false;ctxInfo.sel1=['lauric:1','palm:1']}
+    if(p==='gal'){ctxInfo.gal=true}
+    if(p==='amt2')ctxInfo.sel2=['water:50','water:100'];
+    if(p==='mat2')ctxInfo.sel2=['water:50','ethanol:50'];
+    if(p==='all2')ctxInfo.sel2=['water:50','water:100','ethanol:50','ethanol:100'];
+    if(p==='all3')ctxInfo.sel3=['flat','cooker','everest'];
+    renderCtl();buildRuns();play(true)});
+  $$('#ctl [data-sub]').forEach(b=>b.onclick=()=>{sub=b.dataset.sub;renderCtl();if(sub==='A')buildRuns();else{runs=[];resetB();updateRunsUI();updateLegend();summary()}});
+  $$('#ctl [data-sp]').forEach(b=>b.onclick=()=>{speed=+b.dataset.sp;$$('#ctl [data-sp]').forEach(x=>x.classList.toggle('on',+x.dataset.sp===speed));updateHeadHud()});
+  const pl=$('#play');if(pl)pl.onclick=()=>play(!playing);
+  const rs=$('#reset');if(rs)rs.onclick=()=>{if(mode===3&&sub==='B'){resetB();renderCtl()}else buildRuns()};
+  const pr=$('#pr');if(pr)pr.oninput=e=>{const v=+e.target.value;
+    if(mode===3&&sub==='A'){ctxInfo.free=v;$('#pv').textContent=v.toFixed(2)+'기압';if(!ctxInfo.sel3.includes('free'))ctxInfo.sel3.push('free');renderCtlKeep();buildRuns()}
+    else{B.P=v;$('#pv').textContent=v.toFixed(2)+'기압'}};
+  $$('#ctl [data-bt]').forEach(b=>b.onclick=()=>{B.inT=+b.dataset.bt;resetB();renderCtl()});
+  const pm=$('#pump');if(pm){const on=e=>{e.preventDefault();B.pump=1;pm.classList.add('on')},off=()=>{B.pump=0;pm.classList.remove('on')};
+    pm.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(ev=>pm.addEventListener(ev,off))}
+  const vt=$('#vent');if(vt){vt.onclick=()=>{B.pump=-1;setTimeout(()=>{B.pump=0},900)}}
+}
+function renderCtlKeep(){const v=$('#pr').value;renderCtl();$('#pr').value=v;$('#pv').textContent=(+v).toFixed(2)+'기압'}
+function toggle(a,id){const i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id)}
+function resetB(){B.T=B.inT;B.P=1;B.pump=0;B.bub=[];B.inten=0;B.steam=[]}
+function play(on){if(!runs.length&&!(mode===3&&sub==='B'))return;
+  if(on&&runs.length&&runs.every(r=>r.done))buildRuns();playing=on;syncPlayBtn()}
+function syncPlayBtn(){const b=$('#play');if(!b)return;b.textContent=playing?'⏸ 일시정지':'▶ 가열 시작';b.classList.toggle('pause',playing)}
+
+/* ═════════ 모드 전환 ═════════ */
+function setMode(m){mode=m;$$('.tab').forEach((t,i)=>t.classList.toggle('on',i+1===m));
+  if(m===3&&sub==='B')resetB();
+  renderCtl();if(!(m===3&&sub==='B'))buildRuns();else{runs=[];playing=false;updateRunsUI();updateLegend()}
+  $('#h-l2').textContent=m===3?'외부 압력':'—';updateHeadHud()}
+$$('.tab').forEach((t,i)=>t.onclick=()=>setMode(i+1));
+
+/* ═════════ 그래프 ═════════ */
+function drawGraph(){
+  const {g,w,h}=fit($('#gr'));g.clearRect(0,0,w,h);
+  const ml=Math.max(54,w*0.1),mr=14,mt=14,mb=Math.max(46,h*0.13),pw=w-ml-mr,ph=h-mt-mb;
+  const fs=Math.max(12,w*0.027);
+  if(mode===3&&sub==='B'){return drawPT(g,w,h,ml,mt,pw,ph,fs)}
+  let y0=10,y1=110,yst=20;
+  if(mode===1){y0=20;y1=80;yst=10;if(ctxInfo.gal){y0=15;y1=40;yst=5}}
+  if(mode===2){y0=10;y1=120;yst=20}
+  if(mode===3){y0=10;y1=140;yst=20}
+  const X=t=>ml+pw*t/xmax,Y=T=>mt+ph*(1-(T-y0)/(y1-y0));
+  g.fillStyle='#fff';g.fillRect(0,0,w,h);
+  g.strokeStyle='rgba(100,116,139,.3)';g.lineWidth=1;g.fillStyle='#334155';g.font='700 '+fs+'px sans-serif';
+  const xs=xmax<=10?1:xmax<=20?2:5;
+  g.textAlign='center';for(let t=0;t<=xmax+1e-6;t+=xs){g.beginPath();g.moveTo(X(t),Y(y0));g.lineTo(X(t),Y(y1));g.stroke();g.fillText(t,X(t),Y(y0)+fs*1.5)}
+  g.textAlign='right';for(let T=y0;T<=y1+1e-6;T+=yst){g.beginPath();g.moveTo(X(0),Y(T));g.lineTo(X(xmax),Y(T));g.stroke();g.fillText(T,X(0)-6,Y(T)+fs*0.35)}
+  g.strokeStyle='#0f172a';g.lineWidth=2.5;g.beginPath();g.moveTo(X(0),Y(y1));g.lineTo(X(0),Y(y0));g.lineTo(X(xmax),Y(y0));g.stroke();
+  g.fillStyle='#0f172a';g.font='800 '+(fs*1.05)+'px sans-serif';g.textAlign='center';g.fillText('가열 시간 (분)',X(xmax/2),h-4);
+  g.save();g.translate(14,Y((y0+y1)/2));g.rotate(-Math.PI/2);g.fillText('온도 (℃)',0,0);g.restore();
+  // 수평 구간 안내선
+  const seen={};
+  runs.forEach(r=>{if(r.t0!==null&&!seen[r.Tx.toFixed(1)]){seen[r.Tx.toFixed(1)]=1;
+    g.setLineDash([7,6]);g.strokeStyle='rgba(15,23,42,.45)';g.lineWidth=2;g.beginPath();g.moveTo(X(0),Y(r.Tx));g.lineTo(X(xmax),Y(r.Tx));g.stroke();g.setLineDash([]);
+    g.fillStyle='#0f172a';g.font='900 '+(fs*1.05)+'px sans-serif';g.textAlign='right';
+    g.fillText((r.kind==='boil'?'끓는점 ':'녹는점 ')+r.Tx.toFixed(1)+'℃',X(xmax)-4,Y(r.Tx)-6)}});
+  // 곡선
+  runs.forEach(r=>{
+    g.strokeStyle=r.col;g.lineWidth=4.5;g.lineJoin='round';g.beginPath();
+    r.pts.forEach((p,i)=>{const x=X(p[0]),y=Y(clamp(p[1],y0,y1));i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+    if(r.t0!==null){const t1=r.t1!==null?r.t1:r.t;g.strokeStyle=r.col;g.globalAlpha=.28;g.lineWidth=16;g.lineCap='round';g.beginPath();g.moveTo(X(r.t0),Y(r.Tx));g.lineTo(X(t1),Y(r.Tx));g.stroke();g.globalAlpha=1;g.lineCap='butt'}
+    const lp=r.pts[r.pts.length-1];g.fillStyle=r.col;g.beginPath();g.arc(X(lp[0]),Y(clamp(lp[1],y0,y1)),8,0,6.28);g.fill();g.strokeStyle='#fff';g.lineWidth=2.5;g.stroke();
+  });
+  if(!runs.length){g.fillStyle='#94a3b8';g.font='800 '+fs*1.3+'px sans-serif';g.textAlign='center';g.fillText('시료를 고르고 가열을 시작하세요',X(xmax/2),Y((y0+y1)/2))}
+}
+function drawPT(g,w,h,ml,mt,pw,ph,fs){
+  const P1=1.1,y0=20,y1=110;const X=p=>ml+pw*p/P1,Y=T=>mt+ph*(1-(T-y0)/(y1-y0));
+  g.fillStyle='#fff';g.fillRect(0,0,w,h);
+  g.beginPath();g.moveTo(X(0.05),Y(tb(0.05)));for(let p=0.05;p<=P1;p+=0.01)g.lineTo(X(p),Y(tb(p)));g.lineTo(X(P1),Y(y0));g.lineTo(X(0.05),Y(y0));g.closePath();g.fillStyle='rgba(186,230,253,.7)';g.fill();
+  g.beginPath();g.moveTo(X(0.05),Y(tb(0.05)));for(let p=0.05;p<=P1;p+=0.01)g.lineTo(X(p),Y(tb(p)));g.lineTo(X(P1),Y(y1));g.lineTo(X(0.05),Y(y1));g.closePath();g.fillStyle='rgba(254,205,211,.65)';g.fill();
+  g.strokeStyle='rgba(100,116,139,.3)';g.lineWidth=1;g.fillStyle='#334155';g.font='700 '+fs+'px sans-serif';
+  g.textAlign='center';for(let p=0;p<=1.0001;p+=0.2){g.beginPath();g.moveTo(X(p),Y(y0));g.lineTo(X(p),Y(y1));g.stroke();g.fillText(p.toFixed(1),X(p),Y(y0)+fs*1.5)}
+  g.textAlign='right';for(let T=y0;T<=y1;T+=20){g.beginPath();g.moveTo(X(0),Y(T));g.lineTo(X(P1),Y(T));g.stroke();g.fillText(T,X(0)-6,Y(T)+fs*0.35)}
+  g.strokeStyle='#0f172a';g.lineWidth=2.5;g.beginPath();g.moveTo(X(0),Y(y1));g.lineTo(X(0),Y(y0));g.lineTo(X(P1),Y(y0));g.stroke();
+  g.beginPath();for(let p=0.05;p<=P1;p+=0.01){const x=X(p),y=Y(tb(p));p<0.06?g.moveTo(x,y):g.lineTo(x,y)}g.strokeStyle='#be123c';g.lineWidth=5;g.stroke();
+  g.fillStyle='#0f172a';g.font='800 '+(fs*1.05)+'px sans-serif';g.textAlign='center';g.fillText('압력 (기압)',X(P1/2),h-4);
+  g.save();g.translate(14,Y(65));g.rotate(-Math.PI/2);g.fillText('온도 (℃)',0,0);g.restore();
+  g.font='900 '+fs*1.1+'px sans-serif';g.fillStyle='#0369a1';g.textAlign='left';g.fillText('액체 (끓지 않음)',X(0.3),Y(44));g.fillStyle='#be123c';g.fillText('끓는 영역 → 기포 발생',X(0.06),Y(103));
+  g.textAlign='right';g.fillStyle='#be123c';g.fillText('끓는점 곡선',X(P1)-4,Y(tb(1))-10);
+  g.fillStyle='#dc2626';g.beginPath();g.arc(X(clamp(B.P,0.05,P1)),Y(clamp(B.T,y0,y1)),10,0,6.28);g.fill();g.strokeStyle='#fff';g.lineWidth=3;g.stroke();
+  g.fillStyle='#0f172a';g.textAlign='left';g.font='900 '+fs*1.15+'px sans-serif';g.fillText(B.T.toFixed(1)+'℃ · '+B.P.toFixed(2)+'기압',ml+12,Y(90));
+}
+function updateLegend(){$('#legend').innerHTML=(mode===3&&sub==='B')?'':runs.map(r=>`<span><i style="background:${r.col}"></i>${r.label}</span>`).join('')}
+
+/* ═════════ HUD ═════════ */
+function stateName(r){
+  if(r.kind==='melt'){return r.phase==='low'?'고체':r.phase==='trans'?'고체+액체 (녹는 중)':'액체'}
+  return r.phase==='low'?'액체':r.phase==='trans'||r.phase==='done'?'액체+기체 (끓는 중)':'기체'}
+function alertText(r){
+  const nm=r.kind==='boil'?'끓는점':'녹는점';
+  if(r.t0===null)return '가열 중…';
+  const d=((r.t1!==null?r.t1:r.t)-r.t0);
+  return (r.t1!==null?'✅ ':'🔔 ')+nm+' '+r.Tx.toFixed(1)+'℃ '+(r.t1!==null?'수평 구간 '+d.toFixed(1)+'분':'도달! 온도 일정 · '+d.toFixed(1)+'분째')}
+let lastRunsKey='';
+function updateRunsUI(){
+  const el=$('#runs');
+  if(mode===3&&sub==='B'){const Tb=tb(B.P);const boil=B.inten>0;
+    const key='B'+B.T.toFixed(1)+B.P.toFixed(2)+boil;if(key===lastRunsKey)return;lastRunsKey=key;
+    el.innerHTML=`<div class="rr ${boil?'hit':''}"><i style="background:#2563eb"></i><span class="n">플라스크 속 물</span><span class="t">${B.T.toFixed(1)}℃</span><span class="s">${boil?'끓는 중':'액체'}</span><span class="a">${boil?'🫧 이 압력에서 끓는점 '+Tb.toFixed(1)+'℃ < 물 온도 → 불이 없어도 끓어요!':'현재 압력의 끓는점은 '+Tb.toFixed(1)+'℃ — 압력을 더 낮춰 보세요'}</span></div>`;return}
+  const key=runs.map(r=>r.label+r.T.toFixed(1)+r.phase+(r.t0===null?'':r.t0.toFixed(1))+(r.t1===null?'':r.t1.toFixed(1))+(r.t0!==null&&r.t1===null?r.t.toFixed(1):'')).join('|');
+  if(key===lastRunsKey)return;lastRunsKey=key;
+  el.innerHTML=runs.map(r=>{let extra='';
+    if(mode===3&&r.t1!==null){extra=r.Tx<85?' 🍚 밥이 설익어요':r.Tx>110?' 🍚 밥이 빨리 잘 익어요':' 🍚 보통'}
+    return `<div class="rr ${r.t0!==null&&r.t1===null?'hit':''}"><i style="background:${r.col}"></i><span class="n">${r.label}</span><span class="t">${r.T.toFixed(1)}℃</span><span class="s">${stateName(r)}</span><span class="a">${alertText(r)}${extra}</span></div>`}).join('')}
+function updateHeadHud(){
+  $('#h-time').textContent=simT.toFixed(1)+'분';$('#h-sp').textContent=speed+'×';
+  if(mode===3){$('#h-l2').textContent='외부 압력';$('#h-v2').textContent=(sub==='B'?B.P:(runs[runs.length-1]?runs[runs.length-1].atm:1)).toFixed(2)+'기압'}
+  else{$('#h-l2').textContent='기준 압력';$('#h-v2').textContent='1.0기압'}}
+function summary(){
+  const el=$('#sum');if(mode===3&&sub==='B'){el.className='sum key';el.textContent='💡 물을 끓이는 건 불이 아니라 "끓는점 > 주변 압력에 해당하는 온도"가 되는 것! 압력을 낮추면 끓는점이 내려가요.';return}
+  const done=runs.filter(r=>r.t0!==null&&r.t1!==null);if(!done.length){return}
+  const lines=done.map(r=>`${r.label}: 수평선 ${r.Tx.toFixed(1)}℃ (${r.t0.toFixed(1)}→${r.t1.toFixed(1)}분, ${(r.t1-r.t0).toFixed(1)}분)`);
+  let msg=lines.join('<br>');
+  const ks={};done.forEach(r=>{(ks[r.key+(r.type||'')]=ks[r.key+(r.type||'')]||[]).push(r)});
+  if(mode<3){
+    const same=Object.values(ks).find(a=>a.length>1);
+    if(same)msg+='<br>👉 <b>같은 물질은 양이 달라도 수평선 온도가 같아요.</b> 양이 많으면 시간만 길어져요!';
+    const keys=[...new Set(done.map(r=>r.key))];
+    if(keys.length>1)msg+='<br>👉 <b>물질이 다르면 '+(mode===1?'녹는점':'끓는점')+'이 달라요.</b> (물질의 고유한 특성)';
+  }else if(done.length>1){msg+='<br>👉 <b>외부 압력이 높을수록 끓는점이 높아요.</b>'}
+  el.className='sum key';el.innerHTML=msg}
+
+/* ═════════ 장면 그리기 ═════════ */
+function bubblesIn(g,list,x0,x1,yT,yB,alpha){list.forEach(b=>{const x=lerp(x0,x1,b.u)+Math.sin(b.ph)*3,y=lerp(yT,yB,b.y);
+  g.fillStyle='rgba(255,255,255,'+alpha+')';g.strokeStyle='rgba(30,64,175,.4)';g.lineWidth=1.5;g.beginPath();g.arc(x,y,b.r,0,6.28);g.fill();g.stroke()})}
+function steamAt(g,x,y,s,k){g.strokeStyle='rgba(255,255,255,'+Math.min(.95,k)+')';g.lineWidth=5*s;g.lineCap='round';
+  const t=performance.now()/500;for(let i=0;i<3;i++){const xx=x+(i-1)*14*s,ph=t+i*1.7;g.beginPath();g.moveTo(xx,y);g.bezierCurveTo(xx-12*s*Math.sin(ph),y-20*s,xx+14*s*Math.cos(ph),y-34*s,xx,y-56*s-(Math.sin(ph)*8*s));g.stroke()}}
+function flame(g,x,y,s,on){if(!on)return;const t=performance.now()/90;
+  g.fillStyle='#38bdf8';g.beginPath();g.ellipse(x,y,9*s,16*s+Math.sin(t)*2,0,0,6.28);g.fill();
+  g.fillStyle='#f59e0b';g.beginPath();g.ellipse(x,y-6*s,5*s,10*s+Math.sin(t*1.3)*2,0,0,6.28);g.fill()}
+
+function drawScene(){
+  const {g,w,h}=fit($('#sc'));g.clearRect(0,0,w,h);
+  const base=h*0.86;g.fillStyle='#94a3b8';g.fillRect(0,base+h*0.04,w,h);g.fillStyle='#cbd5e1';g.fillRect(0,base,w,h*0.04);
+  if(mode===1){ctxInfo.gal?sceneHand(g,w,h,base):sceneBath(g,w,h,base)}
+  else if(mode===2)sceneFlasks(g,w,h,base);
+  else if(sub==='A')scenePots(g,w,h,base);
+  else sceneVac(g,w,h,base);
+}
+/* 모드①: 물중탕 + 시험관 */
+function sceneBath(g,w,h,base){
+  const N=Math.max(1,runs.length),bw=w*0.86,bh=h*0.46,L0=(w-bw)/2,top=base-bh-h*0.05;
+  const maxT=Math.max(25,...runs.map(r=>r.T)),warm=clamp((maxT-25)/60,0,1);
+  const burnerOn=playing&&runs.some(r=>!r.done);
+  // 스탠드·가열 장치
+  g.fillStyle='#475569';g.fillRect(L0-18,top-h*0.25,10,bh+h*0.25+h*0.05);g.fillRect(L0-26,base-h*0.0,60,10);
+  g.fillStyle='#334155';rr(g,w/2-bw*0.2,base-h*0.05,bw*0.4,h*0.05,8);g.fill();
+  flame(g,w/2,base-h*0.055,Math.max(.7,h/360),burnerOn);
+  // 비커(중탕)
+  g.fillStyle=`rgb(${Math.round(lerp(186,253,warm))},${Math.round(lerp(230,214,warm))},${Math.round(lerp(253,170,warm))})`;g.globalAlpha=.75;
+  g.fillRect(L0+4,top+bh*0.22,bw-8,bh*0.78-h*0.05);g.globalAlpha=1;
+  g.strokeStyle='#64748b';g.lineWidth=5;g.lineJoin='round';g.beginPath();g.moveTo(L0,top);g.lineTo(L0,base-h*0.05);g.lineTo(L0+bw,base-h*0.05);g.lineTo(L0+bw,top);g.stroke();
+  g.fillStyle='#475569';g.font='800 '+Math.max(13,w*0.026)+'px sans-serif';g.textAlign='left';g.fillText('물중탕',L0+8,top+bh*0.22-6);
+  if(warm>0.3){g.strokeStyle='rgba(255,255,255,.85)';steamAt(g,L0+bw*0.5,top-6,Math.max(.7,h/380),warm*.7)}
+  runs.forEach((r,i)=>{
+    const cx=L0+bw*(i+1)/(N+1),tw=Math.min(bw/(N+1)*0.62,80),tt=top-h*0.16,tb_=base-h*0.05-bh*0.1,th=tb_-tt;
+    const m=r.m,hh=(tb_-tt)*(0.22+0.09*m);
+    // 시험관 내용물
+    g.save();g.beginPath();g.moveTo(cx-tw/2,tt);g.lineTo(cx-tw/2,tb_-tw/2);g.arc(cx,tb_-tw/2,tw/2,Math.PI,0,true);g.lineTo(cx+tw/2,tt);g.clip();
+    const lq=r.kind==='melt'?(r.frac):0;const liqH=hh*clamp(r.phase==='low'?0:(r.phase==='trans'?Math.max(0.12,r.frac):1),0,1);
+    if(liqH>0){g.fillStyle=r.key==='gallium'?'rgba(148,163,184,.9)':'rgba(253,230,138,.7)';g.fillRect(cx-tw/2,tb_-liqH-4,tw,liqH+6)}
+    const solid=r.phase==='low'?1:r.phase==='trans'?1-r.frac:0;
+    const cnt=Math.round(110*(0.5+0.5*m)*solid);const bot=r.phase==='low'?hh:hh*Math.max(.15,1-r.frac*.85);
+    for(let k=0;k<cnt;k++){const u=rnd(k*3+i*17+1),v=rnd(k*3+i*17+2);g.fillStyle=k%3?'#fff':'#e2e8f0';g.fillRect(cx-tw/2+3+u*(tw-6),tb_-3-v*Math.min(hh*.9,bot)-(k%2?1:0),4,4)}
+    g.restore();
+    g.strokeStyle='#475569';g.lineWidth=4;g.beginPath();g.moveTo(cx-tw/2,tt);g.lineTo(cx-tw/2,tb_-tw/2);g.arc(cx,tb_-tw/2,tw/2,Math.PI,0,true);g.lineTo(cx+tw/2,tt);g.stroke();
+    // 온도계
+    const tx=cx+tw*0.18;g.strokeStyle='#ef4444';g.lineWidth=5;g.beginPath();g.moveTo(tx,tt-h*0.06);g.lineTo(tx,tb_-tw*0.25);g.stroke();
+    g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(tx+2,tt-h*0.06);g.lineTo(tx+2,tb_-tw*0.4);g.stroke();
+    g.fillStyle=r.col;g.font='900 '+Math.max(15,Math.min(w*0.036,bw/(N+1)*0.34))+'px sans-serif';g.textAlign='center';g.fillText(r.T.toFixed(1)+'℃',cx,tt-h*0.075);
+    g.fillStyle='#0f172a';g.font='800 '+Math.max(12,Math.min(w*0.026,bw/(N+1)*0.24))+'px sans-serif';g.fillText(r.label,cx,base+h*0.07);
+  });
+  if(!runs.length){g.fillStyle='#475569';g.font='800 '+Math.max(16,w*0.032)+'px sans-serif';g.textAlign='center';g.fillText('아래에서 시료를 골라 보세요',w/2,h*0.4)}
+}
+/* 모드①-보너스: 갈륨 손바닥 */
+function sceneHand(g,w,h,base){
+  const r=runs[0];const cx=w*0.5,cy=h*0.62,s=Math.min(w/520,h/380);
+  g.save();g.translate(cx,cy);g.scale(s,s);
+  g.fillStyle='#f5c9a8';g.strokeStyle='#d99a73';g.lineWidth=4;
+  g.beginPath();g.ellipse(0,40,170,95,0,0,6.28);g.fill();g.stroke();
+  [[-125,-70,-.28,28,110],[-60,-110,-.1,30,125],[10,-120,0.02,30,130],[78,-100,.15,28,118]].forEach(([x,y,a,wd,ln])=>{g.save();g.translate(x,y+40);g.rotate(a);rr(g,-wd/2,-ln+40,wd,ln,14);g.fill();g.stroke();g.restore()});
+  g.save();g.translate(-155,70);g.rotate(-.9);rr(g,-14,-95,30,100,15);g.fill();g.stroke();g.restore();
+  g.fillStyle='#f5c9a8';g.beginPath();g.ellipse(0,40,166,91,0,0,6.28);g.fill();
+  // 갈륨 (고체: 각진 알갱이 → 액체: 납작한 방울)
+  const f=r?r.frac:0,gy=-18;
+  g.fillStyle='#94a3b8';g.strokeStyle='#475569';g.lineWidth=3;
+  if(!r||r.phase==='low'){g.beginPath();g.moveTo(-26,gy+30);g.lineTo(-30,gy+4);g.lineTo(-10,gy-16);g.lineTo(18,gy-14);g.lineTo(32,gy+8);g.lineTo(26,gy+30);g.closePath();g.fill();g.stroke();g.fillStyle='#e2e8f0';g.fillRect(-8,gy-6,12,6)}
+  else{const rx=lerp(36,78,f),ry=lerp(30,10,f);g.beginPath();g.ellipse(0,gy+34-ry*0.2,rx,ry+4,0,0,6.28);g.fill();g.stroke();g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.ellipse(-rx*.3,gy+34-ry*.6,rx*.25,ry*.25,0,0,6.28);g.fill()}
+  g.restore();
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(18,w*0.04)+'px sans-serif';g.textAlign='center';
+  g.fillText('🖐 손바닥 36.5℃',w/2,h*0.12);
+  if(r){g.fillStyle=r.col;g.font='900 '+Math.max(24,w*0.06)+'px sans-serif';g.fillText('갈륨 '+r.T.toFixed(1)+'℃',w/2,h*0.23);
+    g.fillStyle='#475569';g.font='800 '+Math.max(14,w*0.03)+'px sans-serif';g.fillText(r.phase==='low'?'고체 갈륨 (녹는점 약 30℃)':r.phase==='trans'?'녹는 중! 온도가 멈췄어요':'완전히 액체가 됐어요',w/2,h*0.3)}
+}
+/* 플라스크(모드②) 공통 */
+function flaskUnit(g,cx,baseY,s,r){
+  const fw=150*s,fh=190*s,nw=44*s,nh=70*s;
+  // 삼발이 + 버너
+  g.strokeStyle='#475569';g.lineWidth=6*s;g.beginPath();g.moveTo(cx-fw*0.46,baseY-48*s);g.lineTo(cx-fw*0.58,baseY);g.moveTo(cx+fw*0.46,baseY-48*s);g.lineTo(cx+fw*0.58,baseY);g.stroke();
+  g.fillStyle='#64748b';g.fillRect(cx-fw*0.5,baseY-52*s,fw,6*s);
+  g.fillStyle='#334155';rr(g,cx-24*s,baseY-34*s,48*s,34*s,6*s);g.fill();
+  const on=playing&&!r.done;flame(g,cx,baseY-38*s,s*1.2,on);
+  const by=baseY-52*s,bt=by-fh*0.78;
+  // 액체
+  const rem=1-(r.kind==='boil'?r.frac:0)*0.75,lv=clamp(0.14+0.52*(r.m/100)*rem+0.04,0.12,0.72);
+  const ly=by-fh*0.78*lv;
+  g.save();g.beginPath();g.moveTo(cx-nw/2,by-fh*0.78-nh);g.lineTo(cx-nw/2,by-fh*0.78);g.lineTo(cx-fw/2,by-fh*0.05);g.quadraticCurveTo(cx-fw/2,by,cx-fw/2+14*s,by);g.lineTo(cx+fw/2-14*s,by);g.quadraticCurveTo(cx+fw/2,by,cx+fw/2,by-fh*0.05);g.lineTo(cx+nw/2,by-fh*0.78);g.lineTo(cx+nw/2,by-fh*0.78-nh);g.closePath();
+  g.clip();
+  g.fillStyle=r.mat.liq;g.fillRect(cx-fw/2,ly,fw,by-ly+4);
+  // 끓임쪽
+  for(let i=0;i<5;i++){g.fillStyle='#a8a29e';g.fillRect(cx-fw*0.28+i*fw*0.1,by-8*s-rnd(i+5)*6*s,6*s,6*s)}
+  // 기포
+  const Tx=r.Tx,boil=r.phase==='trans';
+  const near=clamp((r.T-(Tx-14))/14,0,1);
+  const rate=boil?(playing?1:0.2):near*0.35;
+  if(rate>0&&playing||boil){const n=Math.random()<rate*0.7*(boil?1.6:0.6)?(boil?3:1):0;for(let i=0;i<n&&r.bub.length<150;i++)r.bub.push({u:Math.random()*.9+.05,y:.97,r:(boil?3.5+Math.random()*6:1.5+Math.random()*2.5)*s,v:(boil?.5:.25)+Math.random()*.3,ph:Math.random()*6.28})}
+  r.bub.forEach(b=>{b.y-=b.v*0.016*(0.7+b.r/(6*s));b.ph+=0.1});r.bub=r.bub.filter(b=>{const yy=lerp(ly,by,b.y);return yy>ly});
+  bubblesIn(g,r.bub,cx-fw*0.4,cx+fw*0.4,ly,by-4*s,.85);
+  g.restore();
+  g.strokeStyle='#475569';g.lineWidth=5*s;g.lineJoin='round';g.beginPath();g.moveTo(cx-nw/2,by-fh*0.78-nh);g.lineTo(cx-nw/2,by-fh*0.78);g.lineTo(cx-fw/2,by-fh*0.05);g.quadraticCurveTo(cx-fw/2,by,cx-fw/2+14*s,by);g.lineTo(cx+fw/2-14*s,by);g.quadraticCurveTo(cx+fw/2,by,cx+fw/2,by-fh*0.05);g.lineTo(cx+nw/2,by-fh*0.78);g.lineTo(cx+nw/2,by-fh*0.78-nh);g.stroke();
+  // 마개 + 온도계
+  g.fillStyle='#b45309';rr(g,cx-nw*0.62,by-fh*0.78-nh-10*s,nw*1.24,14*s,4*s);g.fill();
+  g.strokeStyle='#ef4444';g.lineWidth=5*s;g.beginPath();g.moveTo(cx+nw*0.1,by-fh*0.78-nh-30*s);g.lineTo(cx+nw*0.1,ly+12*s);g.stroke();
+  // 증기
+  if(r.T>Tx-6)steamAt(g,cx,by-fh*0.78-nh-14*s,s*1.2,boil?0.9:clamp((r.T-(Tx-6))/6,0,.6));
+  g.fillStyle=r.col;g.font='900 '+Math.max(15,28*s)+'px sans-serif';g.textAlign='center';g.fillText(r.T.toFixed(1)+'℃',cx,by-fh*0.78-nh-42*s);
+  g.fillStyle='#0f172a';g.font='800 '+Math.max(12,19*s)+'px sans-serif';g.fillText(r.label,cx,baseY+22*s+4);
+}
+function sceneFlasks(g,w,h,base){
+  const N=Math.max(1,runs.length),s=Math.min(1.15,(w/N)/200,h/430);
+  runs.forEach((r,i)=>flaskUnit(g,w*(i+.5)/N,base-4,s,r));
+  if(!runs.length){g.fillStyle='#475569';g.font='800 '+Math.max(16,w*0.032)+'px sans-serif';g.textAlign='center';g.fillText('아래에서 액체를 골라 보세요',w/2,h*0.4)}
+}
+/* 모드③-A: 냄비들 */
+function scenePots(g,w,h,base){
+  const N=Math.max(1,runs.length),s=Math.min(1.1,(w/N)/210,h/430);
+  runs.forEach((r,i)=>{
+    const cx=w*(i+.5)/N,pw=150*s,ph=105*s,by=base-52*s,bt=by-ph;
+    if(r.type==='everest'){g.fillStyle='#cbd5e1';g.beginPath();g.moveTo(cx-pw*0.9,by);g.lineTo(cx-10*s,by-ph*2.2);g.lineTo(cx+pw*0.9,by);g.closePath();g.fill();g.fillStyle='#fff';g.beginPath();g.moveTo(cx-34*s,by-ph*1.55);g.lineTo(cx-10*s,by-ph*2.2);g.lineTo(cx+22*s,by-ph*1.6);g.lineTo(cx+6*s,by-ph*1.7);g.lineTo(cx-12*s,by-ph*1.5);g.closePath();g.fill()}
+    // 삼발이/버너
+    g.fillStyle='#64748b';g.fillRect(cx-pw*0.55,by,pw*1.1,6*s);g.fillStyle='#334155';rr(g,cx-26*s,by+8*s,52*s,40*s,6*s);g.fill();
+    flame(g,cx,by+10*s,s*1.3,playing&&!r.done);
+    // 냄비
+    const lv=0.55-r.frac*0.15;const ly=by-ph*lv;
+    g.save();rr(g,cx-pw/2,bt,pw,ph,10*s);g.clip();
+    g.fillStyle='rgba(96,165,250,.6)';g.fillRect(cx-pw/2,ly,pw,by-ly);
+    // 밥(쌀) 익힘 표시
+    for(let k=0;k<26;k++){const u=rnd(k+r.atm*9),v=rnd(k+40);const cooked=r.t1!==null?(r.Tx>110?1:r.Tx>85?.6:.1):clamp((r.T-60)/60,0,.4);g.fillStyle=cooked>.5?'#fef9c3':'#e5e7eb';g.fillRect(cx-pw/2+6*s+u*(pw-14*s),by-6*s-v*10*s,5*s,4*s)}
+    const boil=r.phase==='trans',near=clamp((r.T-(r.Tx-14))/14,0,1);
+    const rate=boil?1:near*0.3;
+    if(playing||boil){const n=Math.random()<rate*0.8?(boil?3:1):0;for(let k=0;k<n&&r.bub.length<130;k++)r.bub.push({u:Math.random()*.9+.05,y:.97,r:(boil?3.5+Math.random()*5:1.6+Math.random()*2)*s,v:(boil?.55:.28)+Math.random()*.3,ph:Math.random()*6.28})}
+    r.bub.forEach(b=>{b.y-=b.v*0.016*(0.7+b.r/(6*s));b.ph+=0.1});r.bub=r.bub.filter(b=>lerp(ly,by,b.y)>ly);
+    bubblesIn(g,r.bub,cx-pw*0.4,cx+pw*0.4,ly,by-4*s,.85);g.restore();
+    g.strokeStyle='#475569';g.lineWidth=5*s;rr(g,cx-pw/2,bt,pw,ph,10*s);g.stroke();
+    g.fillStyle='#475569';rr(g,cx-pw/2-14*s,bt+14*s,14*s,8*s,3*s);g.fill();rr(g,cx+pw/2,bt+14*s,14*s,8*s,3*s);g.fill();
+    // 뚜껑
+    if(r.type==='cooker'){g.fillStyle='#64748b';rr(g,cx-pw/2-4*s,bt-16*s,pw+8*s,18*s,6*s);g.fill();const jig=boil?Math.sin(performance.now()/60)*2*s:0;g.fillStyle='#0f172a';rr(g,cx-9*s,bt-34*s+jig,18*s,20*s,3*s);g.fill()}
+    else{g.fillStyle='#94a3b8';g.save();g.translate(cx+(boil?6*s:0),bt-4*s);g.rotate(boil?-.05:0);rr(g,-pw/2,-10*s,pw,12*s,5*s);g.fill();g.restore()}
+    if(r.T>r.Tx-6)steamAt(g,cx+(r.type==='cooker'?pw*0.3:0),bt-(r.type==='cooker'?30:14)*s,s*1.1,boil?0.9:.5);
+    g.fillStyle=r.col;g.font='900 '+Math.max(15,28*s)+'px sans-serif';g.textAlign='center';g.fillText(r.T.toFixed(1)+'℃',cx,bt-62*s);
+    g.fillStyle='#0f172a';g.font='800 '+Math.max(12,18*s)+'px sans-serif';g.fillText(r.label,cx,base+h*0.055);
+  });
+  if(!runs.length){g.fillStyle='#475569';g.font='800 '+Math.max(16,w*0.032)+'px sans-serif';g.textAlign='center';g.fillText('아래에서 냄비를 골라 보세요',w/2,h*0.4)}
+}
+/* 모드③-B: 감압 챔버 */
+function sceneVac(g,w,h,base){
+  const cx=w*0.42,R=Math.min(w*0.15,h*0.19),cy=base-R-h*0.1;
+  g.fillStyle='#64748b';g.fillRect(cx-R*0.9,base-h*0.05,R*1.8,h*0.05);
+  g.strokeStyle='#475569';g.lineWidth=7;g.beginPath();g.moveTo(cx-R*.6,base-h*0.05);g.lineTo(cx-R*.55,cy+R*0.8);g.moveTo(cx+R*.6,base-h*0.05);g.lineTo(cx+R*.55,cy+R*0.8);g.stroke();
+  const neckW=R*0.3,neckT=cy-R*1.9;
+  // 물
+  g.save();g.beginPath();g.arc(cx,cy,R,0,6.28);g.rect(cx-neckW/2,neckT,neckW,cy-neckT);g.clip();
+  const ly=cy+R*0.1;g.fillStyle='rgba(96,165,250,.6)';g.fillRect(cx-R,ly,R*2,R*1.2);
+  bubblesIn(g,B.bub,cx-R*0.7,cx+R*0.7,ly,cy+R*0.95,.9);g.restore();
+  g.strokeStyle='#475569';g.lineWidth=6;g.beginPath();g.arc(cx,cy,R,Math.asin(neckW/2/R)-Math.PI/2,Math.PI*1.5-Math.asin(neckW/2/R)+0,false);g.stroke();
+  g.beginPath();g.moveTo(cx-neckW/2,cy-Math.sqrt(R*R-neckW*neckW/4));g.lineTo(cx-neckW/2,neckT);g.moveTo(cx+neckW/2,cy-Math.sqrt(R*R-neckW*neckW/4));g.lineTo(cx+neckW/2,neckT);g.stroke();
+  // 마개 + 온도계 + 관
+  g.fillStyle='#b45309';rr(g,cx-neckW*0.75,neckT-14,neckW*1.5,18,5);g.fill();
+  g.strokeStyle='#ef4444';g.lineWidth=5;g.beginPath();g.moveTo(cx-neckW*0.2,neckT-40);g.lineTo(cx-neckW*0.2,ly+R*0.2);g.stroke();
+  const px=cx+R*1.9;g.strokeStyle='#475569';g.lineWidth=7;g.beginPath();g.moveTo(cx+neckW*0.2,neckT-6);g.lineTo(cx+neckW*0.2,neckT-40);g.lineTo(px,neckT-40);g.lineTo(px,cy-R*0.2);g.stroke();
+  // 펌프
+  const pw=R*0.9,py=cy-R*0.2,pull=B.pump>0?Math.sin(performance.now()/130)*6:0;
+  g.fillStyle='#e2e8f0';rr(g,px-pw*0.25,py,pw*0.5,R*1.2,10);g.fill();g.strokeStyle='#334155';g.lineWidth=4;g.stroke();
+  g.fillStyle='#334155';g.fillRect(px-pw*0.45,py+R*0.2-(B.pump>0?pull+10:0),pw*0.9,10);g.fillRect(px-4,py-R*0.5-(B.pump>0?pull+10:0),8,R*0.7);
+  g.fillStyle='#0f172a';g.font='800 '+Math.max(13,w*0.028)+'px sans-serif';g.textAlign='center';g.fillText('진공 펌프',px,py+R*1.2+22);
+  // 압력계
+  const gx=cx-R*1.9,gy=cy-R*0.9,gr=Math.min(R*0.55,46);
+  g.fillStyle='#fff';g.beginPath();g.arc(gx,gy,gr,0,6.28);g.fill();g.strokeStyle='#334155';g.lineWidth=4;g.stroke();
+  const na=Math.PI*0.75+Math.PI*1.5*clamp(B.P,0,1);g.strokeStyle='#dc2626';g.lineWidth=4;g.beginPath();g.moveTo(gx,gy);g.lineTo(gx+Math.cos(na)*gr*0.8,gy+Math.sin(na)*gr*0.8);g.stroke();
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(13,gr*0.34)+'px sans-serif';g.fillText(B.P.toFixed(2),gx,gy+gr*0.6);
+  g.fillStyle='#475569';g.font='800 '+Math.max(11,gr*0.26)+'px sans-serif';g.fillText('기압',gx,gy+gr*0.9);
+  // 증기
+  if(B.inten>0)steamAt(g,cx,neckT-48,1.2,.8);
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(18,w*0.04)+'px sans-serif';g.fillText(B.T.toFixed(1)+'℃',gx,cy+R*0.5);
+  g.fillStyle='#be123c';g.font='800 '+Math.max(14,w*0.03)+'px sans-serif';g.fillText('불 끔 🔥✕',cx,base+h*0.075);
+}
+
+/* ═════════ 메인 루프 ═════════ */
+let last=0,hudT=0;
+function loop(ts){
+  const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
+  if(mode===3&&sub==='B'){stepB(dt);const pr=$('#pr');if(pr&&document.activeElement!==pr){pr.value=B.P;const pv=$('#pv');if(pv)pv.textContent=B.P.toFixed(2)+'기압'}}
+  else if(playing){
+    const dm=dt*0.6*speed;let rem=dm;
+    while(rem>1e-9){const h=Math.min(0.02,rem);runs.forEach(r=>stepRun(r,h));simT+=h;rem-=h}
+    // 최초 수평 도달 알림
+    runs.forEach(r=>{if(r.t0!==null&&!r.alerted){r.alerted=true;toast('🔔 '+r.label+' · '+(r.kind==='boil'?'끓는점 ':'녹는점 ')+r.Tx.toFixed(1)+'℃ 도달! 온도가 멈췄어요')}});
+    if(runs.length&&runs.every(r=>r.done)){playing=false;syncPlayBtn();toast('✅ 실험 완료! 수평 구간의 길이를 비교해 보세요');summary()}
+    else summary();
+  }
+  hudT+=dt;if(hudT>0.08){hudT=0;updateRunsUI();updateHeadHud()}
+  drawScene();drawGraph();
+  requestAnimationFrame(loop)}
+ctxInfo={gal:false,sel1:['lauric:1','lauric:2'],sel2:['water:50','water:100'],sel3:['flat','cooker','everest'],free:1.5};
+setMode(1);requestAnimationFrame(loop);
+
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'라면 2개를 끓일 때 물을 2배(1000 mL)로 넣으면 물의 끓는점도 2배(200℃)로 높아질까?',o:['O 네, 2배인 200℃가 돼요','X 아니요, 100℃로 그대로예요'],a:1,
+  e:'끓는점은 물질의 양에 관계없이 100℃로 일정해요. 물이 많으면 끓는점까지 도달하는 시간만 2배로 길어질 뿐이에요! (② 실험의 물 50 g vs 100 g 곡선)'},
+ {q:'높은 산 정상에서 밥을 지으면 밥이 설익는 까닭은?',o:['산 위는 추워서 불이 약해지기 때문에','기압이 낮아져 물이 100℃보다 낮은 온도(약 70℃)에서 끓어 쌀에 충분한 열이 전달되지 못하기 때문에','산소가 많아서 물이 빨리 증발하기 때문에'],a:1,
+  e:'에베레스트 정상(0.33기압)에서는 물이 약 70℃에서 끓어버려요. 끓는 물의 온도가 낮아 쌀이 속까지 익지 않아요. (③ 실험의 0.3기압)'},
+ {q:'체온(약 36.5℃)으로 손바닥 위에서 액체로 녹일 수 있는 갈륨 금속의 녹는점은 얼마일까?',o:['약 30℃','약 100℃','약 660℃'],a:0,
+  e:'갈륨의 녹는점은 약 30℃로 체온보다 낮기 때문에 손바닥 위에 올려두면 액체로 녹아요! (① 실험의 갈륨 손바닥 모드)'}
+];
+let qi=0,qdone=false,score=0;
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+score;
+  $('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  Q.o.forEach((t,i)=>{const b=document.createElement('button');b.className='qopt';b.textContent=t;
+    b.onclick=()=>{if(qdone)return;qdone=true;const ok=i===Q.a;if(ok)score++;
+      [...$('#qopts').children].forEach((x,j)=>{if(j===Q.a)x.classList.add('right');else if(j===i)x.classList.add('wrong')});
+      $('#qexp').innerHTML=(ok?'🎉 정답! ':'💡 다시 생각해 볼까요? ')+Q.e;$('#qexp').className='qexp on';
+      $('#qnext').style.display='';$('#qnext').textContent=qi<QZ.length-1?'다음 ▶':'결과 보기';
+      $('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+score};
+    $('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;score=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{$('#qprog').textContent='';$('#qq').textContent='🏁 '+score+' / '+QZ.length+' 문제 정답!';$('#qopts').innerHTML='';
+  $('#qexp').innerHTML=score===QZ.length?'오개념 없이 완벽해요! 👏':'틀린 문제는 실험에서 다시 확인해 보세요.';$('#qexp').className='qexp on';$('#qnext').style.display='none'}};
+$('#btnLife').onclick=()=>$('#modal2').classList.add('on');$('#lclose').onclick=()=>$('#modal2').classList.remove('on');
+</script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>혼합물 분리 가상실험실 (볍씨 고르기·분별 깔때기)</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+.btn.salt{background:#fff7ed;border-color:#fb923c;color:#9a3412}
+.btn.salt.hot{background:#f97316;border-color:#ea580c;color:#fff;animation:pls .9s infinite}
+@keyframes pls{50%{box-shadow:0 0 0 8px rgba(249,115,22,.35)}}
+.mode.on.m2{grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr)}
+.stagewrap canvas{touch-action:none}
+.chk{display:flex;flex-direction:column;gap:6px}
+.ck{display:flex;gap:8px;align-items:flex-start;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:6px 10px;font-weight:800;line-height:1.4;font-size:clamp(13px,1.15vw,18px)}
+.ck b{flex:0 0 1.6em;font-size:1.2em;text-align:center}
+.ck.ok{background:#f0fdf4;border-color:#22c55e}.ck.warn{background:#fff7ed;border-color:#f97316}.ck.bad{background:#fef2f2;border-color:#ef4444}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.stp{flex:1;min-width:120px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;font-weight:800;font-size:clamp(12px,1.05vw,16px);text-align:center;line-height:1.3}
+.stp.now{background:#fef9c3;border-color:#facc15}.stp.done{background:#dcfce7;border-color:#22c55e}
+.light{display:inline-block;width:18px;height:18px;border-radius:50%;background:#ef4444;vertical-align:-3px;margin-right:4px;border:2px solid #fff;box-shadow:0 0 0 2px #cbd5e1}
+.light.y{background:#facc15}.light.g{background:#22c55e;box-shadow:0 0 0 2px #cbd5e1,0 0 12px #22c55e}
+input[type=range].dens{min-width:180px}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.55)}}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧪 혼합물 분리 가상실험실<small>볍씨 고르기 · 분별 깔때기</small></h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 좋은 볍씨 고르기</button>
+    <button class="tab" id="tab2">② 분별 깔때기</button>
+  </div>
+  <span class="sp"></span>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <button class="hb life" id="btnLife">🌍 생활 속 적용</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+
+<main>
+<section class="mode on" id="m1">
+  <div class="col">
+    <div class="card stagewrap"><canvas id="c1"></canvas><div class="toast" id="toast1"></div></div>
+    <div class="card ctl">
+      <div class="row"><button class="btn go" id="bPour">① 🌾 볍씨 붓기</button>
+        <button class="btn salt" id="bSalt">② 🧂 소금 넣기</button><button class="btn" id="bWater">🚰 물 타기</button>
+        <button class="btn dng" id="r1">↺ 리셋</button></div>
+      <div class="row"><span class="lab">밀도</span><span style="font-size:1.1em">1.00</span><input type="range" class="dens" id="dens" min="1" max="1.3" step="0.01" value="1"><span style="font-size:1.1em">1.30</span><span class="tval" id="densV">1.00</span></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="hudtop">
+      <div class="hc"><span>소금물 밀도 (g/cm³)</span><b id="hRho">1.00</b></div>
+      <div class="hc"><span>달걀 (비중 측정)</span><b id="hEgg" style="font-size:clamp(14px,1.4vw,21px)">가라앉음</b></div>
+    </div>
+    <div class="hudtop">
+      <div class="hc"><span>알곡 (가라앉음)</span><b id="hGood">0 / 14</b></div>
+      <div class="hc"><span>쭉정이 (뜸)</span><b id="hChaff">0 / 14</b></div>
+      <div class="hc"><span>건진 쭉정이</span><b id="hColl">0 / 14</b></div>
+    </div>
+    <div class="steps" id="st1">
+      <div class="stp" data-s="0">① 볍씨를 맹물에 붓기<br><small>모두 가라앉아요</small></div>
+      <div class="stp" data-s="1">② 소금을 녹여 밀도 높이기<br><small>달걀이 동전만큼 뜨면 OK</small></div>
+      <div class="stp" data-s="2">③ 쭉정이만 떠오름</div>
+      <div class="stp" data-s="3">④ 뜰채로 쭉정이 건지기<br><small>끌어서 바구니에!</small></div>
+    </div>
+    <div class="sum idle" id="sum1">🌾 [볍씨 붓기]를 눌러 시작해요.</div>
+  </div>
+</section>
+
+<section class="mode m2" id="m2">
+  <div class="col">
+    <div class="card stagewrap"><canvas id="c2"></canvas><div class="toast" id="toast2"></div></div>
+    <div class="card ctl">
+      <div class="row"><button class="btn go" id="bFill">① 🧪 넣고 흔들기</button>
+        <button class="btn" id="bStop">② 마개: 닫힘</button><button class="btn" id="bTap">꼭지: 닫힘</button>
+        <button class="btn pre" id="bTop">④ 위쪽 입구로 따르기</button><button class="btn dng" id="r2">↺ 리셋</button></div>
+      <div class="row"><span class="lab">받는 비커</span>
+        <button class="btn chip on" data-bk="W">(가) 물</button><button class="btn chip" data-bk="I">경계면 비커</button><button class="btn chip" data-bk="O">(나) 식용유</button></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="hudtop">
+      <div class="hc"><span>마개</span><b id="hStop">닫힘</b></div>
+      <div class="hc"><span>꼭지</span><b id="hTap">닫힘</b></div>
+      <div class="hc"><span>깔때기 속</span><b id="hVol">0 mL</b></div>
+    </div>
+    <div class="hudtop">
+      <div class="hc"><span>(가) 물 순도</span><b id="hPw">-</b></div>
+      <div class="hc"><span>(나) 식용유 순도</span><b id="hPo">-</b></div>
+    </div>
+    <div class="chk" id="chk">
+      <div class="ck" id="k1"><b>○</b><span>① 마개를 먼저 연 뒤 꼭지를 연다</span></div>
+      <div class="ck" id="k2"><b>○</b><span>② 두 층의 경계면은 별도 비커에 따로 받아 버린다</span></div>
+      <div class="ck" id="k3"><b>○</b><span>③ 위층 식용유는 꼭지가 아닌 위쪽 입구로 따라낸다</span></div>
+    </div>
+    <div class="sum idle" id="sum2">🧪 [넣고 흔들기]를 눌러 시작해요.</div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<div class="modal" id="modal2"><div class="qbox">
+  <h2>🌍 생활 속 혼합물의 분리</h2>
+  <div class="lgrid2">
+    <div class="lc"><b>🍲 사골국의 기름 걷어내기</b><small>기름이 물보다 가벼워 위에 떠요. 식혀서 숟가락으로 걷어내요.</small></div>
+    <div class="lc"><b>🛢 바다에 유출된 기름</b><small>오일펜스(기름막이)로 퍼지는 것을 막고 흡착포로 걷어내요. 기름은 물 위에 떠요.</small></div>
+    <div class="lc"><b>🫒 간장과 올리브유</b><small>서로 섞이지 않고 밀도 차로 층이 나뉘어 분별 깔때기로 분리할 수 있어요.</small></div>
+    <div class="lc"><b>🌾 볍씨 소금물 고르기(염수선)</b><small>소금물 위에 뜨는 쭉정이는 걷어내고 가라앉은 알찬 볍씨만 써요.</small></div>
+  </div>
+  <div class="qfoot"><button class="btn" id="lclose">닫기 ✕</button></div>
+</div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function rnd(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(.16,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3);
+let mode=1;
+function setMode(m){mode=m;$('#m1').classList.toggle('on',m===1);$('#m2').classList.toggle('on',m===2);$('#tab1').classList.toggle('on',m===1);$('#tab2').classList.toggle('on',m===2)}
+$('#tab1').onclick=()=>setMode(1);$('#tab2').onclick=()=>setMode(2);
+
+/* ═════════════ 모드 ① 좋은 볍씨 고르기 ═════════════
+   밀도: 쭉정이(1.01~1.08) < 적정 소금물(1.12~1.17) < 알찬 볍씨(1.18~1.24),  달걀 1.09 */
+const TK={x0:.06,x1:.68,y0:.30,y1:.90},WS=.38,HOME={x:.56,y:.19},BSK={x:.72,y:.40,w:.26,h:.50};
+const EGG=1.09,GOOD=[1.12,1.17];
+let M1;
+function m1Init(){
+  const seeds=[];for(let i=0;i<28;i++){const good=i<14;
+    seeds.push({good,rho:good?1.18+rnd(i*3+1)*.06:1.01+rnd(i*5+1)*.07,x:0,y:0,vy:0,st:'basket',delay:rnd(i+9)*1.3,ang:rnd(i+20)*3.14,off:rnd(i+40),tx:.10+rnd(i+60)*.55,held:false,coll:false,hx:0,hy:0,bi:0})}
+  M1={rho:1,target:1,seeds,poured:false,egg:{y:TK.y1-.06},net:{x:HOME.x,y:HOME.y,drag:false,back:false},grains:[],won:false,saltT:0,collN:0,goodLost:0,step:0};
+  $('#dens').value=1;
+}
+function m1Pour(){if(M1.poured)return;M1.poured=true;M1.seeds.forEach(s=>{s.st='fall';s.x=.10+rnd(s.tx*99)*.18;s.y=.10;s.vy=0});sOK()}
+function m1Salt(d){
+  if(!M1.poured){toast('#toast1','먼저 [볍씨 붓기]를 눌러요');return}
+  M1.target=clamp(+(M1.target+d).toFixed(2),1,1.3);$('#dens').value=M1.target;
+  if(d>0){M1.saltT=1;for(let i=0;i<24;i++)M1.grains.push({x:.30+(Math.random()-.5)*.04,y:.14+Math.random()*.05,v:.25+Math.random()*.3})}
+}
+$('#bPour').onclick=m1Pour;$('#bSalt').onclick=()=>m1Salt(.04);$('#bWater').onclick=()=>m1Salt(-.04);$('#r1').onclick=m1Init;
+$('#dens').oninput=e=>{if(!M1.poured){toast('#toast1','먼저 [볍씨 붓기]를 눌러요');e.target.value=1;return}const v=+e.target.value;if(v>M1.target)for(let i=0;i<14;i++)M1.grains.push({x:.30+(Math.random()-.5)*.04,y:.14+Math.random()*.05,v:.25+Math.random()*.3});M1.target=v};
+function m1Step(dt){
+  const M=M1;M.rho+=(M.target-M.rho)*Math.min(1,dt*1.3);
+  M.saltT=Math.max(0,M.saltT-dt);
+  M.grains.forEach(g=>g.y+=g.v*dt);M.grains=M.grains.filter(g=>g.y<WS);
+  // 달걀
+  const exp=clamp((M.rho-EGG)*400,0,44),ey=M.rho<EGG?TK.y1-.06:WS-exp/ (M.cvH||400)+0.045;
+  M.egg.y+=(ey-M.egg.y)*Math.min(1,dt*2.2);M.egg.exp=exp;
+  M.seeds.forEach(s=>{
+    if(s.coll||s.st==='basket')return;
+    if(s.held){s.x=M.net.x+s.hx;s.y=M.net.y+s.hy;return}
+    if(s.st==='fall'){s.delay-=dt;if(s.delay>0)return;s.y+=dt*.75;s.x+=(s.tx-s.x)*dt*.5;if(s.y>=WS+.005){s.st='water';s.vy=.15}return}
+    const dr=s.rho-M.rho,vt=dr>0?Math.min(.3,.06+dr*2.4):-Math.min(.3,.06-dr*2.4);
+    s.vy+=(vt-s.vy)*Math.min(1,dt*3);s.y+=s.vy*dt;
+    const yb=TK.y1-.03-s.off*.04,ys=WS+.014+s.off*.03;s.y=clamp(s.y,ys,yb);
+    s.x+=(s.tx-s.x)*dt*.4;s.x=clamp(s.x,TK.x0+.03,TK.x1-.03);
+  });
+  // 건진 쭉정이
+  const chaffTotal=14;const sunkGood=M.seeds.filter(s=>s.good&&!s.coll&&s.st==='water'&&s.y>(WS+TK.y1)/2).length;
+  const floatChaff=M.seeds.filter(s=>!s.good&&!s.coll&&s.st==='water'&&s.y<WS+.08).length;
+  M.cnt={good:sunkGood,chaff:floatChaff,coll:M.seeds.filter(s=>!s.good&&s.coll).length,lost:M.seeds.filter(s=>s.good&&s.coll).length};
+  // 단계
+  let st=0;if(M.poured)st=1;if(M.rho>=GOOD[0]-.005&&M.poured)st=2;if(M.cnt.coll>0)st=3;if(M.won)st=4;M.step=st;
+}
+function norm(cv,e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height,w:r.width,h:r.height}}
+const c1=$('#c1');let nid=null;
+c1.addEventListener('pointerdown',e=>{const p=norm(c1,e),N=M1.net;if(Math.hypot((p.x-N.x)*p.w,(p.y-N.y)*p.h)<64){nid=e.pointerId;c1.setPointerCapture(nid);N.drag=true;N.back=false;N.x=p.x;N.y=p.y;e.preventDefault()}});
+c1.addEventListener('pointermove',e=>{if(nid!==e.pointerId)return;const p=norm(c1,e),N=M1.net;N.x=clamp(p.x,.02,.98);N.y=clamp(p.y,.04,.97);
+  const inWater=N.x>TK.x0&&N.x<TK.x1&&N.y>WS-.02&&N.y<TK.y1;
+  if(inWater){const rx=40/p.w,ry=40/p.h;M1.seeds.forEach(s=>{if(s.held||s.coll||s.st!=='water')return;if(M1.seeds.filter(q=>q.held).length>=24)return;
+    if(((s.x-N.x)/rx)**2+((s.y-N.y)/ry)**2<1.3){s.held=true;s.hx=clamp((s.x-N.x)*.6,-rx*.7,rx*.7);s.hy=clamp((s.y-N.y)*.6,-ry*.7,ry*.7)}})}});
+function netUp(e){if(nid!==e.pointerId)return;nid=null;const N=M1.net;N.drag=false;
+  const held=M1.seeds.filter(s=>s.held);
+  if(N.x>BSK.x&&N.x<BSK.x+BSK.w&&N.y>BSK.y-.1&&N.y<BSK.y+BSK.h){let k=M1.seeds.filter(s=>s.coll).length;held.forEach(s=>{s.held=false;s.coll=true;s.bi=k++});
+    if(held.length){const bad=held.filter(s=>s.good).length;bad?(sNO(),toast('#toast1','⚠️ 알곡 '+bad+'개가 같이 들어갔어요! 수면 근처의 쭉정이만 건져요')):sOK()}
+    checkWin()}
+  else held.forEach(s=>{s.held=false;if(s.y<WS){s.y=WS+.02;s.st='water'}});
+  N.back=true}
+function checkWin(){if(M1.won)return;const left=M1.seeds.filter(s=>!s.good&&!s.coll).length;if(left===0){M1.won=true;const lost=M1.seeds.filter(s=>s.good&&s.coll).length;
+  setTimeout(()=>{sOK();toast('#toast1',lost?'🎉 쭉정이 14개를 모두 건졌어요! (알곡 '+lost+'개가 섞였어요)':'🎉 분리 성공! 알곡 14개는 바닥에, 쭉정이 14개는 바구니에!',5000)},200)}}
+c1.addEventListener('pointerup',netUp);c1.addEventListener('pointercancel',netUp);
+
+function drawEgg(g,w,h,M){const ex=w*.14,ey=M.egg.y*h,rx=Math.max(14,w*.026),ry=rx*1.3;
+  g.fillStyle='#fef3c7';g.strokeStyle='#a16207';g.lineWidth=2.5;g.beginPath();g.ellipse(ex,ey,rx,ry,0,0,6.28);g.fill();g.stroke();
+  g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.ellipse(ex-rx*.3,ey-ry*.3,rx*.25,ry*.3,-.5,0,6.28);g.fill();
+  g.fillStyle='#78350f';g.font='800 '+Math.max(11,w*.017)+'px sans-serif';g.textAlign='center';g.fillText('🥚 달걀',ex,ey+ry+16);
+  if(M.rho>=EGG&&M.egg.exp>6){const sy=WS*h;g.fillStyle='#fbbf24';g.strokeStyle='#92400e';g.lineWidth=2;const cr=Math.max(12,w*.022);g.beginPath();g.arc(ex+rx*2.6,sy-cr-4,cr,0,6.28);g.fill();g.stroke();g.fillStyle='#78350f';g.font='900 '+cr*.7+'px sans-serif';g.fillText('500',ex+rx*2.6,sy-cr+3);
+    g.font='800 '+Math.max(11,w*.016)+'px sans-serif';g.fillText('동전 크기',ex+rx*2.6,sy-cr*2-10)}}
+function drawSeed(g,w,h,s,r){g.save();g.translate(s.x*w,s.y*h);g.rotate(s.ang);
+  g.fillStyle=s.good?'#facc15':'#d6b98a';g.strokeStyle=s.good?'#a16207':'#8b6f47';g.lineWidth=1.6;g.beginPath();g.ellipse(0,0,r*1.7,r*.9,0,0,6.28);g.fill();g.stroke();
+  if(!s.good){g.strokeStyle='rgba(120,90,50,.7)';g.beginPath();g.moveTo(-r,0);g.lineTo(r,0);g.stroke()}else{g.fillStyle='rgba(255,255,255,.5)';g.beginPath();g.ellipse(-r*.4,-r*.25,r*.5,r*.2,0,0,6.28);g.fill()}
+  g.restore()}
+function scene1(g,w,h){
+  const M=M1;M.cvH=h;
+  const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#f8fafc');gr.addColorStop(1,'#e2e8f0');g.fillStyle=gr;g.fillRect(0,0,w,h);
+  const tx=TK.x0*w,ty=TK.y0*h,tw=(TK.x1-TK.x0)*w,th=(TK.y1-TK.y0)*h,sy=WS*h;
+  // 밀도 게이지
+  const gx=w*.08,gw=w*.58,gy=h*.04,gh=Math.max(14,h*.035);
+  const gg=g.createLinearGradient(gx,0,gx+gw,0);gg.addColorStop(0,'#93c5fd');gg.addColorStop(1,'#1e3a8a');g.fillStyle=gg;rr(g,gx,gy,gw,gh,gh/2);g.fill();
+  const zx=gx+gw*(GOOD[0]-1)/.3,zw=gw*(GOOD[1]-GOOD[0])/.3;g.fillStyle='rgba(34,197,94,.85)';g.fillRect(zx,gy-3,zw,gh+6);
+  g.fillStyle='#0f172a';g.font='800 '+Math.max(11,w*.016)+'px sans-serif';g.textAlign='center';g.fillText('적정 구간',zx+zw/2,gy+gh+16);
+  g.textAlign='left';g.fillText('1.00',gx,gy+gh+16);g.textAlign='right';g.fillText('1.30',gx+gw,gy+gh+16);
+  const nx=gx+gw*clamp((M.rho-1)/.3,0,1);g.fillStyle='#ef4444';g.beginPath();g.moveTo(nx,gy+gh+2);g.lineTo(nx-8,gy+gh+16);g.lineTo(nx+8,gy+gh+16);g.fill();
+  // 소금통
+  const sx=w*.36,sj=h*.19;g.save();g.translate(sx,sj);g.rotate(M.saltT>0?-.9:0);g.fillStyle='#fff';g.strokeStyle='#64748b';g.lineWidth=3;rr(g,-18,-24,36,48,8);g.fill();g.stroke();g.fillStyle='#94a3b8';g.fillRect(-12,-30,24,8);g.fillStyle='#334155';g.font='900 12px sans-serif';g.textAlign='center';g.fillText('소금',0,6);g.restore();
+  // 볍씨 바구니(붓기 전)
+  const bx=w*.14,by=h*.17;g.fillStyle='#b45309';g.beginPath();g.moveTo(bx-46,by-6);g.lineTo(bx+46,by-6);g.lineTo(bx+36,by+30);g.lineTo(bx-36,by+30);g.closePath();g.fill();
+  g.fillStyle='#fff';g.font='900 '+Math.max(11,w*.016)+'px sans-serif';g.textAlign='center';g.fillText('볍씨',bx,by+18);
+  M.seeds.forEach((s,i)=>{if(s.st==='basket'){s.x=(bx-30+rnd(i+3)*60)/w;s.y=(by-8-rnd(i+8)*10)/h;drawSeed(g,w,h,s,Math.max(4,w*.0075))}});
+  // 수조
+  g.fillStyle='rgba(255,255,255,.35)';g.fillRect(tx,ty,tw,th);
+  const dn=clamp((M.rho-1)/.3,0,1);g.fillStyle='rgba('+Math.round(125-70*dn)+','+Math.round(190-70*dn)+','+Math.round(250-60*dn)+',.55)';g.fillRect(tx+2,sy,tw-4,th-(sy-ty)-2);
+  g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=3;g.beginPath();g.moveTo(tx+2,sy);g.lineTo(tx+tw-2,sy);g.stroke();
+  // 소금 알갱이
+  g.fillStyle='#fff';M.grains.forEach(p=>{g.fillRect(p.x*w-2,p.y*h-2,4,4)});
+  const r=Math.max(4,w*.0075);
+  M.seeds.forEach(s=>{if(s.st!=='basket'&&!s.coll&&!s.held)drawSeed(g,w,h,s,r)});
+  drawEgg(g,w,h,M);
+  M.seeds.forEach(s=>{if(s.held)drawSeed(g,w,h,s,r)});
+  g.strokeStyle='#475569';g.lineWidth=5;g.lineJoin='round';g.beginPath();g.moveTo(tx,ty);g.lineTo(tx,ty+th);g.lineTo(tx+tw,ty+th);g.lineTo(tx+tw,ty);g.stroke();
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(13,w*.02)+'px sans-serif';g.textAlign='left';g.fillText('수조 (소금물 '+M.rho.toFixed(2)+')',tx+8,ty+th+22);
+  // 바구니(쭉정이)
+  const bw=BSK.w*w,bh=BSK.h*h,bX=BSK.x*w,bY=BSK.y*h;g.fillStyle='rgba(180,83,9,.15)';g.strokeStyle='#b45309';g.lineWidth=4;g.setLineDash([10,6]);rr(g,bX,bY,bw,bh,14);g.fill();g.stroke();g.setLineDash([]);
+  g.fillStyle='#92400e';g.font='900 '+Math.max(13,w*.019)+'px sans-serif';g.textAlign='center';g.fillText('🧺 쭉정이 바구니',bX+bw/2,bY+bh+20);
+  M.seeds.forEach(s=>{if(s.coll){const c=Math.max(1,Math.floor(bw/(r*3.6))),i=s.bi;s.x=(bX+r*2.5+(i%c)*r*3.6)/w;s.y=(bY+bh-r*2-Math.floor(i/c)*r*2.3)/h;drawSeed(g,w,h,s,r)}});
+  // 뜰채
+  const N=M.net;if(N.back&&!N.drag){N.x+=(HOME.x-N.x)*.08;N.y+=(HOME.y-N.y)*.08}
+  const nxp=N.x*w,nyp=N.y*h,R=Math.max(30,w*.052);
+  g.strokeStyle='#64748b';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(nxp+R*.7,nyp-R*.7);g.lineTo(nxp+R*1.6,nyp-R*1.6);g.stroke();g.lineCap='butt';
+  g.fillStyle='rgba(148,163,184,.22)';g.strokeStyle='#475569';g.lineWidth=5;g.beginPath();g.arc(nxp,nyp,R,0,6.28);g.fill();g.stroke();
+  g.strokeStyle='rgba(71,85,105,.6)';g.lineWidth=1.5;for(let k=-3;k<=3;k++){g.beginPath();g.moveTo(nxp-R,nyp+k*R/3.5);g.lineTo(nxp+R,nyp+k*R/3.5);g.stroke();g.beginPath();g.moveTo(nxp+k*R/3.5,nyp-R);g.lineTo(nxp+k*R/3.5,nyp+R);g.stroke()}
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(12,w*.017)+'px sans-serif';g.textAlign='center';if(!N.drag&&M.step<4)g.fillText('뜰채 (끌어서 사용)',nxp+R*.5,nyp+R+18);
+  // 상태 라벨
+  g.font='800 '+Math.max(11,w*.016)+'px sans-serif';
+  if(M.poured&&M.cnt){g.fillStyle='#a16207';g.textAlign='right';g.fillText('⬆ 수면: 쭉정이 '+M.cnt.chaff+'개',tx+tw-6,sy-6)}
+}
+function updHud1(){
+  const M=M1,rho=M.rho;$('#hRho').textContent=rho.toFixed(2);$('#densV').textContent=M.target.toFixed(2);
+  let egg,lt;if(rho<EGG){egg='가라앉음';lt='r'}else if(rho<GOOD[0]){egg='떠오르는 중…';lt='y'}else if(rho<=GOOD[1]){egg='동전 크기 노출 ✅';lt='g'}else{egg='너무 많이 뜸';lt='r'}
+  $('#hEgg').innerHTML='<span class="light '+(lt==='g'?'g':lt==='y'?'y':'')+'"></span>'+egg;
+  const c=M.cnt||{good:0,chaff:0,coll:0,lost:0};$('#hGood').textContent=c.good+' / 14';$('#hChaff').textContent=c.chaff+' / 14';$('#hColl').textContent=c.coll+' / 14';
+  $$('#st1 .stp').forEach(e=>{const i=+e.dataset.s;e.classList.toggle('done',i<M.step);e.classList.toggle('now',i===M.step)});
+  const el=$('#sum1');let m,cls='sum';
+  if(!M.poured){m='🌾 [볍씨 붓기]를 눌러 시작해요.';cls='sum idle'}
+  else if(M.won){m='🎉 쭉정이는 소금물 위로 떠오르고 알찬 볍씨는 가라앉았어요. 밀도 차이로 고체 혼합물을 분리했어요!';cls='sum key'}
+  else if(rho<EGG){m='맹물(1.00)에서는 알곡과 쭉정이가 <b>모두 가라앉아요</b>. ② 소금을 넣어 밀도를 높여 봐요. 달걀이 떠오르는지 보세요!'}
+  else if(rho<GOOD[0]){m='달걀이 떠오르기 시작해요. 쭉정이는 벌써 떠오르는 것도 있어요. 더 넣어 볼까요?'}
+  else if(rho<=GOOD[1]){m='🟢 <b>적정 농도!</b> 달걀이 500원 동전만큼 보여요. 소금물 밀도가 쭉정이보다는 크고 알곡보다는 작아서 쭉정이만 떠요. ④ 뜰채로 건져요!'}
+  else{m='🔴 너무 진해요! 밀도가 알곡보다 커지면 알곡도 떠올라요. [물 타기]로 낮춰요.'}
+  el.className=cls;el.innerHTML=m;
+  $('#bPour').classList.toggle('next',!M.poured);$('#bSalt').classList.toggle('hot',M.poured&&rho<GOOD[0]);
+}
+m1Init();
+
+/* ═════════════ 모드 ② 분별 깔때기 ═════════════ */
+const VCAP=150,NP=160,PROF=[],CB=[];
+function wr(u){if(u<.07)return .10;if(u<.45){const t=(u-.07)/.38,e=t*t*(3-2*t);return lerp(.10,1,e)}if(u<.55)return 1;return lerp(1,.10,(u-.55)/.45)}
+(function(){let a=0;for(let i=NP;i>=0;i--){const u=i/NP;PROF[i]=wr(u);}
+  const cum=new Array(NP+1).fill(0);for(let i=NP-1;i>=0;i--){cum[i]=cum[i+1]+((PROF[i]**2+PROF[i+1]**2)/2)/NP}
+  for(let i=0;i<=NP;i++)CB[i]=cum[i]})();
+function lvlU(v){const tot=CB[0],tgt=clamp(v/VCAP,0,1)*tot;for(let i=NP;i>=0;i--){if(CB[i]>=tgt)return lerp(i/NP,(i+1)/NP,i===NP?0:(CB[i]-tgt)/Math.max(1e-9,CB[i]-CB[i+1]))}return 0}
+const BK=['W','I','O'],BKN={W:'(가) 물',I:'경계면 비커',O:'(나) 식용유'};
+let F;
+function fInit(){F={phase:'empty',sep:0,shakeT:0,w:0,i:0,o:0,stopper:true,tap:false,active:'W',bx:{W:.60,I:.76,O:.91},bk:{W:{w:0,i:0,o:0},I:{w:0,i:0,o:0},O:{w:0,i:0,o:0}},c1:'todo',c2:'todo',c3:'todo',tilt:0,pourT:0,tapOil:0,flowing:null,hintW:false,droplets:[],result:null,tapWarn:0,stopOpenA:0};
+  for(let i=0;i<70;i++)F.droplets.push({u:rnd(i)*.9+.05,x:rnd(i+99)*2-1,o:i%2===0,ph:rnd(i+5)*6.28});
+  updBtns2()}
+function geom(w,h){const L=h*.42,W=Math.min(w*.13,h*.26);return {cx:w*.30,y0:h*.17,L,W,base:h*.95}}
+function bwid(w){return Math.max(56,w*.12)}
+function pivX(w,G){return G.cx+(F.tilt/1.75)*G.W*1.8}
+function bPurity(k){const b=F.bk[k],t=b.w+b.i+b.o;return t<0.3?null:(k==='W'?b.w:k==='O'?b.o:0)/t}
+function warn(msg){sNO();toast('#toast2',msg,3800)}
+function underOK(w){return Math.abs(F.bx[F.active]-geom(w,400).cx/w)<.01}
+function updBtns2(){$('#bStop').textContent='② 마개: '+(F.stopper?'닫힘 (눌러 열기)':'열림');$('#bTap').textContent='꼭지: '+(F.tap?'열림 (눌러 잠그기)':'닫힘');
+  $$('[data-bk]').forEach(b=>b.classList.toggle('on',b.dataset.bk===F.active))}
+function fFill(){if(F.phase!=='empty')return;F.phase='shaking';F.shakeT=0;F.w=50;F.i=0;F.o=50;F.stopper=true;F.tap=false;updBtns2()}
+function togStop(){if(F.phase==='pouring')return;F.stopper=!F.stopper;F.stopOpenA=F.stopper?0:1;updBtns2();if(!F.stopper&&F.tap&&F.phase==='ready')toast('#toast2','💨 마개를 열자 공기가 들어가 액체가 흘러내려요!',2500)}
+function togTap(){
+  if(F.phase==='pouring'||F.phase==='empty'||F.phase==='shaking'||F.phase==='settling')return;
+  F.tap=!F.tap;
+  if(F.tap&&F.stopper&&(F.w+F.i+F.o)>0.3){F.c1='warn';warn('⚠️ 마개가 닫혀 있어 내부 압력이 낮아 액체가 흐르지 않습니다! 마개를 먼저 여세요.')}
+  updBtns2()}
+$('#bFill').onclick=fFill;$('#bStop').onclick=togStop;$('#bTap').onclick=togTap;$('#r2').onclick=fInit;
+$$('[data-bk]').forEach(b=>b.onclick=()=>{F.active=b.dataset.bk;updBtns2()});
+$('#bTop').onclick=()=>{
+  if(F.phase!=='ready'){toast('#toast2','먼저 물과 식용유를 넣고 층이 나뉘도록 기다려요');return}
+  if(F.tap){F.tap=false;updBtns2()}
+  if(F.w>0.5){warn('⚠️ 먼저 아래층 물을 꼭지로 (가) 비커에 받아요');return}
+  if(F.i>0.5){warn('⚠️ 경계면 액체를 [경계면 비커]에 따로 받아 버려요');return}
+  if(F.o<0.5)return;
+  F.stopper=false;F.active='O';F.phase='pouring';F.pourT=0;updBtns2()}
+const c2=$('#c2');
+c2.addEventListener('pointerdown',e=>{const r=c2.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,G=geom(r.width,r.height);
+  if(F.phase==='pouring')return;
+  if(Math.abs(x-G.cx)<G.W*.5&&y>G.y0-70&&y<G.y0+14){togStop();return}
+  if(Math.abs(x-G.cx)<48&&Math.abs(y-(G.y0+G.L*1.13))<44){togTap();return}
+  BK.forEach(k=>{const bx=F.bx[k]*r.width,bw=bwid(r.width);if(Math.abs(x-bx)<bw*.6&&y>G.base-bw*1.3){F.active=k;updBtns2()}})});
+
+function fStep(dt,w,h){
+  const G=geom(w,h);
+  BK.forEach(k=>{const rest={W:.60,I:.76,O:.91}[k],tgt=(k===F.active)?pivX(w,G)/w:rest;F.bx[k]+=(tgt-F.bx[k])*Math.min(1,dt*6)});
+  F.flowing=null;
+  if(F.phase==='shaking'){F.shakeT+=dt;if(F.shakeT>1.8){F.phase='settling';F.sep=0}}
+  else if(F.phase==='settling'){F.sep+=dt/4;if(F.sep>=1){F.sep=1;F.phase='ready';F.w=48;F.i=5;F.o=47}}
+  else if(F.phase==='ready'){
+    if(F.tap&&F.stopper&&(F.w+F.i+F.o)>0.3){F.tapWarn+=dt}
+    if(F.tap&&!F.stopper&&Math.abs(F.bx[F.active]-pivX(w,G)/w)<.015){
+      let rate=F.w>0?2.5+7*clamp((F.w-2)/18,0,1):F.i>0?2.5:2.5;let v=Math.min(rate*dt,F.w+F.i+F.o);
+      const B=F.bk[F.active];let kind=null;
+      if(F.c1!=='ok')F.c1='ok';
+      if(F.w>0.0001){const d=Math.min(v,F.w);F.w-=d;B.w+=d;kind='w'}
+      else if(F.i>0.0001){const d=Math.min(v,F.i);F.i-=d;B.i+=d;kind='i'}
+      else if(F.o>0.0001){const d=Math.min(v,F.o);F.o-=d;B.o+=d*.85;B.w+=d*.15;kind='o';F.tapOil=(F.tapOil||0)+d;if(F.tapOil>1.5&&F.c3!=='bad'){F.c3='bad';warn('⚠️ 꼭지로 식용유를 빼면 꼭지와 관 내벽에 남은 물과 섞여 순도가 떨어져요! 위쪽 입구로 따라내야 해요.')}}
+      F.flowing=kind;
+      if(kind==='w'&&F.w<9&&F.w>0.05&&!F.hintW){F.hintW=true;toast('#toast2','🔔 경계면이 곧 꼭지에 도달해요! 꼭지를 잠그세요',2600);sNO()}
+    }
+    if(F.w<=0.05&&F.i>4.9&&F.hintW===false){}
+  }else if(F.phase==='pouring'){
+    F.pourT+=dt;
+    if(F.pourT<1.2)F.tilt=Math.min(1.75,F.pourT/1.2*1.75);
+    else if(F.o>0.01){F.tilt=1.75;const d=Math.min(F.o,11*dt);F.o-=d;F.bk.O.o+=d;F.flowing='top'}
+    else{F.tilt=Math.max(0,F.tilt-dt*2);if(F.tilt<=0){F.phase='done';fFinish()}}
+  }
+}
+function fFinish(){
+  const W=F.bk.W,I=F.bk.I,O=F.bk.O;
+  if(F.c3!=='bad')F.c3='ok';
+  const wp=W.w/Math.max(1,W.w+W.i+W.o);
+  F.c2=(I.i>=2.5&&wp>=0.95)?'ok':'bad';
+  const ok=F.c1==='ok'&&F.c2==='ok'&&F.c3==='ok';
+  sOK();F.result=ok?'🎉 완벽한 분리!':'분리는 끝났어요. 체크리스트에서 놓친 주의사항을 확인해요.'
+}
+function layersDraw(g,vols,lo,hi,L,Wh,alpha,wdt){ /* vols: [[v0,v1,color]] in funnel coords */
+  vols.forEach(([a,b,col])=>{if(b-a<=0.01)return;const ua=lvlU(b),ub=lvlU(a);g.fillStyle=col;g.globalAlpha=alpha;g.fillRect(-wdt,ua*L,wdt*2,(ub-ua)*L+1);g.globalAlpha=1})}
+function bodyPath(g,L,W){const stem=W*.10;g.beginPath();g.moveTo(-W*.10,0);for(let i=0;i<=NP;i++){g.lineTo(-PROF[i]*W,i/NP*L)}g.lineTo(-stem,L*1.30);g.lineTo(stem,L*1.30);for(let i=NP;i>=0;i--){g.lineTo(PROF[i]*W,i/NP*L)}g.lineTo(W*.10,0);g.closePath()}
+function drawFunnel(g,w,h,G,t){
+  const {cx,y0,L,W}=G;
+  // 스탠드
+  g.fillStyle='#475569';g.fillRect(cx-W*1.25,y0-h*.06,10,h*.8);g.fillRect(cx-W*1.5,h*.74,W*1.0,10);
+  g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(cx-W*1.22,y0+L*.55);g.lineTo(cx-W*.55,y0+L*.55);g.stroke();
+  g.strokeStyle='#64748b';g.lineWidth=6;g.beginPath();g.arc(cx,y0+L*.55,W*.6,0,6.28);g.stroke();
+  g.save();g.translate(pivX(w,G),y0);
+  const sh=F.phase==='shaking'?Math.sin(F.shakeT*28)*.12:0;g.rotate(F.tilt+sh);
+  if(F.phase==='shaking')g.translate(Math.sin(F.shakeT*28)*6,0);
+  // 액체
+  g.save();bodyPath(g,L,W);g.clip();
+  const emu=F.phase==='shaking'?1:F.phase==='settling'?1-F.sep:0,lay=F.phase==='shaking'?0:F.phase==='settling'?F.sep:1;
+  const tot=(F.phase==='shaking'||F.phase==='settling')?100:F.w+F.i+F.o;
+  if(emu>0){g.fillStyle='rgba(200,215,150,.8)';g.globalAlpha=emu;const ua=lvlU(100);g.fillRect(-W,ua*L,W*2,(1-ua)*L+1);g.globalAlpha=1;
+    const ua2=lvlU(100),ub=1;F.droplets.forEach((d,i)=>{const sepOff=F.phase==='settling'?F.sep:0;let uu=d.u;const top=ua2,bot=1;
+      let y=lerp(top,bot,d.u);if(F.phase==='settling'){const target=d.o?lerp(top,lerp(top,bot,.5),d.u):lerp(lerp(top,bot,.55),bot,d.u);y=lerp(y,target,sepOff)}
+      const x=d.x*W*wr(clamp(y,0,1))*.8+Math.sin(t*4+d.ph)*(F.phase==='shaking'?W*.1:2);
+      g.globalAlpha=emu;g.fillStyle=d.o?'#facc15':'#60a5fa';g.beginPath();g.arc(x,y*L,Math.max(3,W*.07),0,6.28);g.fill()});g.globalAlpha=1}
+  if(lay>0){const ww=(F.phase==='ready'||F.phase==='pouring'||F.phase==='done')?F.w:48,ii=(F.phase==='ready'||F.phase==='pouring'||F.phase==='done')?F.i:5,oo=(F.phase==='ready'||F.phase==='pouring'||F.phase==='done')?F.o:47;
+    layersDraw(g,[[0,ww,'rgba(59,130,246,.75)'],[ww,ww+ii,'rgba(148,163,120,.9)'],[ww+ii,ww+ii+oo,'rgba(250,204,21,.8)']],0,0,L,W,lay,W)}
+  g.restore();
+  g.strokeStyle='#334155';g.lineWidth=4;g.lineJoin='round';bodyPath(g,L,W);g.stroke();g.fillStyle='rgba(255,255,255,.15)';g.fill();
+  // 꼭지
+  const ty=L*1.13;g.fillStyle=F.tap?'#16a34a':'#dc2626';g.save();g.translate(0,ty);g.rotate(F.tap?Math.PI/2:0);g.fillRect(-W*.55,-5,W*1.1,10);g.beginPath();g.arc(-W*.55,0,9,0,6.28);g.arc(W*.55,0,9,0,6.28);g.fill();g.restore();
+  g.fillStyle='#334155';g.beginPath();g.arc(0,ty,9,0,6.28);g.fill();
+  g.fillStyle=F.tap?'#16a34a':'#dc2626';g.font='900 '+Math.max(12,w*.019)+'px sans-serif';g.textAlign='left';g.fillText('꼭지',W*.8,ty+5);
+  // 마개
+  const o=F.stopper?0:1;if(F.tilt<=0.01){g.save();g.translate(o*W*1.1,-o*32);g.rotate(o*.35);g.fillStyle='#bae6fd';g.strokeStyle='#0369a1';g.lineWidth=3;g.beginPath();g.moveTo(-W*.22,-4);g.lineTo(W*.22,-4);g.lineTo(W*.12,-40);g.lineTo(-W*.12,-40);g.closePath();g.fill();g.stroke();g.restore()}
+  if(F.stopper&&F.phase!=='shaking'){g.fillStyle='#0369a1';g.font='900 '+Math.max(12,w*.019)+'px sans-serif';g.textAlign='left';g.fillText('마개',W*.28,-26)}
+  g.restore();
+}
+function drawBeaker2(g,w,h,G,k,t){
+  const bx=F.bx[k]*w,bw=bwid(w),bh=bw*1.05,base=G.base,x0=bx-bw/2,top=base-bh,B=F.bk[k],tot=B.w+B.i+B.o;
+  const sc=bh*.9/100;let y=base-3;
+  [[B.w,'rgba(59,130,246,.75)'],[B.i,'rgba(148,163,120,.9)'],[B.o,'rgba(250,204,21,.85)']].forEach(([v,c])=>{if(v<=0.01)return;const hh=v*sc;g.fillStyle=c;g.fillRect(x0+3,y-hh,bw-6,hh);y-=hh});
+  g.strokeStyle=k===F.active?'#f59e0b':'#475569';g.lineWidth=k===F.active?6:5;g.lineJoin='round';g.beginPath();g.moveTo(x0-4,top-4);g.lineTo(x0,top);g.lineTo(x0,base-8);g.quadraticCurveTo(x0,base,x0+10,base);g.lineTo(x0+bw-10,base);g.quadraticCurveTo(x0+bw,base,x0+bw,base-8);g.lineTo(x0+bw,top);g.lineTo(x0+bw+4,top-4);g.stroke();
+  g.fillStyle='#0f172a';g.font='900 '+Math.max(11,w*.018)+'px sans-serif';g.textAlign='center';g.fillText(BKN[k],bx,base+16);
+  if(tot>0.3){g.font='800 '+Math.max(10,w*.015)+'px sans-serif';g.fillStyle='#334155';g.fillText(tot.toFixed(0)+' mL',bx,top-8)}
+}
+function scene2(g,w,h,t){
+  const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#f8fafc');gr.addColorStop(1,'#e2e8f0');g.fillStyle=gr;g.fillRect(0,0,w,h);
+  const G=geom(w,h);g.fillStyle='#94a3b8';g.fillRect(0,G.base+22,w,h);
+  BK.forEach(k=>{if(k!==F.active)drawBeaker2(g,w,h,G,k,t)});
+  // 흐름
+  const bw=bwid(w),bh=bw*1.05;
+  if(F.flowing&&F.flowing!=='top'){const col=F.flowing==='w'?'#3b82f6':F.flowing==='i'?'#94a378':'#facc15';g.strokeStyle=col;g.lineWidth=5;g.beginPath();g.moveTo(G.cx,G.y0+G.L*1.3);g.lineTo(G.cx,G.base-bh*.5);g.stroke()}
+  drawBeaker2(g,w,h,G,F.active,t);
+  drawFunnel(g,w,h,G,t);
+  if(F.flowing==='top'){g.strokeStyle='#facc15';g.lineWidth=6;const px=pivX(w,G);g.beginPath();g.moveTo(px+6,G.y0);g.quadraticCurveTo(px+22,G.y0+h*.1,px+4,G.base-bh*.4);g.stroke()}
+  // 라벨
+  g.fillStyle='#334155';g.font='800 '+Math.max(12,w*.018)+'px sans-serif';g.textAlign='left';
+  if(F.phase==='ready'||F.phase==='pouring'){const Lh=G.L,u=lvlU(F.w+F.i+F.o);
+    if(F.o>0.5){g.fillStyle='#a16207';g.fillText('식용유 (위층, 가벼움)',G.cx+G.W*1.1,G.y0+G.L*.28)}
+    if(F.w>0.5){g.fillStyle='#1d4ed8';g.fillText('물 (아래층, 무거움)',G.cx+G.W*1.1,G.y0+G.L*.9)}
+    if(F.i>0.3){g.fillStyle='#4d5a3d';g.fillText('▶ 경계면',G.cx+G.W*1.1,G.y0+G.L*.7)}}
+  if(F.phase==='settling'){g.fillStyle='#475569';g.fillText('밀도 차로 층이 나뉘는 중… '+Math.round(F.sep*100)+'%',G.cx+G.W*1.1,G.y0+G.L*.5)}
+  if(F.phase==='shaking'){g.fillStyle='#475569';g.fillText('흔드는 중…',G.cx+G.W*1.1,G.y0+G.L*.5)}
+  // 힌트 글로우
+  if(F.phase==='ready'&&!F.tap&&F.stopper&&F.w>0.5){g.strokeStyle='rgba(250,204,21,.9)';g.lineWidth=5;g.beginPath();g.arc(G.cx,G.y0-14,34+Math.sin(t*6)*4,0,6.28);g.stroke()}
+  if(F.phase==='ready'&&F.tap&&F.w>0.05&&F.w<9){g.strokeStyle='rgba(239,68,68,.9)';g.lineWidth=5;g.beginPath();g.arc(G.cx,G.y0+G.L*1.13,30+Math.sin(t*8)*5,0,6.28);g.stroke()}
+}
+const HINT=()=>{
+  switch(F.phase){
+   case'empty':return'🧪 ① [넣고 흔들기]를 눌러 물과 식용유를 넣어요.';
+   case'shaking':return'흔드는 중… 물과 식용유가 섞여 뿌옇게 보여요.';
+   case'settling':return'가만히 기다리면 <b>밀도가 큰 물은 아래, 작은 식용유는 위</b>로 층이 나뉘어요.';
+   case'ready':
+     if(F.w>0.5){if(F.stopper&&!F.tap)return'② <b>마개를 먼저 열고</b> → 꼭지를 열어 아래층 물을 (가) 비커에 받아요.';if(F.stopper&&F.tap)return'⚠️ 꼭지는 열렸지만 마개가 닫혀 있어 안 흘러요. <b>마개를 열어요!</b>';if(!F.tap)return'마개가 열렸어요. 이제 <b>꼭지를 열어요</b>.';return F.w<9?'🔔 <b>경계면 직전!</b> 꼭지를 지금 잠가요.':'물이 (가) 비커로 흘러내려요…'}
+     if(F.i>0.5){if(F.tap&&F.active!=='I')return'⚠️ 경계면이 (가) 비커로 들어가고 있어요! 꼭지를 잠그고 [경계면 비커]로 바꿔요.';if(!F.tap)return'③ 받는 비커를 <b>[경계면 비커]</b>로 바꾸고 꼭지를 열어 경계면만 따로 받아요.';return'경계면 액체를 받는 중… 다 받으면 꼭지를 잠가요.'}
+     if(F.o>0.5)return F.tap?'⚠️ 식용유를 꼭지로 빼면 오염돼요! 꼭지를 잠가요.':'④ 꼭지는 잠근 채 <b>[위쪽 입구로 따르기]</b>를 눌러요.';return'';
+   case'pouring':return'깔때기를 기울여 위쪽 입구로 식용유만 (나) 비커에 따르는 중…';
+   case'done':return F.result||'';}
+  return''};
+function updHud2(){
+  $('#hStop').textContent=F.stopper?'닫힘':'열림';$('#hTap').textContent=F.tap?'열림':'닫힘';
+  $('#hVol').textContent=((F.phase==='shaking'||F.phase==='settling')?100:F.w+F.i+F.o).toFixed(0)+' mL';
+  const pw=bPurity('W'),po=bPurity('O');$('#hPw').textContent=pw===null?'-':(pw*100).toFixed(0)+' %';$('#hPo').textContent=po===null?'-':(po*100).toFixed(0)+' %';
+  [['k1','c1'],['k2','c2'],['k3','c3']].forEach(([id,c])=>{const el=$('#'+id),s=F[c];el.className='ck '+(s==='ok'?'ok':s==='warn'?'warn':s==='bad'?'bad':'');el.firstChild.textContent=s==='ok'?'✅':s==='warn'?'⚠️':s==='bad'?'❌':'○'});
+  const el=$('#sum2');el.className=F.phase==='done'?(F.c1==='ok'&&F.c2==='ok'&&F.c3==='ok'?'sum key':'sum'):'sum';el.innerHTML=HINT();
+  $('#bFill').classList.toggle('next',F.phase==='empty');
+  $('#bStop').classList.toggle('next',F.phase==='ready'&&F.stopper&&F.w>0.5);
+  $('#bTop').classList.toggle('next',F.phase==='ready'&&F.w<=0.05&&F.i<=0.5&&F.o>0.5);
+}
+fInit();
+
+/* ═════════════ 루프 ═════════════ */
+let last=0,hT=0;
+function loop(ts){
+  const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;const t=ts/1000;
+  if(mode===1){m1Step(dt);const {g,w,h}=fit($('#c1'));scene1(g,w,h);hT+=dt;if(hT>.1){hT=0;updHud1()}}
+  else{const {g,w,h}=fit($('#c2'));fStep(dt,w,h);scene2(g,w,h,t);hT+=dt;if(hT>.1){hT=0;updHud2()}}
+  requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+
+/* ═════════════ 퀴즈 / 생활 ═════════════ */
+const QZ=[
+ {q:'분별 깔때기의 꼭지를 열어 아래층 액체를 빼내기 전에 반드시 위쪽 마개를 먼저 열어야 하는 까닭은?',o:['마개를 열어야 액체가 더 차가워지기 때문에','마개를 열어야 공기가 들어가 내부 압력이 대기압과 같아져 액체가 원활하게 흘러내리기 때문에','마개를 열어야 식용유가 먼저 나오기 때문에'],a:1,
+  e:'마개를 닫은 채 꼭지를 열면 내부 기압이 대기압보다 낮아져 액체가 흘러나오지 않아요. 마개를 열어 공기가 들어가면 대기압과 같아져 중력에 의해 흘러내려요! (② 실험의 마개 열기)'},
+ {q:'분별 깔때기에 남은 위층의 식용유를 아래쪽 꼭지로 빼내지 않고 위쪽 입구로 따라내는 까닭은?',o:['꼭지로 빼면 시간이 오래 걸려서','꼭지로 빼면 꼭지와 관 내벽에 남아 있던 물방울과 다시 섞여 순도가 떨어지기 때문에','식용유가 꼭지를 막기 때문에'],a:1,
+  e:'꼭지와 관 안쪽에는 아래층 물이 묻어 있어요. 식용유를 그리로 빼면 다시 섞여 오염돼요. 위쪽 입구로 따르면 깨끗하게 분리돼요! (④ 위쪽 입구로 따르기)'},
+ {q:'좋은 볍씨를 고를 때 맹물이 아닌 소금물을 사용하는 까닭은?',o:['소금이 볍씨를 깨끗이 씻어 주기 때문에','맹물에는 알곡과 쭉정이가 둘 다 가라앉으므로, 소금을 녹여 밀도를 두 볍씨의 중간값으로 맞추어 쭉정이만 띄우기 위해서','소금이 볍씨를 단단하게 만들기 때문에'],a:1,
+  e:'쭉정이 < 적정 소금물 < 알곡 순서로 밀도를 맞추면 쭉정이는 뜨고 알곡은 가라앉아요. (① 실험의 달걀 500원 동전 신호)'}
+];
+let qi=0,qdone=false,score=0;
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+score;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  Q.o.forEach((t,i)=>{const b=document.createElement('button');b.className='qopt';b.textContent=t;b.onclick=()=>{if(qdone)return;qdone=true;const ok=i===Q.a;if(ok)score++;
+    [...$('#qopts').children].forEach((x,j)=>{if(j===Q.a)x.classList.add('right');else if(j===i)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;score=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+score+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+$('#btnLife').onclick=()=>$('#modal2').classList.add('on');$('#lclose').onclick=()=>$('#modal2').classList.remove('on');
+</script>
+</body>
+</html>
