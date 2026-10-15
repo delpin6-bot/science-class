@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>빛의 굴절 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+</style></head><body>
+<header>
+  <h1>💧 빛의 굴절 가상실험실</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 수조 레이저 굴절</button>
+    <button class="tab" id="tab2">② 동전·빨대·물개 착시</button>
+    <button class="tab" id="tab3">③ 매질 비교·물고기 사냥</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<!-- ① 수조 -->
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hudc"><div class="i"><span>입사각 θ₁</span><b id="h1">0°</b></div><div class="g"><span>굴절각 θ₂</span><b id="h2">0°</b></div><div class="m"><span>꺾인 각도 차이</span><b id="h3">0°</b></div></div>
+      <div class="spd" id="spd"></div></div>
+    <div class="card ctl">
+      <div class="seg" id="dir" style="--n:2;grid-template-columns:1fr 1fr"><button class="btn on" data-d="a">⬇ 공기 → 물 비추기</button><button class="btn" data-d="w">⬆ 물속 → 공기 비추기</button></div>
+      <div class="kv2">🔦 레이저를 <b>둥근 궤도 위에서 끌거나</b> 눈금 버튼을 눌러 보세요.</div>
+      <div class="pres" id="pres"><button class="btn" data-a="0">0°</button><button class="btn" data-a="20">20°</button><button class="btn" data-a="40">40°</button><button class="btn" data-a="60">60°</button><button class="btn" data-a="80">80°</button></div>
+      <div class="row sm"><button class="btn" id="aM">－ 1°</button><button class="btn" id="aP">＋ 1°</button><button class="btn" id="sw">⇄ 반대쪽으로</button></div>
+    </div>
+    <div class="card ctl"><div class="tg" id="tg">
+      <button class="btn on" data-t="smoke">🌫 향 연기·우유 ON</button><button class="btn on" data-t="normal">📏 법선 보이기</button>
+      <button class="btn on" data-t="proto">📐 각도기 보이기</button><button class="btn on" data-t="straight">➖ 직진 비교선</button>
+      <button class="btn on" data-t="refl">🪞 부분 반사 보이기</button></div>
+      <div class="fb" id="rule1"></div></div>
+    <div class="card ctl"><div class="kv2"><b>📝 측정 데이터 기록표</b> (교과서 탐구 활동)</div>
+      <table class="dt" id="dt"></table>
+      <div class="row sm"><button class="btn go" id="bRec">📝 현재 값 기록</button><button class="btn dng" id="bClr">표 지우기</button></div>
+      <div class="fb" id="fb1">입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 두 방향 모두 기록해 보세요.</div></div>
+  </div>
+</section>
+<!-- ② 착시 -->
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="seg" id="sub2" style="grid-template-columns:repeat(3,1fr)"><button class="btn on" data-s="A">🪙 실험 A<br><small>컵 속 동전</small></button><button class="btn" data-s="B1">🥤 실험 B-1<br><small>꺾인 빨대</small></button><button class="btn" data-s="B2">🦭 실험 B-2<br><small>수족관 물개</small></button></div></div>
+    <div class="card ctl" id="pA2">
+      <div class="row"><b>💧 물 높이</b><input type="range" class="big" id="wl" min="0" max="100" value="0" style="flex:1;height:52px"><b id="wlv" style="min-width:3em;text-align:right">0%</b></div>
+      <div class="row sm"><button class="btn go" id="pour">💧 물 붓기</button><button class="btn" id="drain">↺ 물 비우기</button><button class="btn on" id="tgV">👁 연장선(허상) 보기</button></div>
+    </div>
+    <div class="card ctl" id="pB2" style="display:none">
+      <div class="row"><b>👁 관찰 각도</b><input type="range" class="big" id="ang2" min="15" max="65" value="40" style="flex:1;height:52px"><b id="ang2v" style="min-width:3em;text-align:right">40°</b></div>
+      <div class="row sm"><button class="btn on" id="tgVB">👁 연장선(허상) 보기</button><button class="btn on" id="tgRB">👻 실제 모습 보기</button></div>
+    </div>
+    <div class="card ctl"><div class="kv2" id="info2"></div><div class="ban" id="ban2"></div></div>
+  </div>
+</section>
+<!-- ③ 매질·사냥 -->
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="seg" id="sub3" style="grid-template-columns:1fr 1fr"><button class="btn on" data-s="cmp">📊 매질 비교</button><button class="btn" data-s="fish">🎯 물고기 사냥</button></div>
+      <div class="kv2"><b>🧪 아래쪽 매질 고르기</b> (위쪽은 공기)</div>
+      <div class="med" id="med"></div></div>
+    <div class="card ctl" id="pC3">
+      <div class="row"><b>🔦 입사각</b><input type="range" class="big" id="th3" min="0" max="80" value="45" style="flex:1;height:52px"><b id="th3v" style="min-width:3em;text-align:right">45°</b></div>
+      <div id="tb3"></div></div>
+    <div class="card ctl" id="pF3" style="display:none">
+      <div class="seg" id="wp" style="grid-template-columns:1fr 1fr"><button class="btn on" data-w="harp">🔱 작살 (물체)</button><button class="btn" data-w="laser">🔦 레이저 (빛)</button></div>
+      <div class="kv2" id="infoF"></div>
+      <div class="row sm"><button class="btn go" id="fire">🎯 발사!</button><button class="btn" id="nextF">🐟 다음 물고기</button><button class="btn" id="reveal">👻 실제 위치 보기</button></div>
+      <div class="kv2" id="sc"></div></div>
+    <div class="fb" id="fb3">매질을 골라 굴절 정도를 비교해 보세요.</div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+
+const S={rec:{a:{},w:{}},m2:new Set(),med:new Set(),g:{hm:false,hh:false,lh:false},quiz:-1};
+const MED=[{nm:'물',n:1.33,c:'#38bdf8',ic:'💧'},{nm:'식용유',n:1.47,c:'#facc15',ic:'🛢️'},{nm:'유리',n:1.52,c:'#4ade80',ic:'🪟'},{nm:'다이아몬드',n:2.42,c:'#e879f9',ic:'💎'}];
+const NW=1.33,CRIT=Math.asin(1/NW)*R2D;
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+function wedge(g,O,rad,a0,a1,fill,stroke){let dl=a1-a0;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;g.beginPath();g.moveTo(O.x,O.y);g.arc(O.x,O.y,rad,a0,a0+dl,dl<0);g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=stroke;g.lineWidth=2.5;g.stroke()}
+function midAng(a0,a1){let d=a1-a0;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return a0+d/2}
+function ray(g,x0,y0,x1,y1,col,wd,al,noarrow){g.save();g.lineCap='round';g.globalAlpha=al==null?1:al;g.shadowColor=col;g.shadowBlur=14;g.strokeStyle=col;g.lineWidth=wd+3;g.globalAlpha=(al==null?1:al)*.4;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+  g.globalAlpha=al==null?1:al;g.shadowBlur=6;g.lineWidth=wd;g.stroke();g.shadowBlur=0;g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=Math.max(1,wd*.35);g.stroke();
+  if(!noarrow){const mx=(x0+x1)/2,my=(y0+y1)/2,an=Math.atan2(y1-y0,x1-x0);g.fillStyle='#fff';g.globalAlpha=(al==null?1:al)*.95;g.beginPath();g.moveTo(mx+Math.cos(an)*10,my+Math.sin(an)*10);g.lineTo(mx-Math.cos(an-.6)*11,my-Math.sin(an-.6)*11);g.lineTo(mx-Math.cos(an+.6)*11,my-Math.sin(an+.6)*11);g.closePath();g.fill()}g.restore()}
+function snell(th1,n1,n2){const s=n1*Math.sin(th1)/n2;return s>1+1e-9?null:Math.asin(Math.min(1,s))}
+/* 눈(E)에서 물속 점(Q)을 볼 때: 수면(y=yw)에서 꺾이는 점 P와 보이는 위치(허상) 계산 */
+function refrView(Q,E,yw,n){const hh=Q.y-yw,H=yw-E.y;if(hh<=0||H<=0)return null;
+  const dx=E.x-Q.x;if(Math.abs(dx)<1e-6)return {P:{x:Q.x,y:yw},app:{x:Q.x,y:yw+hh/n}};
+  const sg=Math.sign(dx),f=xp=>{const a=Math.abs(xp-Q.x),b=Math.abs(E.x-xp);return b/Math.hypot(b,H)-n*a/Math.hypot(a,hh)};
+  let lo=Q.x,hi=E.x;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(f(m)>0)lo=m;else hi=m}
+  const xp=(lo+hi)/2,P={x:xp,y:yw},ya=P.y+(P.y-E.y)*(Q.x-P.x)/(P.x-E.x);return {P,app:{x:Q.x,y:ya}}}
+const pill=(g,t,x,y,col)=>{g.font='900 13px sans-serif';const w=g.measureText(t).width+14;g.fillStyle='rgba(15,23,42,.88)';rr(g,x-w/2,y-12,w,24,12);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+
+/* ═════════ 모드 ①: 수조 레이저 굴절 ═════════ */
+const M1={a:40,side:-1,dir:'a',smoke:true,normal:true,proto:true,straight:true,refl:true,drag:false,snap:-1};
+const PRE=[0,20,40,60,80];
+function geo1(w,h){const R=Math.min(w*.27,h*.29);return {tx:w*.05,ty:h*.04,tw:w*.90,th:h*.92,O:{x:w/2,y:h*.5},R}}
+function toWall(P,d,G){let t=1e9;const x0=G.tx+5,x1=G.tx+G.tw-5,y0=G.ty+5,y1=G.ty+G.th-5;
+  if(d.x>1e-9)t=Math.min(t,(x1-P.x)/d.x);else if(d.x<-1e-9)t=Math.min(t,(x0-P.x)/d.x);
+  if(d.y>1e-9)t=Math.min(t,(y1-P.y)/d.y);else if(d.y<-1e-9)t=Math.min(t,(y0-P.y)/d.y);return t}
+const PUF=Array.from({length:30},(_,i)=>({x:(i*37%100)/100,y:(i*53%100)/100,r:.05+(i%5)*.012,v:.01+(i%4)*.004,p:i}));
+function calc1(){const th=M1.a*D2R,w2=M1.dir==='w',n1=w2?NW:1,n2=w2?1:NW,t2=snell(th,n1,n2);return {th,w2,n1,n2,t2}}
+function scene1(dt,t){const cv=$('#c1'),{g,w,h}=fit(cv),G=geo1(w,h),{O,R}=G,{th,w2,n1,n2,t2}=calc1(),s=M1.side,a=M1.a;
+  g.fillStyle='#0b1220';g.fillRect(0,0,w,h);
+  // 수조: 공기층 / 물층
+  const sm=M1.smoke;
+  g.fillStyle=sm?'rgba(148,163,184,.30)':'rgba(30,41,59,.55)';g.fillRect(G.tx,G.ty,G.tw,O.y-G.ty);
+  g.fillStyle=sm?'rgba(224,242,254,.50)':'rgba(56,189,248,.26)';g.fillRect(G.tx,O.y,G.tw,G.ty+G.th-O.y);
+  if(sm){g.save();g.beginPath();g.rect(G.tx,G.ty,G.tw,O.y-G.ty);g.clip();for(const p of PUF){p.x+=p.v*dt*.35;p.y-=p.v*dt*.18;if(p.x>1.1)p.x=-.1;if(p.y<-.1)p.y=1.1;const x=G.tx+p.x*G.tw,y=G.ty+p.y*(O.y-G.ty),r=p.r*G.tw*.5;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(226,232,240,.22)');gr.addColorStop(1,'rgba(226,232,240,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)}g.restore()}
+  outText(g,sm?'🌫 향 연기가 가득한 공기':'공기',G.tx+90,G.ty+22,14,'#e2e8f0');outText(g,sm?'🥛 우유 탄 물 (n=1.33)':'💧 물 (n=1.33)',G.tx+105,G.ty+G.th-22,14,'#0c4a6e','rgba(255,255,255,.85)');
+  // 유리 + 수면
+  g.strokeStyle='rgba(226,242,255,.8)';g.lineWidth=5;g.strokeRect(G.tx,G.ty,G.tw,G.th);g.strokeStyle='rgba(125,211,252,.95)';g.lineWidth=3;g.beginPath();g.moveTo(G.tx,O.y);g.lineTo(G.tx+G.tw,O.y);g.stroke();
+  outText(g,'수면 (경계면)',G.tx+G.tw-70,O.y-14,13,'#bae6fd');
+  // 각도기(원)
+  if(M1.proto){g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=2;g.beginPath();g.arc(O.x,O.y,R,0,6.2832);g.stroke();g.strokeStyle='rgba(255,255,255,.3)';g.lineWidth=1;g.beginPath();g.arc(O.x,O.y,R*.62,0,6.2832);g.stroke();
+    for(const sy of [-1,1])for(let d=-90;d<=90;d+=5){const m10=d%10===0,len=m10?15:8,sx=Math.sin(d*D2R),cy=sy*Math.cos(d*D2R);g.strokeStyle='rgba(255,255,255,'+(m10?.95:.55)+')';g.lineWidth=m10?2:1;g.beginPath();g.moveTo(O.x+sx*R,O.y+cy*R);g.lineTo(O.x+sx*(R-len),O.y+cy*(R-len));g.stroke();
+      if(m10&&Math.abs(d)<=80&&d!==0)outText(g,Math.abs(d),O.x+sx*(R-29),O.y+cy*(R-29),clamp(R*.06,11,14),'#e0f2fe','rgba(15,23,42,.7)')}
+    outText(g,'0',O.x+13,O.y-R+29,12,'#e0f2fe');outText(g,'0',O.x+13,O.y+R-29,12,'#e0f2fe')}
+  // 법선
+  if(M1.normal){g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=2;g.setLineDash([9,7]);g.beginPath();g.moveTo(O.x,G.ty+8);g.lineTo(O.x,G.ty+G.th-8);g.stroke();g.setLineDash([]);outText(g,'법선',O.x+(a<14&&s>0?-26:26),G.ty+22,15,'#fff')}
+  // 레이저 위치
+  const Rl=R+36,L={x:O.x+s*Math.sin(th)*Rl,y:O.y+(w2?1:-1)*Math.cos(th)*Rl};
+  const d1={x:-s*Math.sin(th),y:(w2?-1:1)*Math.cos(th)},d2=t2==null?null:{x:-s*Math.sin(t2),y:(w2?-1:1)*Math.cos(t2)},dr={x:d1.x,y:-d1.y};
+  const vis=sm?1:.14,col='#ff3030';
+  // 직진 비교선
+  if(M1.straight&&a>.5&&t2!=null){const tt=toWall(O,d1,G);g.save();g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2.5;g.setLineDash([4,8]);g.beginPath();g.moveTo(O.x,O.y);g.lineTo(O.x+d1.x*tt,O.y+d1.y*tt);g.stroke();g.restore();
+    outText(g,'직진했다면',O.x+d1.x*Math.min(tt,R*1.25)+d1.x*0+(s>0?-1:1)*-0,O.y+d1.y*Math.min(tt,R*1.25)+(w2?-16:16),12,'#fff')}
+  // 각도 부채꼴
+  const aL=Math.atan2(L.y-O.y,L.x-O.x),nI=w2?Math.PI/2:-Math.PI/2,nO=-nI,ra=R*.5;
+  if(a>.5){wedge(g,O,ra,nI,aL,'rgba(59,130,246,.42)','#60a5fa');
+    const mi=midAng(nI,aL);outText(g,'θ₁ '+Math.round(a)+'°',O.x+Math.cos(mi)*(ra+(a<22?50:36)),O.y+Math.sin(mi)*(ra+(a<22?50:36)),clamp(R*.06,14,18),'#93c5fd');
+    if(d2){const aO=Math.atan2(d2.y,d2.x);wedge(g,O,ra*.86,nO,aO,'rgba(34,197,94,.42)','#4ade80');const mo=midAng(nO,aO);outText(g,'θ₂ '+(t2*R2D).toFixed(1)+'°',O.x+Math.cos(mo)*(ra+(a<22?50:36)),O.y+Math.sin(mo)*(ra+(a<22?50:36)),clamp(R*.06,14,18),'#86efac')}}
+  // 광선
+  const tI=Math.hypot(L.x-O.x,L.y-O.y);
+  ray(g,L.x,L.y,O.x,O.y,col,4,vis);
+  if(M1.refl&&a>.5&&d2){const tt=toWall(O,dr,G);g.save();g.strokeStyle='rgba(255,170,170,.8)';g.lineWidth=2.5;g.setLineDash([3,7]);g.beginPath();g.moveTo(O.x,O.y);g.lineTo(O.x+dr.x*tt*.9,O.y+dr.y*tt*.9);g.stroke();g.restore();outText(g,'부분 반사(약함)',O.x+dr.x*Math.min(tt*.9,R*1.3)+(s>0?-6:6),O.y+dr.y*Math.min(tt*.9,R*1.3)+(w2?14:-14),11,'#fecaca')}
+  if(d2){const tt=toWall(O,d2,G);ray(g,O.x,O.y,O.x+d2.x*tt,O.y+d2.y*tt,col,4,vis);
+    g.fillStyle='#fff';g.beginPath();g.arc(O.x+d2.x*tt,O.y+d2.y*tt,sm?5:9,0,6.2832);g.fill();g.globalAlpha=.6;g.fillStyle='#ff3030';g.beginPath();g.arc(O.x+d2.x*tt,O.y+d2.y*tt,sm?9:15,0,6.2832);g.fill();g.globalAlpha=1}
+  else{const tt=toWall(O,dr,G);ray(g,O.x,O.y,O.x+dr.x*tt,O.y+dr.y*tt,col,4,vis);
+    g.fillStyle='rgba(127,29,29,.94)';rr(g,w/2-190,G.ty+34,380,44,12);g.fill();g.strokeStyle='#fecaca';g.lineWidth=2;g.stroke();g.fillStyle='#fff';g.font='900 15px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🚫 입사각이 임계각(약 '+CRIT.toFixed(1)+'°)보다 커서',w/2,G.ty+47);g.fillText('물 밖으로 못 나오고 전부 반사돼요 (전반사)',w/2,G.ty+66)}
+  g.fillStyle='#fff';g.beginPath();g.arc(O.x,O.y,6,0,6.2832);g.fill();
+  if(!sm)outText(g,'🌫 향 연기와 우유를 넣으면 빛줄기가 보여요! (산란)',w/2,h-G.th*.04-8,14,'#fde68a');
+  if(a<.5)outText(g,'수직 입사 → 꺾이지 않고 직진!',O.x+w*.2,O.y+(w2?-1:1)*R*.55,clamp(R*.06,13,17),'#fde68a');
+  // 레이저 본체
+  g.save();g.translate(L.x,L.y);g.rotate(Math.atan2(O.y-L.y,O.x-L.x));g.fillStyle='#0b0b0f';rr(g,-110,-17,104,34,6);g.fill();g.fillStyle='#475569';g.fillRect(-60,-17,8,34);g.fillStyle='#1f2937';g.fillRect(-6,-9,6,18);g.fillStyle='#ff4040';g.beginPath();g.arc(-2,0,4.5,0,6.2832);g.fill();g.fillStyle='#e5e7eb';g.font='800 12px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('레이저',-58,0);g.restore();
+  g.strokeStyle='rgba(250,204,21,'+(M1.drag?1:.55+.35*Math.sin(t*4))+')';g.lineWidth=3.5;g.setLineDash([5,5]);g.beginPath();g.arc(L.x,L.y,30,0,6.2832);g.stroke();g.setLineDash([]);
+  hud1(t2,n1,n2)}
+function hud1(t2,n1,n2){const a=Math.round(M1.a),w2=M1.dir==='w';$('#h1').textContent=a+'°';
+  if(t2==null){$('#h2').textContent='전반사';$('#h3').textContent='–'}else{const d=t2*R2D;$('#h2').textContent=d.toFixed(1)+'°';$('#h3').textContent=Math.abs(M1.a-d).toFixed(1)+'°'}
+  const top=w2?{nm:'물',n:NW}:{nm:'공기',n:1},bot=w2?{nm:'공기',n:1}:{nm:'물',n:NW},sp=n=>(3/n);
+  const key='sp'+M1.dir;if($('#spd').dataset.k!==key){$('#spd').dataset.k=key;$('#spd').innerHTML=[['위쪽 매질',top],['아래쪽 매질',bot]].map(([l,m])=>`<div>${l}: <b>${m.nm}</b> (n=${m.n})<br>빛의 속력 ${(3/m.n).toFixed(2)}×10⁸ m/s<i style="width:${(100/m.n).toFixed(0)}%"></i></div>`).join('')}
+  $$('#pres .btn').forEach(b=>b.classList.toggle('on',Math.abs(+b.dataset.a-M1.a)<.6));
+  const k=PRE.findIndex(p=>Math.abs(p-M1.a)<.6);$$('#dt td.cur').forEach(x=>x.classList.remove('cur'));if(k>=0)$$('#dt .c'+k).forEach(x=>x.classList.add('cur'));
+  let r;if(M1.a<.5)r='입사각 0° → 굴절각 0°: 경계면에 <b>수직</b>으로 비추면 꺾이지 않고 <b>그대로 직진</b>해요.';
+  else if(t2==null)r='물속 입사각이 임계각(약 '+CRIT.toFixed(1)+'°)보다 커요 → 빛이 물 밖으로 나오지 못하고 <b>전부 반사</b>(전반사)돼요.';
+  else if(!w2)r='공기 → 물: 빛의 속력이 <b>느려져서 법선 쪽</b>으로 꺾여요. <b>굴절각 &lt; 입사각</b> (공기 쪽 각도가 더 커요).';
+  else r='물 → 공기: 빛의 속력이 <b>빨라져서 경계면 쪽</b>(법선에서 멀어지는 쪽)으로 꺾여요. <b>굴절각 &gt; 입사각</b>.';
+  const rr_=$('#rule1');if(rr_.dataset.r!==r){rr_.dataset.r=r;rr_.innerHTML=r;rr_.className='fb good'}}
+function setAng(a,side,quiet){a=clamp(a,0,80);for(const p of PRE)if(Math.abs(a-p)<=1.4){if(!quiet&&M1.snap!==p)sTick();M1.snap=p;a=p;break}else if(M1.snap===p&&Math.abs(a-p)>1.4)M1.snap=-1;M1.a=Math.round(a);if(side)M1.side=side}
+(()=>{const cv=$('#c1');let act=null;
+  const upd=e=>{const r=cv.getBoundingClientRect(),{O}=geo1(r.width,r.height),x=e.clientX-r.left-O.x,y=(e.clientY-r.top-O.y)*(M1.dir==='w'?1:-1);let a=Math.atan2(Math.abs(x),Math.max(y,1))*R2D;if(y<=1)a=80;setAng(a,Math.abs(x)<3?M1.side:(x<0?-1:1))};
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);act=e.pointerId;M1.drag=true;upd(e)});
+  cv.addEventListener('pointermove',e=>{if(act===e.pointerId)upd(e)});
+  const up=e=>{if(act===e.pointerId){act=null;M1.drag=false}};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)})();
+$$('#pres .btn').forEach(b=>b.onclick=()=>{M1.a=+b.dataset.a;M1.snap=M1.a;sTick()});
+$('#aM').onclick=()=>{M1.a=clamp(Math.round(M1.a)-1,0,80)};$('#aP').onclick=()=>{M1.a=clamp(Math.round(M1.a)+1,0,80)};$('#sw').onclick=()=>{M1.side=-M1.side};
+$$('#dir .btn').forEach(b=>b.onclick=()=>{M1.dir=b.dataset.d;dirUI();sTick()});
+function dirUI(){$$('#dir .btn').forEach(b=>b.classList.toggle('on',b.dataset.d===M1.dir))}
+function syncTg(){$$('#tg .btn').forEach(b=>{const k=b.dataset.t,on=M1[k];b.classList.toggle('on',on);if(k==='smoke')b.textContent=on?'🌫 향 연기·우유 ON':'🌫 향 연기·우유 OFF'})}
+$$('#tg .btn').forEach(b=>b.onclick=()=>{const k=b.dataset.t;M1[k]=!M1[k];syncTg();sTick()});
+function dtBuild(){const cell=(r,i)=>{const v=S.rec[r][i];return `<td class="c${i}${v!=null?' f':''}">${v!=null?v:''}</td>`};
+  $('#dt').innerHTML='<tr><th style="width:27%">입사각</th>'+PRE.map((p,i)=>`<th class="c${i}">${p}°</th>`).join('')+'</tr><tr><th>공기→물<br><small>굴절각</small></th>'+PRE.map((p,i)=>cell('a',i)).join('')+'</tr><tr><th>물→공기<br><small>굴절각</small></th>'+PRE.map((p,i)=>cell('w',i)).join('')+'</tr>'}
+$('#bRec').onclick=()=>{const k=PRE.findIndex(p=>Math.abs(p-M1.a)<1.2),fb=$('#fb1');
+  if(k<0){fb.className='fb bad';fb.textContent='입사각을 0°, 20°, 40°, 60°, 80° 중 하나에 맞춘 뒤 기록해 보세요.';sNO();return}
+  const {t2}=calc1(),key=M1.dir==='a'?'a':'w';S.rec[key][k]=t2==null?'전반사':(t2*R2D).toFixed(1)+'°';dtBuild();hud();sOK();
+  const n=Object.keys(S.rec.a).length+Object.keys(S.rec.w).length;fb.className='fb good';
+  fb.textContent=n>=10?'🎉 표 완성! 공기→물은 굴절각<입사각, 물→공기는 굴절각>입사각(그리고 큰 각에서는 전반사)이에요.':'기록했어요 ('+n+'/10). 다른 각도와 반대 방향도 기록해 보세요.'};
+$('#bClr').onclick=()=>{S.rec={a:{},w:{}};dtBuild();hud();$('#fb1').className='fb';$('#fb1').textContent='입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 두 방향 모두 기록해 보세요.'};
+
+/* ═════════ 모드 ②: 동전 · 빨대 · 물개 ═════════ */
+function eyeIcon(g,x,y){g.save();g.fillStyle='#fff';g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.ellipse(x,y,26,17,0,0,6.2832);g.fill();g.stroke();g.fillStyle='#2563eb';g.beginPath();g.arc(x-3,y+1,10,0,6.2832);g.fill();g.fillStyle='#0f172a';g.beginPath();g.arc(x-3,y+1,5,0,6.2832);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(x-6,y-2,2.3,0,6.2832);g.fill();g.restore()}
+const M2={s:'A',wl:0,pour:false,virt:true,ang:40,virtB:true,realB:true};
+function geoA(w,h){const xl=.12*w,xr=.40*w,yt=.44*h,yb=.84*h;return {xl,xr,yt,yb,wall:Math.max(14,w*.022),cx:xl+.05*w,E:{x:.56*w,y:.20*h}}}
+function calcA(w,h,f){const G=geoA(w,h),C={x:G.cx,y:G.yb-8},E=G.E,yw=G.yb-f*(G.yb-G.yt),dry=f<(14/(G.yb-G.yt));
+  const r={G,C,E,yw,vis:false,P:null,app:null,end:null,dry};
+  if(dry){const t=(C.y-G.yt)/(C.y-E.y);if(C.x+t*(E.x-C.x)<=G.xr){r.vis=true;r.app=C}else{const tt=(G.xr-C.x)/(E.x-C.x);r.end={x:G.xr,y:C.y+tt*(E.y-C.y)}}return r}
+  const v=refrView(C,E,yw,NW);r.P=v.P;r.app=v.app;
+  if(v.P.x>G.xr||v.P.x<G.xl){const tt=(G.xr-C.x)/(v.P.x-C.x);r.end={x:G.xr,y:C.y+tt*(yw-C.y)};r.P=null;return r}
+  const xrim=v.P.x+(E.x-v.P.x)*(yw-G.yt)/(yw-E.y);
+  if(xrim<=G.xr+1e-6){r.vis=true;return r}
+  const tt=(G.xr-v.P.x)/(E.x-v.P.x);r.end={x:G.xr,y:yw+tt*(E.y-yw)};return r}
+let thrA={k:'',v:1};function thresholdA(w,h){const k=w+'x'+h;if(thrA.k===k)return thrA.v;let v=1;for(let f=0;f<=1.0001;f+=.01){if(calcA(w,h,f).vis&&f>.03){v=f;break}}thrA={k,v};return v}
+function sceneA(g,w,h,dt,t){const r=calcA(w,h,M2.wl/100),{G,C,E,yw}=r;
+  g.fillStyle='#e8eef7';g.fillRect(0,0,w,h);g.fillStyle='#cbd5e1';g.fillRect(0,G.yb+G.wall+2,w,h);g.fillStyle='#94a3b8';g.fillRect(0,G.yb+G.wall+2,w,5);
+  // 컵 내부
+  g.fillStyle='#fefce8';g.fillRect(G.xl,G.yt,G.xr-G.xl,G.yb-G.yt);
+  if(!r.dry||M2.wl>0){g.fillStyle='rgba(56,189,248,.5)';g.fillRect(G.xl,yw,G.xr-G.xl,G.yb-yw);g.strokeStyle='#0ea5e9';g.lineWidth=3;g.beginPath();g.moveTo(G.xl,yw);g.lineTo(G.xr,yw);g.stroke()}
+  // 불투명 머그컵 벽
+  const wl=G.wall,mg=g.createLinearGradient(G.xl-wl,0,G.xr+wl,0);mg.addColorStop(0,'#b45309');mg.addColorStop(.5,'#d97706');mg.addColorStop(1,'#92400e');g.fillStyle=mg;g.fillRect(G.xl-wl,G.yt,wl,G.yb-G.yt+wl);g.fillRect(G.xr,G.yt,wl,G.yb-G.yt+wl);g.fillRect(G.xl-wl,G.yb,G.xr-G.xl+2*wl,wl);
+  g.strokeStyle='#92400e';g.lineWidth=14;g.beginPath();g.ellipse(G.xl-wl-4,(G.yt+G.yb)/2,w*.045,(G.yb-G.yt)*.2,0,Math.PI*.5,Math.PI*1.5);g.stroke();
+  outText(g,'불투명 머그컵',(G.xl+G.xr)/2,G.yb+wl+24,15,'#334155','rgba(255,255,255,.9)');
+  // 물 붓기 줄기
+  if(M2.pour){g.fillStyle='rgba(56,189,248,.8)';g.fillRect(G.xl+(G.xr-G.xl)*.5-4,G.yt-.16*h,8,yw-G.yt+.16*h);outText(g,'🫗',G.xl+(G.xr-G.xl)*.5+34,G.yt-.16*h-6,30)}
+  // 동전
+  g.fillStyle='#facc15';g.strokeStyle='#a16207';g.lineWidth=2;g.beginPath();g.ellipse(C.x,C.y,w*.032,8,0,0,6.2832);g.fill();g.stroke();outText(g,'🪙 동전(실제 위치)',C.x+10,C.y+24,13,'#78350f','rgba(255,255,255,.9)');
+  // 눈
+  eyeIcon(g,E.x,E.y);outText(g,'관찰자의 눈',E.x,E.y-36,14,'#334155','rgba(255,255,255,.9)');
+  // 광선
+  const Y='#d97706';
+  if(r.vis){if(r.P){ray(g,C.x,C.y,r.P.x,r.P.y,Y,3.5);ray(g,r.P.x,r.P.y,E.x-(E.x-r.P.x)*24/Math.hypot(E.x-r.P.x,E.y-r.P.y),E.y-(E.y-r.P.y)*24/Math.hypot(E.x-r.P.x,E.y-r.P.y),Y,3.5);
+      g.strokeStyle='#0f172a';g.lineWidth=2;g.setLineDash([6,5]);g.beginPath();g.moveTo(r.P.x,r.P.y-46);g.lineTo(r.P.x,r.P.y+46);g.stroke();g.setLineDash([]);outText(g,'법선',r.P.x+22,r.P.y+34,12,'#0f172a','rgba(255,255,255,.9)');
+      const tw=Math.atan(Math.abs(r.P.x-C.x)/(C.y-yw))*R2D,ta=Math.atan(Math.abs(E.x-r.P.x)/(yw-E.y))*R2D;pill(g,'물속 입사각 '+tw.toFixed(0)+'° → 공기 굴절각 '+ta.toFixed(0)+'°',r.P.x+(E.x-r.P.x)*.2,r.P.y-62,'#ea580c');
+      if(M2.virt){g.save();g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([3,6]);g.beginPath();g.moveTo(r.P.x,r.P.y);g.lineTo(r.app.x,r.app.y);g.stroke();g.restore();
+        g.globalAlpha=.65;g.fillStyle='#fde047';g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([4,3]);g.beginPath();g.ellipse(r.app.x,r.app.y,w*.032,8,0,0,6.2832);g.fill();g.stroke();g.setLineDash([]);g.globalAlpha=1;
+        outText(g,'떠올라 보이는 동전(허상)',r.app.x-6,r.app.y-22,13,'#1d4ed8','rgba(255,255,255,.95)');g.strokeStyle='#2563eb';g.lineWidth=3;g.beginPath();g.moveTo(C.x+w*.048,C.y);g.lineTo(C.x+w*.048,r.app.y+4);g.stroke();g.beginPath();g.moveTo(C.x+w*.048,r.app.y);g.lineTo(C.x+w*.048-6,r.app.y+10);g.lineTo(C.x+w*.048+6,r.app.y+10);g.closePath();g.fillStyle='#2563eb';g.fill()}}
+    else{ray(g,C.x,C.y,E.x-(E.x-C.x)*24/Math.hypot(E.x-C.x,E.y-C.y),E.y-(E.y-C.y)*24/Math.hypot(E.x-C.x,E.y-C.y),Y,3.5)}}
+  else if(r.end){const P=r.P;if(P){ray(g,C.x,C.y,P.x,P.y,'#9a3412',3,.8)}ray(g,P?P.x:C.x,P?P.y:C.y,r.end.x,r.end.y,'#9a3412',3,.8,true);
+    g.strokeStyle='#dc2626';g.lineWidth=5;g.beginPath();g.moveTo(r.end.x-9,r.end.y-9);g.lineTo(r.end.x+9,r.end.y+9);g.moveTo(r.end.x+9,r.end.y-9);g.lineTo(r.end.x-9,r.end.y+9);g.stroke();outText(g,'컵 벽에 막혀요!',r.end.x+70,r.end.y+4,14,'#b91c1c','rgba(255,255,255,.95)')}
+  // 관찰자 시야창
+  {const bw=Math.min(190,w*.27),bh=bw*.8,bx=w-bw-12,by=12;g.fillStyle='#0f172a';rr(g,bx,by,bw,bh,12);g.fill();g.strokeStyle='#facc15';g.lineWidth=3;g.stroke();
+    const cx=bx+bw/2,cy=by+bh*.52;g.fillStyle='#78350f';g.beginPath();g.ellipse(cx,cy,bw*.36,bh*.27,0,0,6.2832);g.fill();g.fillStyle='#1c1917';g.beginPath();g.ellipse(cx,cy,bw*.30,bh*.21,0,0,6.2832);g.fill();
+    if(!r.dry){g.fillStyle='rgba(56,189,248,.5)';g.beginPath();g.ellipse(cx,cy+bh*.2*(1-M2.wl/100)*.6,bw*.30,bh*.21*(.4+.6*M2.wl/100),0,0,6.2832);g.fill()}
+    if(r.vis){const yy=cy+bh*.12-(M2.wl/100)*bh*.12;g.fillStyle='#fde047';g.strokeStyle='#a16207';g.lineWidth=2;g.beginPath();g.ellipse(cx,yy,bw*.09,bh*.055,0,0,6.2832);g.fill();g.stroke()}
+    outText(g,r.vis?'동전이 보여요! ✨':'안 보여요',cx,by+bh*.14,15,r.vis?'#fde68a':'#fca5a5');outText(g,'관찰자 시야창',cx,by+bh+14,13,'#92400e','rgba(255,255,255,.9)')}
+  // 안내
+  const th=thresholdA(w,h),sig=[r.vis,r.dry,Math.round(M2.wl/2),M2.virt].join();
+  if(sig!==info2sig){info2sig=sig;let t1;
+    if(r.dry)t1='💧 <b>물이 없어요</b>: 동전에서 나온 빛은 <b>직진</b>해서 컵 모서리(벽)에 막혀 눈에 닿지 못해요. 그래서 동전이 <b>안 보여요</b>.';
+    else if(!r.vis)t1='💧 물이 조금 찼지만 빛이 아직 <b>컵 벽에 막혀요</b>. 물을 더 부어 보세요!';
+    else t1='🪙 <b>동전이 보여요!</b> 동전에서 나온 빛이 수면에서 물 → 공기로 나오며 <b>수면 쪽으로 꺾여(굴절각 &gt; 입사각)</b> 눈에 들어와요.'+(M2.virt?'<br>👁 우리 눈(뇌)은 빛이 <b>직진</b>해 온 줄 알아서, 꺾인 광선의 <b>연장선 위 — 실제보다 위쪽 얕은 곳</b>에 동전이 있다고 느껴요.':'<br>👉 <b>연장선(허상) 보기</b>를 켜서 눈이 어디에 있다고 느끼는지 확인해 보세요.');
+    $('#info2').innerHTML=t1;$('#ban2').innerHTML=r.vis&&!r.dry?'⭐ 동전이 보이기 시작하는 물 높이: 약 <b>'+Math.round(th*100)+'%</b>':''}
+  if(r.vis&&!r.dry&&!S.m2.has('A')){S.m2.add('A');hud();subUI();sOK();toast('#toast2','🪙 물을 부으니 동전이 떠올라 보여요!',2200)}
+}
+let info2sig='';
+/* ── B: 빨대 / 물개 ── */
+function geoB(w,h){const xl=.16*w,xr=.56*w,yt=.18*h,yb=.86*h,yw=.44*h,p=M2.ang*D2R,Re=.40*h,xc=.36*w;return {xl,xr,yt,yb,yw,E:{x:xc+Re*Math.sin(p),y:yw-Re*Math.cos(p)}}}
+const mapPt=(p,G)=>{if(p.y<=G.yw+.01)return p;const v=refrView(p,G.E,G.yw,NW);return v?v.app:p};
+function ellPoly(cx,cy,rx,ry,rot,n){const pts=[];for(let i=0;i<n;i++){const a=i/n*6.2832,x=Math.cos(a)*rx,y=Math.sin(a)*ry;pts.push({x:cx+x*Math.cos(rot)-y*Math.sin(rot),y:cy+x*Math.sin(rot)+y*Math.cos(rot)})}return pts}
+function polyPath(g,pts){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath()}
+function sceneB(g,w,h,dt,t){const G=geoB(w,h),{xl,xr,yt,yb,yw,E}=G,sub=M2.s;
+  g.fillStyle='#e8eef7';g.fillRect(0,0,w,h);g.fillStyle='#cbd5e1';g.fillRect(0,yb+14,w,h);
+  g.fillStyle='rgba(56,189,248,.38)';g.fillRect(xl,yw,xr-xl,yb-yw);g.strokeStyle='#0ea5e9';g.lineWidth=3;g.beginPath();g.moveTo(xl,yw);g.lineTo(xr,yw);g.stroke();
+  outText(g,'수면',xl-26,yw,13,'#0369a1','rgba(255,255,255,.9)');
+  const drawGlass=()=>{g.strokeStyle='rgba(71,85,105,.85)';g.lineWidth=6;g.beginPath();g.moveTo(xl,yt);g.lineTo(xl,yb);g.lineTo(xr,yb);g.lineTo(xr,yt);g.stroke()};
+  // 눈
+  eyeIcon(g,E.x,E.y);outText(g,'관찰자',E.x,E.y-36,14,'#334155','rgba(255,255,255,.9)');
+  if(sub==='B1'){const b=27*D2R,u={x:-Math.sin(b),y:-Math.cos(b)},Tt={x:.46*w,y:.78*h},L=.80*h,T0={x:Tt.x+u.x*L,y:Tt.y+u.y*L},tO=(Tt.y-yw)/Math.cos(b),O={x:Tt.x+u.x*tO,y:yw};
+    const strawLine=(pts,wd,col,al,dash)=>{g.save();g.lineCap='round';g.lineJoin='round';g.globalAlpha=al;g.strokeStyle=col;g.lineWidth=wd;if(dash)g.setLineDash(dash);g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.stroke();g.restore()};
+    const real=[Tt,O],N=18,under=[];for(let i=0;i<=N;i++){const q={x:Tt.x+(O.x-Tt.x)*i/N,y:Tt.y+(O.y-Tt.y)*i/N};under.push(mapPt(q,G))}
+    if(M2.realB){strawLine(real,12,'#334155',.45,[6,6]);outText(g,'실제 빨대',Tt.x+8,Tt.y+22,13,'#334155','rgba(255,255,255,.9)')}
+    strawLine([O,T0],12,'#e11d48',1);strawLine([O,T0],4,'#fecdd3',.9);
+    strawLine(under.slice().reverse(),16,'#e11d48',.9);strawLine(under.slice().reverse(),5,'#fecdd3',.85);
+    drawGlass();
+    const v=refrView(Tt,E,yw,NW);
+    if(M2.virtB&&v){ray(g,Tt.x,Tt.y,v.P.x,v.P.y,'#d97706',2.5,.95,true);ray(g,v.P.x,v.P.y,E.x-(E.x-v.P.x)*24/Math.hypot(E.x-v.P.x,E.y-v.P.y),E.y-(E.y-v.P.y)*24/Math.hypot(E.x-v.P.x,E.y-v.P.y),'#d97706',2.5,.95);
+      g.save();g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([3,6]);g.beginPath();g.moveTo(v.P.x,v.P.y);g.lineTo(v.app.x,v.app.y);g.stroke();g.restore();outText(g,'보이는 빨대 끝(허상)',v.app.x+6,v.app.y-18,13,'#1d4ed8','rgba(255,255,255,.95)')}
+    outText(g,'⚠ 수면에서 꺾여 보이고 굵어 보여요',w*.5,h*.945,clamp(w*.024,13,18),'#be123c','rgba(255,255,255,.95)');
+    const sg='B1'+M2.ang+M2.virtB;if(sg!==info2sig){info2sig=sg;$('#info2').innerHTML='🥤 물속 빨대에서 나온 빛은 수면에서 <b>꺾여(굴절)</b> 눈에 들어와요. 눈은 빛이 직진해 왔다고 느껴서 물속 부분이 <b>실제보다 위쪽(얕은 곳)</b>에 있는 것처럼 보여요. 그래서 수면에서 빨대가 <b>꺾여 보여요</b>. (물과 컵이 볼록렌즈 역할을 해서 <b>굵어 보이기</b>도 해요.)<br>👁 <b>관찰 각도</b>를 바꾸면 꺾임이 달라져요.';$('#ban2').innerHTML='⭐ 물속 빨대는 위로 떠올라 <b>짧고 꺾여</b> 보여요 (눈 각도 '+M2.ang+'°)'}}
+  else{ // 물개
+    const sx=.30*w,base=[{c:{x:sx+.11*w,y:yw+.16*h},rx:.13*w,ry:.058*h,rot:-.18},{c:{x:sx-.015*w,y:yw+.035*h},rx:.05*w,ry:.07*h,rot:.55},{c:{x:sx-.02*w,y:yw-.055*h},rx:.036*w,ry:.036*h,rot:.1}];
+    const tail=[{x:sx+.235*w,y:yw+.19*h},{x:sx+.30*w,y:yw+.14*h},{x:sx+.285*w,y:yw+.215*h}];
+    const shapes=base.map(e=>ellPoly(e.c.x,e.c.y,e.rx,e.ry,e.rot,48)).concat([tail]);
+    if(M2.realB){g.save();g.strokeStyle='#334155';g.globalAlpha=.55;g.lineWidth=2.5;g.setLineDash([6,6]);shapes.forEach(s=>{polyPath(g,s);g.stroke()});g.restore();outText(g,'실제 모습',sx+.11*w,yw+.25*h,13,'#334155','rgba(255,255,255,.9)')}
+    const mp=shapes.map(s=>s.map(p=>mapPt(p,G)));
+    g.fillStyle='#94a3b8';g.strokeStyle='#475569';g.lineWidth=2.5;mp.forEach(s=>{polyPath(g,s);g.fill();g.stroke()});
+    const hd=mapPt({x:sx-.02*w,y:yw-.055*h},G);g.fillStyle='#0f172a';g.beginPath();g.arc(hd.x-.01*w,hd.y-4,4.5,0,6.2832);g.fill();g.beginPath();g.arc(hd.x-.036*w,hd.y+3,5,0,6.2832);g.fill();
+    g.strokeStyle='#e2e8f0';g.lineWidth=1.6;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(hd.x-.03*w,hd.y+7);g.lineTo(hd.x-.065*w,hd.y+7+i*7);g.stroke()}
+    drawGlass();outText(g,'🦭 보이는 물개',sx+.11*w,yw+.07*h,14,'#1e293b','rgba(255,255,255,.95)');
+    const q=shapes[0][12],v=refrView(q,E,yw,NW);
+    if(M2.virtB&&v){ray(g,q.x,q.y,v.P.x,v.P.y,'#d97706',2.5,.95,true);ray(g,v.P.x,v.P.y,E.x-(E.x-v.P.x)*24/Math.hypot(E.x-v.P.x,E.y-v.P.y),E.y-(E.y-v.P.y)*24/Math.hypot(E.x-v.P.x,E.y-v.P.y),'#d97706',2.5,.95);g.save();g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([3,6]);g.beginPath();g.moveTo(v.P.x,v.P.y);g.lineTo(v.app.x,v.app.y);g.stroke();g.restore();g.fillStyle='#2563eb';g.beginPath();g.arc(v.app.x,v.app.y,6,0,6.2832);g.fill();outText(g,'허상',v.app.x+26,v.app.y,13,'#1d4ed8','rgba(255,255,255,.95)')}
+    outText(g,'⚠ 물속 몸통이 위로 떠올라 짧아 보여요',w*.5,h*.945,clamp(w*.024,13,18),'#be123c','rgba(255,255,255,.95)');
+    const sg='B2'+M2.ang+M2.virtB;if(sg!==info2sig){info2sig=sg;$('#info2').innerHTML='🦭 수족관 물개를 위에서 비스듬히 보면, 물속 몸통에서 나온 빛이 수면에서 <b>꺾여</b> 눈에 들어와요. 눈은 직진해 온 줄 알아서 물속 몸통이 <b>실제보다 위쪽</b>에 있는 것처럼 보이고, 몸이 <b>짧아져</b> 머리와 몸이 어긋난 듯한 <b>착시</b>가 생겨요.<br>👁 <b>관찰 각도</b>를 바꿔 보세요.';$('#ban2').innerHTML='⭐ 물속 몸통이 떠올라 보여서 물개의 모습이 <b>달라 보여요</b> (눈 각도 '+M2.ang+'°)'}}
+}
+function scene2(dt,t){const cv=$('#c2'),{g,w,h}=fit(cv);
+  if(M2.pour&&M2.s==='A'){M2.wl=Math.min(100,M2.wl+dt*16);$('#wl').value=Math.round(M2.wl);$('#wlv').textContent=Math.round(M2.wl)+'%';if(M2.wl>=100){M2.pour=false;pourUI()}}
+  M2.s==='A'?sceneA(g,w,h,dt,t):sceneB(g,w,h,dt,t)}
+function pourUI(){$('#pour').textContent=M2.pour?'⏸ 멈춤':'💧 물 붓기'}
+$('#pour').onclick=()=>{if(M2.wl>=100)M2.wl=0;M2.pour=!M2.pour;pourUI();sTick()};
+$('#drain').onclick=()=>{M2.wl=0;M2.pour=false;pourUI();$('#wl').value=0;$('#wlv').textContent='0%';info2sig='';sTick()};
+$('#wl').oninput=()=>{M2.wl=+$('#wl').value;M2.pour=false;pourUI();$('#wlv').textContent=M2.wl+'%'};
+$('#tgV').onclick=()=>{M2.virt=!M2.virt;$('#tgV').classList.toggle('on',M2.virt);info2sig='';sTick()};
+$('#tgVB').onclick=()=>{M2.virtB=!M2.virtB;$('#tgVB').classList.toggle('on',M2.virtB);info2sig='';sTick()};
+$('#tgRB').onclick=()=>{M2.realB=!M2.realB;$('#tgRB').classList.toggle('on',M2.realB);sTick()};
+$('#ang2').oninput=()=>{M2.ang=+$('#ang2').value;$('#ang2v').textContent=M2.ang+'°'};
+function setSub2(s){M2.s=s;M2.pour=false;pourUI();info2sig='';$('#pA2').style.display=s==='A'?'':'none';$('#pB2').style.display=s==='A'?'none':'';if(s!=='A'){S.m2.add(s);hud()}subUI()}
+function subUI(){$$('#sub2 .btn').forEach(b=>{b.classList.toggle('on',b.dataset.s===M2.s);b.classList.toggle('ok',S.m2.has(b.dataset.s))})}
+$$('#sub2 .btn').forEach(b=>b.onclick=()=>{setSub2(b.dataset.s);sTick()});
+
+/* ═════════ HUD ═════════ */
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const n1=Object.keys(S.rec.a).length+Object.keys(S.rec.w).length,n3=S.med.size+(S.g.hh?1:0)+(S.g.lh?1:0);
+  const it=[['① 굴절 측정',n1,10,10],['② 착시 탐구',S.m2.size,3,3],['③ 매질·사냥',n3,6,6]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[3];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=3?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/3'}</div>`}
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'공기 중에서 물속으로 빛을 비스듬히 비출 때, 입사각과 굴절각 중 어느 각이 더 클까?',o:['입사각이 더 크다 (공기 쪽 각도)','굴절각이 더 크다 (물속 각도)','두 각은 항상 같다','경우에 따라 달라진다'],a:0,e:'빛이 공기에서 물로 들어가면 속력이 느려져 법선 쪽으로 꺾이므로, 항상 공기 쪽 각도인 “입사각”이 굴절각보다 더 커요! (① 공기 → 물 비추기)'},
+ {q:'레이저 빛을 수면에 완전히 수직(입사각 0°)으로 비추면 물속에서 빛은 어떻게 나아갈까?',o:['법선 쪽으로 꺾인다','수면 쪽으로 꺾인다','꺾이지 않고 그대로 곧장 직진한다','수면에서 모두 반사되어 되돌아온다'],a:2,e:'수면에 수직으로 들어가는 빛은 꺾이지 않고 그대로 곧장 직진해요. 입사각 0° → 굴절각 0°! (① 프리셋 0°)'},
+ {q:'물속에 발을 담그거나 수영장 바닥을 내려다보면 실제보다 깊이가 어떻게 보일까?',o:['실제보다 깊어 보이고 다리는 길어 보인다','실제와 똑같이 보인다','실제보다 얕아 보이고 다리는 짧고 굵어 보인다','깊이는 같고 다리만 굵어 보인다'],a:2,e:'물속에서 나온 빛이 수면에서 굴절되어 눈에 들어오므로, 바닥이 실제보다 떠올라 보여 수심이 얕아 보이고 다리는 짧고 굵어 보여요! (② 동전·빨대 착시)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 모드 ③: 매질 비교 · 물고기 사냥 ═════════ */
+const M3={s:'cmp',m:0,th:45,wp:'harp',F:null,aim:null,shot:null,reveal:false,tries:0};
+function buildMed(){$('#med').innerHTML=MED.map((m,i)=>`<button class="btn${M3.m===i?' on':''}" data-m="${i}" style="${S.med.has(i)&&M3.m!==i?'border-color:#86efac':''}">${m.ic} 공기 ↔ ${m.nm}<br><small>n = ${m.n.toFixed(2)} · 속력 ${(3/m.n).toFixed(2)}×10⁸</small></button>`).join('');
+  $$('#med .btn').forEach(b=>b.onclick=()=>{M3.m=+b.dataset.m;S.med.add(M3.m);buildMed();hud();sTick();tb3sig='';if(M3.s==='fish')newFish();else{const m=MED[M3.m],t2=snell(M3.th*D2R,1,m.n)*R2D;$('#fb3').className='fb good';$('#fb3').textContent=m.ic+' '+m.nm+'(n='+m.n.toFixed(2)+'): 입사각 '+M3.th+'° → 굴절각 '+t2.toFixed(1)+'° (꺾인 각도 '+(M3.th-t2).toFixed(1)+'°). 굴절률이 클수록 법선 쪽으로 더 많이 꺾여요.'}})}
+function sceneCmp(g,w,h,t){const O={x:w*.5,y:h*.46},R=Math.min(w*.30,h*.34),th=M3.th*D2R,m=MED[M3.m],Rl=R+34;
+  g.fillStyle='#0b1220';g.fillRect(0,0,w,h);g.save();g.globalAlpha=.3;g.fillStyle=m.c;g.fillRect(0,O.y,w,h-O.y);g.restore();
+  g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=3;g.beginPath();g.moveTo(0,O.y);g.lineTo(w,O.y);g.stroke();
+  outText(g,'공기 (n=1.00)',80,O.y-18,15,'#e2e8f0');outText(g,m.ic+' '+m.nm+' (n='+m.n.toFixed(2)+')',110,O.y+22,15,m.c);
+  g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=2;g.beginPath();g.arc(O.x,O.y,R,0,6.2832);g.stroke();
+  for(const sy of [-1,1])for(let d=-90;d<=90;d+=10){const sx=Math.sin(d*D2R),cy=sy*Math.cos(d*D2R),len=d%20===0?14:8;g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=d%20===0?2:1;g.beginPath();g.moveTo(O.x+sx*R,O.y+cy*R);g.lineTo(O.x+sx*(R-len),O.y+cy*(R-len));g.stroke();if(d%20===0&&Math.abs(d)<90&&d!==0)outText(g,Math.abs(d),O.x+sx*(R-28),O.y+cy*(R-28),12,'#e0f2fe','rgba(15,23,42,.7)')}
+  g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=2;g.setLineDash([9,7]);g.beginPath();g.moveTo(O.x,O.y-R*1.25);g.lineTo(O.x,O.y+R*1.25);g.stroke();g.setLineDash([]);outText(g,'법선',O.x+24,O.y-R*1.25+4,14,'#fff');
+  const s=-1,L={x:O.x+s*Math.sin(th)*Rl,y:O.y-Math.cos(th)*Rl},d1={x:-s*Math.sin(th),y:Math.cos(th)};
+  if(M3.th>0){g.save();g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=2.5;g.setLineDash([4,8]);g.beginPath();g.moveTo(O.x,O.y);g.lineTo(O.x+d1.x*R*1.3,O.y+d1.y*R*1.3);g.stroke();g.restore();outText(g,'직진했다면',O.x+d1.x*R*1.3+30,O.y+d1.y*R*1.3+(M3.th>60?-4:12),12,'#fff')}
+  const aL=Math.atan2(L.y-O.y,L.x-O.x);
+  ray(g,L.x,L.y,O.x,O.y,'#ff3030',4,1);
+  // 모든 매질
+  const ends=[];MED.forEach((md,k)=>{const t2=snell(th,1,md.n),sel=k===M3.m,d2={x:Math.sin(t2),y:Math.cos(t2)},len=R*1.22;const ex=O.x+d2.x*len,ey=O.y+d2.y*len;
+    if(!sel){g.save();g.strokeStyle=md.c;g.globalAlpha=.85;g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(O.x,O.y);g.lineTo(ex,ey);g.stroke();g.restore()}ends.push([k,ex,ey,t2])});
+  {const e=ends[M3.m];ray(g,O.x,O.y,e[1],e[2],m.c,5,1);const t2=e[3];wedge(g,O,R*.5,-Math.PI/2,aL,'rgba(59,130,246,.42)','#60a5fa');const aO=Math.atan2(Math.cos(t2),Math.sin(t2));wedge(g,O,R*.42,Math.PI/2,aO,'rgba(34,197,94,.42)',m.c)}
+  ends.forEach(([k,ex,ey,t2])=>{const md=MED[k];const px=clamp(ex+14,70,w-70),py=clamp(ey+(k%2?20:-4)+k*6,O.y+16,h-16);pill(g,md.nm+' '+(t2*R2D).toFixed(1)+'°',px+(px>w-120?-40:20),py,md.c)});
+  g.fillStyle='#fff';g.beginPath();g.arc(O.x,O.y,6,0,6.2832);g.fill();
+  outText(g,'θ₁ '+M3.th+'°',O.x-Math.sin(th/2)*(R*.5+38),O.y-Math.cos(th/2)*(R*.5+38),15,'#93c5fd');
+  g.save();g.translate(L.x,L.y);g.rotate(Math.atan2(O.y-L.y,O.x-L.x));g.fillStyle='#0b0b0f';rr(g,-110,-17,104,34,6);g.fill();g.fillStyle='#ff4040';g.beginPath();g.arc(-2,0,4.5,0,6.2832);g.fill();g.fillStyle='#e5e7eb';g.font='800 12px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('레이저',-58,0);g.restore();
+  g.strokeStyle='rgba(250,204,21,'+(.55+.35*Math.sin(t*4))+')';g.lineWidth=3.5;g.setLineDash([5,5]);g.beginPath();g.arc(L.x,L.y,30,0,6.2832);g.stroke();g.setLineDash([]);
+  outText(g,'굴절률이 클수록 → 법선 쪽으로 더 많이 꺾여요',w/2,h-18,clamp(w*.024,13,18),'#fde68a');
+  const sg=M3.th+'|'+M3.m;if(sg!==tb3sig){tb3sig=sg;$('#th3v').textContent=M3.th+'°';
+    $('#tb3').innerHTML='<table class="dt"><tr><th>매질</th><th>n</th><th>속력(×10⁸)</th><th>굴절각</th><th>꺾인 각도</th></tr>'+MED.map((md,k)=>{const t2=snell(th,1,md.n)*R2D;return `<tr style="${k===M3.m?'background:#fef9c3;':''}"><td style="color:#0f172a">${md.ic} ${md.nm}</td><td>${md.n.toFixed(2)}</td><td>${(3/md.n).toFixed(2)}</td><td style="color:#15803d">${t2.toFixed(1)}°</td><td>${(M3.th-t2).toFixed(1)}°</td></tr>`}).join('')+'</table>'}}
+let tb3sig='';
+/* 물고기 사냥 */
+function gF(w,h){return {yS:h*.36,S:{x:w*.10,y:h*.15}}}
+function newFish(){const cv=$('#c3'),r=cv.getBoundingClientRect(),w=Math.max(300,r.width),h=Math.max(300,r.height),{yS}=gF(w,h);
+  M3.F={x:(.48+Math.random()*.38)*w,y:yS+(.20+Math.random()*.28)*h};M3.shot=null;M3.reveal=false;M3.aim={x:w*.5,y:yS+.28*h};M3.wsz=[w,h];$('#reveal').classList.remove('on');fishInfo();
+  $('#fb3').className='fb';$('#fb3').textContent=M3.wp==='harp'?'🔱 눈에 보이는 물고기를 그대로 겨냥해 작살을 던져 보세요!':'🔦 눈에 보이는 물고기를 겨냥해 레이저를 쏴 보세요!'}
+function fishInfo(){$('#infoF').innerHTML=M3.wp==='harp'?'🔱 <b>작살은 물체라서 물속에서도 직진</b>해요. 보이는 물고기를 그대로 겨냥하면 맞을까요? 화면을 눌러 <b>조준점</b>을 옮기고 <b>발사!</b>':'🔦 <b>레이저는 빛이라서 수면에서 굴절</b>해요. 보이는 물고기를 그대로 겨냥하면 어떻게 될까요? 화면을 눌러 <b>조준점</b>을 옮기고 <b>발사!</b>';
+  $('#sc').innerHTML=`<b>📋 기록</b> 🔱 보이는 곳 겨냥→빗나감 ${S.g.hm?'✅':'⬜'} · 🔱 실제 위치 겨냥→명중 ${S.g.hh?'✅':'⬜'} · 🔦 보이는 곳 겨냥→명중 ${S.g.lh?'✅':'⬜'}`}
+function sceneFish(g,w,h,dt,t){const {yS,S:SH}=gF(w,h),md=MED[M3.m],n=md.n;if(!M3.F||!M3.wsz||Math.abs(M3.wsz[0]-w)>2||Math.abs(M3.wsz[1]-h)>2){const o=M3.wsz||[w,h],F=M3.F;if(F){M3.F={x:F.x/o[0]*w,y:(F.y-gF(o[0],o[1]).yS)/o[1]*h+yS};M3.aim={x:M3.aim.x/o[0]*w,y:(M3.aim.y-gF(o[0],o[1]).yS)/o[1]*h+yS}}M3.wsz=[w,h];if(!M3.F)newFish()}
+  const F=M3.F,A=M3.aim,v=refrView(F,SH,yS,n),Fa=v.app;
+  const sk=g.createLinearGradient(0,0,0,yS);sk.addColorStop(0,'#7dd3fc');sk.addColorStop(1,'#e0f2fe');g.fillStyle=sk;g.fillRect(0,0,w,yS);
+  const wg=g.createLinearGradient(0,yS,0,h);wg.addColorStop(0,'rgba(56,189,248,.85)');wg.addColorStop(1,'rgba(3,105,161,.95)');g.fillStyle=wg;g.fillRect(0,yS,w,h-yS);
+  g.save();g.globalAlpha=.25;g.fillStyle=md.c;g.fillRect(0,yS,w,h-yS);g.restore();
+  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=3;g.beginPath();for(let x=0;x<=w;x+=8){const y=yS+Math.sin(x*.05+t*2)*2.5;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+  g.fillStyle='#a16207';g.fillRect(0,h-26,w,26);outText(g,'🌿',w*.18,h-30,30);outText(g,'🪨',w*.62,h-26,28);outText(g,'🌿',w*.9,h-30,30);
+  outText(g,md.ic+' '+md.nm+' (n='+n.toFixed(2)+')',w-90,h-46,14,'#fff');
+  // 사냥꾼
+  outText(g,'🧑‍🦱',SH.x,SH.y,44);outText(g,'나 (관찰자)',SH.x,SH.y+36,13,'#0f172a','rgba(255,255,255,.9)');
+  // 물고기: 보이는 위치
+  const flip=Math.sin(t*1.3)>0?1:-1;
+  g.save();g.translate(Fa.x,Fa.y);g.scale(-1,1);g.font='46px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🐟',0,0);g.restore();
+  outText(g,'👁 보이는 물고기',Fa.x,Fa.y-34,13,'#fff');
+  if(M3.reveal||(M3.shot&&M3.shot.t>=1)){g.save();g.globalAlpha=.6;g.translate(F.x,F.y);g.scale(-1,1);g.font='46px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🐟',0,0);g.restore();g.strokeStyle='#fde047';g.lineWidth=3;g.setLineDash([5,5]);g.beginPath();g.arc(F.x,F.y,26,0,6.2832);g.stroke();g.setLineDash([]);outText(g,'실제 위치',F.x,F.y+38,13,'#fde047');
+    g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2;g.setLineDash([3,5]);g.beginPath();g.moveTo(Fa.x,Fa.y+22);g.lineTo(F.x,F.y-24);g.stroke();g.setLineDash([])}
+  // 조준
+  const shot=M3.shot;
+  if(!shot){g.save();g.strokeStyle='rgba(250,204,21,.9)';g.lineWidth=2.5;g.setLineDash([8,6]);g.beginPath();g.moveTo(SH.x+20,SH.y+8);g.lineTo(A.x,A.y);g.stroke();g.restore()}
+  g.strokeStyle='#dc2626';g.lineWidth=3;g.beginPath();g.arc(A.x,A.y,18,0,6.2832);g.moveTo(A.x-28,A.y);g.lineTo(A.x+28,A.y);g.moveTo(A.x,A.y-28);g.lineTo(A.x,A.y+28);g.stroke();
+  // 발사 애니메이션
+  if(shot){shot.t=Math.min(1,shot.t+dt/.85);const pts=shot.path,tot=pts.slice(1).reduce((s,p,i)=>s+Math.hypot(p.x-pts[i].x,p.y-pts[i].y),0);let rem=tot*shot.t,cur=[pts[0]];
+    for(let i=1;i<pts.length;i++){const sl=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);if(rem>=sl){cur.push(pts[i]);rem-=sl}else{const k=rem/sl;cur.push({x:pts[i-1].x+(pts[i].x-pts[i-1].x)*k,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*k});break}}
+    if(shot.wp==='laser'){g.save();g.lineCap='round';g.lineJoin='round';g.shadowColor='#ff2a2a';g.shadowBlur=14;g.strokeStyle='#ff3030';g.lineWidth=5;g.beginPath();cur.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.stroke();g.shadowBlur=0;g.strokeStyle='#fff';g.lineWidth=1.8;g.stroke();g.restore()}
+    else{const e=cur[cur.length-1],p=cur[cur.length-2]||cur[0],an=Math.atan2(e.y-p.y,e.x-p.x);g.save();g.strokeStyle='#1e293b';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(cur[0].x,cur[0].y);g.lineTo(e.x,e.y);g.stroke();g.strokeStyle='#94a3b8';g.lineWidth=2;g.stroke();g.translate(e.x,e.y);g.rotate(an);g.fillStyle='#475569';g.beginPath();g.moveTo(14,0);g.lineTo(-6,-9);g.lineTo(-6,9);g.closePath();g.fill();g.restore()}
+    if(shot.t>=1){if(shot.hit){g.font='60px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💥',F.x,F.y);outText(g,'명중! 🎉',w/2,yS-40,clamp(w*.04,20,34),'#fde047')}else outText(g,'빗나갔어요! ✖',w/2,yS-40,clamp(w*.04,20,34),'#fecaca');
+      if(!shot.done){shot.done=true;finishShot(shot)}}}
+  else outText(g,M3.wp==='harp'?'🔱 작살 (직진)':'🔦 레이저 (굴절)',w/2,yS-34,clamp(w*.03,15,22),'#0f172a','rgba(255,255,255,.9)')}
+function fire(){if(M3.shot)return;const cv=$('#c3'),r=cv.getBoundingClientRect(),w=r.width,h=r.height,{yS,S:SH}=gF(w,h),n=MED[M3.m].n,A=M3.aim,F=M3.F;
+  const o={x:SH.x+20,y:SH.y+8},dx=A.x-o.x,dy=A.y-o.y,L=Math.hypot(dx,dy),d={x:dx/L,y:dy/L};let path,hit=false;
+  if(d.y<=.02){toast('#toast3','물속을 겨냥해 주세요!',1400);return}
+  const tS=(yS-o.y)/d.y,P={x:o.x+d.x*tS,y:yS};
+  if(M3.wp==='harp'){path=[o,{x:o.x+d.x*2500,y:o.y+d.y*2500}];const tf=(F.x-o.x)*d.x+(F.y-o.y)*d.y,dist=Math.abs((F.x-o.x)*d.y-(F.y-o.y)*d.x);hit=tf>0&&dist<=26}
+  else{const t1=Math.asin(clamp(Math.abs(d.x),0,1)),t2=snell(t1,1,n),d2={x:Math.sign(d.x||1)*Math.sin(t2),y:Math.cos(t2)};path=[o,P,{x:P.x+d2.x*2500,y:P.y+d2.y*2500}];
+    const tf=(F.x-P.x)*d2.x+(F.y-P.y)*d2.y,dist=Math.abs((F.x-P.x)*d2.y-(F.y-P.y)*d2.x);hit=tf>0&&dist<=26}
+  const v=refrView(F,o,yS,n);
+  M3.shot={t:0,path,hit,wp:M3.wp,nearApp:v?Math.hypot(A.x-v.app.x,A.y-v.app.y)<38:false,nearReal:Math.hypot(A.x-F.x,A.y-F.y)<38};sTick()}
+function finishShot(s){const fb=$('#fb3');let msg,cls='fb';
+  if(s.wp==='harp'){if(s.hit){if(s.nearReal){S.g.hh=true;msg='🎉 명중! 작살은 직진하므로 물고기의 <b>실제 위치(보이는 곳보다 아래)</b>를 겨냥해야 맞아요.';cls='fb good'}else{S.g.hh=true;msg='🎉 명중! 작살은 직진하므로 실제 위치를 지나게 겨냥했어요.';cls='fb good'}}
+    else if(s.nearApp){S.g.hm=true;msg='😮 보이는 곳을 그대로 겨냥했더니 <b>물고기 위로 빗나갔어요!</b> 눈에 보이는 물고기는 허상이고, 실제 물고기는 더 <b>아래(깊은 곳)</b>에 있어요. 💡 노란 점선으로 표시된 실제 위치를 겨냥해 보세요.'}
+    else msg='빗나갔어요. 작살은 직진하니까 <b>실제 위치</b>(👻 실제 위치 보기)를 겨냥해 보세요.'}
+  else{if(s.hit){if(s.nearApp){S.g.lh=true;msg='🎉 명중! 레이저는 빛이라 <b>같은 경로로 굴절</b>해요. 눈에 보이는 곳을 그대로 겨냥하면 맞아요 (빛의 경로는 되돌려도 같아요).';cls='fb good'}else{S.g.lh=true;msg='🎉 명중!';cls='fb good'}}
+    else if(s.nearReal)msg='😮 실제 위치를 겨냥했더니 레이저가 <b>굴절해서 빗나갔어요</b>. 빛은 보이는 곳을 겨냥해야 맞아요!';else msg='빗나갔어요. 레이저는 <b>눈에 보이는 물고기</b>를 겨냥해 보세요.'}
+  fb.className=cls;fb.innerHTML=msg;if(cls==='fb good')sOK();else sNO();M3.tries++;hud();fishInfo()}
+(()=>{const cv=$('#c3');let act=null;
+  const aim=e=>{const r=cv.getBoundingClientRect(),{yS}=gF(r.width,r.height);M3.aim={x:clamp(e.clientX-r.left,10,r.width-10),y:clamp(e.clientY-r.top,yS+14,r.height-30)}};
+  const ang=e=>{const r=cv.getBoundingClientRect(),O={x:r.width*.5,y:r.height*.46},x=e.clientX-r.left-O.x,y=O.y-(e.clientY-r.top);M3.th=Math.round(clamp(Math.atan2(Math.abs(x),Math.max(y,1))*R2D,0,80));if(y<=1)M3.th=80;$('#th3').value=M3.th};
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);act=e.pointerId;if(M3.s==='fish'){if(!M3.shot)aim(e)}else ang(e)});
+  cv.addEventListener('pointermove',e=>{if(act!==e.pointerId)return;if(M3.s==='fish'){if(!M3.shot)aim(e)}else ang(e)});
+  const up=e=>{if(act===e.pointerId)act=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)})();
+$('#th3').oninput=()=>{M3.th=+$('#th3').value};
+$$('#wp .btn').forEach(b=>b.onclick=()=>{M3.wp=b.dataset.w;$$('#wp .btn').forEach(x=>x.classList.toggle('on',x===b));newFish();sTick()});
+$('#fire').onclick=fire;$('#nextF').onclick=()=>{newFish();sTick()};
+$('#reveal').onclick=()=>{M3.reveal=!M3.reveal;$('#reveal').classList.toggle('on',M3.reveal);sTick()};
+function setSub3(s){M3.s=s;$('#pC3').style.display=s==='cmp'?'':'none';$('#pF3').style.display=s==='fish'?'':'none';$$('#sub3 .btn').forEach(b=>b.classList.toggle('on',b.dataset.s===s));tb3sig='';
+  if(s==='fish')newFish();else{$('#fb3').className='fb';$('#fb3').textContent='매질을 골라 굴절 정도를 비교해 보세요. 레이저를 끌어서 입사각도 바꿔 보세요.'}}
+$$('#sub3 .btn').forEach(b=>b.onclick=()=>{setSub3(b.dataset.s);sTick()});
+function scene3(dt,t){const cv=$('#c3'),{g,w,h}=fit(cv);M3.s==='cmp'?sceneCmp(g,w,h,t):sceneFish(g,w,h,dt,t)}
+
+/* ═════════ 리셋 · 루프 ═════════ */
+function resetAll(){
+  Object.assign(M1,{a:40,side:-1,dir:'a',smoke:true,normal:true,proto:true,straight:true,refl:true,drag:false,snap:-1});syncTg();dirUI();S.rec={a:{},w:{}};dtBuild();
+  $('#fb1').className='fb';$('#fb1').textContent='입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 두 방향 모두 기록해 보세요.';
+  Object.assign(M2,{s:'A',wl:0,pour:false,virt:true,ang:40,virtB:true,realB:true});$('#wl').value=0;$('#wlv').textContent='0%';$('#ang2').value=40;$('#ang2v').textContent='40°';['tgV','tgVB','tgRB'].forEach(i=>$('#'+i).classList.add('on'));pourUI();S.m2=new Set();setSub2('A');
+  S.med=new Set([0]);S.g={hm:false,hh:false,lh:false};Object.assign(M3,{m:0,th:45,wp:'harp',tries:0});$('#th3').value=45;$$('#wp .btn').forEach(x=>x.classList.toggle('on',x.dataset.w==='harp'));buildMed();setSub3('cmp');
+  S.quiz=-1;hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===2)scene2(dt,t);else scene3(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+dtBuild();syncTg();dirUI();S.med.add(0);buildMed();setSub2('A');setSub3('cmp');hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

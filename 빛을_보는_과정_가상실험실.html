@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>빛을 보는 과정 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+</style></head><body>
+<header>
+  <h1>👀 빛을 보는 과정 가상실험실</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 방 안에서 보기</button>
+    <button class="tab" id="tab2">② 캠핑장·밤하늘의 달</button>
+    <button class="tab" id="tab3">③ 오개념 격파·광원 분류</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi1"></div></div>
+    <div class="card ctl">
+      <div class="seg" id="mis" style="grid-template-columns:1fr 1fr"><button class="btn on" data-m="A">📖 미션 A<br><small>책을 볼 때 빛의 경로</small></button><button class="btn" data-m="B">🐟 미션 B<br><small>어항 속 물고기를 볼 때</small></button></div>
+      <div class="kv2" id="guide1"></div>
+      <div class="row sm"><button class="btn on" id="sw1">💡 전등 ON</button><button class="btn" id="clr1">🧹 화살표 지우기</button><button class="btn" id="hint1">💡 힌트</button><button class="btn go" id="play1">▶ 빛 흘려보기</button></div>
+    </div>
+    <div class="fb" id="fb1">전등을 켜고, 빛이 지나가는 순서대로 점에서 점으로 <b>드래그</b>해 화살표를 그려 보세요.</div>
+  </div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi2"></div></div>
+    <div class="card ctl"><div class="seg" id="dn" style="grid-template-columns:1fr 1fr"><button class="btn on" data-d="day">☀️ 낮 (태양·텐트·물고기)</button><button class="btn" data-d="night">🌙 밤 (우주에서 본 달)</button></div>
+      <div class="kv2" id="guide2"></div></div>
+    <div class="card ctl"><div class="kv2" id="info2"></div><div class="ban" id="ban2"></div></div>
+  </div>
+</section>
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div>
+    <div class="sortbox" id="sort"><div class="kv2" style="font-size:clamp(14px,1.3vw,19px)">🗂 <b>카드를 누르고</b>, 아래 <b>광원 / 비광원</b> 상자를 눌러 분류해 보세요!</div><div class="cards" id="cards"></div>
+      <div class="zones"><div class="zone src" id="zSrc" data-z="1">💡 광원<br><small>스스로 빛을 내는 물체</small><div class="chips" id="cSrc"></div></div><div class="zone non" id="zNon" data-z="0">🔦 비광원<br><small>빛을 반사해서 보이는 물체</small><div class="chips" id="cNon"></div></div></div></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi3"></div></div>
+    <div class="card ctl"><div class="seg" id="sub3" style="grid-template-columns:1fr 1fr"><button class="btn on" data-s="A">🧱 실험 A<br><small>가림막 끼우기</small></button><button class="btn" data-s="B">🗂 실험 B<br><small>광원 vs 비광원</small></button></div>
+      <div class="kv2" id="guide3"></div>
+      <div class="row sm" id="rowA"><button class="btn on" id="sw3">💡 전등 ON</button><button class="btn" id="hyp">👁 눈에서 빛이 나간다면?</button><button class="btn" id="rst3">↺ 가림막 되돌리기</button></div>
+      <div class="row sm" id="rowB" style="display:none"><button class="btn" id="rstB">↺ 다시 분류하기</button></div></div>
+    <div class="fb" id="fb3"></div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+
+const S={path:new Set(),m2:new Set(),scrA:false,sort:false,quiz:-1};
+const NW=1.33;
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg)=>{g.font='900 13px sans-serif';const w=g.measureText(t).width+14;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-12,w,24,12);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+function ray(g,x0,y0,x1,y1,col,wd,al,noarrow){g.save();g.lineCap='round';const A=al==null?1:al;g.shadowColor=col;g.shadowBlur=12;g.strokeStyle=col;g.lineWidth=wd+3;g.globalAlpha=A*.4;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+  g.globalAlpha=A;g.shadowBlur=5;g.lineWidth=wd;g.stroke();g.shadowBlur=0;g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=Math.max(1,wd*.35);g.stroke();
+  if(!noarrow&&Math.hypot(x1-x0,y1-y0)>40){const mx=(x0+x1)/2,my=(y0+y1)/2,an=Math.atan2(y1-y0,x1-x0);g.fillStyle='#fff';g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();g.moveTo(mx+Math.cos(an)*11,my+Math.sin(an)*11);g.lineTo(mx-Math.cos(an-.6)*12,my-Math.sin(an-.6)*12);g.lineTo(mx-Math.cos(an+.6)*12,my-Math.sin(an+.6)*12);g.closePath();g.fill();g.stroke()}g.restore()}
+function refrView(Q,E,yw,n){const hh=Q.y-yw,H=yw-E.y;if(hh<=0||H<=0)return {P:{x:Q.x,y:yw},app:{x:Q.x,y:yw}};
+  const dx=E.x-Q.x;if(Math.abs(dx)<1e-6)return {P:{x:Q.x,y:yw},app:{x:Q.x,y:yw+hh/n}};
+  const f=xp=>{const a=Math.abs(xp-Q.x),b=Math.abs(E.x-xp);return b/Math.hypot(b,H)-n*a/Math.hypot(a,hh)};
+  let lo=Q.x,hi=E.x;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(f(m)>0)lo=m;else hi=m}
+  const xp=(lo+hi)/2,P={x:xp,y:yw},ya=P.y+(P.y-E.y)*(Q.x-P.x)/(P.x-E.x);return {P,app:{x:Q.x,y:ya}}}
+const plen=p=>p.slice(1).reduce((s,q,i)=>s+Math.hypot(q.x-p[i].x,q.y-p[i].y),0);
+/* 경로를 u(0~1)만큼 그리고 빛 알갱이를 이동시킨다 */
+function pathAnim(g,pts,u,col,wd,t){const tot=plen(pts);let rem=tot*u,head=pts[0];
+  for(let i=1;i<pts.length;i++){const sl=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);if(rem>=sl){ray(g,pts[i-1].x,pts[i-1].y,pts[i].x,pts[i].y,col,wd);rem-=sl;head=pts[i]}else{const k=rem/sl,q={x:pts[i-1].x+(pts[i].x-pts[i-1].x)*k,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*k};if(rem>1)ray(g,pts[i-1].x,pts[i-1].y,q.x,q.y,col,wd,1,true);head=q;break}}
+  if(u<1){g.fillStyle='#fff';g.shadowColor=col;g.shadowBlur=16;g.beginPath();g.arc(head.x,head.y,7,0,6.2832);g.fill();g.shadowBlur=0}}
+function eyeIcon(g,x,y,s){s=s||1;g.save();g.translate(x,y);g.scale(s,s);g.fillStyle='#fff';g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.ellipse(0,0,26,17,0,0,6.2832);g.fill();g.stroke();g.fillStyle='#2563eb';g.beginPath();g.arc(2,1,10,0,6.2832);g.fill();g.fillStyle='#0f172a';g.beginPath();g.arc(2,1,5,0,6.2832);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(-1,-2,2.3,0,6.2832);g.fill();g.restore()}
+function drawLamp(g,x,y,on,t){g.strokeStyle='#475569';g.lineWidth=3;g.beginPath();g.moveTo(x,0);g.lineTo(x,y-34);g.stroke();
+  if(on){const gr=g.createRadialGradient(x,y,4,x,y,150);gr.addColorStop(0,'rgba(254,240,138,.75)');gr.addColorStop(1,'rgba(254,240,138,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,150,0,6.2832);g.fill()}
+  g.fillStyle='#64748b';g.beginPath();g.moveTo(x-26,y-12);g.lineTo(x-12,y-34);g.lineTo(x+12,y-34);g.lineTo(x+26,y-12);g.closePath();g.fill();
+  g.fillStyle=on?'#fde047':'#cbd5e1';g.strokeStyle=on?'#f59e0b':'#94a3b8';g.lineWidth=3;g.beginPath();g.arc(x,y,16,0,6.2832);g.fill();g.stroke()}
+function drawBook(g,x,y,w,lit){g.fillStyle=lit?'#e11d48':'#7f1d1d';g.fillRect(x-w/2,y,w,16);g.fillStyle=lit?'#fff7ed':'#a8a29e';g.fillRect(x-w/2+4,y+3,w-8,10);g.strokeStyle='#fecaca';g.lineWidth=1;for(let i=0;i<3;i++){g.beginPath();g.moveTo(x-w/2+6,y+5+i*3);g.lineTo(x+w/2-6,y+5+i*3);g.stroke()}
+  g.fillStyle=lit?'#be123c':'#450a0a';g.fillRect(x-w/2,y-5,w,6)}
+function drawFish(g,x,y,sz,al,flip){g.save();g.globalAlpha=al==null?1:al;g.translate(x,y);g.scale(flip?-1:1,1);g.font=sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🐟',0,0);g.restore()}
+function drawSun(g,x,y,r,t){const gr=g.createRadialGradient(x,y,r*.4,x,y,r*2.4);gr.addColorStop(0,'rgba(254,240,138,.8)');gr.addColorStop(1,'rgba(254,240,138,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r*2.4,0,6.2832);g.fill();g.fillStyle='#fde047';g.strokeStyle='#f59e0b';g.lineWidth=3;g.beginPath();g.arc(x,y,r,0,6.2832);g.fill();g.stroke()}
+function drawTent(g,x,base,wd,ht,lit){g.fillStyle=lit?'#f97316':'#9a3412';g.beginPath();g.moveTo(x-wd/2,base);g.lineTo(x,base-ht);g.lineTo(x+wd/2,base);g.closePath();g.fill();g.fillStyle=lit?'#fdba74':'#7c2d12';g.beginPath();g.moveTo(x,base-ht);g.lineTo(x+wd/2,base);g.lineTo(x+wd*.12,base);g.closePath();g.fill();g.fillStyle='#431407';g.beginPath();g.moveTo(x-wd*.07,base);g.lineTo(x,base-ht*.45);g.lineTo(x+wd*.07,base);g.closePath();g.fill();g.strokeStyle='#7c2d12';g.lineWidth=2;g.beginPath();g.moveTo(x-wd/2,base);g.lineTo(x,base-ht);g.lineTo(x+wd/2,base);g.stroke()}
+function drawPerson(g,x,y,ground,col){g.strokeStyle=col||'#334155';g.fillStyle=col||'#334155';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(x,y+26);g.lineTo(x,ground-34);g.moveTo(x,ground-34);g.lineTo(x-12,ground);g.moveTo(x,ground-34);g.lineTo(x+12,ground);g.stroke();g.beginPath();g.arc(x,y,24,0,6.2832);g.fillStyle='#fde0c8';g.fill();g.lineWidth=3;g.strokeStyle='#334155';g.stroke();g.lineCap='butt'}
+function viewBox(g,w){const bw=Math.min(210,w*.3),bh=bw*.72;return {bx:w-bw-12,by:12,bw,bh}}
+function badgeHTML(k){return {d:'<span class="badge b-d">직진 (광원 → 눈)</span>',r:'<span class="badge b-r">반사</span>',f:'<span class="badge b-f">반사 + 굴절</span>',n:'<span class="badge b-n">보이지 않음</span>',b:'<span class="badge b-n">광원에서 직접 오지 않음</span>'}[k]}
+function setInfo(id,obj,src,badge){$(id).innerHTML=`<div>🎯 선택한 물체<br><b>${obj}</b></div><div>💡 광원<br><b>${src}</b></div><div style="grid-column:span 2">✨ 거치는 빛의 현상 ${badgeHTML(badge)}</div>`}
+
+/* ═════════ 모드 ①: 방 안에서 책과 물고기 보기 ═════════ */
+const M1={on:true,mis:'A',arrows:{A:[],B:[]},done:{A:false,B:false},drag:null,t0:0,hint:false};
+const REQ={A:[['lamp','book'],['book','eye']],B:[['lamp','s1'],['s1','fish'],['fish','s2'],['s2','eye']]};
+const NM={lamp:'전등',book:'책',eye:'눈',s1:'수면①',s2:'수면②',fish:'물고기'};
+function g1(w,h){const Lamp={x:.62*w,y:.14*h},Bk={x:.21*w,y:.775*h},E={x:.09*w,y:.34*h},tk={x0:.37*w,x1:.77*w,top:.50*h,bot:.80*h,yw:.58*h},F={x:.54*w,y:.74*h};
+  const v2=refrView(F,E,tk.yw,NW),v1=refrView(F,Lamp,tk.yw,NW);return {w,h,Lamp,Bk,E,tk,F,P1:v1.P,P2:v2.P,Fa:v2.app}}
+const nodes1=G=>{const n={lamp:G.Lamp,eye:G.E};if(M1.mis==='A')n.book=G.Bk;else{n.s1=G.P1;n.fish=G.F;n.s2=G.P2}return n};
+const pathPts=(G,m)=>m==='A'?[G.Lamp,G.Bk,G.E]:[G.Lamp,G.P1,G.F,G.P2,G.E];
+function scene1(dt,t){const cv=$('#c1'),{g,w,h}=fit(cv),G=g1(w,h),{Lamp,Bk,E,tk,F}=G,on=M1.on;
+  const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#fef3c7');bg.addColorStop(1,'#fde68a');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  g.fillStyle='#a16207';g.fillRect(0,h*.92,w,h);g.fillStyle='#b45309';g.fillRect(0,h*.80,w,h*.12);g.fillStyle='#d97706';g.fillRect(0,h*.80,w,6);
+  drawLamp(g,Lamp.x,Lamp.y,on,t);
+  // 어항
+  g.fillStyle='rgba(125,211,252,.55)';g.fillRect(tk.x0,tk.yw,tk.x1-tk.x0,tk.bot-tk.yw);g.strokeStyle='#0ea5e9';g.lineWidth=3;g.beginPath();g.moveTo(tk.x0,tk.yw);g.lineTo(tk.x1,tk.yw);g.stroke();
+  g.strokeStyle='rgba(71,85,105,.9)';g.lineWidth=5;g.strokeRect(tk.x0,tk.top,tk.x1-tk.x0,tk.bot-tk.top);outText(g,'어항',tk.x1-24,tk.top-12,14,'#334155','rgba(255,255,255,.9)');
+  drawFish(g,F.x,F.y,44,1,true);drawBook(g,Bk.x,Bk.y,Math.max(70,w*.11),on);outText(g,'책',Bk.x,Bk.y+36,15,'#78350f','rgba(255,255,255,.9)');
+  drawPerson(g,E.x,E.y,h*.92,'#475569');eyeIcon(g,E.x+8,E.y,.8);outText(g,'학생의 눈',E.x,E.y-42,14,'#334155','rgba(255,255,255,.9)');
+  // 정답 후 애니메이션
+  const m=M1.mis;
+  if(M1.done[m]){const pts=pathPts(G,m),u=Math.min(1,((t-M1.t0)%3)/2.2);pathAnim(g,pts,u,'#f97316',4.5,t);
+    if(m==='A')pill(g,'책에서 반사',Bk.x+8,Bk.y-26,'#fbbf24');
+    else{for(const P of [G.P1,G.P2]){g.strokeStyle='#0f172a';g.lineWidth=2;g.setLineDash([5,5]);g.beginPath();g.moveTo(P.x,P.y-40);g.lineTo(P.x,P.y+40);g.stroke();g.setLineDash([]);pill(g,'굴절!',P.x+(P===G.P1?38:-38),P.y-30,'#fbbf24')}
+      pill(g,'물고기에서 반사',F.x+10,F.y+34,'#fbbf24');
+      g.save();g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([3,6]);g.beginPath();g.moveTo(G.P2.x,G.P2.y);g.lineTo(G.Fa.x,G.Fa.y);g.stroke();g.restore();drawFish(g,G.Fa.x,G.Fa.y,44,.55,true);outText(g,'떠올라 보이는 물고기(허상)',G.Fa.x+92,G.Fa.y-4,13,'#1d4ed8','rgba(255,255,255,.95)')}}
+  // 학생이 그린 화살표(미완성일 때)
+  else for(const a of M1.arrows[m]){const n=nodes1(G),p=n[a[0]],q=n[a[1]];ray(g,p.x,p.y,q.x,q.y,'#16a34a',4)}
+  // 어둠
+  if(!on){g.fillStyle='rgba(2,6,23,.9)';g.fillRect(0,0,w,h);drawLamp(g,Lamp.x,Lamp.y,false,t);g.fillStyle='rgba(2,6,23,.55)';g.fillRect(Lamp.x-40,0,80,Lamp.y+30);
+    g.fillStyle='rgba(127,29,29,.95)';rr(g,w*.08,h*.40,w*.62,92,14);g.fill();g.strokeStyle='#fecaca';g.lineWidth=2;g.stroke();g.fillStyle='#fff';g.font='900 '+clamp(w*.021,13,17)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText('🌑 전등을 껐더니 방이 깜깜해요!',w*.39,h*.40+26);g.fillText('광원이 없으면 물체에서 반사되어 눈으로 들어오는 빛이 없어서',w*.39,h*.40+52);g.fillText('아무것도 볼 수 없어요!',w*.39,h*.40+74)}
+  // 점(노드)
+  if(on){const n=nodes1(G);for(const k in n){const p=n[k],isS=k==='s1'||k==='s2';g.fillStyle='#fff';g.strokeStyle=M1.drag&&M1.drag.from===k?'#16a34a':'#f97316';g.lineWidth=4;g.beginPath();g.arc(p.x,p.y,13+Math.sin(t*4+k.length)*1.5,0,6.2832);g.fill();g.stroke();
+      outText(g,NM[k],p.x+(k==='eye'?0:k==='lamp'?36:k==='s1'?30:k==='s2'?-30:k==='fish'?-34:0),p.y+(k==='eye'?36:k==='lamp'?-4:k==='s1'||k==='s2'?-22:k==='fish'?4:-26),13,'#7c2d12','rgba(255,255,255,.95)')}
+    if(M1.drag){g.save();g.strokeStyle='#16a34a';g.lineWidth=4;g.setLineDash([8,6]);const p=n[M1.drag.from];g.beginPath();g.moveTo(p.x,p.y);g.lineTo(M1.drag.x,M1.drag.y);g.stroke();g.restore()}}
+  // 시야창
+  {const {bx,by,bw,bh}=viewBox(g,w);g.fillStyle=on?'#fffbeb':'#000';rr(g,bx,by,bw,bh,12);g.fill();g.save();rr(g,bx,by,bw,bh,12);g.clip();
+    if(on){drawLamp(g,bx+bw*.5,by+bh*.2,true,t);drawBook(g,bx+bw*.25,by+bh*.74,bw*.26,true);drawFish(g,bx+bw*.74,by+bh*(M1.done.B?.62:.7),bw*.2,1,true)}
+    else outText(g,'아무것도 안 보여요',bx+bw/2,by+bh/2,15,'#9ca3af');g.restore();g.strokeStyle='#facc15';g.lineWidth=3;rr(g,bx,by,bw,bh,12);g.stroke();outText(g,'👀 학생의 시야창',bx+bw/2,by+bh+14,13,'#92400e','rgba(255,255,255,.9)')}
+  const sg=m+on+M1.done[m];if(sg!==sig1){sig1=sg;guide1();setInfo('#hi1',m==='A'?'책':'어항 속 물고기',on?'있음 (전등 ON)':'없음 (전등 OFF)',!on?'n':m==='A'?'r':'f')}}
+let sig1='';
+function guide1(){$('#guide1').innerHTML=M1.mis==='A'?'📖 <b>책</b>이 보이려면 빛은 어떤 순서로 지나갈까요? <b>전등 → 책 → 눈</b> 순서로 점에서 점으로 <b>드래그</b>해 화살표를 이어 보세요.':'🐟 <b>어항 속 물고기</b>가 보이는 길을 <b>전등 → 수면① → 물고기 → 수면② → 눈</b> 순서로 이어 보세요. (수면에서는 빛이 꺾여요)'}
+function fb1(msg,cls){const f=$('#fb1');f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg}
+(()=>{const cv=$('#c1');let act=null;const P=e=>{const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+  const near=(p)=>{const r=cv.getBoundingClientRect(),G=g1(r.width,r.height),n=nodes1(G);let best=null,bd=40;for(const k in n){const d=Math.hypot(n[k].x-p.x,n[k].y-p.y);if(d<bd){bd=d;best=k}}return best};
+  cv.addEventListener('pointerdown',e=>{if(!M1.on){toast('#toast1','🔌 전등이 꺼져 있어요! 먼저 전등을 켜세요.',1800);sNO();return}const p=P(e),k=near(p);if(!k)return;if(M1.done[M1.mis]){return}cv.setPointerCapture(e.pointerId);act=e.pointerId;M1.drag={from:k,x:p.x,y:p.y}});
+  cv.addEventListener('pointermove',e=>{if(act===e.pointerId&&M1.drag){const p=P(e);M1.drag.x=p.x;M1.drag.y=p.y}});
+  const up=e=>{if(act!==e.pointerId||!M1.drag)return;act=null;const p=P(e),from=M1.drag.from,to=near(p);M1.drag=null;if(!to||to===from)return;arrow1(from,to)};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{M1.drag=null;act=null})})();
+function arrow1(a,b){const m=M1.mis,req=REQ[m],has=M1.arrows[m].some(x=>x[0]===a&&x[1]===b);if(has)return;
+  if(req.some(r=>r[0]===a&&r[1]===b)){M1.arrows[m].push([a,b]);sTick();const n=M1.arrows[m].length;
+    if(n>=req.length){M1.done[m]=true;M1.t0=performance.now()/1000;S.path.add(m);hud();sOK();
+      fb1(m==='A'?'🎉 정답! <b>전등 → 책(반사) → 눈</b>. 광원에서 나온 빛이 책 표면에서 <b>반사</b>되어 눈에 들어올 때 책을 볼 수 있어요.':'🎉 정답! <b>전등 → 수면(굴절) → 물고기(반사) → 수면(굴절) → 눈</b>. 물고기에서 반사된 빛이 수면에서 <b>굴절</b>해 눈에 들어와요. 눈은 빛이 직진해 온 줄 알아서 물고기가 <b>실제보다 위쪽(허상)</b>에 떠올라 보여요!','good')}
+    else fb1('좋아요! ('+n+'/'+req.length+') 다음 화살표를 이어 보세요.','good')}
+  else{sNO();let msg;
+    if(a==='eye')msg='⚠️ <b>오개념 주의!</b> 눈에서는 빛이 나오지 않아요. 화살표 방향은 반드시 <b>광원에서 시작</b>해 물체에서 반사된 후 <b>눈으로 들어와야</b> 합니다!';
+    else if(req.some(r=>r[0]===b&&r[1]===a))msg='⚠️ 화살표 방향이 거꾸로예요! 빛은 <b>전등 → … → 눈</b> 방향으로 진행해요.';
+    else if(a==='lamp'&&b==='eye')msg='전등 빛이 눈으로 곧장 들어오면 <b>전등</b>을 보게 돼요. '+(m==='A'?'책을':'물고기를')+' 보려면 물체에서 <b>반사된 빛</b>이 눈에 들어와야 해요.';
+    else msg='이 연결은 빛이 지나가는 길이 아니에요. <b>전등 → … → 눈</b> 순서를 생각해 보세요.';
+    fb1(msg,'bad');toast('#toast1',a==='eye'?'⚠️ 눈에서는 빛이 나오지 않아요!':'⚠️ 다시 생각해 보세요',2000)}}
+$$('#mis .btn').forEach(b=>b.onclick=()=>{M1.mis=b.dataset.m;$$('#mis .btn').forEach(x=>x.classList.toggle('on',x===b));M1.drag=null;sig1='';fb1(M1.done[M1.mis]?'이미 완성했어요! ▶ 빛 흘려보기로 다시 볼 수 있어요.':'전등을 켜고, 빛이 지나가는 순서대로 점에서 점으로 <b>드래그</b>해 화살표를 그려 보세요.');sTick()});
+$('#sw1').onclick=()=>{M1.on=!M1.on;$('#sw1').classList.toggle('on',M1.on);$('#sw1').textContent=M1.on?'💡 전등 ON':'🌑 전등 OFF';sig1='';sTick();if(!M1.on)fb1('🌑 전등을 끄니 아무것도 안 보여요! 눈에서 빛이 나간다면 깜깜해도 보여야 하지만, 실제로는 <b>광원이 있어야</b> 볼 수 있어요.','bad')};
+$('#clr1').onclick=()=>{M1.arrows[M1.mis]=[];M1.done[M1.mis]=false;sig1='';fb1('화살표를 지웠어요. 다시 그려 보세요.');sTick()};
+$('#play1').onclick=()=>{if(!M1.done[M1.mis]){fb1('먼저 화살표를 모두 이어야 빛이 흘러가요!','bad');sNO();return}M1.t0=performance.now()/1000;sTick()};
+$('#hint1').onclick=()=>{fb1(M1.mis==='A'?'💡 힌트: <b>전등 → 책</b>, 그리고 <b>책 → 눈</b> 두 개의 화살표를 그려요.':'💡 힌트: <b>전등 → 수면①</b>, <b>수면① → 물고기</b>, <b>물고기 → 수면②</b>, <b>수면② → 눈</b> 네 개의 화살표를 그려요.');sTick()};
+
+/* ═════════ 모드 ②: 캠핑장 · 밤하늘의 달 ═════════ */
+const M2={d:'day',sel:null,t0:0};
+function g2(w,h){const gy=.66*h,Sun={x:.34*w,y:.14*h,r:Math.max(22,w*.035)},E={x:.13*w,y:.50*h},tent={x:.37*w,base:gy,wd:.16*w,ht:.17*h},Tn={x:.37*w-.04*w,y:gy-.085*h},riv={x0:.58*w,x1:.94*w,yS:gy,bot:.90*h},F={x:.76*w,y:.84*h};
+  const v1=refrView(F,Sun,gy,NW),v2=refrView(F,E,gy,NW);return {w,h,gy,Sun,E,tent,Tn,riv,F,P1:v1.P,P2:v2.P,Fa:v2.app}}
+function gN(w,h){const R=Math.min(w*.14,h*.20),C={x:w*.46,y:h*.62},n={x:Math.cos(24*D2R),y:-Math.sin(24*D2R)},Ob={x:C.x+n.x*R,y:C.y+n.y*R},E={x:C.x+n.x*(R+10),y:C.y+n.y*(R+10)},Moon={x:C.x+n.x*R*3.2,y:C.y+n.y*R*3.2},Sun={x:w*.08,y:Moon.y};
+  return {w,h,R,C,Ob,E,Moon,mr:Math.max(20,R*.28),Sun}}
+function pathsOf(){const r=$('#c2').getBoundingClientRect(),w=r.width,h=r.height;
+  if(M2.d==='day'){const G=g2(w,h);return {sun:[G.Sun,G.E],tent:[G.Sun,G.Tn,G.E],fish:[G.Sun,G.P1,G.F,G.P2,G.E]}}
+  const N=gN(w,h);return {moon:[N.Sun,N.Moon,N.E],sun:[N.Sun,hitCircle(N.Sun,N.E,N.C,N.R)]}}
+function hitCircle(a,b,C,R){const dx=b.x-a.x,dy=b.y-a.y,fx=a.x-C.x,fy=a.y-C.y,A=dx*dx+dy*dy,B=2*(fx*dx+fy*dy),Cc=fx*fx+fy*fy-R*R,D=B*B-4*A*Cc;if(D<0)return b;const t=(-B-Math.sqrt(D))/(2*A);return t>0&&t<1?{x:a.x+dx*t,y:a.y+dy*t}:b}
+function scene2(dt,t){const cv=$('#c2'),{g,w,h}=fit(cv);M2.d==='day'?dayScene(g,w,h,t):nightScene(g,w,h,t);viewWin2(g,w,h)}
+function dayScene(g,w,h,t){const G=g2(w,h),{gy,Sun,E,tent,riv,F}=G,sel=M2.sel,u=Math.min(1,((t-M2.t0)%3.4)/2.4);
+  const sk=g.createLinearGradient(0,0,0,gy);sk.addColorStop(0,'#38bdf8');sk.addColorStop(1,'#e0f2fe');g.fillStyle=sk;g.fillRect(0,0,w,gy);
+  g.fillStyle='rgba(255,255,255,.9)';for(const [cx,cy,s] of [[.62,.12,1],[.84,.2,.8],[.12,.16,.7]]){g.beginPath();g.arc(cx*w,cy*h,22*s,0,6.2832);g.arc(cx*w+24*s,cy*h+4,18*s,0,6.2832);g.arc(cx*w-22*s,cy*h+5,16*s,0,6.2832);g.fill()}
+  // 산
+  g.fillStyle='#86efac';g.beginPath();g.moveTo(0,gy);g.lineTo(w*.2,gy-h*.1);g.lineTo(w*.45,gy);g.fill();g.fillStyle='#4ade80';g.beginPath();g.moveTo(w*.3,gy);g.lineTo(w*.52,gy-h*.08);g.lineTo(w*.7,gy);g.fill();
+  // 땅 + 계곡 단면
+  g.fillStyle='#65a30d';g.fillRect(0,gy,riv.x0,h-gy);g.fillRect(riv.x1,gy,w-riv.x1,h-gy);g.fillStyle='#4d7c0f';g.fillRect(0,gy,w,6);g.fillStyle='#a16207';g.fillRect(riv.x0,riv.bot,riv.x1-riv.x0,h-riv.bot);g.fillStyle='#854d0e';g.fillRect(0,riv.bot+(h-riv.bot)*.5,w,h);
+  g.fillStyle='rgba(56,189,248,.65)';g.fillRect(riv.x0,riv.yS,riv.x1-riv.x0,riv.bot-riv.yS);g.strokeStyle='#0284c7';g.lineWidth=3;g.beginPath();g.moveTo(riv.x0,riv.yS);g.lineTo(riv.x1,riv.yS);g.stroke();outText(g,'계곡 물',riv.x1-44,riv.yS+18,13,'#0c4a6e','rgba(255,255,255,.85)');
+  drawSun(g,Sun.x,Sun.y,Sun.r,t);drawTent(g,tent.x,tent.base,tent.wd,tent.ht,true);outText(g,'텐트',tent.x+tent.wd*.55,tent.base+18,14,'#14532d','rgba(255,255,255,.9)');
+  drawFish(g,F.x,F.y,46,1,true);drawPerson(g,E.x,E.y,gy+4,'#475569');eyeIcon(g,E.x+8,E.y,.8);outText(g,'관찰자',E.x,E.y-40,14,'#0f172a','rgba(255,255,255,.9)');
+  outText(g,'☝ 태양·텐트·물고기를 눌러 보세요',w*.42,h*.95,clamp(w*.022,13,17),'#fde68a');
+  if(sel){const P=pathsOf()[sel];pathAnim(g,P,u,'#f97316',4.5,t);
+    if(sel==='tent')pill(g,'텐트에서 반사',G.Tn.x-6,G.Tn.y-38,'#fbbf24');
+    if(sel==='fish'){for(const Q of [G.P1,G.P2]){g.strokeStyle='#0f172a';g.lineWidth=2;g.setLineDash([5,5]);g.beginPath();g.moveTo(Q.x,Q.y-38);g.lineTo(Q.x,Q.y+38);g.stroke();g.setLineDash([])}pill(g,'굴절',G.P1.x+36,G.P1.y-28,'#fbbf24');pill(g,'굴절',G.P2.x-36,G.P2.y-28,'#fbbf24');pill(g,'물고기에서 반사',F.x+10,F.y+36,'#fbbf24');
+      g.save();g.strokeStyle='#2563eb';g.lineWidth=2.5;g.setLineDash([3,6]);g.beginPath();g.moveTo(G.P2.x,G.P2.y);g.lineTo(G.Fa.x,G.Fa.y);g.stroke();g.restore();drawFish(g,G.Fa.x,G.Fa.y,46,.5,true);outText(g,'떠올라 보이는 모습',G.Fa.x+70,G.Fa.y-6,13,'#1d4ed8','rgba(255,255,255,.95)')}
+    if(sel==='sun')pill(g,'직진 (광원 → 눈)',(Sun.x+E.x)/2+20,(Sun.y+E.y)/2-24,'#fbbf24')}
+  const sg='d'+sel;if(sg!==sig2){sig2=sg;info2()}}
+function nightScene(g,w,h,t){const N=gN(w,h),{R,C,E,Moon,mr,Sun}=N,sel=M2.sel,u=Math.min(1,((t-M2.t0)%3.4)/2.4);
+  g.fillStyle='#020617';g.fillRect(0,0,w,h);g.fillStyle='#e2e8f0';for(let i=0;i<60;i++){g.globalAlpha=.3+.5*((i*7)%5)/5;g.fillRect((i*131%100)/100*w,(i*71%100)/100*h,2,2)}g.globalAlpha=1;
+  // 태양 빛(평행)
+  g.save();g.strokeStyle='rgba(253,224,71,.2)';g.lineWidth=2;for(let i=-5;i<=5;i++){const y=C.y+i*R*.45;g.beginPath();g.moveTo(Sun.x+40,y);g.lineTo(w,y);g.stroke()}g.restore();
+  drawSun(g,Sun.x,Sun.y,Math.max(26,w*.04),t);outText(g,'태양',Sun.x,Sun.y+Math.max(26,w*.04)+22,15,'#fde047');
+  // 지구 (왼쪽 낮, 오른쪽 밤)
+  g.fillStyle='#1e3a8a';g.beginPath();g.arc(C.x,C.y,R,0,6.2832);g.fill();g.save();g.beginPath();g.arc(C.x,C.y,R,0,6.2832);g.clip();g.fillStyle='#3b82f6';g.fillRect(C.x-R,C.y-R,R,2*R);g.fillStyle='#16a34a';g.beginPath();g.ellipse(C.x-R*.4,C.y-R*.2,R*.3,R*.2,.4,0,6.2832);g.fill();g.fillStyle='rgba(2,6,23,.55)';g.fillRect(C.x,C.y-R,R,2*R);g.restore();
+  g.strokeStyle='#93c5fd';g.lineWidth=2;g.beginPath();g.arc(C.x,C.y,R,0,6.2832);g.stroke();outText(g,'지구',C.x-R*.5,C.y+R+20,15,'#93c5fd');outText(g,'밤',C.x+R*.5,C.y+R+20,15,'#c7d2fe');outText(g,'낮',C.x-R*.5,C.y-R-14,13,'#fde68a');
+  // 관찰자
+  g.strokeStyle='#fde0c8';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(N.Ob.x,N.Ob.y);g.lineTo(E.x,E.y);g.stroke();g.lineCap='butt';g.fillStyle='#fde0c8';g.beginPath();g.arc(E.x,E.y,8,0,6.2832);g.fill();eyeIcon(g,E.x+10,E.y-8,.5);outText(g,'관찰자 (밤)',E.x+46,E.y+30,13,'#e2e8f0');
+  // 달: 태양 쪽 절반만 밝음
+  g.fillStyle='#334155';g.beginPath();g.arc(Moon.x,Moon.y,mr,0,6.2832);g.fill();g.save();g.beginPath();g.arc(Moon.x,Moon.y,mr,0,6.2832);g.clip();g.fillStyle='#f1f5f9';g.fillRect(Moon.x-mr,Moon.y-mr,mr,2*mr);g.fillStyle='#cbd5e1';g.beginPath();g.arc(Moon.x-mr*.3,Moon.y-mr*.2,mr*.18,0,6.2832);g.arc(Moon.x-mr*.5,Moon.y+mr*.35,mr*.12,0,6.2832);g.fill();g.restore();outText(g,'달 (광원 ✕)',Moon.x,Moon.y-mr-16,14,'#f1f5f9');
+  outText(g,'※ 크기·거리는 실제와 달라요 (모식도)',w*.5,h-16,12,'#94a3b8');
+  if(sel==='moon'){const P=pathsOf().moon;pathAnim(g,P,u,'#fb923c',4.5,t);pill(g,'달 표면에서 반사',Moon.x-mr-10,Moon.y+mr+26,'#fbbf24')}
+  if(sel==='sun'){const P=pathsOf().sun;pathAnim(g,P,u,'#fb923c',4.5,t);const q=P[1];g.strokeStyle='#ef4444';g.lineWidth=6;g.beginPath();g.moveTo(q.x-10,q.y-10);g.lineTo(q.x+10,q.y+10);g.moveTo(q.x+10,q.y-10);g.lineTo(q.x-10,q.y+10);g.stroke();pill(g,'지구가 가려요! 눈에 못 와요',q.x-70,q.y-26,'#fca5a5')}
+  outText(g,'☝ 달이나 태양을 눌러 보세요',w*.5,24,clamp(w*.022,13,17),'#fde68a');
+  const sg='n'+sel;if(sg!==sig2){sig2=sg;info2()}}
+let sig2='';
+function viewWin2(g,w,h){const {bx,by,bw,bh}=viewBox(g,w);g.fillStyle='#0b1220';rr(g,bx,by,bw,bh,12);g.fill();g.save();rr(g,bx,by,bw,bh,12);g.clip();
+  const day=M2.d==='day',slots=day?['sun','tent','fish']:['moon','sun'],sw=bw/slots.length;
+  slots.forEach((k,i)=>{const cx=bx+sw*(i+.5),cy=by+bh*.52,lit=M2.sel===k&&!(!day&&k==='sun');
+    g.save();g.beginPath();g.rect(bx+sw*i,by,sw,bh);g.clip();g.fillStyle=lit?(day?'#bae6fd':'#0f172a'):'#111827';g.fillRect(bx+sw*i,by,sw,bh);
+    if(lit||true){const al=lit?1:.18;g.globalAlpha=al;if(k==='sun'&&day)drawSun(g,cx,cy,sw*.22,0);else if(k==='tent')drawTent(g,cx,cy+sw*.25,sw*.6,sw*.5,true);else if(k==='fish')drawFish(g,cx,cy-(lit?6:0),sw*.5,1,true);else if(k==='moon'){g.fillStyle='#f1f5f9';g.beginPath();g.arc(cx,cy,sw*.26,0,6.2832);g.fill()}g.globalAlpha=1}
+    if(!day&&k==='sun'){outText(g,'안 보여요',cx,cy,13,'#fca5a5')}
+    g.restore();g.strokeStyle='rgba(148,163,184,.4)';g.strokeRect(bx+sw*i,by,sw,bh)});
+  g.restore();g.strokeStyle='#facc15';g.lineWidth=3;rr(g,bx,by,bw,bh,12);g.stroke();outText(g,'👀 관찰자의 눈 (1인칭)',bx+bw/2,by+bh+14,13,M2.d==='day'?'#92400e':'#fde68a',M2.d==='day'?'rgba(255,255,255,.9)':'rgba(15,23,42,.9)')}
+function info2(){const k=M2.sel,day=M2.d==='day';let t,src,badge,obj;
+  if(!k){obj='(물체를 눌러 보세요)';src=day?'있음 (태양)':'있음 (태양)';badge='n';t=day?'☝ <b>태양, 텐트, 계곡의 물고기</b>를 눌러 빛이 어떻게 눈에 들어오는지 확인해 보세요.':'☝ <b>달</b>은 스스로 빛을 낼까요? 달과 태양을 눌러 확인해 보세요.'}
+  else if(day&&k==='sun'){obj='태양';src='태양 자신 (광원)';badge='d';t='☀️ <b>태양 → 눈</b>: 광원에서 나온 빛이 <b>직진</b>해서 눈으로 곧장 들어오면 광원을 볼 수 있어요.'}
+  else if(day&&k==='tent'){obj='텐트';src='있음 (태양)';badge='r';t='⛺ <b>태양 → 텐트(반사) → 눈</b>: 텐트는 스스로 빛을 내지 못해요. 태양 빛이 텐트 표면에서 <b>반사</b>되어 눈에 들어올 때 텐트를 볼 수 있어요.'}
+  else if(day&&k==='fish'){obj='계곡 속 물고기';src='있음 (태양)';badge='f';t='🐟 <b>태양 → 수면(굴절) → 물고기(반사) → 수면(굴절) → 눈</b>: 물고기에서 반사된 빛이 수면에서 <b>굴절</b>해 눈에 들어와요. 눈은 직진해 온 줄 알아서 물고기가 <b>떠올라 보여요</b>.'}
+  else if(k==='moon'){obj='밤하늘의 달';src='있음 (태양 — 달은 광원이 아님)';badge='r';t='🌙 <b>태양 → 달(반사) → 눈</b>: 달은 스스로 빛을 내지 못해요. 태양에서 나온 빛이 <b>달 표면에서 반사</b>되어 밤 지역 관찰자의 눈에 들어와서 밝게 보여요.'}
+  else{obj='태양 (밤)';src='태양 (지구 반대편)';badge='b';t='☀️ 관찰자는 지구의 <b>밤쪽</b>에 있어서, 태양 빛은 <b>지구에 가려</b> 눈에 직접 들어오지 못해요. 그래서 밤에는 태양이 보이지 않아요.'}
+  setInfo('#hi2',obj,src,badge);$('#info2').innerHTML=t;$('#ban2').innerHTML=day?'⭐ 광원은 <b>직접</b>, 그 밖의 물체는 광원의 빛이 <b>반사</b>되어 눈에 들어올 때 보여요!':'⭐ 달은 <b>광원이 아니에요!</b> 태양 빛을 반사해서 밝게 보이는 거예요.';
+  $('#guide2').innerHTML=day?'☀️ <b>낮</b>: 오브젝트를 눌러 빛 알갱이가 이동하는 경로를 보세요.':'🌙 <b>밤</b>: 우주에서 본 모습이에요. 달 위 관찰자(지구의 밤쪽)의 눈에 들어오는 빛을 따라가 보세요.'}
+(()=>{const cv=$('#c2');cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=r.width,h=r.height;let hit=null;
+  if(M2.d==='day'){const G=g2(w,h);if(Math.hypot(x-G.Sun.x,y-G.Sun.y)<G.Sun.r+26)hit='sun';else if(Math.hypot(x-G.F.x,y-G.F.y)<46)hit='fish';else if(x>G.tent.x-G.tent.wd*.6&&x<G.tent.x+G.tent.wd*.6&&y>G.tent.base-G.tent.ht-14&&y<G.tent.base+6)hit='tent'}
+  else{const N=gN(w,h);if(Math.hypot(x-N.Moon.x,y-N.Moon.y)<N.mr+24)hit='moon';else if(Math.hypot(x-N.Sun.x,y-N.Sun.y)<Math.max(26,w*.04)+30)hit='sun'}
+  if(!hit)return;M2.sel=hit;M2.t0=performance.now()/1000;sig2='';S.m2.add(hit==='sun'&&M2.d==='night'?'sunN':hit);hud();sTick()})})();
+$$('#dn .btn').forEach(b=>b.onclick=()=>{M2.d=b.dataset.d;M2.sel=null;$$('#dn .btn').forEach(x=>x.classList.toggle('on',x===b));sig2='';sTick()});
+
+/* ═════════ HUD ═════════ */
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const n2=['sun','tent','fish','moon'].filter(k=>S.m2.has(k)).length,n3=(S.scrA?1:0)+(S.sort?1:0);
+  const it=[['① 빛 경로 작도',S.path.size,2,2],['② 캠핑장·달',n2,4,4],['③ 실험·분류',n3,2,2]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[3];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=3?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/3'}</div>`}
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'빛이 전혀 없는 깜깜한 암실에서 눈을 크게 뜨고 적응하면 책의 글씨를 읽을 수 있을까?',o:['읽을 수 있다 (눈이 어둠에 적응하기 때문)','읽을 수 없다 (책에서 반사되어 눈으로 들어오는 빛이 없기 때문)','눈에서 나온 빛으로 읽을 수 있다','글씨가 큰 책은 읽을 수 있다'],a:1,e:'읽을 수 없어요! 책은 스스로 빛을 내지 못하며, 광원이 없으면 책에서 반사되어 눈으로 들어오는 빛이 전혀 없기 때문이에요! (① 전등 OFF)'},
+ {q:'어항 속 물고기를 볼 때 일어나는 빛의 성질 두 가지는 무엇일까?',o:['직진과 분산','반사와 굴절','반사와 회절','굴절과 흡수'],a:1,e:'광원의 빛이 물고기 표면에서 튕겨 나오는 “빛의 반사”와, 물속에서 공기 중으로 나올 때 수면에서 꺾이는 “빛의 굴절”이 모두 일어나요! (① 미션 B)'},
+ {q:'밤하늘에 떠 있는 보름달은 광원일까, 아닐까?',o:['광원이다. 스스로 빛을 낸다','광원이 아니다. 태양 빛이 달 표면에서 반사되어 눈에 들어온다','광원이다. 밤에만 스스로 빛을 낸다','광원이 아니다. 눈에서 나간 빛이 달에 닿아 보인다'],a:1,e:'달은 스스로 빛을 내지 못하므로 광원이 아니에요. 태양에서 나온 빛이 달 표면에서 반사되어 우리 눈에 들어오기 때문에 밝게 보이는 거예요! (② 밤 모드)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 모드 ③: 가림막 실험 · 광원 분류 ═════════ */
+const M3={s:'A',on:true,hyp:false,sx:.90,sy:.60,drag:null};
+function g3(w,h){const Lamp={x:.50*w,y:.14*h},Bk={x:.74*w,y:.775*h},E={x:.18*w,y:.46*h},sw=22,sh=h*.30;return {w,h,Lamp,Bk,E,R:{x:M3.sx*w-sw/2,y:M3.sy*h-sh/2,w:sw,h:sh}}}
+const inR=(p,r)=>p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
+function firstHit(a,b,r){for(let i=0;i<=120;i++){const t=i/120,p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};if(inR(p,r))return {t,p}}return null}
+function scene3(dt,t){if(M3.s!=='A')return;const cv=$('#c3'),{g,w,h}=fit(cv),G=g3(w,h),{Lamp,Bk,E,R}=G,on=M3.on;
+  const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#fef3c7');bg.addColorStop(1,'#fde68a');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  g.fillStyle='#a16207';g.fillRect(0,h*.92,w,h);g.fillStyle='#b45309';g.fillRect(0,h*.80,w,h*.12);g.fillStyle='#d97706';g.fillRect(0,h*.80,w,6);
+  drawLamp(g,Lamp.x,Lamp.y,on,t);
+  const hL=firstHit(Lamp,Bk,R),hE=firstHit(Bk,E,R),bL=!!hL,bE=!!hE,lit=on&&!bL,visible=lit&&!bE;
+  drawBook(g,Bk.x,Bk.y,Math.max(70,w*.11),lit);outText(g,'책',Bk.x,Bk.y+36,15,'#78350f','rgba(255,255,255,.9)');
+  drawPerson(g,E.x,E.y,h*.92,'#475569');eyeIcon(g,E.x+8,E.y,.8);outText(g,'학생의 눈',E.x,E.y-42,14,'#334155','rgba(255,255,255,.9)');
+  // 광선
+  const dash=(a,b,al)=>{g.save();g.strokeStyle='rgba(249,115,22,'+al+')';g.lineWidth=3;g.setLineDash([6,8]);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.restore()};
+  const X=p=>{g.strokeStyle='#dc2626';g.lineWidth=6;g.beginPath();g.moveTo(p.x-9,p.y-9);g.lineTo(p.x+9,p.y+9);g.moveTo(p.x+9,p.y-9);g.lineTo(p.x-9,p.y+9);g.stroke()};
+  if(on){if(bL){ray(g,Lamp.x,Lamp.y,hL.p.x,hL.p.y,'#f97316',4,1,true);dash(hL.p,Bk,.35);X(hL.p)}else ray(g,Lamp.x,Lamp.y,Bk.x,Bk.y,'#f97316',4)}
+  if(lit){if(bE){ray(g,Bk.x,Bk.y,hE.p.x,hE.p.y,'#f97316',4,1,true);dash(hE.p,E,.35);X(hE.p)}else ray(g,Bk.x,Bk.y,E.x,E.y,'#f97316',4)}
+  if(M3.hyp){g.save();g.strokeStyle='#7c3aed';g.lineWidth=3;g.setLineDash([10,7]);g.beginPath();g.moveTo(E.x+30,E.y);g.lineTo(Bk.x,Bk.y);g.stroke();g.restore();pill(g,'눈에서 빛이 나간다? (오개념)',(E.x+Bk.x)/2,(E.y+Bk.y)/2-34,'#c4b5fd','rgba(46,16,101,.92)')}
+  // 가림막
+  g.fillStyle='#374151';g.strokeStyle='#111827';g.lineWidth=3;g.fillRect(R.x,R.y,R.w,R.h);g.strokeRect(R.x,R.y,R.w,R.h);g.fillStyle='#fbbf24';g.fillRect(R.x+3,R.y+8,R.w-6,6);outText(g,'🧱 불투명 가림막',R.x+R.w/2,R.y-16,13,'#78350f','rgba(255,255,255,.95)');outText(g,'(끌어서 옮겨요)',R.x+R.w/2,R.y+R.h+14,12,'#78350f','rgba(255,255,255,.9)');
+  if(!M3.drag){g.strokeStyle='rgba(250,204,21,'+(.5+.4*Math.sin(t*4))+')';g.lineWidth=4;g.setLineDash([6,5]);g.strokeRect(R.x-6,R.y-6,R.w+12,R.h+12);g.setLineDash([])}
+  if(!on){g.fillStyle='rgba(2,6,23,.88)';g.fillRect(0,0,w,h);drawLamp(g,Lamp.x,Lamp.y,false,t);drawPerson(g,E.x,E.y,h*.92,'#64748b');eyeIcon(g,E.x+8,E.y,.8);
+    if(M3.hyp){g.save();g.strokeStyle='#a78bfa';g.lineWidth=3;g.setLineDash([10,7]);g.beginPath();g.moveTo(E.x+30,E.y);g.lineTo(Bk.x,Bk.y);g.stroke();g.restore();drawBook(g,Bk.x,Bk.y,Math.max(70,w*.11),false);g.fillStyle='rgba(2,6,23,.85)';g.fillRect(Bk.x-60,Bk.y-10,120,40);outText(g,'❓ 안 보여요!',Bk.x,Bk.y+10,16,'#fca5a5')}}
+  // 시야창
+  {const {bx,by,bw,bh}=viewBox(g,w);g.fillStyle=visible?'#fffbeb':'#000';rr(g,bx,by,bw,bh,12);g.fill();g.save();rr(g,bx,by,bw,bh,12);g.clip();
+    if(visible){drawBook(g,bx+bw*.5,by+bh*.55,bw*.5,true)}else outText(g,!on?'아무것도 안 보여요':'책이 사라졌어요!',bx+bw/2,by+bh/2,15,'#fca5a5');g.restore();g.strokeStyle='#facc15';g.lineWidth=3;rr(g,bx,by,bw,bh,12);g.stroke();outText(g,'👀 학생의 시야창',bx+bw/2,by+bh+14,13,'#92400e','rgba(255,255,255,.9)')}
+  if(on&&bL&&!bE)pill(g,'전등 빛이 책에 닿지 못해요!',R.x+R.w/2,R.y+R.h*.5,'#fca5a5');
+  const sg=[on,bL,bE,M3.hyp].join();if(sg!==sig3){sig3=sg;state3(on,bL,bE,visible)}}
+let sig3='';
+function state3(on,bL,bE,visible){const f=$('#fb3');let m,c='fb';
+  if(!on){m=M3.hyp?'🌑 <b>눈에서 빛이 나간다면</b> 깜깜한 곳에서도 책이 보여야 해요. 하지만 전등을 끄니 <b>아무것도 안 보여요!</b> → 오개념 1 격파: 눈에서는 빛이 나오지 않아요.':'🌑 전등이 꺼졌어요. 광원이 없으면 책에서 반사되어 눈으로 들어오는 빛이 없어 <b>아무것도 안 보여요</b>. (<b>👁 눈에서 빛이 나간다면?</b> 버튼도 눌러 보세요)';c='fb bad'}
+  else if(bL){m='🧱 가림막이 <b>전등과 책 사이</b>를 막았어요. 책에 빛이 닿지 못해 책도 안 보여요. 가림막을 <b>책과 눈 사이</b>로 옮겨 보세요.';c='fb bad'}
+  else if(bE){m='🎉 <b>책이 사라졌어요!</b> 전등 빛은 책에 도달하지만(전등 → 책), 책에서 <b>반사된 빛이 가림막에 막혀</b> 눈에 들어오지 못해요. → 오개념 2 격파: 빛이 책까지만 가서는 안 되고, <b>눈에 들어와야</b> 볼 수 있어요!';c='fb good';if(!S.scrA){S.scrA=true;hud();sOK()}}
+  else{m='📖 전등 → 책(반사) → 눈: 반사된 빛이 눈에 들어와서 책이 보여요. <b>가림막을 책과 눈 사이에 끼워</b> 보세요!'+(M3.hyp?'<br>👁 (보라색 점선: 눈에서 빛이 나간다는 틀린 생각)':'')}
+  f.className=c;f.innerHTML=m;setInfo('#hi3','책',on?'있음 (전등 ON)':'없음 (전등 OFF)',visible?'r':'n')}
+(()=>{const cv=$('#c3');let act=null;
+  cv.addEventListener('pointerdown',e=>{if(M3.s!=='A')return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,G=g3(r.width,r.height),R=G.R;
+    if(x>=R.x-22&&x<=R.x+R.w+22&&y>=R.y-22&&y<=R.y+R.h+22){cv.setPointerCapture(e.pointerId);act=e.pointerId;M3.drag={dx:x-(R.x+R.w/2),dy:y-(R.y+R.h/2)}}});
+  cv.addEventListener('pointermove',e=>{if(act!==e.pointerId||!M3.drag)return;const r=cv.getBoundingClientRect();M3.sx=clamp((e.clientX-r.left-M3.drag.dx)/r.width,.03,.97);M3.sy=clamp((e.clientY-r.top-M3.drag.dy)/r.height,.2,.78)});
+  const up=e=>{if(act===e.pointerId){act=null;M3.drag=null}};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)})();
+$('#sw3').onclick=()=>{M3.on=!M3.on;$('#sw3').classList.toggle('on',M3.on);$('#sw3').textContent=M3.on?'💡 전등 ON':'🌑 전등 OFF';sig3='';sTick()};
+$('#hyp').onclick=()=>{M3.hyp=!M3.hyp;$('#hyp').classList.toggle('on',M3.hyp);sig3='';sTick()};
+$('#rst3').onclick=()=>{M3.sx=.90;M3.sy=.60;sTick()};
+/* 광원 분류 */
+const CARDS=[{id:'sun',ic:'☀️',nm:'태양',s:1,e:'태양은 스스로 빛을 내는 <b>광원</b>이에요.'},{id:'lamp',ic:'💡',nm:'켜진 전등',s:1,e:'켜진 전등은 스스로 빛을 내는 <b>광원</b>이에요.'},{id:'fly',ic:'🪲',nm:'반딧불이',s:1,e:'반딧불이는 스스로 빛을 내는 <b>광원</b>이에요.'},{id:'phone',ic:'📱',nm:'스마트폰 화면',s:1,e:'켜진 스마트폰 화면은 스스로 빛을 내는 <b>광원</b>이에요.'},
+ {id:'moon',ic:'🌙',nm:'밤하늘의 달',s:0,e:'달은 스스로 빛을 내지 못하고, <b>태양 빛을 반사</b>할 뿐이에요.',w:'⚠️ <b>오답!</b> 달과 거울은 스스로 빛을 내지 못하고 다른 광원의 빛을 <b>반사할 뿐</b>입니다!'},{id:'mirror',ic:'🪞',nm:'거울',s:0,e:'거울은 스스로 빛을 내지 못하고, <b>다른 광원의 빛을 반사</b>할 뿐이에요.',w:'⚠️ <b>오답!</b> 달과 거울은 스스로 빛을 내지 못하고 다른 광원의 빛을 <b>반사할 뿐</b>입니다!'},{id:'apple',ic:'🍎',nm:'사과',s:0,e:'사과는 스스로 빛을 내지 못해요. 빛을 <b>반사</b>해서 보여요.'},{id:'book',ic:'📖',nm:'책',s:0,e:'책은 스스로 빛을 내지 못해요. 빛을 <b>반사</b>해서 보여요.'}];
+const SO={sel:null,placed:{},miss:0};
+function buildSort(){$('#cards').innerHTML=CARDS.filter(c=>!(c.id in SO.placed)).map(c=>`<button class="cardb${SO.sel===c.id?' sel':''}" data-c="${c.id}"><span>${c.ic}</span>${c.nm}</button>`).join('')||'<div class="kv2" style="grid-column:span 4">🎉 모든 카드를 분류했어요!</div>';
+  $$('#cards .cardb').forEach(b=>b.onclick=()=>{SO.sel=SO.sel===b.dataset.c?null:b.dataset.c;sTick();buildSort()});
+  const ch=z=>CARDS.filter(c=>SO.placed[c.id]===z).map(c=>`<span class="chip">${c.ic} ${c.nm}</span>`).join('');$('#cSrc').innerHTML=ch(1);$('#cNon').innerHTML=ch(0);
+  $$('.zone').forEach(z=>z.classList.toggle('on',SO.sel!=null));const np=$('#nPl');if(np)np.textContent=Object.keys(SO.placed).length+' / 8'}
+$$('.zone').forEach(z=>z.onclick=()=>{if(SO.sel==null){toast('#toast3','먼저 위에서 카드를 눌러 선택하세요',1500);return}const c=CARDS.find(x=>x.id===SO.sel),zone=+z.dataset.z,f=$('#fb3');
+  if(c.s===zone){SO.placed[c.id]=zone;SO.sel=null;f.className='fb good';f.innerHTML='⭕ 정답! '+c.e;sOK();buildSort();
+    if(Object.keys(SO.placed).length===CARDS.length){S.sort=true;hud();f.innerHTML+='<br>🎉 <b>분류 완료!</b> 실수 '+SO.miss+'번 — 광원은 스스로 빛을 내는 물체, 달·거울·사과·책은 빛을 반사해서 보여요.'}}
+  else{SO.miss++;f.className='fb bad';f.innerHTML=c.w||('⚠️ <b>오답!</b> '+c.e);sNO();const b=$('#cards .cardb[data-c="'+c.id+'"]');if(b){b.classList.add('shake');setTimeout(()=>b.classList.remove('shake'),450)}}});
+$('#rstB').onclick=()=>{SO.sel=null;SO.placed={};SO.miss=0;buildSort();$('#fb3').className='fb';$('#fb3').innerHTML='카드를 다시 분류해 보세요.';sTick()};
+function setSub3(s){M3.s=s;$$('#sub3 .btn').forEach(b=>b.classList.toggle('on',b.dataset.s===s));$('#rowA').style.display=s==='A'?'':'none';$('#rowB').style.display=s==='B'?'':'none';$('#sort').style.display=s==='B'?'flex':'none';sig3='';
+  if(s==='A'){$('#guide3').innerHTML='🧱 전등이 책을 비추고 있어요. <b>가림막</b>을 끌어서 <b>책과 눈 사이</b>에 끼워 보세요!'}
+  else{$('#guide3').innerHTML='🗂 8장의 카드를 <b>광원</b>과 <b>비광원</b>으로 나눠 보세요. (함정 카드 조심!)';$('#hi3').innerHTML='<div>🎯 활동<br><b>광원 분류 챌린지</b></div><div>🗂 분류한 카드<br><b id="nPl">'+Object.keys(SO.placed).length+' / 8</b></div><div style="grid-column:span 2">✨ 기억하세요 <span class="badge b-d">광원: 스스로 빛을 낸다</span> <span class="badge b-r">비광원: 반사해서 보인다</span></div>';buildSort();$('#fb3').className='fb';$('#fb3').innerHTML='카드를 누른 뒤, 아래 <b>광원 / 비광원</b> 상자를 눌러 분류하세요.'}}
+$$('#sub3 .btn').forEach(b=>b.onclick=()=>{setSub3(b.dataset.s);sTick()});
+
+/* ═════════ 리셋 · 루프 ═════════ */
+function resetAll(){
+  Object.assign(M1,{on:true,mis:'A',arrows:{A:[],B:[]},done:{A:false,B:false},drag:null});$('#sw1').classList.add('on');$('#sw1').textContent='💡 전등 ON';$$('#mis .btn').forEach(b=>b.classList.toggle('on',b.dataset.m==='A'));sig1='';fb1('전등을 켜고, 빛이 지나가는 순서대로 점에서 점으로 <b>드래그</b>해 화살표를 그려 보세요.');
+  Object.assign(M2,{d:'day',sel:null});$$('#dn .btn').forEach(b=>b.classList.toggle('on',b.dataset.d==='day'));sig2='';
+  Object.assign(M3,{on:true,hyp:false,sx:.90,sy:.60,drag:null});$('#sw3').classList.add('on');$('#sw3').textContent='💡 전등 ON';$('#hyp').classList.remove('on');SO.sel=null;SO.placed={};SO.miss=0;
+  S.path=new Set();S.m2=new Set();S.scrA=false;S.sort=false;S.quiz=-1;setSub3('A');hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===2)scene2(dt,t);else scene3(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+guide1();info2();setSub3('A');hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>원자 모형 만들기 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:1;min-height:150px}
+.bin{border:4px dashed #94a3b8;border-radius:14px;padding:6px;font-weight:900;background:#fff;display:flex;flex-direction:column;gap:5px;align-content:flex-start;font-size:clamp(13px,1.15vw,17px);line-height:1.25}.bin.hot{border-color:#f59e0b;background:#fffbeb}.bin small{font-weight:700;color:var(--mut);font-size:.78em}
+.cardf{min-height:100px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;font-size:clamp(12px,1.05vw,16px);text-align:center}.cardf span{font-size:clamp(26px,2.8vw,40px)}.cardf.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardf.back{background:#eff6ff;border-color:#60a5fa}.cardf.back small{font-weight:800;color:#1e3a8a;font-size:.9em}.cardf.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+.ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.06);width:150px}
+input[type=range].big{width:100%;height:48px}
+.rec td{font-size:clamp(11px,.95vw,14px);line-height:1.25;vertical-align:middle}.rec .ic{display:inline-block;line-height:1}
+.lr{display:grid;grid-template-columns:minmax(96px,150px) minmax(0,1fr) 52px;gap:8px;align-items:center}.lr b{text-align:right;font-variant-numeric:tabular-nums;font-size:clamp(14px,1.2vw,19px)}
+.lt{min-height:56px!important;line-height:1.15}
+.lt.r.on{background:#fecaca;border-color:#ef4444;color:#7f1d1d}.lt.g.on{background:#bbf7d0;border-color:#22c55e;color:#14532d}.lt.b.on{background:#bfdbfe;border-color:#3b82f6;color:#1e3a8a}
+.lt.w.on{background:#f1f5f9;border-color:#475569;color:#0f172a}
+.r2{accent-color:#dc2626}.g2s{accent-color:#16a34a}.b2s{accent-color:#2563eb}
+.sw{display:flex;align-items:center;gap:10px}.sw i{display:block;width:clamp(56px,6vw,96px);height:clamp(56px,6vw,96px);border-radius:14px;border:3px solid #334155;flex:0 0 auto}
+.sw div{font-weight:900;line-height:1.35;font-size:clamp(14px,1.25vw,20px)}.sw small{display:block;font-weight:800;color:var(--mut);font-size:.78em}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found span{min-height:40px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;color:#94a3b8;font-weight:900;display:inline-flex;align-items:center;gap:6px;font-size:clamp(12px,1.05vw,16px)}.found span.on{border-style:solid;border-color:#22c55e;background:#f0fdf4;color:#166534}
+.found i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #334155}
+.ptab{width:100%;border-collapse:collapse;font-weight:800;font-size:clamp(11px,.98vw,15px);text-align:center}.ptab th,.ptab td{border:2px solid #cbd5e1;padding:4px 3px}.ptab th{background:#dbeafe;color:#1e3a8a}.ptab td i{display:inline-block;width:22px;height:22px;border-radius:6px;border:2px solid #334155;vertical-align:middle}
+.ptab td.cur{outline:3px solid #f59e0b}
+.pxs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pxs .btn{min-height:52px;padding:2px 4px;line-height:1.1;font-size:clamp(11px,.98vw,15px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.pxs .btn i{width:30px;height:14px;border-radius:4px;border:2px solid #334155}.pxs .btn.seen{border-color:#22c55e}.pxs .btn.on{border-color:#f59e0b;background:#fffbeb}
+.bars{display:grid;gap:5px}.bars div{display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.bars em{display:block;height:20px;border-radius:6px;background:#e2e8f0;position:relative;overflow:hidden}.bars em u{display:block;height:100%;width:0}
+.c4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c4 .btn{min-height:76px;line-height:1.25;padding:4px 6px;font-size:clamp(13px,1.15vw,18px)}.c4 .btn span{display:block;font-size:1.7em}.c4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.c4 .btn.ok{border-color:#22c55e}
+.info4{font-weight:800;line-height:1.6;font-size:clamp(13px,1.15vw,18px)}.info4 b{color:#1d4ed8}
+.prs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.prs .btn{min-height:52px;padding:2px 4px;line-height:1.15;font-size:clamp(12px,1.05vw,16px)}
+.ins4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ins4 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(12px,1.05vw,16px)}.ins4 .btn span{display:block;font-size:1.5em}.ins4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.ins5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ins5 .btn{min-height:56px;line-height:1.15;padding:2px 4px;font-size:clamp(12px,1.05vw,16px)}.ins5 .btn.on{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.stat div{border:3px solid var(--line);border-radius:12px;padding:4px 8px;background:#f8fafc;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.stat b{display:block;font-size:clamp(20px,2vw,30px);font-variant-numeric:tabular-nums;color:#1d4ed8}
+.tip{border-radius:12px;padding:9px 13px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(13px,1.12vw,18px)}.tip b{color:#be123c}
+.sw2{min-height:56px;border-radius:14px;border:3px solid #94a3b8;background:#f8fafc;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:clamp(14px,1.2vw,19px)}.sw2.on{background:#dcfce7;border-color:#22c55e;color:#14532d}
+.sldr{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.sldr b{text-align:right;font-variant-numeric:tabular-nums}
+.sldr.dis{opacity:.45}
+.sub6{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.sub6 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(13px,1.15vw,18px)}.sub6 .btn span{display:block;font-size:1.5em}
+.sub6.el .btn.on{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.sub6.co .btn.on{background:#ffedd5;border-color:#f97316;color:#7c2d12}.sub6 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.gm{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:12px;background:#f1f5f9;overflow:auto}
+.bk2{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:150px}
+.bk{border:4px dashed #94a3b8;border-radius:18px;background:#fff;padding:8px 10px;font-weight:900;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.45vw,22px);transition:.15s}.bk small{font-weight:700;color:var(--mut);font-size:.62em}.bk.hot{border-color:#f59e0b;background:#fffbeb}
+.bk.e{border-color:#60a5fa}.bk.c{border-color:#fb923c}.bk.ok{animation:okf .5s}.bk.no{animation:nof .5s}
+@keyframes okf{50%{background:#bbf7d0;border-color:#22c55e}}@keyframes nof{50%{background:#fecaca;border-color:#ef4444}}
+.cp2{display:flex;flex-wrap:wrap;gap:5px}.cp2 span{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:2px 8px;font-size:clamp(11px,.95vw,15px)}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{min-height:92px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;text-align:center;font-size:clamp(12px,1.1vw,17px)}.mc span{font-size:clamp(26px,2.8vw,40px)}.mc.sel{border-color:#f59e0b;background:#fffbeb}.mc.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.res3{position:absolute;inset:0;background:rgba(15,23,42,.8);display:none;align-items:center;justify-content:center;z-index:5}.res3.on{display:flex}.res3>div{background:#fff;border-radius:24px;padding:22px 30px;text-align:center;font-weight:900;max-width:80%;font-size:clamp(16px,1.6vw,24px);line-height:1.6}.res3 b{font-size:1.6em;color:#15803d}
+.cfx{position:fixed;top:-40px;z-index:70;font-size:30px;pointer-events:none;animation:fall 2.6s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.prop{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(11px,1vw,15px)}.prop th,.prop td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.prop th{background:#dbeafe;color:#1e3a8a}.prop td.q{background:#f1f5f9;color:#94a3b8}.prop td.n{background:#fef9c3;color:#713f12;animation:okf .6s}
+.cmp{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.cmp th,.cmp td{border:2px solid #cbd5e1;padding:5px}.cmp th{background:#f1f5f9}
+.prt{display:grid;grid-template-columns:52px 1fr auto auto auto;gap:8px;align-items:center;padding:4px 0;border-bottom:2px dashed #e2e8f0}.prt:last-child{border:0}
+.dotp{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#fff;box-shadow:inset -4px -5px 8px rgba(0,0,0,.3)}.dotp.p{background:#ef4444}.dotp.n{background:#94a3b8}.dotp.e{background:#2563eb}
+.prt .nm{font-weight:900;font-size:clamp(17px,1.7vw,25px);line-height:1.15}.prt .nm small{display:block;font-size:.6em;color:var(--mut);font-weight:700}
+.pm{min-width:68px;min-height:68px;font-size:40px;font-weight:900;border-radius:18px;border:3px solid #94a3b8;background:#fff;cursor:pointer;line-height:1;padding:0;touch-action:manipulation}.pm:active{transform:scale(.93)}.pm.plus{background:#dcfce7;border-color:#22c55e;color:#166534}.pm.minus{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+.cnt{min-width:54px;text-align:center;font-size:clamp(30px,3vw,44px);font-weight:900}
+.chg{font-weight:900;border-radius:14px;padding:10px 12px;text-align:center;font-size:clamp(20px,2vw,30px);line-height:1.25;border:3px solid}.chg.neu{background:#dcfce7;border-color:#22c55e;color:#14532d}.chg.pos{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}.chg.neg{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.chg.none{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+.elb{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.elb b{font-size:clamp(28px,3vw,44px)}.elb span{font-size:clamp(15px,1.4vw,21px);font-weight:800;color:var(--mut)}
+.nt{display:inline-flex;align-items:center;font-weight:900;font-size:1.35em}.nt .ab{display:inline-flex;flex-direction:column;font-size:.55em;line-height:1.05;margin-right:3px;text-align:right}.nt sup{font-size:.55em;vertical-align:top;margin-left:1px}
+.task{border:4px solid #f59e0b;background:#fffbeb;border-radius:16px;padding:10px 14px}.task .tq{font-weight:900;font-size:clamp(17px,1.7vw,25px);line-height:1.45;margin:4px 0}.task .th{font-weight:900;color:#b45309;font-size:clamp(14px,1.25vw,19px)}
+.chk{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.chk span{border:3px solid #cbd5e1;border-radius:999px;padding:3px 12px;font-weight:900;background:#fff;font-size:clamp(14px,1.2vw,18px)}.chk span.ok{border-color:#22c55e;background:#dcfce7;color:#14532d}
+.stp{display:flex;gap:8px;margin-top:6px}.stp i{flex:1;text-align:center;font-style:normal;border:3px dashed #cbd5e1;border-radius:12px;padding:4px;font-weight:900;font-size:clamp(13px,1.1vw,17px);color:#94a3b8}.stp i.on{border:3px solid #16a34a;color:#16a34a;background:#f0fdf4}
+.stamp{position:absolute;right:5%;top:16%;width:min(34%,190px);aspect-ratio:1;border:8px double #22c55e;border-radius:50%;color:#4ade80;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(22px,3vw,40px);transform:rotate(-14deg) scale(3);opacity:0;pointer-events:none;text-align:center;line-height:1.15;background:rgba(34,197,94,.12);z-index:4}.stamp.on{animation:stm .6s forwards}@keyframes stm{0%{opacity:0;transform:rotate(-14deg) scale(3)}60%{opacity:1;transform:rotate(-14deg) scale(.9)}100%{opacity:.95;transform:rotate(-14deg) scale(1)}}
+@media (max-width:980px){.stagewrap{min-height:560px}.stagewrap canvas{position:absolute;inset:0}.prt{grid-template-columns:44px 1fr auto auto auto;gap:5px}.pm{min-width:64px;min-height:64px}}
+</style></head><body>
+<header>
+  <h1>⚛️ 원자 모형 만들기</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 원자 조립소</button>
+    <button class="tab" id="tab2">② 교과서 미션</button>
+    <button class="tab" id="tab3">③ 이온 도전</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode g2 on" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#0b1220"><canvas id="c1"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" id="side1" style="overflow:auto"></div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0b1220"><canvas id="c2"></canvas><div class="toast" id="toast2"></div><div class="stamp" id="stamp2">✔ 성공!</div><div class="res3" id="res2"><div id="res2t"></div></div></div></div>
+  <div class="col" id="side2" style="overflow:auto"></div>
+</section>
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#0b1220"><canvas id="c3"></canvas><div class="toast" id="toast3"></div><div class="stamp" id="stamp3">✔ 성공!</div><div class="res3" id="res3"><div id="res3t"></div></div></div></div>
+  <div class="col" id="side3" style="overflow:auto"></div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg)=>{g.font='900 13px sans-serif';const w=g.measureText(t).width+14;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-12,w,24,12);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+const S={built:new Set(),mis:0,ion:0,quiz:-1};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+const eob=x=>{x=clamp(x,0,1);const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const ELN=['','수소','헬륨','리튬','베릴륨','붕소','탄소','질소','산소','플루오린','네온','나트륨','마그네슘','알루미늄','규소','인','황','염소','아르곤','칼륨','칼슘'];
+const ELS=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca'];
+const LIM={p:20,n:22,e:24},PN={p:'양성자',n:'중성자',e:'전자'},PIC={p:'🔴',n:'⚪',e:'🔵'};
+const SHN=['K','L','M','N'],CAP=[2,8,8,8];
+const A=[null,{p:1,n:0,e:1},{p:0,n:0,e:0},{p:11,n:12,e:11}];
+const FX={t:-9,col:'#fff',k:0};
+function shells(e){const r=[];for(let i=0;i<4;i++){const c=Math.min(CAP[i],e);r.push(c);e-=c}return r}
+function sup(n){return n===0?'':(Math.abs(n)>1?Math.abs(n):'')+(n>0?'+':'−')}
+function state(a){const d=a.p-a.e;if(a.p===0)return{c:'none',t:a.e||a.n?'원소가 아직 없어요 (양성자가 필요해요)':'양성자를 넣어 보세요',s:'?'};
+  if(d===0)return{c:'neu',t:'⚖️ 전기적으로 중성 (원자)',s:'중성'};
+  if(d>0)return{c:'pos',t:'➕ (+) 이온 (양이온) · +'+d+'가',s:'+'+d};return{c:'neg',t:'➖ (−) 이온 (음이온) · −'+(-d)+'가',s:'−'+(-d)}}
+/* ═════════ 원자 모형 그리기 (보어 모형) ═════════ */
+function ball(g,x,y,r,c0,c1,txt,tc){const gr=g.createRadialGradient(x-r*.35,y-r*.38,r*.08,x,y,r);gr.addColorStop(0,c1);gr.addColorStop(1,c0);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,6.2832);g.fill();g.lineWidth=1.2;g.strokeStyle='rgba(0,0,0,.4)';g.stroke();
+  if(txt&&r>=6){g.fillStyle=tc||'#fff';g.font='900 '+Math.round(r*1.25)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,x,y+r*.05)}}
+function drawAtom(cv,a,now){const {g,w,h}=fit(cv);const bg=g.createRadialGradient(w/2,h/2,10,w/2,h/2,Math.max(w,h)*.7);bg.addColorStop(0,'#16294a');bg.addColorStop(1,'#080f1e');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const top=46,bot=40,cx=w/2,cy=top+(h-top-bot)/2,Rm=Math.max(60,Math.min(w/2-12,(h-top-bot)/2-2)),st=state(a),sh=shells(a.e),used=Math.max(1,sh.filter(x=>x>0).length);
+  /* 제목 */
+  const nm=a.p>0?ELN[a.p]+' ('+ELS[a.p]+')':'원소 없음';const fs=Math.max(18,Math.min(26,w/17));
+  outText(g,nm+(a.p>0?(a.p===a.e?' 원자':a.p>a.e?' 양이온':' 음이온'):''),cx,22,fs,'#fff');
+  /* 중성 후광 */
+  if(a.p>0){const col=st.c==='neu'?'rgba(74,222,128,':st.c==='pos'?'rgba(248,113,113,':'rgba(96,165,250,';const ga=.18+.08*Math.sin(now*3);const gl=g.createRadialGradient(cx,cy,Rm*.2,cx,cy,Rm*(.35+.23*(used-1)+.2));gl.addColorStop(0,col+'0)');gl.addColorStop(1,col+ga+')');g.fillStyle=gl;g.beginPath();g.arc(cx,cy,Rm*(.35+.23*(used-1)+.2),0,6.2832);g.fill()}
+  /* 궤도 */
+  g.lineWidth=2;for(let k=0;k<(a.e?used:1);k++){const r=Rm*(.3+.23*k);g.strokeStyle='rgba(148,163,184,.45)';g.setLineDash(a.e?[]:[6,6]);g.beginPath();g.arc(cx,cy,r,0,6.2832);g.stroke();g.setLineDash([]);
+    if(a.e){const lx=cx+r*.707,ly=cy-r*.707;g.font='900 '+Math.max(12,Rm*.06)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle='#0b1220';g.beginPath();g.arc(lx,ly,Math.max(10,Rm*.05),0,6.2832);g.fill();g.fillStyle='#fde68a';g.fillText(SHN[k],lx,ly+1)}}
+  /* 원자핵 */
+  const N=a.p+a.n;
+  if(N===0){g.strokeStyle='rgba(148,163,184,.6)';g.setLineDash([5,5]);g.lineWidth=2;g.beginPath();g.arc(cx,cy,Rm*.12,0,6.2832);g.stroke();g.setLineDash([]);outText(g,'핵',cx,cy,14,'#94a3b8')}
+  else{const rp=Math.min(Rm*.075,Rm*.27/(1.1*Math.sqrt(N)+1)),c=1.1*rp,ps=[];let pc=0;
+    for(let i=0;i<N;i++){const isP=Math.floor((i+1)*a.p/N)>Math.floor(i*a.p/N);const ang=i*2.39996,rr_=c*Math.sqrt(i+.5);ps.push({x:cx+Math.cos(ang)*rr_+Math.sin(now*3+i*1.7)*rp*.07,y:cy+Math.sin(ang)*rr_+Math.cos(now*2.6+i*2.3)*rp*.07,p:isP})}
+    ps.reverse().forEach(q=>q.p?ball(g,q.x,q.y,rp,'#b91c1c','#fca5a5','+'):ball(g,q.x,q.y,rp,'#64748b','#e2e8f0',null))}
+  /* 전자 */
+  const re=Math.max(7,Math.min(13,Rm*.04));
+  sh.forEach((cnt,k)=>{const r=Rm*(.3+.23*k),om=1.3/Math.pow(k+1,.8)*(k%2?-1:1);for(let j=0;j<cnt;j++){const th=om*now+j*6.2832/cnt+k*.7,x=cx+Math.cos(th)*r,y=cy+Math.sin(th)*r;
+    let s=1;if(FX.k===1&&FX.col==='#60a5fa'&&now-FX.t<.5&&j===cnt-1&&k===FX.sh)s=eob((now-FX.t)*3);ball(g,x,y,re*s,'#1d4ed8','#93c5fd','−')}});
+  /* 효과 */
+  if(now-FX.t<.7){const q=(now-FX.t)/.7;g.strokeStyle=FX.col;g.globalAlpha=1-q;g.lineWidth=5;g.beginPath();g.arc(cx,cy,Rm*.1+Rm*.9*q,0,6.2832);g.stroke();g.globalAlpha=1}
+  /* 전하 배지 */
+  if(a.p>0&&a.p!==a.e){const d=a.p-a.e;g.fillStyle=d>0?'#ef4444':'#2563eb';g.beginPath();g.arc(w-34,top+16,24,0,6.2832);g.fill();g.strokeStyle='#fff';g.lineWidth=3;g.stroke();g.fillStyle='#fff';g.font='900 20px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(st.s,w-34,top+17)}
+  /* 범례 */
+  const lg=[['#ef4444','+','양성자'],['#94a3b8','','중성자'],['#2563eb','−','전자']],fw=Math.max(13,Math.min(17,w/26));g.font='800 '+fw+'px sans-serif';
+  let tw=0;lg.forEach(l=>tw+=fw*2+g.measureText(l[2]).width+14);let x=cx-tw/2+fw;
+  lg.forEach(l=>{ball(g,x,h-22,fw*.72,l[0],l[0],l[1]);g.fillStyle='#e2e8f0';g.textAlign='left';g.textBaseline='middle';g.fillText(l[2],x+fw,h-21);x+=fw*2+g.measureText(l[2]).width+14})}
+/* ═════════ 오른쪽 조작부 ═════════ */
+function ntHTML(a){if(a.p<=0)return '?';const d=a.p-a.e;return `<span class="nt"><span class="ab"><span>${a.p+a.n}</span><span>${a.p}</span></span>${ELS[a.p]}${d?`<sup>${sup(d)}</sup>`:''}</span>`}
+function sideHTML(k){let h='';
+  if(k>1)h+=`<div class="card ctl task" id="task${k}"></div>`;
+  h+=`<div class="card ctl" id="info${k}"></div>`;
+  h+=`<div class="card ctl"><div class="kv2" style="font-size:clamp(15px,1.4vw,21px)">🎛️ 입자 조작부</div>`+['p','n','e'].map(t=>`<div class="prt"><div class="dotp ${t}">${t==='p'?'+':t==='e'?'−':''}</div><div class="nm">${PN[t]}<small>${t==='p'?'Proton · 원소의 종류':t==='n'?'Neutron · 질량':'Electron · 궤도를 돌아요'}</small></div><button class="pm minus" data-k="${k}" data-t="${t}" data-d="-1" aria-label="${PN[t]} 빼기">−</button><b class="cnt" id="cnt${k}${t}">0</b><button class="pm plus" data-k="${k}" data-t="${t}" data-d="1" aria-label="${PN[t]} 넣기">+</button></div>`).join('')+`<div class="row sm" style="margin-top:6px"><button class="btn" data-clr="${k}">🗑️ ${k===1?'모두 비우기':'처음 상태로'}</button></div></div>`;
+  h+=`<div class="fb" id="fb${k}"></div>`;
+  if(k===1)h+=`<div class="card ctl"><div class="kv2">🧪 예시 원자 불러오기</div><div class="sub6" id="pre1"></div></div>`;
+  return h}
+function infoHTML(a){const st=state(a),d=a.p-a.e;
+  return `<div class="elb"><b>${a.p>0?ELN[a.p]+' ('+ELS[a.p]+')':'—'}</b><span>${a.p>0?'원자 번호 '+a.p:'양성자 0개'}</span></div><div class="chg ${st.c}" style="margin:6px 0">${st.t}</div>
+  <div class="hi"><div>⚖️ 질량수<br><b style="font-size:1.5em">${a.p+a.n}</b> <small>(양성자 ${a.p} + 중성자 ${a.n})</small></div><div>⚡ 전하<br><b style="font-size:1.5em">${d===0?'0':(d>0?'+':'−')+Math.abs(d)}</b> <small>(양성자 ${a.p} − 전자 ${a.e})</small></div><div>🌀 전자 배치<br><b style="font-size:1.3em">${a.e?shells(a.e).filter(x=>x).join(', '):'없음'}</b> <small>(K, L, M…)</small></div><div>🏷️ 원소 표기<br>${ntHTML(a)}</div></div>`}
+const PRE=[['H',1,0],['He',2,2],['C',6,6],['N',7,7],['O',8,8],['Na',11,12]];
+const TK={2:{i:0,done:[0,0,0],lock:false,list:[
+ {sym:'H',nm:'수소',goal:{p:1,n:0,e:1},start:{p:0,n:0,e:0},q:'양성자 1개, 중성자 0개, 전자 1개를 넣어 수소(H) 원자를 완성하세요!',ok:'수소 원자 완성! 양성자 1개와 전자 1개로 전기적 중성이에요. 가장 간단한 원자예요.'},
+ {sym:'C',nm:'탄소',goal:{p:6,n:6,e:6},start:{p:0,n:0,e:0},q:'양성자 6개, 중성자 6개, 전자 6개를 넣어 탄소(C) 원자를 완성하세요!',ok:'탄소 원자 완성! 양성자가 6개이므로 탄소예요. 전자 6개는 K 껍질에 2개, L 껍질에 4개가 들어가요.'},
+ {sym:'O',nm:'산소',goal:{p:8,n:8,e:8},start:{p:0,n:0,e:0},q:'양성자 8개, 중성자 8개, 전자 8개를 넣어 산소(O) 원자를 완성하세요!',ok:'산소 원자 완성! 양성자가 8개이므로 산소예요. 전자 8개는 K에 2개, L에 6개가 들어가요.'}]},
+ 3:{i:0,done:[0,0,0,0],lock:false,list:[
+ {sym:'Na⁺',nm:'나트륨 이온',goal:{p:11,n:12,e:10},start:{p:11,n:12,e:11},q:'나트륨 원자(양성자 11)가 전자 1개를 잃으면 (+) 이온이 돼요. 전자를 조절해 나트륨 이온(Na⁺)을 만들어 보세요!',ok:'Na⁺ 완성! 양성자 11개 > 전자 10개이므로 (+) 이온(양이온)이에요. 원소는 그대로 나트륨이에요.'},
+ {sym:'Cl⁻',nm:'염화 이온',goal:{p:17,n:18,e:18},start:{p:17,n:18,e:17},q:'염소 원자(양성자 17)가 전자 1개를 얻으면 (−) 이온이 돼요. 염화 이온(Cl⁻)을 만들어 보세요!',ok:'Cl⁻ 완성! 전자 18개 > 양성자 17개이므로 (−) 이온(음이온)이에요. 양성자 수가 같아 원소는 염소 그대로예요.'},
+ {sym:'Mg²⁺',nm:'마그네슘 이온',goal:{p:12,n:12,e:10},start:{p:12,n:12,e:12},q:'마그네슘 원자(양성자 12)가 전자 2개를 잃으면 어떤 이온일까요? 마그네슘 이온(Mg²⁺)을 만들어 보세요!',ok:'Mg²⁺ 완성! 양성자 12개, 전자 10개이므로 +2가의 양이온이에요.'},
+ {sym:'O²⁻',nm:'산화 이온',goal:{p:8,n:8,e:10},start:{p:8,n:8,e:8},q:'산소 원자(양성자 8)가 전자 2개를 얻으면 어떤 이온일까요? 산화 이온(O²⁻)을 만들어 보세요!',ok:'O²⁻ 완성! 양성자 8개, 전자 10개이므로 −2가의 음이온이에요.'}]}};
+const STAT={2:'mis',3:'ion'};
+function conf(){const em=['🎉','✨','⭐','🎊','⚛️','🔬'];for(let i=0;i<30;i++){const s=document.createElement('span');s.className='cfx';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=(Math.random()*1)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),4200)}}
+function fanfare(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,f,.18,.16),i*140));setTimeout(sBoom,600)}
+function renderSide(k){const a=A[k];['p','n','e'].forEach(t=>{const el=$('#cnt'+k+t);if(el)el.textContent=a[t]});$('#info'+k).innerHTML=infoHTML(a);
+  if(k>1)taskUI(k)}
+function taskUI(k){const T=TK[k],it=T.list[T.i],a=A[k],g=it.goal;
+  const chk=['p','n','e'].map(t=>`<span class="${a[t]===g[t]?'ok':''}">${a[t]===g[t]?'✔':'○'} ${PN[t]} ${a[t]}${k===2?' / '+g[t]:''}</span>`).join('');
+  $('#task'+k).innerHTML=`<div class="th">${k===2?'📖 교과서 [해 보기] 미션':'⚡ 이온 도전'} ${T.i+1} / ${T.list.length}</div><div class="tq">${it.q}</div><div class="chk">${chk}</div><div class="stp">${T.list.map((x,i)=>`<i class="${T.done[i]?'on':''}">${T.done[i]?'✅':(i+1)} ${x.sym}</i>`).join('')}</div>`}
+function change(k,t,d){const a=A[k];if(k>1&&TK[k].lock)return;const v=a[t]+d;if(v<0||v>LIM[t]){toast('#toast'+k,v<0?PN[t]+'가 이미 0개예요':PN[t]+'는 최대 '+LIM[t]+'개까지 넣을 수 있어요',1600);sNO();return}
+  a[t]=v;sTap();FX.t=performance.now()/1000;FX.col=t==='p'?'#f87171':t==='n'?'#cbd5e1':'#60a5fa';FX.k=t==='e'&&d>0?1:0;if(t==='e'&&d>0)FX.sh=Math.max(0,shells(a.e).filter(x=>x>0).length-1);
+  renderSide(k);after(k)}
+function after(k){const a=A[k],st=state(a);
+  if(k===1){let m='';if(a.p===0)m='⚛️ 양성자를 넣어 원소를 만들어 보세요. 양성자 수가 원소의 종류를 결정해요!';
+    else{m=`🔴 양성자 <b>${a.p}개</b> → <b>${ELN[a.p]}(${ELS[a.p]})</b>! `;m+=a.p===a.e?`전자도 ${a.e}개라서 <b>전기적으로 중성인 원자</b>예요.`:a.p>a.e?`전자(${a.e}개)가 양성자보다 적어서 <b>(+) 이온</b>이 됐어요. 원소는 그대로 ${ELN[a.p]}이에요.`:`전자(${a.e}개)가 양성자보다 많아서 <b>(−) 이온</b>이 됐어요. 원소는 그대로 ${ELN[a.p]}이에요.`;
+      if(a.p===a.e&&!S.built.has(a.p)){S.built.add(a.p);hud();m+='<br>🎉 새로운 원자를 완성했어요! ('+S.built.size+'/5)'}}
+    fbx('#fb1',m,st.c==='neu'&&a.p?'good':'')}
+  else checkTask(k)}
+function diffMsg(a,g){const r=[];['p','n','e'].forEach(t=>{const d=g[t]-a[t];if(d>0)r.push(`${PN[t]} ${d}개 더 넣어요`);else if(d<0)r.push(`${PN[t]} ${-d}개 빼요`)});return r.join(' · ')}
+function checkTask(k){const T=TK[k],it=T.list[T.i],a=A[k],g=it.goal;if(T.lock)return;
+  if(a.p===g.p&&a.n===g.n&&a.e===g.e){T.lock=true;T.done[T.i]=1;S[STAT[k]]=T.done.filter(x=>x).length;hud();taskUI(k);
+    const sp=$('#stamp'+k);sp.classList.remove('on');void sp.offsetWidth;sp.classList.add('on');conf();fanfare();
+    fbx('#fb'+k,`🎉 <b>${it.nm}${k===2?' 원자':''}</b> 성공! ${it.ok}`,'good');FX.t=performance.now()/1000;FX.col='#4ade80';FX.k=0;
+    setTimeout(()=>{sp.classList.remove('on');if(T.i<T.list.length-1){T.i++;const s=it_start(k);Object.assign(A[k],s);T.lock=false;renderSide(k);fbx('#fb'+k,'다음 미션이에요! 입자 수를 맞춰 보세요.')}else finishTask(k)},2600)}
+  else{const dm=diffMsg(a,g);fbx('#fb'+k,a.p===g.p?`👍 양성자 수가 같아 <b>${it.nm.replace(' 이온','')}</b>이에요! 남은 일: ${dm}`:`💡 ${dm}`)}}
+function it_start(k){const T=TK[k];return Object.assign({},T.list[T.i].start)}
+function finishTask(k){const T=TK[k];T.lock=true;$('#res'+k+'t').innerHTML=`<div style="font-size:1.6em">🏆 ${k===2?'교과서 미션 완료!':'이온 도전 완료!'} 🏆</div><div style="margin:10px 0">${T.list.map(x=>'✅ '+x.sym).join(' · ')}</div><div style="font-size:.85em;font-weight:800;color:#475569;margin-bottom:10px">${k===2?'양성자 수가 원소의 종류를 결정하고, 양성자 수와 전자 수가 같으면 전기적으로 중성이에요.':'원자가 전자를 잃으면 (+) 이온, 전자를 얻으면 (−) 이온이 돼요. 이때 원소의 종류는 그대로예요.'}</div><button class="btn go" id="again${k}" style="min-height:60px">🔁 다시 도전하기</button>`;
+  $('#res'+k).classList.add('on');$('#again'+k).onclick=()=>resetTask(k);fanfare();conf()}
+function resetTask(k){const T=TK[k];T.i=0;T.done=T.done.map(()=>0);T.lock=false;S[STAT[k]]=0;Object.assign(A[k],it_start(k));$('#res'+k).classList.remove('on');$('#stamp'+k).classList.remove('on');renderSide(k);hud();
+  fbx('#fb'+k,k===2?'입자 수를 조절해 교과서 미션을 해결해 보세요!':'전자 수를 조절해 이온을 만들어 보세요. 원소의 종류(양성자 수)는 그대로예요!')}
+/* 이벤트 */
+[1,2,3].forEach(k=>$('#side'+k).innerHTML=sideHTML(k));
+$('#pre1').innerHTML=PRE.map((p,i)=>`<button class="btn" data-pre="${i}"><span>⚛️</span>${ELN[p[1]]} (${p[0]})</button>`).join('');
+document.addEventListener('click',e=>{const b=e.target.closest('.pm');if(b){change(+b.dataset.k,b.dataset.t,+b.dataset.d);return}
+  const c=e.target.closest('[data-clr]');if(c){const k=+c.dataset.clr;if(k===1)Object.assign(A[1],{p:0,n:0,e:0});else{if(TK[k].lock)return;Object.assign(A[k],it_start(k))}FX.t=-9;sTap();renderSide(k);after(k);return}
+  const p=e.target.closest('[data-pre]');if(p){const q=PRE[+p.dataset.pre];Object.assign(A[1],{p:q[1],n:q[2],e:q[1]});sTap();FX.t=performance.now()/1000;FX.col='#4ade80';FX.k=0;renderSide(1);after(1)}});
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 원자 만들기',S.built.size,5],['② 미션',S.mis,3],['③ 이온 도전',S.ion,4]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[2];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=4?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/4'}</div>`}
+const QZ=[
+ {q:'원소의 종류(수소, 탄소, 산소…)를 결정하는 것은 무엇일까?',o:['양성자의 수','전자의 수','중성자의 수','원자핵의 색깔'],a:0,e:'원소의 종류는 양성자 수로 정해져요. 양성자가 1개면 수소, 6개면 탄소, 8개면 산소예요. 전자나 중성자 수가 달라져도 양성자 수가 같으면 같은 원소예요.'},
+ {q:'양성자 6개, 중성자 6개, 전자 6개로 이루어진 입자의 전하 상태는?',o:['전기적으로 중성인 탄소 원자','(+) 이온','(−) 이온','양성자와 전자가 같아도 전하를 띤다'],a:0,e:'양성자(+) 수와 전자(−) 수가 같으면 전하가 서로 상쇄되어 전기적으로 중성이에요. 양성자 6개이므로 탄소 원자예요.'},
+ {q:'나트륨 원자(양성자 11개, 전자 11개)가 전자 1개를 잃으면 어떻게 될까?',o:['양성자가 더 많아져 (+) 이온이 된다','원소가 마그네슘으로 바뀐다','(−) 이온이 된다','중성이지만 질량이 줄어든다'],a:0,e:'전자가 1개 줄면 양성자 11개 > 전자 10개이므로 (+) 이온(Na⁺)이 돼요. 양성자 수는 그대로라서 원소는 여전히 나트륨이에요.'},
+ {q:'원자가 전자를 얻어 이온이 되었을 때 원소의 종류는?',o:['변하지 않는다 (양성자 수가 같으므로)','전자 수에 따라 다른 원소가 된다','양성자가 늘어난다','중성자가 늘어난다'],a:0,e:'전자를 얻거나 잃어도 양성자 수는 변하지 않아요. 그래서 원소의 종류는 그대로이고 전하만 달라져요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+function resetAll(){S.built=new Set();S.mis=0;S.ion=0;S.quiz=-1;Object.assign(A[1],{p:1,n:0,e:1});FX.t=-9;
+  Object.assign(A[2],{p:0,n:0,e:0});Object.assign(A[3],{p:11,n:12,e:11});[2,3].forEach(k=>{const T=TK[k];T.i=0;T.done=T.done.map(()=>0);T.lock=false;Object.assign(A[k],it_start(k));$('#res'+k).classList.remove('on');$('#stamp'+k).classList.remove('on')});
+  [1,2,3].forEach(renderSide);fbx('#fb1','➕ ➖ 버튼으로 양성자·중성자·전자를 넣고 빼며 나만의 원자를 만들어 보세요!');fbx('#fb2','입자 수를 조절해 교과서 미션을 해결해 보세요!');fbx('#fb3','전자 수를 조절해 이온을 만들어 보세요. 원소의 종류(양성자 수)는 그대로예요!');hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+function loop(){try{drawAtom($('#c'+mode),A[mode],performance.now()/1000)}catch(e){console.error(e)}requestAnimationFrame(loop)}
+resetAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

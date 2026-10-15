@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>거울과 렌즈 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+</style></head><body>
+<header>
+  <h1>🪞 거울과 렌즈 가상실험실</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 모눈종이·평면거울</button>
+    <button class="tab" id="tab2">② 상이 생기는 원리</button>
+    <button class="tab" id="tab3">③ 거울 착시·거울 문자</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#fffef5"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi1"></div></div>
+    <div class="card ctl">
+      <div class="kv2">📍 물체 (가)를 거울에서 몇 cm 떨어뜨릴까요?</div>
+      <div class="seg" id="pres1" style="grid-template-columns:repeat(3,1fr)"><button class="btn" data-d="5">5 cm</button><button class="btn" data-d="10">10 cm</button><button class="btn" data-d="15">15 cm</button></div>
+      <div class="row sm"><button class="btn" id="hm">➖ 높이</button><button class="btn" id="hp">➕ 높이</button><button class="btn" id="far">🚶 멀어지기</button><button class="btn" id="obj1">🖍 크레파스</button></div>
+      <div class="row sm"><button class="btn on" id="tgG1">☑ 📏 모눈 눈금 보이기</button><button class="btn" id="rsN">↺ 물체 (나) 되돌리기</button></div>
+    </div>
+    <div class="card ctl"><div class="kv2">👁 눈에 보이는 크기 vs 모눈종이로 잰 크기</div><canvas id="c1v" class="cv" style="height:130px"></canvas><div class="ban" id="ban1"></div></div>
+    <div class="fb" id="fb1"></div>
+  </div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#fff"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi2"></div></div>
+    <div class="card ctl">
+      <div class="stg3" id="stp"><button class="btn" data-s="1">➊ 입사·반사<br>광선</button><button class="btn" data-s="2">➋ 거울 뒤<br>연장선</button><button class="btn" data-s="3">➌ 상의<br>완성</button></div>
+      <div class="row sm"><button class="btn go" id="auto2">▶ 자동 재생</button><button class="btn" id="rs2">↺ 처음으로</button><button class="btn" id="obj2">🖍 크레파스</button></div>
+      <div class="tg"><button class="btn on" id="tgN2">☑ ⊥ 법선 보이기</button><button class="btn on" id="tgE2">☑ ┄ 연장선(점선) 보이기</button><button class="btn on" id="tgG2" style="grid-column:span 2">☑ 📏 모눈 눈금 보이기</button></div>
+    </div>
+    <div class="fb" id="fb2"></div>
+  </div>
+</section>
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#e0f2fe"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hi" id="hi3"></div></div>
+    <div class="card ctl"><div class="seg" id="sub3" style="grid-template-columns:1fr 1fr"><button class="btn on" data-s="A">🕴 실험 A<br><small>공중부양 착시 사진</small></button><button class="btn" data-s="B">🚑 실험 B<br><small>구급차 거울 문자</small></button></div>
+      <div class="kv2" id="guide3"></div>
+      <div class="row sm" id="rowA"><button class="btn go" id="lift">🦶 거울 앞쪽 한 발 들기</button><button class="btn" id="secret">🔍 비밀 장치 보기</button></div>
+      <div id="rowB" style="display:none"><input id="txt" maxlength="14" value="AMBULANCE" style="width:100%;min-height:48px;font-size:20px;font-weight:900;border:3px solid #cbd5e1;border-radius:12px;padding:0 12px;box-sizing:border-box">
+        <div class="row sm" style="margin-top:6px"><button class="btn" id="pAMB">AMBULANCE</button><button class="btn" id="pKR">구급차</button><button class="btn" id="pAB">ABC 123</button></div>
+        <div class="row sm" style="margin-top:6px"><button class="btn on" id="pre">🚑 구급차처럼 미리 뒤집어 쓰기</button><button class="btn go" id="flip">🪞 거울에 비춰보기</button></div></div></div>
+    <div class="fb" id="fb3"></div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg)=>{g.font='900 13px sans-serif';const w=g.measureText(t).width+14;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-12,w,24,12);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+function ray(g,x0,y0,x1,y1,col,wd,al,noarrow){g.save();g.lineCap='round';const A=al==null?1:al;g.shadowColor=col;g.shadowBlur=12;g.strokeStyle=col;g.lineWidth=wd+3;g.globalAlpha=A*.4;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+  g.globalAlpha=A;g.shadowBlur=5;g.lineWidth=wd;g.stroke();g.shadowBlur=0;g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=Math.max(1,wd*.35);g.stroke();
+  if(!noarrow&&Math.hypot(x1-x0,y1-y0)>40){const mx=(x0+x1)/2,my=(y0+y1)/2,an=Math.atan2(y1-y0,x1-x0);g.fillStyle='#fff';g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();g.moveTo(mx+Math.cos(an)*11,my+Math.sin(an)*11);g.lineTo(mx-Math.cos(an-.6)*12,my-Math.sin(an-.6)*12);g.lineTo(mx-Math.cos(an+.6)*12,my-Math.sin(an+.6)*12);g.closePath();g.fill();g.stroke()}g.restore()}
+const plen=p=>p.slice(1).reduce((s,q,i)=>s+Math.hypot(q.x-p[i].x,q.y-p[i].y),0);
+function eyeIcon(g,x,y,s){s=s||1;g.save();g.translate(x,y);g.scale(s,s);g.fillStyle='#fff';g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.ellipse(0,0,26,17,0,0,6.2832);g.fill();g.stroke();g.fillStyle='#2563eb';g.beginPath();g.arc(2,1,10,0,6.2832);g.fill();g.fillStyle='#0f172a';g.beginPath();g.arc(2,1,5,0,6.2832);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(-1,-2,2.3,0,6.2832);g.fill();g.restore()}
+const S={m1:new Set(),steps:new Set(),m3:new Set(),quiz:-1,obj:'crayon',opt:{grid:true,normal:true,ext:true}};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+function dimArrow(g,x0,y0,x1,y1,col,label,lo){g.save();g.strokeStyle=col;g.fillStyle=col;g.lineWidth=2.5;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+  const an=Math.atan2(y1-y0,x1-x0);for(const [x,y,a] of [[x1,y1,an],[x0,y0,an+Math.PI]]){g.beginPath();g.moveTo(x,y);g.lineTo(x-Math.cos(a-.4)*10,y-Math.sin(a-.4)*10);g.lineTo(x-Math.cos(a+.4)*10,y-Math.sin(a+.4)*10);g.closePath();g.fill()}
+  g.restore();if(label){const W=g.canvas.getBoundingClientRect().width;pill(g,label,clamp((x0+x1)/2+(lo?lo[0]:0),34,W-34),(y0+y1)/2+(lo?lo[1]:-16),col)}}
+function drawObj(g,x,gy,hp,kind,mir,al,col,lab,flag){g.save();g.globalAlpha=al==null?1:al;g.translate(x,gy);if(mir)g.scale(-1,1);const c=col||'#ef4444';let ox;
+  if(kind==='cat'){g.font=(hp*.92)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🐱',0,-hp*.5);ox=hp*.42}
+  else{const w=Math.max(10,hp*.2),bh=hp*.8;ox=w/2;g.fillStyle=c;g.fillRect(-w/2,-bh,w,bh);g.fillStyle='rgba(255,255,255,.55)';g.fillRect(-w/2,-bh*.66,w,bh*.1);g.fillRect(-w/2,-bh*.22,w,bh*.1);
+    g.fillStyle='#f5d0a9';g.beginPath();g.moveTo(-w/2,-bh);g.lineTo(0,-hp);g.lineTo(w/2,-bh);g.closePath();g.fill();g.fillStyle=c;g.beginPath();g.moveTo(-w*.17,-hp*.945);g.lineTo(0,-hp);g.lineTo(w*.17,-hp*.945);g.closePath();g.fill();
+    if(lab){g.fillStyle='#fff';g.font='900 '+Math.max(10,w*.8)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(lab,0,-bh*.44)}}
+  if(flag){const fy=-hp*.5,fl=Math.max(12,hp*.3);g.fillStyle='#2563eb';g.strokeStyle='#1e3a8a';g.lineWidth=1.5;g.beginPath();g.moveTo(ox+3,fy-8);g.lineTo(ox+3+fl,fy);g.lineTo(ox+3,fy+8);g.closePath();g.fill();g.stroke()}
+  g.restore()}
+function syncObj(){$$('#obj1,#obj2').forEach(b=>b.textContent=S.obj==='cat'?'🐱 고양이':'🖍 크레파스')}
+$$('#obj1,#obj2').forEach(b=>b.onclick=()=>{S.obj=S.obj==='cat'?'crayon':'cat';syncObj();sTap()});
+const OPTS=[['grid',['#tgG1','#tgG2'],'📏 모눈 눈금'],['normal',['#tgN2'],'⊥ 법선'],['ext',['#tgE2'],'┄ 연장선(점선)']];
+function syncOpt(){for(const [k,ids,lb] of OPTS)ids.forEach(id=>{const b=$(id);b.classList.toggle('on',!!S.opt[k]);b.textContent=(S.opt[k]?'☑ ':'☐ ')+lb+' 보이기'})}
+OPTS.forEach(([k,ids])=>ids.forEach(id=>$(id).onclick=()=>{S.opt[k]=!S.opt[k];syncOpt();sTap()}));
+function ptr(cv,e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}}
+
+/* ═════════ 모드 ①: 모눈종이 & 반투명 평면거울 ═════════ */
+const M1={d:8,h:4,dn:3,tgt:null,spd:12,drag:null,ok:false,far:false};
+function G1(w,h){const cs=Math.min((w-24)/34,(h-34)/10.8);return {w,h,cs,ox:w/2,gy:Math.min(h-24,Math.round(h/2+5.2*cs))}}
+function chk1(){const was=M1.ok,near=Math.abs(M1.dn-M1.d)<=.4;M1.ok=near;
+  if(near){M1.dn=M1.d;if(!was){S.m1.add(Math.round(M1.d));hud();sOK();toast('#toast1','✨ 완벽 일치!',2200);
+    fbx('#fb1',`✨ <b>완벽 일치!</b> 물체 거리(${M1.d}cm) = 상 거리(${M1.d}cm), 물체 크기(${M1.h}cm) = 상 크기(${M1.h}cm)!<br>다른 거리에서도 확인해 보세요. (확인한 거리: ${[...S.m1].sort((a,b)=>a-b).join(', ')}cm)`,'good')}}
+  else if(was)fbx('#fb1','물체 (가)가 움직여서 상의 자리가 바뀌었어요. (나)를 다시 상에 포개 보세요.')}
+let sig1='';
+function info1(){const d=M1.d,hh=M1.h,ang=2*Math.atan((hh/2)/(2*d))*R2D,s=[d,hh,S.obj,M1.ok,S.m1.size].join();if(s===sig1)return;sig1=s;
+  $('#hi1').innerHTML=`<div>📏 물체→거울 거리<br><b style="color:#dc2626">d = ${d} cm</b></div><div>📏 거울→상 거리<br><b style="color:#7e22ce">d′ = ${d} cm</b></div><div>🖍 물체 높이<br><b style="color:#dc2626">${hh} cm</b></div><div>🪞 상의 높이<br><b style="color:#7e22ce">${hh} cm</b></div><div>👁 눈에 보이는 각도<br><b>${ang.toFixed(1)}°</b> <small>(멀수록 작아져요)</small></div><div>🧮 모눈에서 센 상의 높이<br><b>${hh}칸 = ${hh} cm</b></div>`;
+  $('#ban1').innerHTML=`🔎 오개념 체크: 멀어질수록 거울 속 모습이 <b>작아 보이는 건 시야각</b>이 줄어서예요. 상의 <b>실제 크기는 ${hh}cm 그대로</b>!`;
+  $$('#pres1 .btn').forEach(b=>b.classList.toggle('on',Math.abs(+b.dataset.d-d)<.01))}
+function drawView1(){const cv=$('#c1v'),{g,w,h}=fit(cv);g.fillStyle='#f1f5f9';g.fillRect(0,0,w,h);const H=h-44,gyv=h-16,d=M1.d,r=(M1.h/d)/(4/5),hpL=Math.min(H,H*.7*r),cc=H/6.5;
+  g.fillStyle='#fff';rr(g,6,6,w/2-9,h-12,10);g.fill();rr(g,w/2+3,6,w/2-9,h-12,10);g.fill();
+  eyeIcon(g,26,gyv-H*.45,.5);drawObj(g,w/4+16,gyv,hpL,S.obj,true,.7,'#a855f7');
+  outText(g,`눈에 보이는 상 ↓ ${(2*Math.atan((M1.h/2)/(2*d))*R2D).toFixed(0)}°`,w/4,16,Math.max(11,Math.min(14,w/30)),'#7e22ce','rgba(255,255,255,.95)');
+  const gx=w/2+14,gw=w/2-30;g.strokeStyle='#86efac';g.lineWidth=1;for(let j=0;j<=6;j++){g.beginPath();g.moveTo(gx,gyv-j*cc);g.lineTo(gx+gw,gyv-j*cc);g.stroke()}for(let i=0;i<=Math.floor(gw/cc);i++){g.beginPath();g.moveTo(gx+i*cc,gyv);g.lineTo(gx+i*cc,gyv-6*cc);g.stroke()}
+  drawObj(g,gx+gw/2,gyv,M1.h*cc,S.obj,true,.7,'#a855f7');dimArrow(g,gx+gw-6,gyv,gx+gw-6,gyv-M1.h*cc,'#16a34a');
+  outText(g,`모눈 위 상: ${M1.h}칸 그대로`,w*.75,16,Math.max(11,Math.min(14,w/30)),'#15803d','rgba(255,255,255,.95)')}
+function scene1(dt,t){const cv=$('#c1'),{g,w,h}=fit(cv),G=G1(w,h),{cs,ox,gy}=G;
+  if(M1.tgt!=null){const df=M1.tgt-M1.d,st=M1.spd*dt;if(Math.abs(df)<=st){M1.d=M1.tgt;M1.tgt=null}else M1.d+=Math.sign(df)*st;M1.d=Math.round(M1.d*100)/100;chk1()}
+  g.fillStyle='#fffef5';g.fillRect(0,0,w,h);const x0=ox-17*cs,top=gy-10*cs,x1=ox+17*cs,hpx=M1.h*cs;
+  if(S.opt.grid){for(let i=-17;i<=17;i++){g.strokeStyle=i%5===0?'#4ade80':'#bbf7d0';g.lineWidth=i%5===0?1.6:1;g.beginPath();g.moveTo(ox+i*cs,top);g.lineTo(ox+i*cs,gy);g.stroke()}
+    for(let j=0;j<=10;j++){g.strokeStyle=j%5===0?'#4ade80':'#bbf7d0';g.lineWidth=j%5===0?1.6:1;g.beginPath();g.moveTo(x0,gy-j*cs);g.lineTo(x1,gy-j*cs);g.stroke()}
+    g.font='800 '+Math.max(11,cs*.55)+'px sans-serif';g.fillStyle='#166534';g.textAlign='center';g.textBaseline='top';for(let i=-15;i<=15;i+=5)if(i)g.fillText(Math.abs(i)+'cm',ox+i*cs,gy+4)}
+  else{g.strokeStyle='#cbd5e1';g.lineWidth=2;g.strokeRect(x0,top,x1-x0,gy-top)}
+  g.strokeStyle='#15803d';g.lineWidth=3;g.beginPath();g.moveTo(x0,gy);g.lineTo(x1,gy);g.stroke();
+  // 거울
+  const mg=g.createLinearGradient(ox-5,0,ox+5,0);mg.addColorStop(0,'rgba(186,230,253,.85)');mg.addColorStop(.5,'rgba(255,255,255,.9)');mg.addColorStop(1,'rgba(125,211,252,.85)');g.fillStyle=mg;g.fillRect(ox-5,gy-9*cs,10,9*cs);g.strokeStyle='#475569';g.lineWidth=2;g.strokeRect(ox-5,gy-9*cs,10,9*cs);
+  pill(g,'반투명 평면거울',ox,gy-9*cs-14,'#38bdf8');
+  const xo=ox-M1.d*cs,xi=ox+M1.d*cs;
+  // 대칭 연결선
+  g.save();g.strokeStyle='rgba(124,58,237,.55)';g.lineWidth=2;g.setLineDash([6,6]);g.beginPath();g.moveTo(xo,gy-hpx*.5);g.lineTo(xi,gy-hpx*.5);g.stroke();g.restore();
+  drawObj(g,xi,gy,hpx,S.obj,true,.5,'#a855f7','가',true);
+  g.save();g.strokeStyle='#7e22ce';g.lineWidth=2;g.setLineDash([4,4]);g.strokeRect(xi-cs*.9,gy-hpx-4,cs*1.8,hpx+4);g.restore();
+  outText(g,'거울 속 상',xi,gy-hpx-18,Math.max(12,cs*.6),'#7e22ce','rgba(255,255,255,.95)');
+  drawObj(g,xo,gy,hpx,S.obj,false,1,'#ef4444','가',true);outText(g,'물체 (가)',xo,gy-hpx-18,Math.max(12,cs*.6),'#b91c1c','rgba(255,255,255,.95)');
+  const xn=ox+M1.dn*cs;
+  if(M1.ok){g.save();g.strokeStyle='#22c55e';g.lineWidth=4;g.setLineDash([8,5]);g.strokeRect(xn-cs*1.1,gy-hpx-8,cs*2.2,hpx+8);g.restore()}
+  drawObj(g,xn,gy,hpx,S.obj,false,.9,'#2563eb','나',false);
+  if(!M1.ok){outText(g,'물체 (나)',xn,gy+ -6 -hpx-(Math.abs(M1.dn-M1.d)<1.5?30:0),Math.max(12,cs*.6),'#1d4ed8','rgba(255,255,255,.95)');
+    if(Math.abs(M1.dn-M1.d)<1.6&&Math.abs(M1.dn-M1.d)>.4)outText(g,'거의 다 왔어요!',xn,gy-hpx-8-cs*.9,Math.max(12,cs*.55),'#16a34a','rgba(255,255,255,.95)')}
+  if(M1.ok){const yt=gy-(M1.h+1.6)*cs;dimArrow(g,xo,yt,ox,yt,'#dc2626',`d = ${M1.d} cm`);dimArrow(g,ox,yt,xi,yt,'#7e22ce',`d′ = ${M1.d} cm`);
+    dimArrow(g,xo-cs*1.4,gy,xo-cs*1.4,gy-hpx,'#dc2626',`${M1.h} cm`,[-24,0]);dimArrow(g,xi+cs*1.4,gy,xi+cs*1.4,gy-hpx,'#7e22ce',`${M1.h} cm`,[24,0])}
+  info1();drawView1()}
+(function(){const cv=$('#c1');
+  cv.addEventListener('pointerdown',e=>{const G=G1(cv.getBoundingClientRect().width,cv.getBoundingClientRect().height),p=ptr(cv,e),wx=(p.x-G.ox)/G.cs,wy=(G.gy-p.y)/G.cs;
+    const inY=wy>=-.8&&wy<=M1.h+1.2;
+    if(inY&&Math.abs(wx-M1.dn)<=1.7){M1.drag='n';M1.ok=false}
+    else if(inY&&Math.abs(wx+M1.d)<=1.7){M1.drag='o';M1.tgt=null}
+    if(M1.drag){cv.setPointerCapture(e.pointerId);sTap();e.preventDefault()}});
+  cv.addEventListener('pointermove',e=>{if(!M1.drag)return;const G=G1(cv.getBoundingClientRect().width,cv.getBoundingClientRect().height),p=ptr(cv,e),wx=(p.x-G.ox)/G.cs;
+    if(M1.drag==='o'){M1.d=clamp(Math.round(-wx*2)/2,1,16);chk1()}else{M1.dn=clamp(Math.round(wx*2)/2,.5,16.5);chk1()}});
+  const up=()=>{M1.drag=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  $$('#pres1 .btn').forEach(b=>b.onclick=()=>{M1.tgt=+b.dataset.d;M1.spd=16;M1.far=false;sTap()});
+  $('#hm').onclick=()=>{M1.h=clamp(M1.h-1,2,6);chk1();sTap()};$('#hp').onclick=()=>{M1.h=clamp(M1.h+1,2,6);chk1();sTap()};
+  $('#far').onclick=()=>{M1.far=!M1.far;M1.tgt=M1.far?16:1;M1.spd=2.2;$('#far').classList.toggle('on',M1.far);$('#far').textContent=M1.far?'🚶 가까워지기':'🚶 멀어지기';sTap()};
+  $('#rsN').onclick=()=>{M1.dn=3;M1.ok=false;chk1();sTap()};
+  fbx('#fb1','물체 (나)를 <b>끌어서</b> 거울 뒤쪽의 상에 정확히 포개 보세요. 물체 (가)도 끌어서 옮길 수 있어요.')})();
+/* ═════════ 모드 ②: 상이 생기는 원리 광선 작도 ═════════ */
+const M2={dO:6,yb:0,hO:5,dE:12,yE:11,step:0,u:[0,0,0],drag:null,tm:[],lastToast:0};
+function G2(w,h){const mx=.62*w,u=Math.min(.38*w/12,(mx-12)/18,(h-100)/15.6),gy=Math.min(h-58,Math.round(h/2+7.2*u));return {w,h,mx,gy,u,X:c=>mx+c*u,Y:c=>gy-c*u}}
+function calc2(){const out=[];for(const [nm,y] of [['head',M2.yb+M2.hO],['foot',M2.yb]])for(const sg of [1,-1]){const Q={x:-M2.dE,y:M2.yE+sg*1.2},P={x:-M2.dO,y:y},Pi={x:M2.dO,y:y},yr=Q.y+(Pi.y-Q.y)*M2.dE/(M2.dE+M2.dO);out.push({nm,P,Pi,Q,R:{x:0,y:yr}})}return out}
+function arcBetween(g,cx,cy,r,a,b){let d=((b-a+3*Math.PI)%(2*Math.PI))-Math.PI;g.beginPath();g.arc(cx,cy,r,a,a+d,d<0);g.stroke();return a+d/2}
+function part(g,pts,u,col,wd){const tot=plen(pts);let rem=tot*u;for(let i=1;i<pts.length&&rem>0;i++){const a=pts[i-1],b=pts[i],sl=Math.hypot(b.x-a.x,b.y-a.y),k=Math.min(1,rem/sl);ray(g,a.x,a.y,a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,col,wd,1,k<1);rem-=sl}}
+function dashed(g,a,b,u,col,wd){if(u<=0)return;g.save();g.strokeStyle=col;g.lineWidth=wd;g.setLineDash([8,6]);g.lineCap='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u);g.stroke();g.restore()}
+let sig2='';
+function info2(){const ra=calc2()[0],i=Math.atan(Math.abs(ra.R.y-ra.P.y)/M2.dO)*R2D,r=Math.atan(Math.abs(ra.R.y-ra.Q.y)/M2.dE)*R2D,s=[M2.dO,M2.hO,M2.yb,M2.dE,M2.yE,M2.step].join();if(s===sig2)return;sig2=s;
+  $('#hi2').innerHTML=`<div>📏 물체→거울 거리<br><b style="color:#dc2626">d = ${M2.dO.toFixed(1)} cm</b></div><div>📏 거울→상 거리<br><b style="color:#7e22ce">d′ = ${M2.dO.toFixed(1)} cm</b></div><div>📐 입사각 (머리 광선)<br><b style="color:#d97706">i = ${i.toFixed(1)}°</b></div><div>📐 반사각 (머리 광선)<br><b style="color:#d97706">r = ${r.toFixed(1)}°</b></div><div style="grid-column:span 2">📍 상의 위치: 거울 뒤 <b>${M2.dO.toFixed(1)} cm</b>, 바닥에서 <b>${M2.yb.toFixed(1)}~${(M2.yb+M2.hO).toFixed(1)} cm</b> <span class="badge b-f">눈을 옮겨도 그대로!</span></div>`;
+  $$('#stp .btn').forEach(b=>{const k=+b.dataset.s;b.classList.toggle('on',M2.step===k);b.classList.toggle('ok',S.steps.has(k)&&M2.step!==k)})}
+function scene2(dt,t){const cv=$('#c2'),{g,w,h}=fit(cv),G=G2(w,h),{mx,gy,u,X,Y}=G;
+  for(let i=0;i<3;i++){const tg=M2.step>i?1:0;M2.u[i]+=clamp(tg-M2.u[i],-dt*1.1,dt*1.1)}
+  g.fillStyle='#fff';g.fillRect(0,0,w,h);
+  if(S.opt.grid){for(let c=-20;c<=14;c++){const x=X(c);if(x<0||x>w)continue;g.strokeStyle=c%5===0?'#cbd5e1':'#eef2f7';g.lineWidth=c%5===0?1.4:1;g.beginPath();g.moveTo(x,Y(15));g.lineTo(x,gy);g.stroke()}
+    for(let j=0;j<=15;j++){g.strokeStyle=j%5===0?'#cbd5e1':'#eef2f7';g.lineWidth=j%5===0?1.4:1;g.beginPath();g.moveTo(0,Y(j));g.lineTo(w,Y(j));g.stroke()}}
+  g.strokeStyle='#64748b';g.lineWidth=3;g.beginPath();g.moveTo(0,gy);g.lineTo(w,gy);g.stroke();
+  g.fillStyle='rgba(148,163,184,.12)';g.fillRect(mx,Y(15),w-mx,gy-Y(15));outText(g,'거울 뒤쪽 (빛이 통과하지 못해요)',mx+(w-mx)/2,Y(14.4),Math.max(11,Math.min(14,w/55)),'#64748b','rgba(255,255,255,.95)');
+  const mg=g.createLinearGradient(mx-6,0,mx+6,0);mg.addColorStop(0,'rgba(186,230,253,.9)');mg.addColorStop(.5,'rgba(255,255,255,.95)');mg.addColorStop(1,'rgba(125,211,252,.9)');g.fillStyle=mg;g.fillRect(mx-6,Y(14),12,14*u);g.strokeStyle='#475569';g.lineWidth=2;g.strokeRect(mx-6,Y(14),12,14*u);pill(g,'평면거울',mx,Y(14)-14,'#38bdf8');
+  const R=calc2(),hp=M2.hO*u,u0=M2.u[0],u1=M2.u[1],u2=M2.u[2];
+  // 상 (➌)
+  if(u2>0){drawObj(g,X(M2.dO),Y(M2.yb),hp,S.obj,true,.55*u2,'#a855f7','가',true);
+    g.save();g.globalAlpha=u2;g.strokeStyle='#7e22ce';g.lineWidth=2;g.setLineDash([5,5]);g.strokeRect(X(M2.dO)-u*1.3,Y(M2.yb+M2.hO)-4,u*2.6,hp+4);g.restore();outText(g,'상',X(M2.dO),Y(M2.yb+M2.hO)-18,14,'#7e22ce','rgba(255,255,255,.95)')}
+  // 물체·눈
+  drawObj(g,X(-M2.dO),Y(M2.yb),hp,S.obj,false,1,'#ef4444','가',true);outText(g,'물체',X(-M2.dO),Y(M2.yb+M2.hO)-16,14,'#b91c1c','rgba(255,255,255,.95)');
+  const ex=X(-M2.dE),ey=Y(M2.yE);eyeIcon(g,ex,ey,Math.max(.7,u/30));g.strokeStyle='#0f172a';g.lineWidth=3;g.beginPath();g.moveTo(ex+u*.55,Y(M2.yE+1.2));g.lineTo(ex+u*.55,Y(M2.yE-1.2));g.stroke();outText(g,'관찰자의 눈',ex,ey+u*2.1,13,'#334155','rgba(255,255,255,.95)');
+  // 법선·광선
+  const ra=R[0];
+  if(S.opt.normal&&u0>.02)for(const r of R){g.save();g.strokeStyle='#64748b';g.lineWidth=1.6;g.setLineDash([4,5]);g.globalAlpha=Math.min(1,u0*2);g.beginPath();g.moveTo(X(-4),Y(r.R.y));g.lineTo(X(3),Y(r.R.y));g.stroke();g.restore()}
+  if(u0>.02){for(const r of R)part(g,[{x:X(r.P.x),y:Y(r.P.y)},{x:X(0),y:Y(r.R.y)},{x:X(r.Q.x),y:Y(r.Q.y)}],u0,r.nm==='head'?'#f59e0b':'#0ea5e9',3.4);
+    for(const r of R)if(u0>.5){g.fillStyle='#fff';g.strokeStyle='#0f172a';g.lineWidth=2;g.beginPath();g.arc(X(0),Y(r.R.y),4.5,0,6.2832);g.fill();g.stroke()}
+    if(u0>.97){const i=Math.atan(Math.abs(ra.R.y-ra.P.y)/M2.dO),r=Math.atan(Math.abs(ra.R.y-ra.Q.y)/M2.dE),cx=X(0),cy=Y(ra.R.y),sP=ra.P.y>ra.R.y?-1:1,sQ=ra.Q.y>ra.R.y?-1:1,rad=Math.min(70,u*3.3);
+      g.strokeStyle='#d97706';g.lineWidth=3;const m1=arcBetween(g,cx,cy,rad,Math.PI,Math.PI+sP*i),m2=arcBetween(g,cx,cy,rad,Math.PI,Math.PI+sQ*r);
+      outText(g,'입사각 i',cx+Math.cos(m1)*(rad+34),cy+Math.sin(m1)*(rad+16),13,'#92400e','rgba(255,255,255,.95)');outText(g,'반사각 r',cx+Math.cos(m2)*(rad+34),cy+Math.sin(m2)*(rad+16),13,'#92400e','rgba(255,255,255,.95)');
+      pill(g,'반사 법칙: i = r',X(0)-u*5,Y(14)+6,'#fbbf24')}}
+  // 연장선 (➋)
+  if(u1>.02&&S.opt.ext){for(const r of R)dashed(g,{x:X(0),y:Y(r.R.y)},{x:X(r.Pi.x),y:Y(r.Pi.y)},u1,'#a855f7',2.6);
+    if(u1>.97)for(const nm of ['head','foot']){const r=R.find(q=>q.nm===nm);g.fillStyle='#a855f7';g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(X(r.Pi.x),Y(r.Pi.y),7,0,6.2832);g.fill();g.stroke();pill(g,nm==='head'?'상의 머리':'상의 발',X(r.Pi.x)+u*2.5,Y(r.Pi.y)+(nm==='head'?-4:10),'#c084fc')}}
+  else if(u1>.97&&!S.opt.ext)outText(g,'(연장선 숨김)',X(M2.dO),Y(M2.yb+M2.hO)-30,13,'#7e22ce','rgba(255,255,255,.95)');
+  // 합동 삼각형 (➌)
+  if(u2>.3){const P=ra.P,Rr=ra.R,M={x:0,y:P.y};g.save();g.globalAlpha=.35*u2;g.fillStyle='#fde68a';g.beginPath();g.moveTo(X(P.x),Y(P.y));g.lineTo(X(0),Y(Rr.y));g.lineTo(X(0),Y(M.y));g.closePath();g.fill();g.fillStyle='#e9d5ff';g.beginPath();g.moveTo(X(-P.x),Y(P.y));g.lineTo(X(0),Y(Rr.y));g.lineTo(X(0),Y(M.y));g.closePath();g.fill();g.restore();
+    g.save();g.globalAlpha=u2;g.strokeStyle='#7c3aed';g.lineWidth=2;g.setLineDash([3,5]);g.beginPath();g.moveTo(X(P.x),Y(P.y));g.lineTo(X(-P.x),Y(P.y));g.stroke();g.restore();
+    const yd=gy+30;g.globalAlpha=u2;dimArrow(g,X(P.x),yd,X(0),yd,'#dc2626',`d = ${M2.dO.toFixed(1)} cm`,[0,0]);dimArrow(g,X(0),yd,X(-P.x),yd,'#7e22ce',`d′ = ${M2.dO.toFixed(1)} cm`,[0,0]);g.globalAlpha=1;
+    g.save();g.globalAlpha=.5*u2;g.strokeStyle='#64748b';g.setLineDash([3,4]);g.lineWidth=1.5;for(const x of [P.x,0,-P.x]){g.beginPath();g.moveTo(X(x),gy);g.lineTo(X(x),yd+10);g.stroke()}g.restore();
+    if(u2>.9)pill(g,'합동 삼각형 → d = d′',X(0)+u*5.4,Y(12.4),'#fbbf24')}
+  }
+(function(){const cv=$('#c2');let off={x:0,y:0};
+  cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),G=G2(r.width,r.height),p=ptr(cv,e),wx=(p.x-G.mx)/G.u,wy=(G.gy-p.y)/G.u;
+    if(Math.abs(wx+M2.dE)<=2.4&&Math.abs(wy-M2.yE)<=2.6){M2.drag='e'}
+    else if(Math.abs(wx+M2.dO)<=1.9&&wy>=M2.yb-.8&&wy<=M2.yb+M2.hO+1){M2.drag='o';off.y=wy-M2.yb}
+    if(M2.drag){cv.setPointerCapture(e.pointerId);sTap();e.preventDefault()}});
+  cv.addEventListener('pointermove',e=>{if(!M2.drag)return;const r=cv.getBoundingClientRect(),G=G2(r.width,r.height),p=ptr(cv,e),wx=(p.x-G.mx)/G.u,wy=(G.gy-p.y)/G.u;
+    if(M2.drag==='e'){M2.dE=clamp(Math.round(-wx*2)/2,5,16);M2.yE=clamp(Math.round(wy*2)/2,2.5,12.5);
+      if(M2.step>=2&&performance.now()-M2.lastToast>3500){M2.lastToast=performance.now();toast('#toast2','👁 눈을 옮겨도 상은 같은 자리에 있어요!',2400);fbx('#fb2','👁 눈의 위치가 바뀌면 반사 광선의 각도는 달라지지만, <b>연장선이 만나는 상의 위치(거울 뒤 '+M2.dO.toFixed(1)+'cm)는 변하지 않아요!</b>','good')}}
+    else{M2.dO=clamp(Math.round(-wx*2)/2,3,10);M2.yb=clamp(Math.round((wy-off.y)*2)/2,0,13-M2.hO)}});
+  const up=()=>{M2.drag=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  const FB=['버튼 <b>➊</b>을 눌러 물체의 머리와 발에서 나온 빛이 거울에서 반사되어 눈으로 들어가는 모습을 보세요. (물체와 눈은 끌어서 옮길 수 있어요)',
+   '<b>➊</b> 물체의 한 점에서 나온 여러 줄기의 빛이 거울에서 <b>반사 법칙(입사각 = 반사각)</b>에 따라 반사되어 눈으로 들어갑니다.',
+   '<b>➋</b> 눈으로 들어온 반사 광선을 거울 뒤쪽으로 곧게 <b>연장(점선)</b>하면 거울 뒤의 한 점에서 만나요.',
+   '<b>➌</b> 우리는 빛이 직진해 왔다고 느껴서, 연장선이 만나는 <b>거울 뒤쪽에 상이 있는 것처럼</b> 봐요. 두 삼각형이 합동이라 d = d′ 입니다.'];
+  window.setStep=function(s,manual){if(manual){M2.tm.forEach(clearTimeout);M2.tm=[]}M2.step=s;for(let i=1;i<=s;i++)S.steps.add(i);hud();fbx('#fb2',FB[s],s===3?'good':'');if(s)sTap();sig2=''};
+  $$('#stp .btn').forEach(b=>b.onclick=()=>setStep(+b.dataset.s,true));
+  $('#auto2').onclick=()=>{setStep(0,true);M2.u=[0,0,0];setStep(1);M2.tm=[setTimeout(()=>setStep(2),2600),setTimeout(()=>setStep(3),5200)]};
+  $('#rs2').onclick=()=>{setStep(0,true);Object.assign(M2,{dO:6,yb:0,dE:12,yE:11})};
+  fbx('#fb2',FB[0])})();
+/* ═════════ HUD ═════════ */
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 거리 확인',Math.min(3,S.m1.size),3],['② 광선 작도 ➊➋➌',S.steps.size,3],['③ 착시·거울 문자',S.m3.size,2]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[2];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=3?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/3'}</div>`}
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'평면거울 앞에서 뒤로 두 걸음 물러서면, 거울 속에 생기는 상의 실제 크기는 작아질까?',o:['작아진다 (멀어졌으니까)','작아지지 않는다 (물체의 크기와 항상 같다)','오히려 커진다','거울의 크기에 따라 달라진다'],a:1,e:'작아지지 않아요! 평면거울에 생기는 상의 크기는 거리에 관계없이 항상 물체의 크기와 같아요. 작아 보이는 건 눈에서 상까지 멀어져 시야각이 줄었기 때문이에요! (① 모눈종이 비교)'},
+ {q:'평면거울에서 15cm 떨어진 곳에 물체를 두었을 때, 물체에서 거울 속 상까지의 전체 거리는 몇 cm일까?',o:['15 cm','30 cm','45 cm','7.5 cm'],a:1,e:'거울에서 상까지의 거리도 15cm이므로, 물체에서 상까지의 전체 거리는 15cm + 15cm = 30cm예요! (① 거리 d = 상 거리 d′)'},
+ {q:'실제로는 거울 뒤편으로 빛이 통과하지 못하는데, 왜 거울 뒤쪽에 상이 있는 것처럼 보일까?',o:['빛이 거울을 뚫고 뒤쪽까지 가기 때문','반사되어 눈으로 들어온 빛을 직진해 온 것으로 느껴, 연장선이 만나는 거울 뒤에 상이 있다고 인식하기 때문','거울 뒤에 진짜 물체가 숨어 있기 때문','눈에서 나간 빛이 거울 뒤까지 가기 때문'],a:1,e:'거울 표면에서 반사되어 눈으로 들어온 빛을 뇌가 직진해 온 것으로 인식하기 때문이에요. 그래서 반사 광선의 연장선이 만나는 거울 뒤쪽 지점에 상이 맺힌 것처럼 느껴요! (② 연장선)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 모드 ③: 거울 착시 스튜디오 ═════════ */
+const M3={s:'A',lift:0,liftT:0,secret:false,txt:'AMBULANCE',pre:true,f:1,fT:1,flipUser:false};
+function halfBody(g,cx,gy,s,L,shirt,jeans){
+  g.save();g.lineCap='round';g.lineJoin='round';
+  // 다리
+  const hx=cx-15*s,hy=gy-84*s,fx=hx-L*30*s-0*s,fy=gy-9*s-L*66*s,kx=hx-8*s-L*34*s,ky=hy+44*s-L*4*s;
+  g.strokeStyle=jeans;g.lineWidth=19*s;g.beginPath();g.moveTo(hx,hy);g.lineTo(kx,ky);g.lineTo(fx,fy);g.stroke();
+  g.fillStyle='#1e293b';g.beginPath();g.ellipse(fx-7*s,fy+5*s,17*s,8*s,-L*.3,0,6.2832);g.fill();
+  // 팔 (한쪽은 위로)
+  const ax=cx-29*s,ay=gy-142*s;g.strokeStyle=shirt;g.lineWidth=15*s;g.beginPath();g.moveTo(ax,ay);g.lineTo(ax-46*s,ay+(26-L*70)*s);g.stroke();
+  g.fillStyle='#fde0c8';g.beginPath();g.arc(ax-50*s,ay+(28-L*74)*s,8*s,0,6.2832);g.fill();
+  // 몸통
+  g.fillStyle=shirt;rr(g,cx-31*s,gy-150*s,31*s,68*s,8*s);g.fill();g.fillRect(cx-6*s,gy-150*s,6*s,68*s);
+  // 머리 (반쪽)
+  const hr=26*s,hyc=gy-178*s;g.fillStyle='#fde0c8';g.strokeStyle='#334155';g.lineWidth=2.5*s;g.beginPath();g.arc(cx,hyc,hr,Math.PI/2,Math.PI*1.5);g.closePath();g.fill();g.stroke();
+  g.fillStyle='#1e293b';g.beginPath();g.arc(cx-11*s,hyc-3*s,3.6*s,0,6.2832);g.fill();g.strokeStyle='#be123c';g.lineWidth=2.6*s;g.beginPath();g.arc(cx-3*s,hyc+8*s,10*s,.2,1.6);g.stroke();
+  g.fillStyle='#334155';g.beginPath();g.arc(cx,hyc-2*s,hr+2*s,Math.PI*1.12,Math.PI*1.5);g.lineTo(cx,hyc-hr);g.closePath();g.fill();
+  g.restore()}
+function sceneA(dt,t,g,w,h){M3.lift+=(M3.liftT-M3.lift)*Math.min(1,dt*6);const L=M3.lift,gy=h*.84,s=(h*.70)/250,cx=w*.5;
+  const bg=g.createLinearGradient(0,0,0,gy);bg.addColorStop(0,'#bae6fd');bg.addColorStop(1,'#e0f2fe');g.fillStyle=bg;g.fillRect(0,0,w,h);g.fillStyle='#86efac';g.fillRect(0,gy,w,h-gy);g.fillStyle='#4ade80';g.fillRect(0,gy,w,5);
+  g.fillStyle='rgba(15,23,42,.18)';g.beginPath();g.ellipse(cx,gy+10*s,68*s,9*s,0,0,6.2832);g.fill();
+  const mx0=cx,mw=140*s,my0=gy-236*s,mh=244*s;
+  // 거울 패널
+  g.save();g.beginPath();g.rect(mx0,my0,mw,mh);g.clip();
+  g.fillStyle='rgba(240,249,255,.55)';g.fillRect(mx0,my0,mw,mh);
+  if(M3.secret){g.save();g.translate(cx,0);g.scale(-1,1);g.translate(-cx,0);halfBody(g,cx,gy,s,0,'#64748b','#334155');g.restore();
+    g.globalAlpha=.4;g.save();g.translate(cx,0);g.scale(-1,1);g.translate(-cx,0);g.setLineDash([6,5]);halfBody(g,cx,gy,s,L,'#f97316','#2563eb');g.restore();g.globalAlpha=1}
+  else{g.save();g.translate(cx,0);g.scale(-1,1);g.translate(-cx,0);halfBody(g,cx,gy,s,L,'#f97316','#2563eb');g.restore()}
+  g.fillStyle='rgba(255,255,255,.28)';g.beginPath();g.moveTo(mx0+mw*.2,my0);g.lineTo(mx0+mw*.45,my0);g.lineTo(mx0+mw*.1,my0+mh);g.lineTo(mx0-mw*.15,my0+mh);g.closePath();g.fill();g.restore();
+  g.strokeStyle='#64748b';g.lineWidth=5;g.strokeRect(mx0,my0,mw,mh);
+  // 진짜 몸 (왼쪽 반쪽)
+  g.save();g.beginPath();g.rect(0,0,cx,h);g.clip();halfBody(g,cx,gy,s,L,'#f97316','#2563eb');g.restore();
+  g.fillStyle='#475569';g.fillRect(mx0-3,my0+mh,6,10);
+  pill(g,'📸 카메라로 찍은 사진',cx-mw*.1,18,'#0369a1','rgba(255,255,255,.95)');
+  pill(g,'🪞 평면거울',mx0+mw/2,my0-14,'#64748b','rgba(255,255,255,.95)');
+  const fl=L>.6;
+  outText(g,M3.secret?(fl?'거울 뒤 진짜 몸은 한 발로 땅 위에 서 있어요!':'두 발 모두 땅 위에 서 있는 모습'):(fl?'와! 두 발이 모두 공중에 뜬 것 같아요 ✨':'아직은 평범하게 서 있는 모습'),cx,h-14,Math.max(14,Math.min(21,w/38)),fl?'#b45309':'#334155','rgba(255,255,255,.95)');
+  // 개념도 (위에서 본 장면)
+  const iw=Math.min(236,w*.36),ih=iw*.66,ix=10,iy=44;g.fillStyle='rgba(255,255,255,.93)';rr(g,ix,iy,iw,ih,12);g.fill();g.strokeStyle='#94a3b8';g.lineWidth=2;g.stroke();
+  const fs=Math.max(10,Math.min(13,iw/18));outText(g,'위에서 본 개념도',ix+iw/2,iy+12,fs,'#334155','rgba(255,255,255,.95)');
+  const mxi=ix+iw*.5;g.strokeStyle='#0ea5e9';g.lineWidth=6;g.beginPath();g.moveTo(mxi,iy+ih*.2);g.lineTo(mxi,iy+ih*.72);g.stroke();
+  const fyi=iy+ih*.46;g.fillStyle='#f97316';g.beginPath();g.arc(mxi-iw*.16,fyi-L*ih*.06,iw*.045,0,6.2832);g.fill();
+  if(L>.3){g.strokeStyle='#b45309';g.lineWidth=2.5;g.beginPath();g.moveTo(mxi-iw*.16,fyi-ih*.13);g.lineTo(mxi-iw*.16,fyi-ih*.2);g.stroke();outText(g,'↑ 들기',mxi-iw*.28,fyi-ih*.22,fs,'#b45309','rgba(255,255,255,.95)')}
+  g.fillStyle='#64748b';g.beginPath();g.arc(mxi+iw*.16,fyi,iw*.045,0,6.2832);g.fill();
+  outText(g,'앞발',mxi-iw*.22,fyi+ih*.17,fs,'#c2410c','rgba(255,255,255,.95)');outText(g,'거울 뒤 숨은 발',mxi+iw*.2,fyi+ih*.17,fs,'#475569','rgba(255,255,255,.95)');
+  outText(g,'📷',mxi-iw*.3,iy+ih*.9,fs+6,'#0f172a','rgba(255,255,255,.95)');g.save();g.strokeStyle='#64748b';g.setLineDash([4,4]);g.beginPath();g.moveTo(mxi-iw*.3+10,iy+ih*.85);g.lineTo(mxi-iw*.08,fyi+ih*.07);g.stroke();g.restore();
+  outText(g,'※ 개념도',ix+iw-26,iy+ih-10,fs-1,'#94a3b8','rgba(255,255,255,.95)');
+  M3sig()}
+function sceneB(dt,t,g,w,h){M3.f+=clamp(M3.fT-M3.f,-dt*1.1,dt*1.1);if(M3.flipUser&&M3.f>=1){M3.flipUser=false;S.m3.add('txt');hud();sOK();fbx('#fb3',M3.pre?'✅ <b>거울에 비치면 글자가 바르게 읽혀요!</b> 구급차 앞면의 글자를 좌우 반전해서 써 두면, 앞차 운전자가 백미러로 볼 때 바르게 읽을 수 있어요.':'🪞 거울에 비친 글자는 <b>좌우가 뒤집혀</b> 보여요. 위아래는 그대로예요! “구급차처럼 미리 뒤집어 쓰기”를 켜고 다시 비춰 보세요.','good')}
+  const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#f0f9ff');bg.addColorStop(1,'#e0f2fe');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const cx=w/2,txt=M3.txt||'AMBULANCE',fs=Math.min(h*.2,(w*.4)/(Math.max(3,txt.length)*.66)),yy=h*.5,xo=cx-w*.24,xi=cx+w*.24,sx0=M3.pre?-1:1;
+  // 거울
+  const mg=g.createLinearGradient(cx-8,0,cx+8,0);mg.addColorStop(0,'rgba(186,230,253,.9)');mg.addColorStop(.5,'rgba(255,255,255,.95)');mg.addColorStop(1,'rgba(125,211,252,.9)');g.fillStyle=mg;g.fillRect(cx-8,h*.1,16,h*.8);g.strokeStyle='#475569';g.lineWidth=3;g.strokeRect(cx-8,h*.1,16,h*.8);
+  pill(g,'🪞 평면거울',cx,h*.1-12,'#38bdf8','rgba(255,255,255,.95)');
+  g.save();g.strokeStyle='rgba(124,58,237,.5)';g.lineWidth=2;g.setLineDash([6,6]);g.beginPath();g.moveTo(xo,h*.8);g.lineTo(xi,h*.8);g.stroke();g.restore();
+  g.font='900 '+fs+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineJoin='round';
+  // 원본
+  g.save();g.translate(xo,yy);g.scale(sx0,1);g.lineWidth=fs*.1;g.strokeStyle='#fff';g.strokeText(txt,0,0);g.fillStyle=M3.pre?'#dc2626':'#1d4ed8';g.fillText(txt,0,0);g.restore();
+  // 상
+  const ix=lerp(xo,xi,M3.f),sc=sx0*Math.cos(Math.PI*M3.f);g.save();g.translate(ix,yy);g.scale(Math.abs(sc)<.02?.02*Math.sign(sc||1):sc,1);g.globalAlpha=.4+.6*M3.f;g.lineWidth=fs*.1;g.strokeStyle='#fff';g.strokeText(txt,0,0);g.fillStyle=M3.pre&&M3.f>=.99?'#16a34a':'#7e22ce';g.fillText(txt,0,0);g.restore();
+  const lf=Math.max(12,Math.min(17,w/42));
+  outText(g,M3.pre?'🚑 구급차 앞면에 쓰인 글자 (좌우 반전)':'물체의 글자 (그대로)',xo,h*.2,lf,'#b91c1c','rgba(255,255,255,.95)');
+  outText(g,M3.pre?(M3.f>=.99?'✅ 백미러 속: 바르게 읽혀요!':'거울에 비치는 중…'):'거울 속 상 (좌우가 바뀜)',xi,h*.2,lf,M3.pre&&M3.f>=.99?'#15803d':'#7e22ce','rgba(255,255,255,.95)');
+  outText(g,'↔ 좌우만 반대, ↕ 위아래는 그대로',cx,h*.93,lf,'#334155','rgba(255,255,255,.95)');
+  if(M3.pre){g.font=Math.min(48,h*.1)+'px sans-serif';g.textAlign='center';g.fillText('🚑',xo,h*.34)}
+  M3sig()}
+let sig3='';
+function M3sig(){const s=[M3.s,M3.lift>.6,M3.secret,M3.pre,M3.txt,M3.f>=.99,S.m3.size].join();if(s===sig3)return;sig3=s;
+  if(M3.s==='A')$('#hi3').innerHTML=`<div>🎯 활동<br><b>공중부양 착시 사진</b></div><div>🦶 거울 앞쪽 다리<br><b>${M3.lift>.6?'들고 있음':'내려놓음'}</b></div><div style="grid-column:span 2">📸 사진 속 두 발 <span class="badge ${M3.lift>.6?'b-f':'b-n'}">${M3.lift>.6?'둘 다 공중에 뜸!':'땅에 닿아 있음'}</span> <span class="badge b-r">거울 속 상은 좌우 대칭</span></div>`;
+  else $('#hi3').innerHTML=`<div>✏️ 입력한 글자<br><b>${M3.txt.replace(/</g,'')||'AMBULANCE'}</b></div><div>🪞 거울 속 모양<br><b>좌우 반대 · 상하 그대로</b></div><div style="grid-column:span 2">🚑 미리 뒤집어 쓰기 <span class="badge ${M3.pre?'b-f':'b-n'}">${M3.pre?'켜짐 → 백미러에서 바르게 보임':'꺼짐 → 백미러에서 뒤집혀 보임'}</span></div>`}
+function scene3(dt,t){const {g,w,h}=fit($('#c3'));if(M3.s==='A')sceneA(dt,t,g,w,h);else sceneB(dt,t,g,w,h)}
+function setSub3(s){M3.s=s;$$('#sub3 .btn').forEach(b=>b.classList.toggle('on',b.dataset.s===s));$('#rowA').style.display=s==='A'?'':'none';$('#rowB').style.display=s==='B'?'':'none';sig3='';
+  $('#guide3').innerHTML=s==='A'?'🕴 캐릭터가 거울 모서리에 몸을 반쯤 가리고 서 있어요. <b>거울 앞쪽 한 발 들기</b>를 눌러 보세요!':'🚑 글자를 입력하고 <b>거울에 비춰보기</b>를 눌러, 구급차 글자가 왜 뒤집혀 쓰여 있는지 알아보세요.';
+  fbx('#fb3',s==='A'?'거울에는 몸의 <b>한쪽 반</b>만 비치고, 나머지 반은 거울 뒤에 숨어 있어요. 발을 들면 어떻게 보일까요?':'평면거울은 <b>좌우</b>를 바꿔 보여 줘요. 위아래는 바뀌지 않아요.')}
+$$('#sub3 .btn').forEach(b=>b.onclick=()=>{setSub3(b.dataset.s);sTap()});
+$('#lift').onclick=()=>{M3.liftT=M3.liftT?0:1;$('#lift').textContent=M3.liftT?'🦶 발 내리기':'🦶 거울 앞쪽 한 발 들기';sTap();
+  if(M3.liftT){S.m3.add('lift');hud();fbx('#fb3','✨ <b>거울 속 상도 같이 발을 들었어요!</b> 진짜 몸은 거울 뒤에서 한 발로 땅을 딛고 있지만, 사진에는 <b>두 발이 모두 공중에 뜬 것처럼</b> 보여요.','good')}else fbx('#fb3','발을 내리면 거울 속 발도 내려가 평범하게 서 있는 모습으로 보여요.')};
+$('#secret').onclick=()=>{M3.secret=!M3.secret;$('#secret').classList.toggle('on',M3.secret);$('#secret').textContent=M3.secret?'🔍 비밀 장치 숨기기':'🔍 비밀 장치 보기';sTap()};
+function setTxt(v){M3.txt=v||'AMBULANCE';$('#txt').value=M3.txt;sig3='';M3.f=0;M3.fT=1;M3.flipUser=false}
+$('#txt').oninput=e=>{M3.txt=e.target.value||'AMBULANCE';sig3='';M3.f=0;M3.fT=1;M3.flipUser=false};
+$('#pAMB').onclick=()=>{setTxt('AMBULANCE');sTap()};$('#pKR').onclick=()=>{setTxt('구급차');sTap()};$('#pAB').onclick=()=>{setTxt('ABC 123');sTap()};
+$('#pre').onclick=()=>{M3.pre=!M3.pre;$('#pre').classList.toggle('on',M3.pre);sig3='';sTap()};
+$('#flip').onclick=()=>{M3.f=0;M3.fT=1;M3.flipUser=true;sTap()};
+
+/* ═════════ 리셋 · 루프 ═════════ */
+function resetAll(){
+  Object.assign(M1,{d:8,h:4,dn:3,tgt:null,drag:null,ok:false,far:false});$('#far').classList.remove('on');$('#far').textContent='🚶 멀어지기';sig1='';
+  M2.tm.forEach(clearTimeout);Object.assign(M2,{dO:6,yb:0,hO:5,dE:12,yE:11,step:0,u:[0,0,0],drag:null,tm:[]});sig2='';fbx('#fb2','버튼 <b>➊</b>을 눌러 물체의 머리와 발에서 나온 빛이 거울에서 반사되어 눈으로 들어가는 모습을 보세요. (물체와 눈은 끌어서 옮길 수 있어요)');
+  Object.assign(M3,{lift:0,liftT:0,secret:false,pre:true,f:1,fT:1,flipUser:false,txt:'AMBULANCE'});$('#lift').textContent='🦶 거울 앞쪽 한 발 들기';$('#secret').classList.remove('on');$('#secret').textContent='🔍 비밀 장치 보기';$('#pre').classList.add('on');$('#txt').value='AMBULANCE';
+  S.m1=new Set();S.steps=new Set();S.m3=new Set();S.quiz=-1;fbx('#fb1','물체 (나)를 <b>끌어서</b> 거울 뒤쪽의 상에 정확히 포개 보세요. 물체 (가)도 끌어서 옮길 수 있어요.');setSub3('A');hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===2){scene2(dt,t);info2()}else scene3(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+syncObj();syncOpt();setSub3('A');hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

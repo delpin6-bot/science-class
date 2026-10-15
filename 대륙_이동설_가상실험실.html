@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>대륙 이동설과 판게아 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+#top{flex-wrap:nowrap}@media (max-width:980px){#top{flex-wrap:wrap}}
+#top .pseg{min-width:0}
+.mode.on.g2{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+.cb{display:flex;gap:6px;flex-wrap:wrap}.cb .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.kv{font-weight:800;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}.kv b{color:#0f766e}.kv h3{font-size:1.2em;margin-bottom:2px}
+.lyr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lyr .btn{min-height:60px;text-align:left;line-height:1.25;padding:6px 12px;display:flex;align-items:center;gap:8px}
+.lyr .btn i{width:22px;height:22px;border-radius:50%;flex:0 0 auto;border:3px solid #fff;box-shadow:0 0 0 2px #94a3b8;opacity:.45}
+.lyr .btn.on i{opacity:1;box-shadow:0 0 0 2px #0f172a}
+.lyr .btn.on{background:#fffbeb;border-color:#f59e0b;color:#1f2937}
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stg .btn{min-height:64px;line-height:1.2;padding:4px 6px;font-size:clamp(12px,1.05vw,16px)}
+.stg .btn small{display:block;font-weight:700;opacity:.8}
+.stg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.nt{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.55;border:3px solid #c4b5fd;background:#f5f3ff;color:#4c1d95;font-size:clamp(13px,1.15vw,18px)}
+.pop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88%,430px);background:#fff;border:4px solid #f59e0b;border-radius:18px;padding:12px 16px;box-shadow:0 12px 34px rgba(0,0,0,.35);display:none;font-weight:800;line-height:1.55;font-size:clamp(14px,1.3vw,20px);z-index:5}
+.pop.on{display:block}.pop h3{font-size:1.2em;margin-bottom:4px}.pop .btn{margin-top:8px;min-height:48px}
+.hyp{display:flex;flex-direction:column;gap:8px}.hyp .btn{text-align:left;min-height:60px;line-height:1.35;padding:6px 12px}
+.hyp .btn.ok{background:#dcfce7;border-color:#22c55e}.hyp .btn.no{background:#fee2e2;border-color:#ef4444}
+.clue{min-height:60px;text-align:left;line-height:1.3}.clue.got{background:#fffbeb;border-color:#f59e0b}
+.stepn{display:inline-block;background:#0f172a;color:#fff;border-radius:99px;padding:1px 10px;margin-right:6px;font-size:.9em}
+</style></head><body>
+<header>
+  <h1>🌏 대륙 이동설과 판게아</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 판게아 퍼즐</button>
+    <button class="tab" id="tab2">② 4대 증거</button>
+    <button class="tab" id="tab3">③ 타임랩스</button>
+    <button class="tab" id="tab4">④ 인도 빙하 추리</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 전체 리셋</button>
+</div>
+<main>
+<!-- ① 퍼즐 -->
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#dbeafe"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl">
+      <div class="kv"><h3>🧩 대륙 조각을 판게아로 맞춰 보세요</h3>조각을 <b>끌어서 옮기고</b>, 선택한 조각은 <b>⟲ ⟳ 버튼이나 빨간 손잡이</b>로 돌려요. 아프리카를 가운데에 두면 쉬워요! 알맞은 자리에 가까워지면 <b>착!</b> 붙어요.</div>
+      <div class="row"><button class="btn" id="rL15">⟲ 15°</button><button class="btn" id="rL5">⟲ 5°</button><button class="btn" id="rR5">⟳ 5°</button><button class="btn" id="rR15">⟳ 15°</button></div>
+      <div class="cb"><button class="btn" id="tFos">🦎🌿 화석 띠 가이드</button><button class="btn" id="tGho">👻 정답 윤곽 힌트</button><button class="btn dng" id="bScat">🔀 다시 흩뜨리기</button></div>
+    </div>
+    <div class="card"><div class="kv" id="plist"></div></div>
+    <div class="fb" id="fb1">조각을 눌러 선택하고 끌어 보세요. 남아메리카 동해안과 아프리카 서해안이 퍼즐처럼 맞물려요!</div>
+  </div>
+</section>
+<!-- ② 4대 증거 -->
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#dbeafe"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div>
+    <div class="pop" id="pop2"><h3>🔍 인도 남부 집중 탐구</h3><div id="pop2t"></div><button class="btn on" id="pop2x">확인 ✔</button></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><b>🔎 증거 레이어 켜고 끄기 (복원된 판게아 위)</b>
+      <div class="lyr" id="lyr">
+        <button class="btn" data-l="coast"><i style="background:#f5b800"></i><span>① 해안선 모양 일치</span></button>
+        <button class="btn" data-l="fossil"><i style="background:#f97316"></i><span>② 화석 분포 띠</span></button>
+        <button class="btn" data-l="ice"><i style="background:#38bdf8"></i><span>③ 빙하 흔적</span></button>
+        <button class="btn" data-l="mtn"><i style="background:#9333ea"></i><span>④ 산맥의 연속성</span></button>
+      </div>
+      <div class="row"><b>🧲 대륙 합치기 ↔ 떼어내기</b><b id="uV" style="margin-left:auto;color:#0f766e">판게아</b></div>
+      <input type="range" class="big" id="sep" min="0" max="100" value="100" style="width:100%;height:48px;flex:none">
+    </div>
+    <div class="card" id="info2"></div>
+  </div>
+</section>
+<!-- ③ 타임랩스 -->
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#dbeafe"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl">
+      <div class="row"><button class="btn go" id="bPlay">▶ 자동 재생 (10초)</button><button class="btn" id="bBack">⏮ 처음(판게아)</button><b id="ageV" style="margin-left:auto;font-size:1.3em;color:#0f766e"></b></div>
+      <input type="range" class="big" id="tl" min="0" max="1000" value="0" style="width:100%;height:48px;flex:none">
+      <div class="stg" id="stg">
+        <button class="btn on" data-s="0">① 3.3억 년 전<small>고생대 말</small></button>
+        <button class="btn" data-s="1">② 1.5억 년 전<small>중생대</small></button>
+        <button class="btn" data-s="2">③ 6500만 년 전<small>신생대 초</small></button>
+        <button class="btn" data-s="3">④ 현재<small>신생대</small></button>
+      </div>
+    </div>
+    <div class="card" id="info3"></div>
+    <div class="nt" id="note3">📓 <b>베게너의 노트</b> — 당시에는 대륙을 움직이는 원동력을 설명하지 못했지만, 훗날 맨틀의 대류가 발견되며 진실로 밝혀졌습니다.</div>
+  </div>
+</section>
+<!-- ④ 추리 랩 -->
+<section class="mode g2" id="m4">
+  <div class="col"><div class="card stagewrap" style="background:#dbeafe"><canvas id="c4"></canvas><div class="toast" id="toast4"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="kv"><h3>🕵️ 사건 파일: 열대 인도에 남은 빙하의 흔적</h3>현재 덥고 습한 열대 기후인 인도 남부에서 <b>고생대 빙하가 만든 흔적</b>이 발견됐어요. 어떻게 된 일일까요?</div></div>
+    <div class="card ctl"><div class="kv"><span class="stepn">1</span><b>단서 모으기</b> (3개 모두 눌러 보세요)</div>
+      <div class="cb" id="clues"><button class="btn clue" data-c="0">🪨 긁힌 줄무늬 돌</button><button class="btn clue" data-c="1">🧊 빙퇴석 지층</button><button class="btn clue" data-c="2">🌴 지금의 인도 기후</button></div>
+      <div class="fb" id="fb4a">단서를 눌러 확인해 보세요.</div></div>
+    <div class="card ctl" id="hypc" style="display:none"><div class="kv"><span class="stepn">2</span><b>가설 세우기</b> — 가장 알맞은 설명은?</div><div class="hyp" id="hyp"></div><div class="fb" id="fb4b" style="display:none"></div></div>
+    <div class="card ctl" id="verc" style="display:none"><div class="kv"><span class="stepn">3</span><b>검증하기</b> — 인도를 판게아 때 위치로 보내 볼까요?</div>
+      <div class="row"><button class="btn go" id="bVer">🧭 판게아 시절 위치로 이동</button><button class="btn" id="bVer0">↩ 현재 위치로</button></div><div class="fb" id="fb4c" style="display:none"></div></div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const DEG=Math.PI/180,RAD=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sSnap=()=>{beep(180,90,.12);setTimeout(()=>beep(700,900,.15),90)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3,4].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)})}
+[1,2,3,4].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const PL={"SA":[[-81.4,-4.7,-80.9,-5.7,-81.2,-6.1,-79.8,-7.2,-76.3,-13.5,-76.4,-13.8,-76.0,-14.7,-71.5,-17.4,-71.4,-17.8,-70.4,-18.4,-70.1,-21.4,-70.9,-27.6,-71.5,-28.9,-71.4,-30.1,-71.7,-30.9,-71.4,-32.4,-73.2,-37.1,-73.6,-37.2,-73.2,-39.3,-73.7,-39.9,-74.3,-43.2,-73.7,-43.4,-73.4,-42.1,-72.7,-42.4,-73.2,-44.4,-74.3,-44.1,-74.7,-45.8,-75.7,-46.6,-74.2,-47.0,-75.2,-47.7,-75.6,-48.7,-75.5,-50.4,-75.0,-51.0,-75.3,-51.6,-75.0,-52.3,-72.6,-53.5,-71.0,-53.8,-70.8,-52.9,-69.5,-52.3,-68.2,-52.4,-68.8,-51.8,-69.1,-50.7,-67.8,-49.9,-67.2,-48.7,-66.0,-48.1,-65.6,-47.2,-66.6,-47.0,-67.6,-46.3,-67.3,-45.6,-66.5,-45.0,-65.6,-45.0,-65.2,-43.5,-63.5,-42.6,-63.8,-42.0,-64.3,-42.4,-65.0,-42.1,-65.1,-41.0,-64.7,-40.8,-63.8,-41.2,-62.1,-40.7,-62.3,-38.8,-59.2,-38.7,-57.8,-38.2,-56.8,-36.9,-56.7,-36.4,-57.4,-36.0,-57.2,-35.3,-58.5,-34.4,-58.4,-34.0,-57.8,-34.5,-57.1,-34.4,-56.2,-34.9,-54.9,-35.0,-53.8,-34.4,-52.7,-33.2,-52.2,-32.2,-50.7,-31.0,-49.6,-29.2,-48.9,-28.7,-48.5,-27.2,-48.5,-25.9,-47.6,-24.9,-44.6,-23.4,-42.0,-23.0,-41.8,-22.4,-41.0,-21.9,-40.8,-20.9,-39.8,-19.6,-39.6,-18.3,-39.3,-17.9,-38.9,-15.7,-39.0,-13.8,-38.7,-13.1,-35.1,-9.0,-34.7,-7.3,-35.2,-5.5,-35.6,-5.2,-37.2,-4.8,-40.0,-2.9,-41.5,-2.9,-43.4,-2.4,-44.5,-2.7,-44.4,-2.1,-44.9,-1.6,-47.8,-0.6,-48.5,-1.2,-48.6,-0.2,-50.4,-0.1,-50.7,0.2,-50.0,1.1,-50.0,1.7,-50.5,1.9,-51.3,4.2,-51.7,4.2,-52.9,5.4,-54.0,5.8,-55.0,6.0,-56.0,5.8,-57.1,6.0,-58.5,6.8,-58.5,7.3,-59.1,8.0,-60.1,8.6,-60.7,8.6,-60.8,9.4,-61.6,9.9,-62.4,10.0,-62.7,10.4,-61.9,10.7,-64.3,10.6,-64.9,10.1,-65.7,10.2,-66.2,10.7,-68.2,10.6,-68.9,11.4,-69.6,11.5,-69.9,12.2,-70.3,11.8,-70.2,11.4,-71.4,11.0,-71.0,9.8,-71.3,9.2,-71.7,9.1,-72.1,9.8,-71.6,10.4,-71.9,11.4,-71.4,11.5,-71.1,12.1,-71.8,12.4,-73.4,11.2,-74.9,11.1,-75.5,10.6,-75.7,9.4,-76.8,8.7,-77.4,8.7,-77.4,8.2,-78.4,8.1,-77.5,6.7,-77.3,4.7,-77.5,4.1,-77.2,3.8,-77.9,2.7,-78.4,2.6,-78.6,1.8,-79.0,1.7,-78.9,1.4,-80.1,0.8,-80.0,0.3,-80.6,-0.9,-80.9,-1.1,-80.8,-1.9,-81.0,-2.2,-80.4,-2.7,-80.0,-2.3,-79.8,-2.7,-81.1,-4.0],[-61.2,-51.9,-60.7,-52.3,-59.9,-51.9,-59.4,-52.2,-58.0,-51.9,-57.8,-51.5,-58.5,-51.1,-59.1,-51.5,-60.0,-51.2],[-74.7,-52.8,-72.3,-54.5,-69.2,-55.5,-68.2,-55.6,-67.0,-54.9,-66.5,-55.2,-65.5,-55.2,-65.0,-54.7,-66.5,-54.5,-67.7,-53.9,-68.6,-52.6,-69.3,-52.5,-70.3,-52.9,-71.1,-54.1]],"NA":[[-73.3,78.0,-67.9,77.4,-71.4,77.0,-68.5,76.1,-61.3,76.1,-58.6,75.5,-58.6,75.1,-57.3,74.7,-54.8,72.6,-55.8,71.7,-55.0,71.4,-54.0,71.5,-51.8,70.7,-54.4,70.8,-54.8,70.3,-54.7,69.6,-53.5,69.3,-50.9,69.9,-51.5,68.7,-53.0,68.4,-54.0,67.2,-53.3,66.8,-53.7,66.1,-52.3,65.2,-52.1,64.3,-51.6,63.6,-49.9,62.4,-49.2,61.4,-48.3,60.9,-46.3,60.9,-44.8,60.0,-43.4,60.1,-42.4,61.9,-42.8,62.7,-41.2,63.5,-40.7,64.1,-40.7,64.8,-39.8,65.5,-36.4,66.0,-34.2,66.7,-32.8,67.7,-31.8,68.1,-27.8,68.5,-22.4,70.1,-26.2,70.3,-25.2,70.8,-25.4,71.4,-23.5,70.5,-21.8,70.7,-22.1,71.5,-24.7,72.4,-24.3,72.6,-22.3,72.2,-22.3,72.6,-23.4,73.3,-20.8,73.5,-20.4,73.8,-21.4,74.2,-19.4,74.3,-20.6,75.1,-19.6,75.2,-19.8,76.1,-21.5,76.6,-18.5,77.0,-19.7,77.7,-19.7,78.8,-17.7,80.1,-18.7,80.2,-16.9,80.3,-12.2,81.3,-12.8,81.7,-15.8,81.9,-22.9,81.2,-22.1,81.7,-22.9,82.1,-24.9,81.8,-27.9,82.1,-31.7,82.2,-22.7,82.3,-20.9,82.7,-27.1,83.5,-38.6,83.5,-39.9,83.2,-43.4,83.2,-46.8,82.6,-46.9,82.2,-46.0,81.9,-50.4,82.4,-53.0,81.9,-54.1,82.2,-57.2,82.2,-62.6,81.8,-62.3,81.3,-67.2,80.5,-68.0,80.1,-65.4,79.8,-65.7,79.4,-73.2,78.4],[-17.6,14.7,-16.7,13.6,-16.6,12.2,-16.1,11.5,-14.8,10.9,-14.6,10.2,-13.2,8.9,-13.1,8.2,-12.5,7.3,-12.5,28.1,-13.1,27.6,-13.8,26.6,-14.4,26.2,-15.1,24.5,-16.0,23.7,-16.3,22.7,-17.0,21.9,-17.1,21.0,-16.3,20.1,-16.1,18.1,-16.5,16.1,-17.2,14.9],[-24.3,65.6,-22.2,65.4,-22.2,65.1,-24.0,64.9,-21.9,64.4,-22.8,64.0,-18.7,63.5,-14.9,64.4,-13.6,65.1,-14.7,65.8,-14.5,66.5,-16.2,66.5,-17.8,66.0,-19.1,66.3,-20.6,65.7,-22.1,66.4,-23.6,66.3],[-59.4,47.9,-59.3,47.6,-56.2,47.6,-55.4,47.4,-56.0,46.9,-55.4,46.9,-54.2,47.7,-54.0,47.6,-54.2,46.8,-53.5,46.6,-53.1,46.7,-52.6,47.5,-53.1,48.7,-53.8,48.6,-53.5,49.2,-55.7,49.6,-55.5,49.9,-56.1,50.1,-56.7,49.9,-55.4,51.6,-55.9,51.6,-57.4,50.7,-58.4,49.1,-59.2,48.5,-58.9,48.2],[-168.1,65.7,-166.4,64.7,-165.0,64.5,-163.6,64.6,-162.8,64.3,-161.0,64.8,-161.5,64.4,-161.0,64.2,-160.8,63.8,-161.5,63.5,-162.3,63.5,-163.1,63.1,-164.6,63.1,-166.1,61.5,-165.4,61.1,-165.3,60.5,-163.8,59.8,-162.5,60.0,-161.9,59.7,-162.0,58.7,-160.4,59.1,-160.0,58.6,-159.7,58.9,-159.1,58.4,-158.5,58.8,-157.1,58.8,-157.7,57.6,-160.6,56.0,-161.8,55.9,-164.9,54.6,-164.8,54.4,-158.4,56.0,-158.1,56.5,-156.6,57.0,-156.3,57.4,-154.2,58.1,-153.3,58.9,-153.9,59.4,-150.6,61.3,-150.4,61.0,-151.4,60.7,-151.9,59.7,-151.7,59.2,-148.0,60.0,-148.2,60.7,-147.1,60.9,-144.0,60.0,-142.6,60.1,-139.9,59.5,-136.6,58.2,-134.1,58.1,-133.5,57.2,-132.2,56.4,-132.0,55.5,-130.6,54.8,-130.5,54.3,-129.3,53.6,-129.1,52.8,-127.9,52.3,-128.0,51.7,-127.4,50.8,-125.6,50.4,-122.8,49.0,-122.3,47.4,-122.6,47.1,-123.1,48.0,-124.6,48.4,-124.7,48.2,-124.1,46.9,-123.9,45.5,-124.5,42.8,-124.2,42.0,-124.4,40.3,-123.9,39.8,-123.7,39.0,-122.5,37.8,-121.7,36.2,-120.8,35.2,-120.6,34.6,-118.5,34.0,-117.3,33.0,-115.5,29.6,-114.2,28.6,-114.5,27.8,-115.1,27.7,-114.5,27.1,-112.3,26.0,-112.2,24.7,-110.3,23.4,-110.0,22.8,-109.4,23.2,-110.2,24.3,-110.7,24.3,-111.6,26.7,-114.7,30.1,-114.9,31.4,-114.8,31.8,-113.2,31.2,-112.2,29.0,-111.2,27.9,-110.7,27.9,-110.4,27.2,-109.3,26.4,-109.3,25.6,-108.4,25.2,-106.0,22.8,-105.3,21.4,-105.4,20.5,-105.7,20.4,-105.0,19.3,-103.5,18.3,-101.9,17.9,-100.0,16.8,-100.0,17.2,-88.3,17.2,-88.1,18.4,-88.3,18.5,-87.8,18.3,-87.4,19.5,-87.6,19.7,-86.8,20.9,-87.0,21.5,-88.5,21.5,-90.3,21.0,-90.8,19.3,-91.4,18.9,-94.4,18.1,-94.8,18.6,-95.9,18.8,-97.2,20.6,-97.9,22.4,-97.7,24.3,-97.1,25.9,-97.4,26.7,-97.1,27.8,-94.7,29.5,-93.8,29.7,-91.6,29.7,-90.9,29.1,-90.2,29.1,-89.2,29.3,-89.6,30.1,-89.2,30.3,-86.4,30.4,-85.1,29.6,-84.1,30.1,-82.9,29.1,-82.7,28.6,-82.9,27.9,-81.7,25.9,-81.2,25.2,-80.4,25.2,-80.1,26.9,-81.3,30.0,-81.3,31.4,-79.0,33.5,-77.4,34.5,-76.4,34.8,-75.7,35.5,-76.3,37.9,-76.6,38.1,-76.3,38.1,-76.4,39.0,-76.2,38.3,-75.7,37.9,-75.9,37.2,-75.1,38.4,-75.5,39.4,-74.9,38.9,-74.2,39.7,-74.1,40.6,-72.0,40.9,-73.3,41.0,-72.9,41.2,-70.0,41.6,-69.9,41.9,-70.2,42.1,-70.1,41.8,-70.5,41.8,-70.8,42.3,-70.7,43.0,-70.1,43.7,-67.0,44.8,-67.1,45.1,-64.6,45.3,-66.2,44.5,-66.1,43.6,-65.4,43.5,-64.2,44.3,-61.0,45.3,-59.8,45.9,-60.4,46.3,-60.5,47.0,-61.5,45.9,-63.2,45.7,-64.5,46.2,-65.1,48.1,-64.2,48.7,-65.0,49.2,-66.5,49.1,-68.7,48.3,-70.2,47.0,-71.0,46.9,-68.5,49.1,-67.2,49.5,-66.4,50.2,-60.0,50.2,-58.8,51.1,-57.1,51.4,-55.7,52.1,-55.8,53.3,-56.2,53.6,-56.9,53.8,-57.3,54.6,-59.6,55.2,-61.8,56.3,-61.4,57.0,-64.6,60.3,-66.2,58.8,-67.7,58.2,-68.4,58.8,-69.3,59.0,-69.6,61.1,-71.4,61.1,-71.7,61.5,-73.8,62.4,-74.7,62.2,-77.4,62.5,-78.1,62.3,-77.3,59.9,-78.5,58.8,-77.3,58.0,-76.6,57.2,-76.5,56.5,-77.1,55.8,-78.2,55.1,-79.8,54.7,-79.1,54.1,-78.6,52.6,-79.1,51.5,-79.9,51.2,-81.4,52.2,-82.1,53.3,-82.4,54.3,-82.3,55.1,-85.0,55.3,-87.3,56.0,-89.0,56.9,-90.9,57.3,-92.3,57.1,-93.2,58.8,-94.7,59.0,-94.6,60.1,-94.2,60.9,-91.9,62.8,-90.8,63.0,-90.7,63.6,-89.9,64.0,-88.5,64.1,-87.3,64.8,-85.8,66.5,-84.7,66.3,-83.3,66.4,-81.4,67.1,-81.3,67.6,-81.9,68.1,-81.2,68.7,-81.3,69.2,-82.6,69.7,-85.5,69.9,-85.6,68.8,-87.4,67.2,-88.3,67.9,-88.0,68.6,-89.2,69.3,-90.5,68.5,-90.5,69.5,-92.3,69.7,-91.5,70.2,-92.9,71.3,-95.2,71.9,-96.4,71.2,-96.5,70.1,-94.2,69.0,-94.7,68.1,-95.5,68.1,-96.1,67.4,-96.1,68.2,-97.7,68.6,-98.6,68.4,-98.5,67.8,-101.5,67.7,-103.2,68.1,-104.3,68.0,-106.2,68.8,-108.2,68.7,-108.8,68.3,-107.9,67.9,-108.9,67.4,-110.0,68.0,-113.5,67.7,-115.1,67.9,-113.9,68.4,-115.2,68.9,-117.6,69.0,-121.5,69.8,-122.7,69.9,-124.3,69.4,-124.4,70.2,-125.8,69.5,-128.1,70.5,-128.4,70.0,-129.1,69.8,-129.8,70.2,-132.9,69.5,-134.4,69.6,-136.5,68.9,-143.6,70.2,-144.9,70.0,-150.7,70.4,-152.2,70.6,-152.2,70.8,-154.3,70.7,-155.1,71.2,-156.6,71.4,-158.1,70.8,-159.0,70.9,-161.9,70.3,-162.9,69.9,-163.2,69.4,-164.4,68.9,-166.2,68.9,-166.8,68.4,-164.4,67.6,-162.5,66.7,-161.8,66.1,-163.7,66.1,-163.7,66.6,-164.5,66.6],[-90.2,72.2,-89.9,71.2,-88.7,71.2,-89.5,70.8,-88.7,70.4,-81.3,69.7,-79.5,69.9,-79.0,70.2,-77.3,69.8,-76.3,69.2,-76.9,68.9,-73.3,68.1,-72.7,67.3,-74.0,66.3,-74.3,65.8,-74.0,65.5,-77.9,65.3,-78.5,64.6,-77.7,64.2,-74.8,64.4,-74.8,64.7,-72.0,63.7,-72.2,63.4,-71.0,62.9,-68.9,62.3,-66.2,61.9,-66.3,62.3,-68.4,63.6,-65.0,62.7,-64.7,63.4,-65.3,64.4,-68.1,65.7,-68.0,66.3,-66.7,66.4,-63.9,65.0,-62.2,66.2,-61.9,66.9,-63.4,66.9,-64.9,67.8,-68.6,68.7,-67.0,69.2,-67.9,70.1,-68.8,70.5,-71.2,70.9,-72.2,71.6,-74.1,71.3,-74.2,71.8,-77.8,72.8,-80.7,72.1,-80.6,72.7,-82.3,73.8,-84.8,73.3,-85.8,72.5,-86.5,73.2,-85.8,73.8,-88.4,73.5,-89.4,73.1],[-91.6,81.9,-91.4,81.5,-89.4,80.9,-87.6,80.5,-82.2,80.5,-83.4,80.1,-86.9,80.2,-86.5,79.7,-85.1,79.3,-85.4,79.0,-87.2,78.8,-88.0,78.4,-86.3,78.2,-85.3,77.6,-88.3,77.9,-87.8,77.2,-89.6,77.0,-89.5,76.5,-83.2,76.5,-80.6,76.2,-77.9,76.8,-77.9,77.0,-79.6,77.0,-79.7,77.2,-75.4,78.5,-76.1,79.0,-75.5,79.2,-76.1,79.3,-71.2,79.8,-69.5,80.6,-65.5,81.5,-67.3,81.6,-61.9,82.4,-61.9,82.6,-72.8,83.2,-79.3,83.1,-82.4,82.9,-83.2,82.3,-85.5,82.7,-87.0,82.3],[-74.5,18.3,-73.9,18.0,-72.4,18.2,-71.7,18.1,-71.4,17.6,-70.7,18.4,-70.5,18.2,-69.9,18.4,-68.7,18.2,-68.3,18.6,-69.2,19.0,-69.2,19.3,-69.8,19.3,-70.0,19.6,-70.8,19.9,-73.2,19.9,-73.4,19.6,-72.8,19.5,-72.4,18.6,-72.7,18.4,-74.4,18.7],[-85.0,21.9,-84.0,21.9,-82.8,22.7,-81.9,22.6,-82.2,22.4,-81.8,22.2,-78.7,21.6,-78.1,20.7,-77.1,20.4,-77.8,19.9,-75.0,19.9,-74.2,20.3,-76.5,21.2,-78.3,22.5,-79.3,22.4,-80.6,23.1,-83.3,23.0],[-77.2,67.6,-77.0,67.1,-75.9,67.2,-75.2,67.4,-75.1,68.0,-75.9,68.3,-76.8,68.2],[-80.9,73.3,-79.5,72.7,-76.2,72.8,-76.3,73.1,-78.1,73.7,-80.4,73.8,-80.8,73.7],[-97.1,76.8,-93.9,76.3,-92.9,75.9,-92.4,74.8,-89.8,74.5,-82.0,74.4,-79.8,74.9,-80.1,75.3,-81.1,75.7,-89.2,75.6,-90.9,76.1,-90.7,76.5,-91.6,76.8,-96.7,77.2],[-87.2,63.5,-85.9,63.6,-85.5,63.0,-83.1,64.1,-82.5,63.6,-81.0,63.4,-80.1,63.7,-80.8,64.1,-81.5,64.0,-81.6,64.5,-84.5,65.4,-85.0,65.2,-85.2,65.7,-85.9,65.7,-86.4,64.0],[-96.7,80.2,-95.0,79.4,-93.4,79.4,-93.9,79.1,-94.0,78.8,-92.9,78.3,-89.0,78.3,-85.8,79.3,-87.0,79.7,-87.8,80.3,-91.1,80.7,-92.4,81.3,-94.7,81.2,-94.4,81.0,-95.3,80.9],[-96.0,72.9,-95.4,72.1,-94.3,72.0,-93.2,72.8,-92.0,73.0,-90.5,73.9,-94.5,74.1,-95.5,73.9,-96.0,73.4],[-96.8,74.9,-94.2,74.6,-93.6,75.0,-94.8,75.7,-96.3,75.4],[-98.6,78.9,-98.1,78.1,-97.3,77.8,-95.8,78.1,-95.6,78.4,-96.8,78.8],[-99.8,69.4,-98.4,69.0,-97.6,69.1,-96.3,68.8,-95.7,69.1,-96.6,69.7,-98.2,70.1],[-102.5,72.5,-99.3,71.4,-98.4,71.3,-96.7,71.7,-96.5,72.6,-98.0,73.0,-97.1,73.5,-97.4,73.8,-100.4,73.8,-101.5,73.4,-100.6,72.7,-102.5,72.8],[-102.6,76.3,-102.5,75.6,-100.9,75.6,-100.9,75.1,-99.8,74.9,-98.2,75.0,-97.7,75.7,-97.7,76.3,-98.5,76.7],[-105.5,79.3,-105.4,78.9,-104.4,78.7,-105.2,78.4,-99.7,77.9,-100.8,78.8],[-119.4,71.6,-116.7,71.3,-118.4,70.9,-117.9,70.5,-112.8,70.4,-117.3,70.0,-116.1,69.2,-113.9,69.0,-113.3,68.5,-106.0,69.2,-102.4,68.8,-102.1,69.1,-102.6,69.5,-101.1,69.6,-101.0,70.0,-104.5,71.0,-105.4,72.7,-104.5,73.4,-105.3,73.6,-106.9,73.5,-105.5,72.7,-107.5,73.2,-108.4,73.1,-107.7,72.1,-108.2,71.7,-109.0,72.6,-109.9,73.0,-111.0,72.5,-112.4,73.0,-114.5,72.7,-114.2,73.1,-115.2,73.3,-117.9,72.7],[-117.7,75.2,-112.3,75.2,-113.9,74.7,-113.7,74.4,-112.2,74.4,-109.7,74.8,-106.3,75.0,-105.7,75.5,-105.9,76.0,-107.8,75.8,-108.5,76.7,-109.6,76.8,-110.5,76.4,-109.2,75.5,-110.8,75.5,-112.6,76.1,-115.4,76.5,-116.3,76.2],[-113.5,77.7,-112.0,77.4,-110.2,77.7,-109.8,78.0,-112.7,78.0],[-125.9,71.9,-123.6,71.3,-123.1,70.9,-120.5,71.4,-120.4,71.8,-119.2,72.5,-115.5,73.5,-117.6,74.2,-121.5,74.5,-124.9,74.3,-124.0,73.7],[-122.9,76.1,-121.5,75.9,-117.1,76.5,-116.3,76.9,-116.2,77.6,-119.1,77.5],[-128.1,50.0,-127.0,49.8,-125.7,48.8,-124.0,48.4,-123.5,48.5,-125.8,50.3,-128.4,50.8],[-133.2,53.9,-132.2,52.6,-131.2,52.2,-132.0,53.0,-131.8,54.1,-133.2,54.2],[-154.7,57.5,-154.5,57.0,-154.0,56.7,-152.1,57.6,-153.2,58.0],[-180.0,71.5,-180.0,70.8,-177.6,71.3,-179.0,71.6]],"AF":[[-17.6,14.7,-16.7,13.6,-16.6,12.2,-16.1,11.5,-14.8,10.9,-14.6,10.2,-13.2,8.9,-12.9,7.8,-9.0,4.8,-8.0,4.4,-4.7,5.2,-2.0,4.7,1.9,6.1,4.3,6.3,5.9,4.3,8.5,4.8,8.9,3.9,9.4,3.7,9.8,3.1,9.3,1.2,9.5,1.0,8.8,-1.1,11.9,-5.0,13.2,-8.5,12.9,-9.2,13.7,-10.8,13.6,-12.0,12.5,-13.6,11.8,-15.8,11.8,-18.1,12.6,-19.1,13.3,-20.9,14.3,-22.1,15.2,-27.1,18.2,-31.7,18.2,-32.4,17.9,-32.6,18.2,-33.9,18.9,-34.4,20.1,-34.8,22.6,-33.9,25.8,-34.0,25.9,-33.7,28.2,-32.8,32.2,-28.8,32.9,-26.2,32.6,-25.7,35.5,-24.1,35.6,-22.1,34.7,-20.5,34.8,-19.8,37.4,-17.6,39.5,-16.7,40.1,-16.1,40.8,-14.7,40.5,-10.8,39.2,-8.5,39.4,-6.8,38.8,-6.5,39.2,-4.7,39.6,-4.3,40.3,-2.6,41.6,-1.7,43.1,0.3,46.6,2.9,47.7,4.2,49.5,6.8,51.0,10.6,51.1,12.0,44.6,10.4,44.1,10.4,42.8,11.7,43.3,12.0,43.3,12.4,39.3,15.9,38.4,18.0,37.5,18.6,36.9,22.0,35.5,23.1,35.7,23.9,34.1,26.1,32.3,29.8,33.9,27.6,34.9,29.4,34.6,28.1,35.1,28.1,36.9,25.6,37.5,24.3,38.5,23.7,39.1,22.6,39.1,21.3,39.8,20.3,40.9,19.5,41.2,18.7,42.6,16.8,42.8,15.9,42.6,15.2,43.5,12.6,45.0,12.7,45.6,13.3,48.7,14.0,49.6,14.7,52.2,15.6,52.4,16.4,55.3,17.2,55.3,17.6,56.3,17.9,56.6,18.6,57.7,18.9,57.8,20.2,58.5,20.4,59.8,22.3,58.7,23.6,56.8,24.2,56.4,24.9,56.4,26.4,54.0,24.1,51.8,24.0,51.4,24.6,51.6,25.8,51.3,26.1,50.7,25.5,50.7,24.9,50.1,25.9,50.1,26.7,48.8,27.7,48.0,29.9,48.6,29.9,49.0,30.3,49.6,30.0,50.0,30.1,48.0,31.0,44.0,37.5,40.0,37.0,36.0,34.0,34.5,31.5,33.8,31.0,32.2,31.3,31.9,31.0,31.7,31.4,31.0,31.6,30.1,31.5,28.9,30.9,26.5,31.6,25.2,31.6,24.9,31.9,23.2,32.2,22.9,32.6,21.5,32.8,20.1,32.2,19.8,31.8,20.0,31.0,19.1,30.3,15.7,31.4,15.2,32.3,11.5,33.1,10.9,33.8,10.3,33.8,10.2,34.3,10.8,34.8,10.9,35.7,10.6,36.0,10.6,36.4,11.0,37.1,10.2,36.8,10.2,37.2,9.5,37.4,7.8,36.9,6.3,37.1,5.3,36.7,1.5,36.6,-2.2,35.2,-4.6,35.3,-5.2,35.8,-5.9,35.8,-6.9,34.1,-8.7,33.2,-9.3,32.6,-9.8,31.2,-9.6,29.9,-11.7,28.1,-12.6,28.0,-13.8,26.6,-14.4,26.2,-15.1,24.5,-16.0,23.7,-16.3,22.7,-17.0,21.9,-17.1,21.0,-16.3,20.1,-16.1,18.1,-16.5,16.1,-17.2,14.9],[50.2,30.0,51.5,27.9,52.5,27.6,53.5,26.8,54.7,26.5,56.5,27.1,57.0,26.9,57.4,25.7,57.8,25.7,57.0,27.0],[43.2,-22.1,44.0,-25.0,45.4,-25.6,47.1,-24.9,49.4,-17.9,49.5,-17.1,49.8,-16.9,49.7,-15.7,49.9,-15.5,50.2,-16.0,50.5,-15.2,49.8,-12.9,49.2,-12.0,48.3,-13.8,47.9,-13.7,48.0,-14.1,47.7,-14.6,46.3,-15.8,44.5,-16.2,44.0,-17.4,44.5,-19.4,44.4,-20.1,43.9,-21.2,43.4,-21.3]],"IN":[[66.0,25.4,66.4,25.4,67.1,24.7,67.4,23.9,69.3,22.8,69.6,22.4,69.2,22.1,70.5,20.9,71.2,20.8,72.6,21.3,73.5,16.0,74.4,14.6,74.9,12.7,75.8,11.3,76.6,8.9,77.5,8.0,78.3,8.9,79.2,9.2,78.9,9.6,79.3,10.3,79.9,10.4,79.9,12.1,80.3,13.0,80.0,15.1,80.3,15.9,82.2,16.6,82.2,17.0,85.1,19.5,86.5,20.1,87.0,20.7,87.0,21.5,88.9,21.7,89.1,22.1,90.3,21.8,90.5,22.8,91.4,22.8,92.4,20.7,93.0,19.9,93.5,24.0,92.0,26.5,88.0,27.0,79.0,30.5,75.0,32.5,70.0,31.0,66.0,28.0],[79.7,8.2,79.9,6.8,80.3,6.0,81.6,6.5,81.8,7.5,80.8,9.3,80.2,9.8]],"AU":[[172.6,-34.5,174.3,-36.5,174.7,-37.4,174.6,-38.8,173.8,-39.1,173.8,-39.5,174.9,-39.9,175.2,-40.5,174.7,-41.3,175.2,-41.7,176.0,-41.3,177.0,-39.9,177.2,-39.2,178.0,-39.2,178.5,-37.7,178.0,-37.6,177.4,-38.0,176.0,-37.6,175.8,-36.8,175.4,-36.5,175.2,-37.1,174.3,-35.3,173.6,-35.0,173.0,-34.5],[166.5,-45.9,166.7,-46.2,169.3,-46.6,170.6,-45.9,171.5,-44.2,173.1,-43.9,172.7,-43.4,174.2,-41.8,174.2,-41.4,174.0,-40.9,173.2,-41.3,172.8,-40.5,172.1,-41.0,171.9,-41.5,170.5,-43.0,168.3,-44.1],[164.0,-20.1,165.5,-21.7,166.7,-22.4,167.1,-22.2,165.0,-20.5],[113.3,-26.1,115.0,-29.4,115.2,-30.6,115.7,-31.6,115.7,-33.3,115.0,-33.6,115.0,-34.2,116.6,-35.0,118.0,-35.1,119.9,-34.0,123.7,-33.9,124.2,-33.0,126.1,-32.2,127.1,-32.3,129.5,-31.6,131.3,-31.5,134.2,-32.6,134.1,-32.9,135.2,-33.9,135.2,-34.5,136.0,-34.9,136.4,-34.1,137.8,-33.0,137.9,-33.6,136.8,-35.3,137.7,-35.1,138.2,-34.5,138.4,-35.1,138.1,-35.6,139.1,-35.7,139.6,-36.1,140.0,-37.4,140.6,-38.0,143.6,-38.8,145.0,-37.9,144.9,-38.4,146.3,-39.0,148.3,-37.8,149.4,-37.8,150.0,-37.4,150.1,-36.4,151.0,-34.3,152.9,-31.6,153.6,-28.1,153.1,-27.3,153.1,-26.1,152.9,-25.3,150.9,-23.5,150.7,-22.4,150.5,-22.5,150.1,-22.1,149.7,-22.3,149.3,-21.3,148.7,-20.6,148.8,-20.4,146.4,-18.9,145.9,-16.9,145.5,-16.3,145.4,-15.0,144.6,-14.2,143.9,-14.5,143.5,-12.8,142.5,-10.7,141.7,-12.4,141.7,-15.1,140.9,-17.4,140.2,-17.7,139.3,-17.4,135.5,-15.0,135.4,-14.7,136.1,-13.7,136.0,-13.3,136.3,-13.3,136.9,-12.3,136.5,-11.9,135.3,-12.2,133.6,-11.8,132.4,-11.1,131.8,-11.3,132.6,-11.6,132.6,-12.1,131.2,-12.2,130.6,-12.5,130.2,-13.1,130.3,-13.4,129.4,-14.4,129.6,-14.9,128.4,-14.9,127.1,-13.8,126.1,-14.1,126.1,-14.3,125.7,-14.2,124.4,-15.6,124.3,-16.3,123.8,-16.1,123.5,-16.6,123.8,-17.1,123.4,-17.2,123.0,-16.4,122.3,-17.3,122.2,-18.2,120.9,-19.7,119.2,-19.9,117.5,-20.7,116.7,-20.7,114.7,-21.8,114.3,-22.4,114.2,-21.8,113.7,-22.5,113.8,-23.1,113.4,-24.4,114.2,-26.1,113.4,-25.6,113.7,-26.4],[148.3,-5.8,150.2,-6.3,152.0,-5.5,152.0,-4.2,151.5,-4.2,151.6,-4.8,150.8,-5.5,150.2,-5.5,150.1,-5.0,149.8,-5.5,148.4,-5.4],[131.0,-1.4,131.8,-1.6,132.2,-2.2,133.7,-2.2,133.7,-2.5,132.0,-2.8,132.7,-3.3,133.0,-4.1,133.7,-3.6,135.2,-4.5,136.0,-4.5,137.9,-5.4,138.7,-7.3,138.0,-7.6,137.6,-8.4,138.9,-8.4,139.2,-8.1,140.1,-8.3,141.0,-9.1,142.6,-9.3,143.4,-9.0,143.3,-8.2,144.8,-7.6,146.0,-8.1,146.6,-8.9,147.9,-10.1,150.7,-10.6,150.8,-10.3,149.8,-9.9,150.0,-9.7,149.3,-9.5,149.3,-9.1,148.7,-9.1,148.1,-8.0,147.2,-7.4,147.0,-6.7,147.9,-6.6,147.7,-6.1,146.0,-5.5,145.8,-4.9,144.6,-3.9,138.3,-1.7,137.4,-1.7,136.3,-2.3,135.4,-3.4,134.4,-2.8,134.0,-0.8,132.4,-0.4,131.0,-0.8],[144.7,-41.2,146.1,-43.5,146.9,-43.6,147.6,-43.0,147.9,-43.2,148.0,-42.4,148.4,-42.1,148.3,-40.9,146.4,-41.1,144.7,-40.7]],"EU":[[-9.5,38.7,-8.8,38.2,-8.9,36.9,-6.5,37.0,-5.9,36.0,-5.4,36.0,-4.4,36.7,-2.1,36.7,-1.4,37.4,-0.7,37.6,-0.5,38.3,0.1,38.7,-0.3,39.3,0.8,41.0,2.1,41.2,3.0,41.9,3.1,43.1,4.6,43.4,6.5,43.1,8.9,44.4,10.2,43.9,10.5,42.9,12.1,41.7,13.6,41.2,15.4,40.0,16.1,39.0,15.7,37.9,16.1,38.0,16.6,38.8,17.1,38.9,17.2,39.4,16.5,39.8,16.9,40.4,17.7,40.3,18.3,39.8,18.5,40.2,16.0,41.5,16.2,41.7,15.9,42.0,15.1,42.0,14.0,42.8,13.5,43.6,12.6,44.1,12.3,44.6,12.3,45.4,13.2,45.7,13.8,45.6,13.7,45.1,13.9,44.8,14.3,45.2,14.9,45.1,15.3,44.4,15.2,44.2,16.0,43.5,19.4,41.9,19.4,40.2,19.9,39.9,21.1,38.3,21.7,36.9,22.5,36.4,23.1,36.4,22.8,37.3,23.4,37.4,23.2,37.9,24.0,37.7,24.0,38.2,23.0,38.9,23.4,39.2,22.6,40.3,22.8,40.5,23.3,40.0,23.9,40.0,24.4,40.1,23.8,40.7,24.9,41.0,26.0,40.8,26.4,40.1,27.6,41.0,28.8,41.1,29.0,41.3,28.1,41.6,27.7,42.6,28.6,43.7,28.8,44.9,29.6,45.0,30.8,46.6,31.6,46.7,31.7,46.3,33.3,46.1,33.5,45.8,32.5,45.3,33.5,45.0,33.3,44.6,33.9,44.4,36.3,45.1,36.5,45.5,35.0,45.6,35.0,46.3,39.1,47.2,39.1,47.0,37.7,46.6,38.2,46.2,37.4,45.4,36.7,45.2,41.4,42.6,41.7,42.0,41.5,41.5,40.4,41.0,38.4,41.0,35.2,42.0,33.5,42.0,31.1,41.1,29.2,41.2,28.8,40.5,27.3,40.4,26.2,39.5,26.8,39.0,26.3,38.2,27.1,37.6,27.6,36.7,28.7,36.7,29.7,36.1,30.4,36.3,30.6,36.7,31.7,36.6,32.5,36.1,34.0,36.2,34.7,36.8,36.0,36.6,35.8,36.3,36.1,35.8,35.9,35.4,36.0,34.6,34.8,32.2,36.0,34.0,40.0,37.0,44.0,37.5,48.0,31.0,57.0,27.0,57.7,25.7,61.5,25.1,66.0,25.4,66.0,28.0,70.0,31.0,75.0,32.5,79.0,30.5,88.0,27.0,92.0,26.5,93.5,24.0,92.9,20.0,93.1,19.9,93.6,19.7,93.5,19.4,94.3,18.2,94.5,17.3,94.2,16.0,95.4,15.7,97.2,16.9,97.6,16.1,98.1,13.6,98.5,13.1,98.4,12.0,98.8,11.4,98.2,8.3,98.3,7.8,98.5,8.3,100.1,6.5,100.2,5.3,101.4,2.8,103.5,1.2,104.2,1.3,103.9,2.5,103.5,2.8,103.4,4.8,103.0,5.5,101.6,6.7,101.0,6.9,100.5,7.4,99.9,9.2,99.2,9.3,99.2,10.0,100.0,12.3,100.1,13.4,101.0,13.4,100.8,12.6,101.7,12.6,102.6,12.2,103.5,10.6,104.3,10.5,105.0,9.9,104.8,9.2,105.2,8.6,109.2,11.7,109.3,13.4,108.9,15.3,107.4,16.7,105.7,19.0,105.9,19.8,106.7,20.7,108.5,21.7,109.8,21.4,109.6,21.0,109.9,20.3,110.4,20.3,110.8,21.4,113.2,22.1,113.8,22.5,114.2,22.2,114.8,22.7,115.9,22.8,118.7,24.6,121.1,28.1,121.7,28.2,122.1,29.8,121.5,30.1,121.3,30.6,121.9,30.9,121.9,31.7,120.6,33.4,120.2,34.4,119.2,34.9,119.7,35.6,121.1,36.6,122.5,36.9,122.4,37.5,120.8,37.9,119.7,37.2,118.9,37.4,118.9,37.9,118.1,38.1,117.6,38.7,118.0,39.2,119.0,39.2,119.6,39.9,121.7,40.9,122.1,40.4,121.4,39.8,121.6,39.4,121.0,38.9,124.2,39.9,125.3,39.5,125.2,38.7,124.7,38.1,125.3,37.7,125.7,37.9,126.2,37.8,126.8,37.0,126.1,36.7,126.6,35.7,126.5,34.4,129.1,35.1,129.5,35.6,129.5,36.8,128.3,38.6,127.4,39.2,127.5,39.8,129.7,40.9,129.7,41.6,130.0,41.9,132.2,43.3,132.9,42.8,133.5,42.8,134.9,43.4,138.2,46.3,138.6,47.0,140.1,48.5,140.6,51.2,141.4,52.2,141.3,53.1,139.9,54.2,138.8,54.3,138.2,53.8,137.2,54.0,136.7,54.6,135.2,54.8,142.2,59.0,145.5,59.3,148.6,59.2,149.8,59.7,151.3,59.5,151.3,58.8,155.0,59.1,154.3,59.8,156.7,61.4,159.3,61.8,160.1,60.5,162.7,61.6,163.3,62.5,164.4,62.5,163.7,61.1,161.9,60.3,158.4,58.1,156.8,57.8,156.8,57.4,155.9,56.8,155.4,55.4,156.8,51.0,158.2,51.9,158.5,53.0,160.0,53.2,160.4,54.4,162.1,54.9,161.7,55.3,162.1,56.1,163.1,56.2,163.2,57.6,162.1,57.8,162.0,58.2,163.2,59.2,163.6,59.9,164.9,59.7,165.8,60.1,166.3,59.8,168.9,60.6,170.3,59.9,170.7,60.3,173.7,61.6,177.4,62.5,179.2,62.3,179.5,62.6,179.4,63.0,177.6,64.6,178.7,64.5,180.0,65.0,180.6,65.4,180.2,65.9,181.2,66.1,181.1,65.7,181.6,65.4,183.8,65.4,184.0,64.9,187.0,64.2,187.4,64.5,187.5,65.4,189.1,65.5,190.1,66.0,188.1,66.9,185.4,67.1,185.6,66.4,185.0,66.6,185.1,67.2,182.4,68.2,178.6,69.4,175.7,69.9,170.4,70.1,170.0,69.7,170.8,69.0,169.6,68.7,167.8,69.6,160.9,69.4,159.7,69.7,159.8,70.5,159.0,70.9,153.0,70.8,150.3,71.6,149.5,72.2,140.5,72.8,139.2,72.4,139.8,71.5,138.2,71.6,137.5,71.3,135.6,71.7,133.9,71.4,132.2,71.8,131.3,70.8,129.7,71.2,128.5,71.9,129.1,72.4,128.6,73.0,127.0,73.6,123.3,73.7,123.2,73.0,119.0,73.1,118.8,73.6,115.6,73.8,113.5,73.3,113.0,74.0,112.1,73.8,109.6,74.2,113.9,75.3,114.1,75.8,111.1,76.7,108.2,76.7,107.2,76.5,107.0,77.0,105.1,77.1,106.1,77.4,104.3,77.7,102.0,77.3,101.0,76.9,100.7,76.4,98.9,76.5,96.7,75.9,95.9,76.1,93.2,76.0,92.9,75.8,87.2,75.1,86.0,74.5,86.7,73.9,80.5,73.7,80.6,72.6,81.3,71.8,79.7,72.3,77.6,72.3,75.9,71.9,76.2,71.2,75.3,71.3,75.7,72.3,75.2,72.9,74.7,72.8,74.9,72.1,73.1,71.5,74.4,70.6,73.6,69.6,73.8,69.1,74.9,69.0,74.5,68.3,75.0,67.8,74.2,67.3,73.9,66.8,72.4,66.2,71.4,66.4,73.2,67.7,73.7,68.4,72.6,69.0,72.8,70.4,72.5,71.1,71.9,71.4,72.8,72.2,72.6,72.8,69.9,73.0,69.2,72.8,68.5,71.9,66.7,71.0,67.2,69.9,66.9,69.5,68.1,69.4,69.1,68.6,68.5,68.1,63.5,69.5,60.5,69.8,60.0,69.5,61.0,68.9,60.0,68.3,58.8,68.9,57.3,68.5,55.4,68.4,54.7,68.1,53.6,68.2,54.5,68.8,53.7,68.9,48.1,67.5,47.9,66.9,46.4,66.7,45.6,67.0,45.6,67.6,46.8,67.7,46.2,68.2,43.5,68.6,44.2,68.0,43.7,67.3,44.5,66.8,44.0,66.1,42.1,66.5,39.8,65.5,40.4,64.8,39.6,64.5,37.2,65.1,36.5,64.8,37.1,64.3,37.0,63.9,35.0,64.4,34.8,65.9,33.3,66.6,33.9,66.8,38.4,66.0,40.0,66.3,41.1,66.8,41.1,67.5,40.3,67.9,36.5,69.1,33.8,69.3,32.1,69.9,31.1,69.6,30.1,70.2,31.3,70.5,28.2,71.2,24.6,71.0,23.0,70.2,21.4,70.3,19.2,69.8,14.8,67.8,10.5,64.5,8.6,63.5,5.9,62.6,5.0,62.0,5.7,58.6,7.0,58.1,8.4,58.3,10.4,59.5,11.0,58.9,12.9,55.4,14.1,55.4,14.7,56.2,15.9,56.1,16.4,57.0,16.8,58.7,17.9,59.0,18.8,60.1,17.1,61.3,17.8,62.7,21.4,64.4,21.2,65.0,22.2,65.7,23.9,66.0,25.3,65.5,25.4,65.1,21.5,63.2,21.1,62.6,21.5,61.7,21.3,60.7,22.3,60.4,22.9,59.9,28.1,60.5,29.0,60.0,28.0,59.5,25.9,59.6,23.3,59.2,23.4,58.6,24.4,58.3,24.1,57.0,23.3,57.0,22.5,57.8,21.6,57.4,21.1,56.8,21.2,55.2,19.9,54.9,19.6,54.4,17.6,54.9,14.1,53.8,12.5,54.5,11.0,54.0,10.9,54.4,9.9,54.6,9.7,55.5,10.9,56.5,10.3,56.9,10.6,57.7,9.4,57.2,8.5,57.1,8.1,56.5,8.1,55.5,8.8,54.0,8.2,53.5,7.1,53.7,4.7,53.1,3.8,51.6,1.6,51.0,1.3,50.1,-1.0,49.4,-1.9,49.8,-1.7,48.7,-3.3,48.9,-4.6,48.7,-4.5,48.0,-3.0,47.6,-1.2,46.0,-1.4,44.0,-1.9,43.4,-8.0,43.8,-9.4,43.0,-9.0,42.6,-8.8,40.8],[146.1,75.2,149.6,74.7,150.7,75.1,146.4,75.5],[139.8,42.6,140.0,41.6,141.1,41.6,141.6,42.7,143.2,42.0,144.1,43.0,145.5,43.3,145.3,44.4,144.6,44.0,143.9,44.2,142.0,45.5,141.4,43.4,140.3,43.3],[137.0,75.3,139.0,74.6,144.3,74.8,145.1,75.6,141.5,76.1,138.8,76.1,137.5,76.0],[141.6,51.9,142.2,50.9,141.9,48.9,142.1,46.0,142.8,46.7,143.5,46.1,143.5,46.8,142.6,47.9,143.2,49.3,144.7,49.0,143.2,51.8,143.3,52.7,142.7,54.4,142.2,54.2,142.6,53.7,141.7,53.3],[139.9,73.4,143.6,73.2,143.5,73.5,142.1,73.9,140.8,73.8],[129.4,33.3,129.8,32.6,130.4,32.3,130.2,31.4,130.7,31.0,131.3,31.4,132.0,33.1,131.1,33.9,135.0,34.6,135.1,33.9,135.8,33.5,137.2,34.6,139.0,34.7,140.2,35.1,140.8,35.8,140.6,36.3,141.0,37.1,141.0,38.2,141.9,39.2,141.9,40.0,141.4,41.4,140.3,41.2,139.9,40.6,140.1,39.4,139.4,38.2,137.4,36.8,136.7,37.3,135.7,35.5,134.6,35.7,132.6,35.4,130.3,33.6],[133.9,34.4,133.5,34.0,132.9,34.1,132.4,33.5,132.4,33.0,133.0,32.7,133.3,33.3,133.8,33.5,134.2,33.2,134.8,33.8,134.6,34.1],[127.9,-3.4,130.0,-3.5,130.8,-3.9,130.5,-3.1,129.4,-2.8,128.1,-2.8],[127.4,1.0,127.7,-0.3,128.1,-0.9,128.4,-0.8,128.0,-0.2,128.1,0.3,128.6,0.3,128.6,1.5,128.0,1.6,127.9,2.2],[123.5,-10.2,124.4,-10.1,125.1,-9.4,127.3,-8.4,125.1,-8.7,124.0,-9.3],[121.9,7.2,122.1,6.9,123.6,7.8,124.2,7.4,123.9,6.9,124.2,6.2,125.4,5.6,125.7,6.0,125.4,6.8,125.8,7.2,126.2,6.3,126.5,7.2,126.2,9.3,125.4,9.8,125.5,9.0,124.8,9.0,124.6,8.5,123.9,8.2,123.5,8.7,122.3,8.0],[124.3,12.6,124.9,11.8,124.9,11.4,124.3,11.5,124.5,10.9,124.8,10.8,124.8,10.1,125.3,10.4,125.0,11.3,125.8,11.1,125.2,12.5],[118.8,-2.8,119.1,-3.5,119.5,-3.5,119.7,-4.5,119.4,-5.4,119.8,-5.7,120.4,-5.5,120.3,-3.0,120.9,-2.7,120.9,-3.6,121.6,-4.2,121.5,-4.6,121.7,-4.8,122.6,-4.5,122.2,-5.3,122.6,-5.6,123.2,-5.3,123.2,-4.7,121.5,-1.9,122.4,-1.5,122.8,-0.9,123.3,-1.1,123.3,-0.6,121.5,-1.0,120.9,-1.4,120.0,-0.5,120.2,0.2,122.7,0.4,123.7,0.2,124.4,0.4,125.2,1.4,125.1,1.6,124.1,0.9,122.9,0.9,120.9,1.3,120.0,0.6],[119.9,16.4,120.1,15.0,120.6,14.4,120.7,14.7,121.0,14.5,120.6,13.9,121.1,13.6,122.0,13.8,122.7,13.2,123.0,13.5,124.1,12.5,124.0,13.8,122.7,14.3,121.7,14.4,121.5,15.1,121.7,15.9,122.2,16.3,122.5,17.1,122.2,17.8,122.2,18.5,121.9,18.2,120.7,18.5,120.3,16.1],[122.4,9.7,123.0,9.0,124.0,10.3,124.1,11.2,123.5,10.4,123.5,10.9,123.0,10.9],[119.9,-8.8,121.2,-8.9,122.8,-8.7,122.9,-8.1,121.3,-8.5,120.7,-8.2,119.9,-8.4],[120.1,23.6,120.8,22.0,122.0,25.0,121.5,25.3],[109.1,-0.5,109.6,-1.3,110.1,-1.6,110.2,-2.9,111.7,-3.0,112.1,-3.5,113.3,-3.1,114.5,-3.5,114.9,-4.1,116.0,-3.7,116.2,-4.0,116.6,-1.5,117.5,-0.8,117.5,0.1,117.8,0.8,119.0,0.9,117.9,1.8,118.0,2.3,117.3,3.2,117.9,4.1,118.6,4.5,118.5,5.0,119.1,5.0,119.2,5.4,117.7,6.0,117.1,6.9,116.7,6.9,116.2,6.1,114.6,4.9,113.0,3.1,111.4,2.7,111.1,1.8,110.4,1.7,109.7,2.0,109.1,1.3],[105.4,-6.8,106.3,-6.9,106.5,-7.4,108.3,-7.8,113.5,-8.3,114.6,-8.8,115.7,-8.4,114.5,-7.8,113.0,-7.6,112.6,-7.0,110.8,-6.5,110.5,-6.9,108.7,-6.8,108.5,-6.4,107.3,-6.0,106.0,-5.9],[108.6,19.4,108.7,18.5,109.5,18.2,110.3,18.7,111.0,19.7,110.8,20.1,110.2,20.1,109.1,19.8],[95.3,5.5,95.4,5.0,98.6,1.8,99.3,0.2,100.1,-0.7,102.6,-4.2,104.7,-5.9,105.8,-5.8,106.1,-3.1,105.6,-2.4,104.9,-2.3,104.4,-1.1,103.5,-0.7,103.8,0.1,101.7,2.1,100.6,2.1,97.5,5.2],[99.4,77.9,105.1,78.3,105.4,78.7,102.1,79.3,101.3,79.2],[91.2,80.3,92.5,80.1,93.3,79.4,97.8,78.8,99.9,78.9,100.2,79.8,95.9,81.2,93.8,81.0],[51.5,72.0,51.6,71.5,53.4,71.2,53.7,70.8,57.5,70.7,55.6,71.5,55.4,72.4,58.5,74.3,61.6,75.3,68.2,76.2,68.8,76.5,68.2,76.9,66.2,76.8,64.5,76.4,61.2,76.2,55.6,75.1,55.9,74.6,53.5,73.8,54.3,73.6,52.4,72.8,52.5,72.2],[44.9,80.6,46.9,80.6,46.5,80.2,47.6,80.0,51.5,80.7,50.0,80.9,48.5,80.5,48.3,80.8],[17.4,80.3,18.5,79.9,19.9,79.8,20.1,79.6,23.0,79.4,25.9,79.5,27.4,80.1,22.9,80.7,21.9,80.4,20.5,80.6],[20.7,77.7,22.5,77.5,24.7,77.8,23.3,78.1,22.9,78.5,20.8,78.2,21.3,77.9],[10.4,79.7,11.2,78.9,14.5,77.7,13.8,77.4,15.9,76.8,17.1,76.8,17.6,77.6,18.5,77.8,19.0,78.6,21.5,79.0,17.0,80.0,15.5,80.0,15.1,79.7,13.7,79.7,13.2,80.0],[12.4,37.6,15.1,36.6,15.5,38.2,12.6,38.1],[10.9,55.8,11.0,55.4,12.1,54.8,12.7,55.6,12.4,56.1],[8.2,41.0,8.4,39.2,8.8,38.9,9.2,39.2,9.7,39.2,9.8,40.5,9.2,41.2],[-6.2,56.8,-5.7,56.3,-5.6,55.3,-5.0,55.8,-4.7,55.5,-5.1,55.1,-4.8,54.8,-3.6,54.6,-3.0,54.0,-3.1,53.4,-4.6,53.5,-4.8,52.8,-4.3,52.3,-5.3,52.0,-5.0,51.6,-3.7,51.4,-5.8,50.2,-5.2,50.0,-4.5,50.3,-3.6,50.2,-3.0,50.7,-2.5,50.5,0.6,50.8,1.4,51.3,1.1,51.8,1.6,52.1,1.7,52.7,0.5,52.9,-0.4,54.5,-1.1,54.6,-2.1,55.9,-3.0,56.0,-2.2,56.9,-2.0,57.7,-4.0,57.6,-3.0,58.6,-5.0,58.6,-5.8,57.8],[-10.0,51.8,-8.6,51.7,-6.8,52.3,-6.0,53.1,-6.2,53.9,-5.7,54.6,-6.7,55.2,-7.6,55.1,-9.7,53.9,-9.2,52.9]],"AN":[[-180.0,-84.4,-156.5,-85.2,-174.2,-82.8,-159.4,-83.5,-153.4,-82.6,-154.7,-81.9,-154.0,-81.7,-157.0,-81.3,-148.1,-80.9,-150.6,-80.4,-148.1,-79.9,-156.1,-78.7,-154.3,-78.3,-157.8,-78.1,-158.5,-77.8,-158.2,-77.2,-145.7,-77.5,-145.7,-76.7,-149.7,-76.4,-145.4,-76.4,-146.4,-76.1,-135.4,-74.7,-121.5,-74.7,-115.2,-74.5,-114.6,-73.9,-113.5,-74.1,-114.1,-75.0,-111.2,-74.2,-110.2,-74.5,-111.4,-75.2,-101.0,-75.4,-98.6,-75.2,-102.8,-73.6,-98.9,-73.6,-103.4,-72.8,-90.9,-73.3,-88.8,-72.7,-88.4,-73.2,-82.2,-73.9,-80.3,-73.4,-80.4,-72.9,-77.0,-73.8,-68.8,-73.1,-66.8,-72.1,-68.7,-69.4,-67.0,-69.2,-67.4,-68.9,-66.7,-67.6,-67.5,-67.1,-66.5,-67.3,-66.5,-66.7,-63.8,-65.0,-57.4,-63.2,-56.8,-63.6,-62.1,-65.3,-62.0,-66.1,-60.6,-66.0,-61.0,-66.3,-63.8,-66.3,-63.8,-66.9,-65.5,-67.4,-65.2,-68.6,-62.9,-68.4,-63.8,-68.6,-61.0,-71.2,-62.0,-71.7,-61.0,-71.8,-62.3,-72.0,-60.7,-72.1,-61.3,-72.6,-60.0,-72.9,-62.0,-73.1,-60.8,-73.7,-61.8,-74.3,-60.7,-74.3,-64.3,-75.3,-63.4,-75.5,-70.2,-76.7,-77.3,-76.7,-72.9,-77.6,-74.0,-78.1,-80.6,-77.8,-81.6,-77.8,-77.5,-78.6,-80.3,-78.8,-83.8,-78.0,-83.2,-78.4,-83.8,-78.5,-80.9,-79.5,-76.2,-79.4,-76.6,-79.9,-79.7,-80.0,-76.4,-80.1,-75.1,-80.9,-70.7,-80.6,-62.4,-81.6,-66.1,-82.0,-60.5,-82.2,-62.7,-82.5,-61.2,-83.0,-61.4,-83.4,-59.5,-83.5,-54.0,-82.2,-46.3,-81.9,-46.5,-82.5,-45.8,-82.5,-38.8,-80.9,-23.6,-80.0,-36.3,-78.6,-34.1,-77.4,-28.9,-76.4,-18.3,-75.4,-18.8,-75.2,-17.4,-74.4,-14.6,-73.9,-16.4,-73.4,-11.5,-72.4,-11.0,-71.8,-12.3,-71.4,-10.8,-71.6,-10.3,-70.9,-8.6,-71.7,-7.7,-71.5,-7.8,-70.8,-5.9,-70.7,-6.1,-71.3,-0.5,-71.7,9.1,-70.2,11.7,-70.8,13.1,-70.1,26.5,-71.0,32.6,-70.0,32.6,-68.9,33.5,-68.7,35.4,-69.7,38.9,-70.2,40.2,-68.8,46.6,-67.3,48.4,-68.0,49.2,-67.2,48.5,-67.0,50.6,-67.2,50.3,-66.4,53.7,-65.9,57.2,-66.6,56.1,-66.6,56.2,-67.3,69.6,-67.8,70.0,-68.5,69.1,-69.9,67.3,-70.3,69.2,-70.4,66.5,-73.1,67.3,-73.3,71.3,-71.6,73.3,-69.8,75.6,-69.8,79.0,-68.2,84.5,-67.1,99.4,-66.6,102.7,-65.9,109.5,-66.9,113.1,-65.8,115.6,-66.8,114.0,-67.4,120.4,-67.0,119.1,-67.4,125.9,-66.4,129.0,-67.1,130.1,-66.3,133.4,-66.1,143.7,-66.9,144.6,-67.1,144.0,-67.9,146.0,-67.6,147.1,-68.4,153.1,-68.9,153.9,-68.3,159.8,-69.5,162.2,-71.0,162.0,-70.4,162.7,-70.3,170.4,-71.4,170.9,-71.9,170.2,-72.6,168.4,-72.4,169.5,-73.1,166.5,-72.9,167.7,-73.4,165.3,-73.9,164.8,-73.4,165.4,-74.6,163.4,-74.4,160.9,-75.3,162.8,-75.8,162.4,-77.0,164.5,-78.0,164.0,-78.2,167.1,-78.7,161.7,-78.5,162.0,-79.0,159.9,-79.8,160.6,-80.0,158.6,-80.4,160.6,-80.4,160.5,-81.3,163.7,-82.2,161.3,-82.5,164.7,-82.4,168.6,-83.1,167.7,-83.3,168.1,-83.4,179.6,-84.3]]};
+const EUL={"SA":[0.60468,-0.38802,0.69556,1.0422],"NA":[0.39922,-0.03741,0.91609,1.32219],"EU":[0.75996,-0.02221,0.64959,0.32602],"AN":[0.82817,-0.51662,-0.21735,0.92481],"IN":[-0.72575,-0.55792,-0.4025,0.97012],"AU":[-0.70382,-0.6864,0.18301,0.58745]};
+const COASTL={"SA":[-34.7,-7.3,-35.1,-9.0,-38.7,-13.1,-39.0,-13.8,-38.9,-15.7,-39.3,-17.9,-39.6,-18.3,-39.8,-19.6,-40.8,-20.9,-41.0,-21.9,-41.8,-22.4,-42.0,-23.0,-44.6,-23.4,-47.6,-24.9,-48.5,-25.9,-48.5,-27.2,-48.9,-28.7,-49.6,-29.2,-50.7,-31.0,-52.2,-32.2,-52.7,-33.2,-53.8,-34.4,-54.9,-35.0,-56.2,-34.9,-57.1,-34.4,-57.8,-34.5,-58.4,-34.0,-58.5,-34.4,-57.2,-35.3,-57.4,-36.0,-56.7,-36.4,-56.8,-36.9,-57.8,-38.2,-59.2,-38.7,-62.3,-38.8,-62.1,-40.7,-63.8,-41.2,-64.7,-40.8,-65.1,-41.0,-65.0,-42.1,-64.3,-42.4,-63.8,-42.0,-63.5,-42.6,-65.2,-43.5,-65.6,-45.0,-66.5,-45.0,-67.3,-45.6,-67.6,-46.3,-66.6,-47.0,-65.6,-47.2,-66.0,-48.1,-67.2,-48.7,-67.8,-49.9,-69.1,-50.7,-68.8,-51.8,-68.2,-52.4],"AF":[-17.6,14.7,-16.7,13.6,-16.6,12.2,-16.1,11.5,-14.8,10.9,-14.6,10.2,-13.2,8.9,-12.9,7.8,-9.0,4.8,-8.0,4.4,-4.7,5.2,-2.0,4.7,1.9,6.1,4.3,6.3,5.9,4.3,8.5,4.8,8.9,3.9,9.4,3.7,9.8,3.1,9.3,1.2,9.5,1.0,8.8,-1.1,11.9,-5.0,13.2,-8.5,12.9,-9.2,13.7,-10.8,13.6,-12.0,12.5,-13.6,11.8,-15.8,11.8,-18.1,12.6,-19.1,13.3,-20.9,14.3,-22.1,15.2,-27.1,18.2,-31.7,18.2,-32.4,17.9,-32.6,18.2,-33.9,18.9,-34.4,20.1,-34.8]};
+
+/* ═════════ 지도 엔진 (구면 회전 + 몰바이데 도법) ═════════ */
+const LON0=10,SQ2=Math.SQRT2,KX=2*SQ2/Math.PI,D2R=Math.PI/180;
+const PK=['AN','AF','SA','NA','EU','IN','AU'];
+const NM={NA:'북아메리카',SA:'남아메리카',AF:'아프리카',EU:'유라시아',IN:'인도',AN:'남극',AU:'오스트레일리아'};
+const COL={NA:'#eaa57c',SA:'#8fc486',AF:'#e6c585',EU:'#f1e790',IN:'#ff9fb5',AN:'#f1f6fc',AU:'#c9a8e3'};
+const ID=[1,0,0,0,1,0,0,0,1];
+function rotMat(a,t){const c=Math.cos(t),s=Math.sin(t),C=1-c,x=a[0],y=a[1],z=a[2];return [c+x*x*C,x*y*C-z*s,x*z*C+y*s,y*x*C+z*s,c+y*y*C,y*z*C-x*s,z*x*C-y*s,z*y*C+x*s,c+z*z*C]}
+function mm(A,B){const r=new Array(9);for(let i=0;i<3;i++)for(let j=0;j<3;j++)r[i*3+j]=A[i*3]*B[j]+A[i*3+1]*B[3+j]+A[i*3+2]*B[6+j];return r}
+const EV={};for(const k in EUL)EV[k]={a:EUL[k].slice(0,3),g:EUL[k][3]};
+const Rf=(k,f)=>f===0?ID:rotMat(EV[k].a,EV[k].g*f);
+function poseF(f){const P={AF:ID};for(const k of ['NA','SA','EU','AN','IN'])P[k]=Rf(k,f[k]);P.AU=mm(P.AN,Rf('AU',f.AU));return P}
+const FR={NA:[1,.62,.14,0],SA:[1,.93,.14,0],EU:[1,.6,.2,0],AN:[1,.75,.3,0],IN:[1,.96,.55,0],AU:[1,1,.9,0]};
+const sm=u=>u*u*(3-2*u);
+function poseT(tt){tt=clamp(tt,0,1);const seg=Math.min(2,Math.floor(tt*3)),u=sm(tt*3-seg);const f={};for(const k in FR)f[k]=lerp(FR[k][seg],FR[k][seg+1],u);return poseF(f)}
+function poseU(u){return poseF({NA:u,SA:u,EU:u,AN:u,IN:u,AU:u})}
+const VX={};for(const k in PL)VX[k]=PL[k].map(fl=>{const n=fl.length/2,v=new Float64Array(n*3);for(let i=0;i<n;i++){const lo=fl[2*i]*D2R,la=fl[2*i+1]*D2R;v[3*i]=Math.cos(la)*Math.cos(lo);v[3*i+1]=Math.cos(la)*Math.sin(lo);v[3*i+2]=Math.sin(la)}return {n,v}});
+function moll(lon,lat){const la=lat*D2R;let th=la;if(Math.abs(la)<Math.PI/2-1e-6){const k=Math.PI*Math.sin(la);for(let i=0;i<9;i++){const d=2+2*Math.cos(2*th);if(Math.abs(d)<1e-9)break;th-=(2*th+Math.sin(2*th)-k)/d}th=clamp(th,-1.5707963,1.5707963)}
+  return [KX*lon*D2R*Math.cos(th),SQ2*Math.sin(th)]}
+function ringPaths(R,rg){const n=rg.n,v=rg.v,lo=new Float64Array(n),la=new Float64Array(n);
+  for(let i=0;i<n;i++){const x=v[3*i],y=v[3*i+1],z=v[3*i+2];const X=R[0]*x+R[1]*y+R[2]*z,Y=R[3]*x+R[4]*y+R[5]*z,Z=R[6]*x+R[7]*y+R[8]*z;lo[i]=Math.atan2(Y,X)/D2R;la[i]=Math.asin(clamp(Z,-1,1))/D2R}
+  const u=new Float64Array(n);u[0]=lo[0];for(let i=1;i<n;i++){let d=lo[i]-lo[i-1];d-=360*Math.round(d/360);u[i]=u[i-1]+d}
+  let dc=lo[0]-lo[n-1];dc-=360*Math.round(dc/360);const wind=Math.round((u[n-1]-u[0]+dc)/360);
+  let mean=0,mlat=0;for(let i=0;i<n;i++){mean+=u[i];mlat+=la[i]}mean/=n;mlat/=n;
+  if(wind===0){const sh=360*Math.round((mean-LON0)/360);let mn=1e9,mx=-1e9;const r=new Float64Array(n);for(let i=0;i<n;i++){r[i]=u[i]-sh-LON0;mn=Math.min(mn,r[i]);mx=Math.max(mx,r[i])}
+    const mk=s=>{const o=new Array(n);for(let i=0;i<n;i++)o[i]=moll(r[i]+s,la[i]);return o};
+    const out=[mk(0)];if(mx>180)out.push(mk(-360));if(mn<-180)out.push(mk(360));return out}
+  const sh=360*Math.floor((u[0]-LON0+180)/360);const r=new Float64Array(n);for(let i=0;i<n;i++)r[i]=u[i]-sh-LON0;
+  const pts=[],sgn=wind>0?1:-1;let j=-1;
+  for(let i=1;i<n;i++){if(sgn>0?r[i]>=180:r[i]<=-180){j=i;break}}
+  if(j<0)j=n;
+  const lim=sgn>0?180:-180;let latc=la[0];if(j<n){const t=(lim-r[j-1])/(r[j]-r[j-1]);latc=la[j-1]+t*(la[j]-la[j-1])}
+  const seq=[[-lim,latc]];for(let i=j;i<n;i++)seq.push([r[i]-sgn*360,la[i]]);for(let i=0;i<Math.min(j,n);i++)seq.push([r[i],la[i]]);seq.push([lim,latc]);
+  const pole=mlat<0?-89.9:89.9;const endLat=latc;
+  for(let l=endLat;pole<0?l>pole:l<pole;l+=pole<0?-8:8)seq.push([lim,l]);
+  seq.push([lim,pole]);seq.push([-lim,pole]);for(let l=pole;pole<0?l<endLat:l>endLat;l+=pole<0?8:-8)seq.push([-lim,l]);
+  return [seq.map(a=>moll(a[0],a[1]))]}
+function geoBox(w,h){const S=Math.min(w*.975/(4*SQ2),h*.94/(2*SQ2));return {S,cx:w/2,cy:h/2}}
+function drawOcean(g,B){const {S,cx,cy}=B;g.beginPath();g.ellipse(cx,cy,2*SQ2*S,SQ2*S,0,0,6.2832);const og=g.createLinearGradient(0,cy-SQ2*S,0,cy+SQ2*S);og.addColorStop(0,'#d4ecfc');og.addColorStop(1,'#a6d1f2');g.fillStyle=og;g.fill();
+  g.save();g.clip();g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
+  for(let lo=-180;lo<=180;lo+=30){g.beginPath();for(let la=-90;la<=90;la+=6){const p=moll(lo,la);const X=cx+p[0]*S,Y=cy-p[1]*S;la===-90?g.moveTo(X,Y):g.lineTo(X,Y)}g.stroke()}
+  for(let la=-60;la<=60;la+=30){g.beginPath();for(let lo=-180;lo<=180;lo+=6){const p=moll(lo,la);const X=cx+p[0]*S,Y=cy-p[1]*S;lo===-180?g.moveTo(X,Y):g.lineTo(X,Y)}g.stroke()}
+  g.restore()}
+function drawPlates(g,B,P,o){o=o||{};const {S,cx,cy}=B;g.save();g.beginPath();g.ellipse(cx,cy,2*SQ2*S,SQ2*S,0,0,6.2832);g.clip();
+  for(const k of PK){const col=o.fill||COL[k];g.fillStyle=col;g.strokeStyle=o.stroke||'rgba(70,55,30,.75)';g.lineWidth=o.lw||1.1;g.lineJoin='round';
+    for(const rg of VX[k]){for(const pts of ringPaths(P[k],rg)){g.beginPath();for(let i=0;i<pts.length;i++){const X=cx+pts[i][0]*S,Y=cy-pts[i][1]*S;i?g.lineTo(X,Y):g.moveTo(X,Y)}g.closePath();g.fill();g.stroke()}}}
+  g.restore()}
+function rotLL(R,lon,lat){const lo=lon*D2R,la=lat*D2R,x=Math.cos(la)*Math.cos(lo),y=Math.cos(la)*Math.sin(lo),z=Math.sin(la);
+  const X=R[0]*x+R[1]*y+R[2]*z,Y=R[3]*x+R[4]*y+R[5]*z,Z=R[6]*x+R[7]*y+R[8]*z;return [Math.atan2(Y,X)/D2R,Math.asin(clamp(Z,-1,1))/D2R]}
+function projPt(P,k,lon,lat){const a=rotLL(P[k],lon,lat);let rel=a[0]-LON0;rel-=360*Math.round(rel/360);return moll(rel,a[1])}
+const px=(B,p)=>[B.cx+p[0]*B.S,B.cy-p[1]*B.S];
+function label(g,B,P,k,lon,lat,txt,sz){const p=px(B,projPt(P,k,lon,lat));g.font='900 '+(sz||clamp(B.S*.1,11,17))+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4;g.strokeStyle='rgba(255,255,255,.9)';g.strokeText(txt,p[0],p[1]);g.fillStyle='#1f2933';g.fillText(txt,p[0],p[1])}
+const LBL={NA:[-100,45],SA:[-60,-14],AF:[20,6],EU:[85,52],IN:[78,20],AN:[60,-82],AU:[134,-25]};
+function drawLabels(g,B,P,only){for(const k of PK){if(only&&!only.includes(k))continue;if(k==='IN'&&B.S<70)continue;label(g,B,P,k,LBL[k][0],LBL[k][1],NM[k])}}
+function drawPolyLL(g,B,P,k,pts,step){const out=[];for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/(step||1.5)));for(let j=0;j<=n;j++){if(j===0&&i>0)continue;out.push(px(B,projPt(P,k,lerp(a[0],b[0],j/n),lerp(a[1],b[1],j/n))))}}
+  g.beginPath();out.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));return out}
+function arrowHead(g,x,y,ang,sz){g.beginPath();g.moveTo(x,y);g.lineTo(x-Math.cos(ang-.45)*sz,y-Math.sin(ang-.45)*sz);g.lineTo(x-Math.cos(ang+.45)*sz,y-Math.sin(ang+.45)*sz);g.closePath();g.fill()}
+/* ═════════ 증거 데이터 (현재 위도·경도 기준, 대륙과 함께 움직여요) ═════════ */
+const MES=[['SA',-52,-27,6],['AF',22,-29,6]];
+const GLO=[['SA',-52,-24,6],['SA',-63,-33,5],['AF',27,-29,6],['AF',33,-17,5],['IN',82,22,5],['IN',79,16,4],['AN',165,-78,5],['AN',110,-74,5],['AU',148,-34,5]];
+const ICE=[['SA',-52,-28,6],['SA',-64,-31,5],['AF',24,-30,6],['AF',16,-23,4],['IN',80,20,5],['IN',79,15,4],['AN',170,-80,5],['AN',130,-72,5],['AU',146,-36,5],['AU',118,-30,4]];
+const MTN=[['NA',[[-87,33],[-84,35],[-80,37.5],[-77,40],[-74,42],[-70,44.5],[-66,46],[-62,46.5],[-58,48.5],[-55,49.5]]],['EU',[[-9.5,53.5],[-6,55],[-4,57.5],[-5,58.5]]],['EU',[[5,60],[7,62],[11,64],[14,66.5],[18,68.5],[22,70]]],['NA',[[-25,70],[-22,73],[-20,76]]]];
+const HIMA=[[73,36],[76,35],[79,32.5],[82,30],[86,28],[90,27.8],[94,28.5],[97,28]];
+function coastFlat(k){const f=COASTL[k],o=[];for(let i=0;i<f.length;i+=2)o.push([f[i],f[i+1]]);return o}
+function circ(g,B,P,list,fill,stroke,alpha){g.save();g.globalAlpha=alpha||.8;for(const it of list){const p=px(B,projPt(P,it[0],it[1],it[2]));const r=it[3]*D2R*KX*B.S*.95;g.beginPath();g.arc(p[0],p[1],Math.max(4,r),0,6.2832);g.fillStyle=fill;g.fill();g.lineWidth=2;g.strokeStyle=stroke;g.stroke()}g.restore()}
+function ribbon(g,B,P,list,color,wd){const pts=list.map(it=>px(B,projPt(P,it[0],it[1],it[2])));const ord=[pts.shift()];while(pts.length){const l=ord[ord.length-1];let bi=0,bd=1e9;pts.forEach((p,i)=>{const d=Math.hypot(p[0]-l[0],p[1]-l[1]);if(d<bd){bd=d;bi=i}});ord.push(pts.splice(bi,1)[0])}
+  g.save();g.lineCap='round';g.lineJoin='round';g.strokeStyle=color;g.globalAlpha=.55;g.lineWidth=wd;g.beginPath();ord.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.restore();return ord}
+/* ═════════ 진행 상태·HUD ═════════ */
+const S={puz:new Set(),evi:new Set(),tl:new Set(),cs:false,quiz:-1};
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 대륙 퍼즐',S.puz.size,6],['② 4대 증거',S.evi.size,4],['③ 타임랩스',S.tl.size,4],['④ 인도 추리',S.cs?1:0,1]];
+  el.innerHTML=it.map(a=>`<div class="pseg${a[1]>=a[2]?' ok':''}">${a[0]} ${a[1]}/${a[2]}${a[1]>=a[2]?' ✔':''}</div>`).join('')+`<div class="pseg${S.quiz>=3?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/3'}</div>`}
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'현재 열대 기후에 속하는 인도의 남부 지역에서 고대 빙하의 흔적이 발견되는 까닭은 무엇일까?',o:['고생대에는 지구 전체가 얼어 있었기 때문','과거 대륙들이 판게아로 뭉쳐 있을 때 인도 대륙이 남극 근처의 매우 추운 고위도에 있었기 때문','바다의 빙산이 떠내려와 인도에 쌓였기 때문'],a:1,e:'과거 대륙들이 판게아로 뭉쳐 있었을 당시, 인도 대륙이 남극 근처의 매우 추운 고위도에 위치해 있었기 때문이에요! 이후 인도가 북쪽으로 이동해 지금의 열대에 놓였어요. (② 빙하 흔적 · ④ 추리 랩)'},
+ {q:'바다를 건너 수영할 수 없는 민물 파충류 \'메소사우루스\' 화석이 대서양 건너 두 대륙에서 모두 발견되는 까닭은?',o:['메소사우루스가 대서양을 헤엄쳐 건넜기 때문','두 대륙에서 각각 따로 같은 종류가 진화했기 때문','생물이 살던 당시에는 두 대륙이 하나로 붙어 있었고, 이후 대륙이 분리되어 멀어졌기 때문'],a:2,e:'생물이 살던 당시에는 두 대륙이 하나로 붙어 있었고, 이후 대륙이 분리되어 멀어졌기 때문이에요! 화석 분포가 대륙 이동의 증거예요. (② 화석 분포 띠)'},
+ {q:'베게너가 결정적인 증거들을 제시했음에도 불구하고 당시 과학자들에게 인정받지 못한 까닭은?',o:['해안선 모양이 전혀 맞지 않았기 때문','거대한 대륙을 움직이게 만드는 힘의 원동력을 과학적으로 명확히 설명하지 못했기 때문','화석이 한 대륙에서만 발견되었기 때문'],a:1,e:'거대한 대륙을 움직이게 만드는 힘의 원동력을 명확히 설명하지 못했기 때문이에요! 훗날 맨틀 대류가 밝혀지며 대륙 이동설은 판 구조론으로 발전했어요. (③ 타임랩스)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 모드 ①: 판게아 퍼즐 ═════════ */
+const P0=poseU(0),P1=poseU(1);
+const PZ=[{k:'AF',pl:['AF'],n:'아프리카',st:[20,6],rot:40,msg:'아프리카를 판게아의 한가운데에 놓았어요! 이제 다른 대륙을 붙여 볼까요?'},
+ {k:'SA',pl:['SA'],n:'남아메리카',st:[-60,-14],rot:-52,msg:'남아메리카 동해안과 아프리카 서해안이 퍼즐처럼 “착!” 맞물렸어요. 해안선 모양이 일치해요!'},
+ {k:'NA',pl:['NA'],n:'북아메리카',st:[-100,45],rot:68,msg:'북아메리카가 아프리카·유라시아와 이어졌어요. 대서양이 사라졌네요!'},
+ {k:'EU',pl:['EU'],n:'유라시아',st:[85,52],rot:-32,msg:'유라시아가 북쪽에서 아프리카·북아메리카와 연결됐어요.'},
+ {k:'IN',pl:['IN'],n:'인도',st:[78,20],rot:75,msg:'인도는 아프리카와 남극 사이에 있었어요. 지금은 아시아 아래에 붙어 있지요!'},
+ {k:'AN',pl:['AN','AU'],n:'남극+오스트레일리아',st:null,rot:-70,msg:'남극과 오스트레일리아는 하나로 붙어 아프리카·인도 곁에 있었어요.'}];
+function ringList(k){const out=[];for(const rg of VX[k])out.push(ringPaths(P1[k],rg)[0]);return out}
+PZ.forEach(p=>{let rings=[];p.pl.forEach(k=>rings=rings.concat(ringList(k)));let mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;rings.forEach(r=>r.forEach(q=>{mnx=Math.min(mnx,q[0]);mxx=Math.max(mxx,q[0]);mny=Math.min(mny,q[1]);mxy=Math.max(mxy,q[1])}));
+  p.c=[(mnx+mxx)/2,(mny+mxy)/2];p.rings=rings.map(r=>r.map(q=>[q[0]-p.c[0],q[1]-p.c[1]]));let R=0;p.rings.forEach(r=>r.forEach(q=>R=Math.max(R,Math.hypot(q[0],q[1]))));p.R=R;
+  p.patch=[];const add=(list,col)=>list.forEach(it=>{if(p.pl.includes(it[0])){const q=projPt(P1,it[0],it[1],it[2]);p.patch.push([q[0]-p.c[0],q[1]-p.c[1],it[3]*D2R*KX*.95,col])}});add(MES,'#f97316');add(GLO,'#16a34a')});
+const Z1={sel:null,drag:null,fos:false,gho:false,conf:[],done:false,B:null};
+function scatter(){const pos={AF:[0.0,0.0],SA:[-2.1,-0.55],NA:[-2.0,0.55],EU:[1.2,1.0],IN:[2.5,-0.2],AN:[0.0,-1.15]};
+  PZ.forEach(p=>{p.done=false;p.anim=0;const a=pos[p.k];p.x=a[0];p.y=a[1];p.r=p.rot*D2R;p.tx=p.c[0];p.ty=p.c[1]});
+  Z1.sel=null;Z1.done=false;Z1.conf=[];S.puz=new Set();hud();plist()}
+function plist(){$('#plist').innerHTML='<b>🧩 맞춘 대륙 '+S.puz.size+' / 6</b><br>'+PZ.map(p=>(p.done?'✅ ':'⬜ ')+p.n).join(' &nbsp; ')}
+const angd=(a)=>{a=a%(2*Math.PI);if(a>Math.PI)a-=2*Math.PI;if(a<-Math.PI)a+=2*Math.PI;return a};
+function pieceHit(p,wx,wy){const dx=wx-p.x,dy=wy-p.y,c=Math.cos(p.r),s=Math.sin(p.r),lx=dx*c+dy*s,ly=-dx*s+dy*c;
+  for(const r of p.rings){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>ly)!==(b[1]>ly)&&lx<(b[0]-a[0])*(ly-a[1])/(b[1]-a[1])+a[0])ins=!ins}if(ins)return true}return false}
+function handlePos(p){const hd=p.R+.3;return [p.x-hd*Math.sin(p.r),p.y+hd*Math.cos(p.r)]}
+function wpt(e){const cv=$('#c1'),r=cv.getBoundingClientRect(),B=Z1.B||geoBox(r.width,r.height);return {wx:(e.clientX-r.left-B.cx)/B.S,wy:(B.cy-(e.clientY-r.top))/B.S,sx:e.clientX-r.left,sy:e.clientY-r.top,B}}
+function setSel(p){Z1.sel=p;if(p){const i=PZ.indexOf(p);PZ.splice(i,1);PZ.push(p)}}
+function snapTry(p){const d=Math.hypot(p.x-p.tx,p.y-p.ty),a=Math.abs(angd(p.r));
+  if(d<.34&&a<15*D2R){p.done=true;p.anim=.0001;p.fx=p.x;p.fy=p.y;p.fr=angd(p.r);S.puz.add(p.k);sSnap();toast('#toast1','🧲 착! '+p.n,1600);$('#fb1').className='fb good';$('#fb1').textContent='✅ '+p.msg;plist();hud();Z1.sel=null;
+    if(S.puz.size===6){Z1.done=true;setTimeout(()=>{sOK();toast('#toast1','🎉 초대륙 판게아 복원 완료!',4200);$('#fb1').textContent='🎉 초대륙 판게아 복원 완료! 약 3억 3천만 년 전에는 모든 대륙이 하나로 모여 있었어요.';for(let i=0;i<110;i++)Z1.conf.push({x:Math.random(),y:-.1-Math.random()*.4,vx:(Math.random()-.5)*.3,vy:.25+Math.random()*.45,c:['#f59e0b','#22c55e','#3b82f6','#ec4899','#a855f7'][i%5],s:3+Math.random()*5,r:Math.random()*6})},450)}
+    return true}
+  if(d<.6){toast('#toast1',a>=15*D2R?'↻ 거의 다 왔어요! 방향을 조금 돌려 보세요':'거의 다 왔어요! 조금만 더 가까이',1700);$('#fb1').className='fb';$('#fb1').textContent=a>=15*D2R?'위치는 좋아요! 이제 ⟲ ⟳ 버튼이나 빨간 손잡이로 방향을 맞춰 보세요.':'조금만 더 가까이 옮겨 보세요.'}
+  return false}
+const cv1=$('#c1');
+cv1.addEventListener('pointerdown',e=>{e.preventDefault();const w=wpt(e);cv1.setPointerCapture(e.pointerId);
+  if(Z1.sel&&!Z1.sel.done){const h=handlePos(Z1.sel),hp=px(w.B,h);if(Math.hypot(hp[0]-w.sx,hp[1]-w.sy)<30){Z1.drag={p:Z1.sel,t:'rot'};return}}
+  for(let i=PZ.length-1;i>=0;i--){const p=PZ[i];if(p.done)continue;if(pieceHit(p,w.wx,w.wy)){setSel(p);Z1.drag={p,t:'move',ox:p.x-w.wx,oy:p.y-w.wy};return}}
+  Z1.sel=null});
+cv1.addEventListener('pointermove',e=>{if(!Z1.drag)return;const w=wpt(e),d=Z1.drag,p=d.p;if(d.t==='move'){p.x=w.wx+d.ox;p.y=w.wy+d.oy}else{p.r=Math.atan2(w.wy-p.y,w.wx-p.x)-Math.PI/2}});
+const endDrag=e=>{if(!Z1.drag)return;const p=Z1.drag.p;Z1.drag=null;snapTry(p)};
+cv1.addEventListener('pointerup',endDrag);cv1.addEventListener('pointercancel',endDrag);
+const rotSel=d=>{const p=Z1.sel;if(!p||p.done){toast('#toast1','먼저 조각을 눌러 선택하세요',1500);return}p.r+=d*D2R;snapTry(p)};
+$('#rL15').onclick=()=>rotSel(15);$('#rL5').onclick=()=>rotSel(5);$('#rR5').onclick=()=>rotSel(-5);$('#rR15').onclick=()=>rotSel(-15);
+$('#tFos').onclick=()=>{Z1.fos=!Z1.fos;$('#tFos').classList.toggle('on',Z1.fos)};
+$('#tGho').onclick=()=>{Z1.gho=!Z1.gho;$('#tGho').classList.toggle('on',Z1.gho)};
+$('#bScat').onclick=()=>{scatter();$('#fb1').className='fb';$('#fb1').textContent='조각을 다시 흩뜨렸어요. 아프리카부터 가운데에 놓아 보세요!'};
+let bg1=null;
+function pathPiece(g,p){for(const r of p.rings){g.moveTo(r[0][0],r[0][1]);for(let i=1;i<r.length;i++)g.lineTo(r[i][0],r[i][1]);g.closePath()}}
+function scene1(dt,t){const {g,w,h}=fit(cv1),B=geoBox(w,h);Z1.B=B;g.clearRect(0,0,w,h);
+  if(!bg1||bg1.w!==w||bg1.h!==h){const c=document.createElement('canvas');c.width=w;c.height=h;const gg=c.getContext('2d');drawOcean(gg,B);drawPlates(gg,B,P0,{fill:'rgba(255,255,255,.62)',stroke:'rgba(100,116,139,.55)',lw:1});bg1={w,h,c}}
+  g.drawImage(bg1.c,0,0,w,h);
+  g.font='800 '+clamp(B.S*.1,11,15)+'px sans-serif';g.textAlign='center';g.fillStyle='rgba(51,65,85,.7)';g.fillText('흐릿한 바탕 = 오늘날의 세계 지도',B.cx,B.cy-SQ2*B.S-6);
+  if(Z1.gho||Z1.done){PZ.forEach(p=>{if(p.done&&!Z1.done)return;g.save();g.translate(B.cx+p.c[0]*B.S,B.cy-p.c[1]*B.S);g.scale(B.S,-B.S);g.beginPath();pathPiece(g,p);g.setLineDash([.1,.07]);g.lineWidth=2/B.S;g.strokeStyle=Z1.done?'rgba(245,158,11,.0)':'rgba(30,64,175,.55)';g.stroke();g.restore()})}
+  for(const p of PZ){if(p.anim>0){p.anim=Math.min(1,p.anim+dt/.28);const e=sm(p.anim);p.x=lerp(p.fx,p.tx,e);p.y=lerp(p.fy,p.ty,e);p.r=lerp(p.fr,0,e);if(p.anim>=1){p.anim=0;p.x=p.tx;p.y=p.ty;p.r=0}}
+    const near=!p.done&&Z1.drag&&Z1.drag.p===p&&Math.hypot(p.x-p.tx,p.y-p.ty)<.6;
+    g.save();g.translate(B.cx+p.x*B.S,B.cy-p.y*B.S);g.rotate(-p.r);g.scale(B.S,-B.S);
+    g.shadowColor='rgba(0,0,0,.35)';g.shadowBlur=p.done?2:10;g.shadowOffsetY=p.done?0:3;
+    g.beginPath();pathPiece(g,p);g.fillStyle=COL[p.k];g.fill();g.shadowColor='transparent';
+    g.lineWidth=(p===Z1.sel?4:near?4:1.6)/B.S;g.strokeStyle=near?'#16a34a':p===Z1.sel?'#f59e0b':'rgba(70,55,30,.85)';g.lineJoin='round';g.stroke();
+    if(Z1.fos||Z1.done&&false){for(const q of p.patch){g.beginPath();g.arc(q[0],q[1],q[2],0,6.2832);g.fillStyle=q[3]==='#16a34a'?'rgba(22,163,74,.75)':'rgba(249,115,22,.85)';g.fill();g.lineWidth=1.5/B.S;g.strokeStyle='#fff';g.stroke()}}
+    g.restore();
+    const cx=B.cx+p.x*B.S,cy=B.cy-p.y*B.S;g.font='900 '+clamp(B.S*.11,11,17)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4;g.strokeStyle='rgba(255,255,255,.92)';g.strokeText(p.n,cx,cy);g.fillStyle='#1f2933';g.fillText(p.n,cx,cy);
+    if(p===Z1.sel&&!p.done){const hp=px(B,handlePos(p));g.beginPath();g.moveTo(cx,cy);g.lineTo(hp[0],hp[1]);g.strokeStyle='#ef4444';g.lineWidth=2.5;g.stroke();g.beginPath();g.arc(hp[0],hp[1],15,0,6.2832);g.fillStyle='#ef4444';g.fill();g.lineWidth=3;g.strokeStyle='#fff';g.stroke();g.fillStyle='#fff';g.font='900 18px sans-serif';g.fillText('↻',hp[0],hp[1]+1)}}
+  if(Z1.done){g.font='900 '+clamp(B.S*.17,16,30)+'px sans-serif';g.textAlign='center';g.lineWidth=6;g.strokeStyle='rgba(255,255,255,.95)';g.strokeText('판게아 (약 3억 3천만 년 전)',B.cx,B.cy-SQ2*B.S+18);g.fillStyle='#b45309';g.fillText('판게아 (약 3억 3천만 년 전)',B.cx,B.cy-SQ2*B.S+18)}
+  for(const c of Z1.conf){c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=dt*6;g.save();g.translate(c.x*w,c.y*h);g.rotate(c.r);g.fillStyle=c.c;g.fillRect(-c.s/2,-c.s/2,c.s,c.s*.6);g.restore()}
+  Z1.conf=Z1.conf.filter(c=>c.y<1.1)}
+scatter();
+
+/* ═════════ 모드 ②: 4대 증거 탐색 ═════════ */
+const L2={coast:false,fossil:false,ice:false,mtn:false};
+let U2=1,pop2=false,hot2=null;
+const EV2={
+ coast:{t:'① 해안선 모양의 일치',h:'남아메리카 대륙의 <b>동해안</b>과 아프리카 대륙의 <b>서해안</b>이 퍼즐 조각처럼 들어맞아요. 황금빛 선이 하나로 이어지는 걸 확인해 보세요!'},
+ fossil:{t:'② 화석 분포의 일치',h:'<b>메소사우루스</b>(주황색)는 민물에 살던 파충류라 바다를 건널 수 없는데, 대서양 양쪽 대륙에서 띠 모양으로 이어져 발견돼요. 식물 <b>글로소프테리스</b>(초록색)는 남아메리카·아프리카·인도·남극·오스트레일리아에 걸쳐 하나로 이어져요.'},
+ ice:{t:'③ 빙하 흔적의 연속성',h:'고생대 빙하 퇴적층과 긁힌 자국이 남아메리카·아프리카·인도·오스트레일리아·남극에서 발견돼요. 대륙을 남극 중심으로 모으면 빙하가 <b>사방으로 퍼져 나간 흔적</b>이 하나로 연결돼요.<br><br>🔍 <b>인도 남부</b>의 돋보기를 눌러 보세요!'},
+ mtn:{t:'④ 지질 구조(산맥)의 연속성',h:'북아메리카의 <b>애팔래치아산맥</b>과 유럽의 <b>칼레도니아산맥</b>은 지금은 대서양에 끊겨 있지만, 판게아로 모으면 하나의 연속된 산맥 줄기를 이뤄요.'}};
+function info2(){const on=Object.keys(L2).filter(k=>L2[k]);$('#info2').innerHTML=on.length?on.map(k=>`<div class="kv" style="margin-bottom:8px"><h3>${EV2[k].t}</h3>${EV2[k].h}</div>`).join(''):'<div class="kv" style="color:var(--mut)">위의 증거 버튼을 눌러 보세요. 판게아 지도 위에 베게너가 제시한 4가지 증거가 나타나요.</div>';
+  $$('#lyr .btn').forEach(b=>b.classList.toggle('on',L2[b.dataset.l]))}
+$$('#lyr .btn').forEach(b=>b.onclick=()=>{const k=b.dataset.l;L2[k]=!L2[k];if(L2[k]){S.evi.add(k);hud();sOK();toast('#toast2',EV2[k].t,1800)}info2()});
+$('#sep').oninput=e=>{U2=e.target.value/100;$('#uV').textContent=U2>=.99?'판게아':U2<=.01?'오늘날':'이동 중 '+Math.round(U2*100)+'%'};
+$('#pop2x').onclick=()=>{$('#pop2').classList.remove('on');pop2=false};
+$('#c2').addEventListener('pointerdown',e=>{const r=$('#c2').getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;if(hot2&&Math.hypot(sx-hot2[0],sy-hot2[1])<hot2[2]){pop2=true;$('#pop2t').innerHTML='<b>현재의 인도 남부는 더운 열대 지방</b>이에요. 그런데 고생대 빙하 흔적이 남아 있어요!<br>👉 판게아 시절에는 인도가 <b>남극에 붙어 있었기 때문</b>에 빙하 흔적이 남았어요. 지금의 열대 위치로 올라온 건 대륙이 이동했기 때문이에요!';$('#pop2').classList.add('on');S.evi.add('ice');hud();sOK()}});
+function iceCenter(P){return px(geoBox(1,1),[0,0])}
+function drawIceArrows(g,B,P,t){const c=px(B,projPt(P,'AN',120,-80));g.save();g.fillStyle='rgba(14,165,233,.35)';g.beginPath();g.arc(c[0],c[1],B.S*.34,0,6.2832);g.fill();g.restore();
+  g.font='900 '+clamp(B.S*.1,11,15)+'px sans-serif';g.textAlign='center';g.fillStyle='#0369a1';g.lineWidth=4;g.strokeStyle='#fff';g.strokeText('얼음 중심',c[0],c[1]-B.S*.4);g.fillText('얼음 중심',c[0],c[1]-B.S*.4);
+  for(const it of ICE){const p=px(B,projPt(P,it[0],it[1],it[2])),dx=p[0]-c[0],dy=p[1]-c[1],L=Math.hypot(dx,dy)||1,a=Math.atan2(dy,dx),len=B.S*.55+Math.sin(t*3)*3;const ex=p[0]+dx/L*len,ey=p[1]+dy/L*len;
+    g.strokeStyle='#0284c7';g.fillStyle='#0284c7';g.lineWidth=3.5;g.lineCap='round';g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(ex,ey);g.stroke();arrowHead(g,ex,ey,a,10)}}
+function drawEvid(g,B,P,L,t,u){
+  if(L.mtn){g.save();g.lineCap='round';g.lineJoin='round';const ends=[];
+    MTN.forEach(m=>{const pts=drawPolyLL(g,B,P,m[0],m[1],1.6);g.strokeStyle='#fff';g.lineWidth=9;g.stroke();g.strokeStyle='#9333ea';g.lineWidth=6;g.stroke();ends.push(pts)});
+    // 끊어진 곳 점선 연결
+    if(u>.85){g.setLineDash([6,7]);g.strokeStyle='#c084fc';g.lineWidth=3;const a=ends[0][ends[0].length-1],b=ends[1][ends[1].length-1];g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.setLineDash([])}
+    const a=px(B,projPt(P,'NA',-76,40));g.font='900 '+clamp(B.S*.1,11,15)+'px sans-serif';g.textAlign='right';g.fillStyle='#6b21a8';g.lineWidth=4;g.strokeStyle='#fff';g.strokeText('애팔래치아산맥',a[0]-14,a[1]);g.fillText('애팔래치아산맥',a[0]-14,a[1]);
+    const c=px(B,projPt(P,'EU',10,63));g.textAlign='left';g.strokeText('칼레도니아산맥',c[0]+12,c[1]);g.fillText('칼레도니아산맥',c[0]+12,c[1]);g.restore()}
+  if(L.ice){circ(g,B,P,ICE,'rgba(186,230,253,.9)','#0284c7',.9);if(u>.85)drawIceArrows(g,B,P,t)}
+  if(L.fossil){ribbon(g,B,P,GLO,'#16a34a',B.S*.1);circ(g,B,P,GLO,'rgba(22,163,74,.85)','#fff',.95);ribbon(g,B,P,MES,'#f97316',B.S*.09);circ(g,B,P,MES,'rgba(249,115,22,.95)','#fff',1);
+    g.font=Math.round(clamp(B.S*.14,14,22))+'px sans-serif';g.textAlign='center';g.textBaseline='middle';MES.forEach(it=>{const p=px(B,projPt(P,it[0],it[1],it[2]));g.fillText('🦎',p[0],p[1])});GLO.forEach(it=>{const p=px(B,projPt(P,it[0],it[1],it[2]));g.fillText('🌿',p[0],p[1])})}
+  if(L.coast){g.save();g.lineCap='round';g.lineJoin='round';const pulse=.6+.4*Math.sin(t*4);g.shadowColor='#fbbf24';g.shadowBlur=14*pulse;['SA','AF'].forEach(k=>{drawPolyLL(g,B,P,k,coastFlat(k),1.2);g.strokeStyle='#fde047';g.lineWidth=7;g.stroke();g.shadowBlur=0;g.strokeStyle='#f59e0b';g.lineWidth=3;g.stroke();g.shadowBlur=14*pulse});g.restore()}
+}
+function scene2(dt,t){const {g,w,h}=fit($('#c2')),B=geoBox(w,h);g.clearRect(0,0,w,h);const P=poseU(U2);drawOcean(g,B);drawPlates(g,B,P);drawLabels(g,B,P);
+  hot2=null;drawEvid(g,B,P,L2,t,U2);
+  if(L2.ice){const p=px(B,projPt(P,'IN',79,15)),r=26;hot2=[p[0],p[1]+B.S*.02,r+10];const pu=1+.12*Math.sin(t*5);g.save();g.beginPath();g.arc(p[0],p[1],r*pu,0,6.2832);g.fillStyle='#fef3c7';g.fill();g.lineWidth=4;g.strokeStyle='#f59e0b';g.stroke();g.font='26px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('🔍',p[0],p[1]+1);g.restore()}
+  g.font='900 '+clamp(B.S*.14,14,22)+'px sans-serif';g.textAlign='left';g.fillStyle='#0f172a';g.lineWidth=5;g.strokeStyle='rgba(255,255,255,.9)';const ttl=U2>=.99?'판게아 (약 3억 3천만 년 전)':U2<=.01?'오늘날의 대륙 분포':'대륙 이동 중…';g.strokeText(ttl,10,22);g.fillText(ttl,10,22)}
+
+/* ═════════ 모드 ③: 3억 년 타임랩스 ═════════ */
+const TL={tt:0,play:false,last:-1};
+const AGES=[330,150,65,0];
+const STG=[{n:'① 약 3억 3천만 년 전 · 고생대 말',t:'모든 대륙이 하나로 뭉친 거대한 초대륙 <b>판게아</b>! 주위는 하나의 거대한 바다(판탈라사)였어요.'},
+ {n:'② 약 1억 5천만 년 전 · 중생대',t:'판게아가 갈라지며 <b>대서양이 열리기 시작</b>해요. 북반구 대륙과 남반구 대륙이 분리돼요.'},
+ {n:'③ 약 6천 5백만 년 전 · 신생대 초',t:'<b>인도 대륙</b>이 남극 근처에서 떨어져 나와 아시아를 향해 <b>매우 빠르게 북상</b>해요.'},
+ {n:'④ 현재 · 신생대',t:'인도가 유라시아와 충돌해 <b>히말라야산맥이 솟아오르고</b>, 5대양 6대주가 완성됐어요.'}];
+function ageOf(tt){const seg=Math.min(2,Math.floor(tt*3)),u=tt*3-seg;return lerp(AGES[seg],AGES[seg+1],u)}
+function periodOf(a){return a>=251?'고생대':a>=66?'중생대':'신생대'}
+const TRAIL=[];for(let i=0;i<=60;i++){TRAIL.push(i/60)}
+function setTT(v){TL.tt=clamp(v,0,1);$('#tl').value=Math.round(TL.tt*1000)}
+$('#tl').oninput=e=>{TL.play=false;$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause');TL.tt=e.target.value/1000};
+$('#bPlay').onclick=()=>{if(TL.play){TL.play=false;$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause');return}if(TL.tt>=.999)setTT(0);TL.play=true;$('#bPlay').textContent='⏸ 일시정지';$('#bPlay').classList.add('pause')};
+$('#bBack').onclick=()=>{TL.play=false;$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause');setTT(0)};
+$$('#stg .btn').forEach(b=>b.onclick=()=>{TL.play=false;$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause');TL.go=+b.dataset.s/3});
+function checkStage(){[0,1,2,3].forEach(i=>{if(Math.abs(TL.tt-i/3)<.012&&!S.tl.has(i)){S.tl.add(i);hud();if(i===2)toast('#toast3','🇮🇳 인도가 북상 중!',1800);if(i===3){toast('#toast3','🏔️ 인도·유라시아 충돌 → 히말라야 융기! 5대양 6대주 완성',3600);sOK()}}})}
+function info3(){const a=ageOf(TL.tt),near=Math.round(TL.tt*3),eps=Math.abs(TL.tt-near/3)<.04;const s=STG[near];
+  $('#ageV').textContent=(a<1?'현재':a>=100?'약 '+(a/100).toFixed(1).replace(/\.0$/,'')+'억 년 전':'약 '+Math.round(a)+'백만 년 전')+' · '+periodOf(a);
+  $('#info3').innerHTML=`<div class="kv"><h3>${eps?s.n:'⏳ 대륙이 움직이는 중… ('+periodOf(a)+')'}</h3>${eps?s.t:'대륙들이 천천히 갈라져 흩어지고 있어요. 아래 단계 버튼이나 슬라이더로 원하는 때를 살펴보세요.'}</div>`;
+  $$('#stg .btn').forEach((b,i)=>b.classList.toggle('on',eps&&i===near))}
+function scene3(dt,t){const {g,w,h}=fit($('#c3')),B=geoBox(w,h);
+  if(TL.go!=null){const d=TL.go-TL.tt;if(Math.abs(d)<.004){setTT(TL.go);TL.go=null}else setTT(TL.tt+Math.sign(d)*Math.min(Math.abs(d),dt*.9))}
+  if(TL.play){setTT(TL.tt+dt/10);if(TL.tt>=1){TL.play=false;$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause')}}
+  g.clearRect(0,0,w,h);const P=poseT(TL.tt);drawOcean(g,B);drawPlates(g,B,P);
+  // 인도 이동 궤적
+  const tr=TRAIL.map(s=>px(B,projPt(poseT(s),'IN',78,20)));g.save();g.setLineDash([5,6]);g.strokeStyle='rgba(219,39,119,.8)';g.lineWidth=3;g.beginPath();tr.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.setLineDash([]);const e=tr[tr.length-1],e0=tr[tr.length-6];g.fillStyle='rgba(219,39,119,.9)';arrowHead(g,e[0],e[1],Math.atan2(e[1]-e0[1],e[0]-e0[0]),11);g.restore();
+  drawLabels(g,B,P);
+  if(TL.tt>.94){const a=clamp((TL.tt-.94)/.06,0,1);g.save();g.globalAlpha=a;const pts=drawPolyLL(g,B,P,'EU',HIMA,1.2);g.lineCap='round';g.strokeStyle='#fff';g.lineWidth=11;g.stroke();g.strokeStyle='#7c4a1e';g.lineWidth=6;g.stroke();g.font=Math.round(clamp(B.S*.16,16,26))+'px sans-serif';g.textAlign='center';g.textBaseline='middle';[0.15,.4,.65,.9].forEach(f=>{const q=pts[Math.floor(f*(pts.length-1))];g.fillText('🏔️',q[0],q[1]-4)});
+    const q=pts[Math.floor(pts.length*.5)];g.font='900 '+clamp(B.S*.1,11,15)+'px sans-serif';g.lineWidth=4;g.strokeStyle='#fff';g.strokeText('히말라야산맥',q[0],q[1]-24);g.fillStyle='#7c2d12';g.fillText('히말라야산맥',q[0],q[1]-24);g.restore()}
+  if(TL.tt>.97){g.save();g.font='900 '+clamp(B.S*.12,12,18)+'px sans-serif';g.textAlign='center';g.fillStyle='#075985';g.lineWidth=4;g.strokeStyle='rgba(255,255,255,.9)';
+    [['태평양',-150,5],['대서양',-32,12],['인도양',78,-28],['북극해',80,80],['남극해',-110,-62]].forEach(o=>{const m=moll(((o[1]-LON0+540)%360)-180,o[2]),X=B.cx+m[0]*B.S,Y=B.cy-m[1]*B.S;g.strokeText(o[0],X,Y);g.fillText(o[0],X,Y)});
+    g.font='900 '+clamp(B.S*.17,16,28)+'px sans-serif';g.fillStyle='#166534';g.strokeText('✔ 5대양 6대주 완성!',B.cx,B.cy+SQ2*B.S-14);g.fillText('✔ 5대양 6대주 완성!',B.cx,B.cy+SQ2*B.S-14);g.restore()}
+  const a=ageOf(TL.tt);g.font='900 '+clamp(B.S*.2,18,34)+'px sans-serif';g.textAlign='left';g.lineWidth=6;g.strokeStyle='rgba(255,255,255,.95)';const txt=a<1?'현재':'약 '+Math.round(a)+'백만 년 전';g.strokeText(txt,12,30);g.fillStyle='#0f172a';g.fillText(txt,12,30);g.font='900 '+clamp(B.S*.13,13,22)+'px sans-serif';g.fillStyle='#b45309';g.strokeText(periodOf(a),12,58);g.fillText(periodOf(a),12,58);
+  checkStage();info3()}
+
+/* ═════════ 모드 ④: 인도 빙하 미스터리 추리 랩 ═════════ */
+const CASE={clue:new Set(),hyp:-1,ok:false,u:0,tu:0,done:false};
+const CLUES=['<b>🪨 긁힌 줄무늬 돌</b> — 인도 남부의 단단한 암석 표면에 한 방향으로 길게 긁힌 줄무늬가 있어요. 얼음 속에 박힌 돌이 바닥을 긁으며 끌려가면서 생긴 <b>빙하의 흔적</b>이에요.',
+ '<b>🧊 빙퇴석 지층</b> — 크기와 모양이 제각각인 돌이 진흙에 뒤섞인 두꺼운 지층이 발견돼요. 빙하가 녹으며 남긴 퇴적물이에요. 같은 시기의 같은 지층이 아프리카·남아메리카·오스트레일리아·남극에서도 나와요.',
+ '<b>🌴 지금의 인도 기후</b> — 인도 남부는 연중 덥고 비가 많은 <b>열대 기후</b>예요. 지금 같은 날씨라면 빙하가 생길 수 없어요.'];
+const HYP=[{t:'고생대에는 지구 전체가 몹시 추워서, 인도 남부까지 빙하가 덮었다.',f:'❌ 빙하 흔적은 <b>남반구의 대륙들</b>에서만 발견되고, 같은 시기의 북반구에는 열대 식물(석탄층)이 있었어요. 지구 전체가 얼었다고 보기 어려워요.'},
+ {t:'인도 대륙이 옛날에는 남극 가까운 추운 곳에 있다가, 북쪽으로 이동해 왔다.',f:'⭕ 맞아요! 대륙이 움직였다고 보면 모든 것이 설명돼요.',ok:true},
+ {t:'바다 위 얼음이 떠내려와 인도에 쌓였다.',f:'❌ 줄무늬 긁힌 자국은 얼음이 <b>땅 위를 누르며 움직일 때</b> 생겨요. 바다에 떠다닌 얼음으로는 설명하기 어려워요.'},
+ {t:'인도 남부의 땅이 아주 높은 산이 되어 추웠다.',f:'❌ 높은 산으로 설명하면 아프리카·남아메리카·오스트레일리아에 같은 흔적이 있는 까닭을 설명하기 어려워요.'}];
+function initCase(){$('#hyp').innerHTML='';HYP.forEach((h,i)=>{const b=document.createElement('button');b.className='btn';b.innerHTML=String.fromCharCode(65+i)+'. '+h.t;b.onclick=()=>{CASE.hyp=i;const fb=$('#fb4b');fb.style.display='';fb.className='fb '+(h.ok?'good':'bad');fb.innerHTML=h.f;[...$('#hyp').children].forEach((x,j)=>{x.classList.remove('ok','no');if(j===i)x.classList.add(h.ok?'ok':'no')});if(h.ok){CASE.ok=true;sOK();$('#verc').style.display='';toast('#toast4','🕵️ 가설 채택! 검증해 볼까요?',2000)}else sNO()};$('#hyp').appendChild(b)})}
+$$('#clues .btn').forEach(b=>b.onclick=()=>{const i=+b.dataset.c;CASE.clue.add(i);b.classList.add('got');$('#fb4a').innerHTML=CLUES[i];$('#fb4a').className='fb good';if(CASE.clue.size===3){$('#hypc').style.display='';toast('#toast4','단서 3개 수집! 이제 가설을 세워 보세요',2000)}});
+$('#bVer').onclick=()=>{if(!CASE.ok)return;CASE.tu=1;$('#fb4c').style.display='';$('#fb4c').className='fb';$('#fb4c').textContent='🧭 인도가 이동하는 중…'};
+$('#bVer0').onclick=()=>{CASE.tu=0;if(CASE.ok){$('#fb4c').style.display='';$('#fb4c').className='fb';$('#fb4c').textContent='현재 위치에서는 빙하 흔적이 세계 곳곳에 흩어져 있어요. 판게아 위치로 보내 다시 비교해 보세요.'}};
+function scene4(dt,t){const {g,w,h}=fit($('#c4')),B=geoBox(w,h);CASE.u+=(CASE.tu-CASE.u)*Math.min(1,dt*2.2);if(Math.abs(CASE.tu-CASE.u)<.003)CASE.u=CASE.tu;const u=CASE.u;
+  g.clearRect(0,0,w,h);const P=poseU(u);drawOcean(g,B);drawPlates(g,B,P);drawLabels(g,B,P);
+  circ(g,B,P,ICE,'rgba(186,230,253,.92)','#0284c7',.95);if(u>.9)drawIceArrows(g,B,P,t);
+  const p=px(B,projPt(P,'IN',78,20)),pu=1+.1*Math.sin(t*5);g.save();g.beginPath();g.arc(p[0],p[1],B.S*.34*pu,0,6.2832);g.lineWidth=4;g.strokeStyle='#db2777';g.setLineDash([7,6]);g.stroke();g.setLineDash([]);g.font='900 '+clamp(B.S*.11,12,17)+'px sans-serif';g.textAlign='center';g.lineWidth=4;g.strokeStyle='#fff';g.fillStyle='#be185d';g.strokeText('수사 대상: 인도',p[0],p[1]-B.S*.42);g.fillText('수사 대상: 인도',p[0],p[1]-B.S*.42);g.restore();
+  g.font='900 '+clamp(B.S*.14,14,22)+'px sans-serif';g.textAlign='left';g.lineWidth=5;g.strokeStyle='rgba(255,255,255,.92)';const ttl=u>=.98?'판게아 시절: 인도는 남극 곁 (빙하 흔적이 한곳으로 모여요!)':u<=.02?'오늘날: 빙하 흔적이 세계 곳곳에 흩어져 있어요':'인도가 이동하는 중…';g.strokeText(ttl,10,22);g.fillStyle='#0f172a';g.fillText(ttl,10,22);
+  if(CASE.ok&&CASE.tu===1&&u>=.98&&!CASE.done){CASE.done=true;S.cs=true;hud();sOK();$('#fb4c').className='fb good';$('#fb4c').innerHTML='✅ <b>사건 해결!</b> 판게아로 대륙을 모으면 인도는 남극과 붙어 있었고, 빙하 흔적이 남극을 중심으로 <b>사방으로 퍼져 나간 모양</b>으로 연결돼요. 그 뒤 인도가 북쪽으로 이동해 지금의 열대 위치에 놓인 거예요.';toast('#toast4','🎉 사건 해결!',2600)}}
+
+/* ═════════ 리셋·루프 ═════════ */
+function resetAll(){S.puz=new Set();S.evi=new Set();S.tl=new Set();S.cs=false;S.quiz=-1;scatter();Z1.fos=false;Z1.gho=false;$('#tFos').classList.remove('on');$('#tGho').classList.remove('on');$('#fb1').className='fb';$('#fb1').textContent='조각을 눌러 선택하고 끌어 보세요. 남아메리카 동해안과 아프리카 서해안이 퍼즐처럼 맞물려요!';
+  Object.keys(L2).forEach(k=>L2[k]=false);U2=1;$('#sep').value=100;$('#uV').textContent='판게아';info2();$('#pop2').classList.remove('on');
+  TL.play=false;TL.go=null;setTT(0);$('#bPlay').textContent='▶ 자동 재생 (10초)';$('#bPlay').classList.remove('pause');
+  CASE.clue=new Set();CASE.ok=false;CASE.hyp=-1;CASE.u=0;CASE.tu=0;CASE.done=false;$$('#clues .btn').forEach(b=>b.classList.remove('got'));$('#fb4a').className='fb';$('#fb4a').textContent='단서를 눌러 확인해 보세요.';$('#hypc').style.display='none';$('#verc').style.display='none';$('#fb4b').style.display='none';$('#fb4c').style.display='none';initCase();hud()}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===2)scene2(dt,t);else if(mode===3)scene3(dt,t);else scene4(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+initCase();info2();hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

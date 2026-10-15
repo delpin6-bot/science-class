@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>전하를 띠는 이온의 이동 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:1;min-height:150px}
+.bin{border:4px dashed #94a3b8;border-radius:14px;padding:6px;font-weight:900;background:#fff;display:flex;flex-direction:column;gap:5px;align-content:flex-start;font-size:clamp(13px,1.15vw,17px);line-height:1.25}.bin.hot{border-color:#f59e0b;background:#fffbeb}.bin small{font-weight:700;color:var(--mut);font-size:.78em}
+.cardf{min-height:100px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;font-size:clamp(12px,1.05vw,16px);text-align:center}.cardf span{font-size:clamp(26px,2.8vw,40px)}.cardf.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardf.back{background:#eff6ff;border-color:#60a5fa}.cardf.back small{font-weight:800;color:#1e3a8a;font-size:.9em}.cardf.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+.ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.06);width:150px}
+input[type=range].big{width:100%;height:48px}
+.rec td{font-size:clamp(11px,.95vw,14px);line-height:1.25;vertical-align:middle}.rec .ic{display:inline-block;line-height:1}
+.lr{display:grid;grid-template-columns:minmax(96px,150px) minmax(0,1fr) 52px;gap:8px;align-items:center}.lr b{text-align:right;font-variant-numeric:tabular-nums;font-size:clamp(14px,1.2vw,19px)}
+.lt{min-height:56px!important;line-height:1.15}
+.lt.r.on{background:#fecaca;border-color:#ef4444;color:#7f1d1d}.lt.g.on{background:#bbf7d0;border-color:#22c55e;color:#14532d}.lt.b.on{background:#bfdbfe;border-color:#3b82f6;color:#1e3a8a}
+.lt.w.on{background:#f1f5f9;border-color:#475569;color:#0f172a}
+.r2{accent-color:#dc2626}.g2s{accent-color:#16a34a}.b2s{accent-color:#2563eb}
+.sw{display:flex;align-items:center;gap:10px}.sw i{display:block;width:clamp(56px,6vw,96px);height:clamp(56px,6vw,96px);border-radius:14px;border:3px solid #334155;flex:0 0 auto}
+.sw div{font-weight:900;line-height:1.35;font-size:clamp(14px,1.25vw,20px)}.sw small{display:block;font-weight:800;color:var(--mut);font-size:.78em}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found span{min-height:40px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;color:#94a3b8;font-weight:900;display:inline-flex;align-items:center;gap:6px;font-size:clamp(12px,1.05vw,16px)}.found span.on{border-style:solid;border-color:#22c55e;background:#f0fdf4;color:#166534}
+.found i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #334155}
+.ptab{width:100%;border-collapse:collapse;font-weight:800;font-size:clamp(11px,.98vw,15px);text-align:center}.ptab th,.ptab td{border:2px solid #cbd5e1;padding:4px 3px}.ptab th{background:#dbeafe;color:#1e3a8a}.ptab td i{display:inline-block;width:22px;height:22px;border-radius:6px;border:2px solid #334155;vertical-align:middle}
+.ptab td.cur{outline:3px solid #f59e0b}
+.pxs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pxs .btn{min-height:52px;padding:2px 4px;line-height:1.1;font-size:clamp(11px,.98vw,15px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.pxs .btn i{width:30px;height:14px;border-radius:4px;border:2px solid #334155}.pxs .btn.seen{border-color:#22c55e}.pxs .btn.on{border-color:#f59e0b;background:#fffbeb}
+.bars{display:grid;gap:5px}.bars div{display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.bars em{display:block;height:20px;border-radius:6px;background:#e2e8f0;position:relative;overflow:hidden}.bars em u{display:block;height:100%;width:0}
+.c4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c4 .btn{min-height:76px;line-height:1.25;padding:4px 6px;font-size:clamp(13px,1.15vw,18px)}.c4 .btn span{display:block;font-size:1.7em}.c4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.c4 .btn.ok{border-color:#22c55e}
+.info4{font-weight:800;line-height:1.6;font-size:clamp(13px,1.15vw,18px)}.info4 b{color:#1d4ed8}
+.prs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.prs .btn{min-height:52px;padding:2px 4px;line-height:1.15;font-size:clamp(12px,1.05vw,16px)}
+.ins4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ins4 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(12px,1.05vw,16px)}.ins4 .btn span{display:block;font-size:1.5em}.ins4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.ins5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ins5 .btn{min-height:56px;line-height:1.15;padding:2px 4px;font-size:clamp(12px,1.05vw,16px)}.ins5 .btn.on{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.stat div{border:3px solid var(--line);border-radius:12px;padding:4px 8px;background:#f8fafc;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.stat b{display:block;font-size:clamp(20px,2vw,30px);font-variant-numeric:tabular-nums;color:#1d4ed8}
+.tip{border-radius:12px;padding:9px 13px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(13px,1.12vw,18px)}.tip b{color:#be123c}
+.sw2{min-height:56px;border-radius:14px;border:3px solid #94a3b8;background:#f8fafc;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:clamp(14px,1.2vw,19px)}.sw2.on{background:#dcfce7;border-color:#22c55e;color:#14532d}
+.sldr{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.sldr b{text-align:right;font-variant-numeric:tabular-nums}
+.sldr.dis{opacity:.45}
+.sub6{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.sub6 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(13px,1.15vw,18px)}.sub6 .btn span{display:block;font-size:1.5em}
+.sub6.el .btn.on{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.sub6.co .btn.on{background:#ffedd5;border-color:#f97316;color:#7c2d12}.sub6 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.gm{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:12px;background:#f1f5f9;overflow:auto}
+.bk2{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:150px}
+.bk{border:4px dashed #94a3b8;border-radius:18px;background:#fff;padding:8px 10px;font-weight:900;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.45vw,22px);transition:.15s}.bk small{font-weight:700;color:var(--mut);font-size:.62em}.bk.hot{border-color:#f59e0b;background:#fffbeb}
+.bk.e{border-color:#60a5fa}.bk.c{border-color:#fb923c}.bk.ok{animation:okf .5s}.bk.no{animation:nof .5s}
+@keyframes okf{50%{background:#bbf7d0;border-color:#22c55e}}@keyframes nof{50%{background:#fecaca;border-color:#ef4444}}
+.cp2{display:flex;flex-wrap:wrap;gap:5px}.cp2 span{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:2px 8px;font-size:clamp(11px,.95vw,15px)}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{min-height:92px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;text-align:center;font-size:clamp(12px,1.1vw,17px)}.mc span{font-size:clamp(26px,2.8vw,40px)}.mc.sel{border-color:#f59e0b;background:#fffbeb}.mc.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.res3{position:absolute;inset:0;background:rgba(15,23,42,.8);display:none;align-items:center;justify-content:center;z-index:5}.res3.on{display:flex}.res3>div{background:#fff;border-radius:24px;padding:22px 30px;text-align:center;font-weight:900;max-width:80%;font-size:clamp(16px,1.6vw,24px);line-height:1.6}.res3 b{font-size:1.6em;color:#15803d}
+.cfx{position:fixed;top:-40px;z-index:70;font-size:30px;pointer-events:none;animation:fall 2.6s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.prop{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(11px,1vw,15px)}.prop th,.prop td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.prop th{background:#dbeafe;color:#1e3a8a}.prop td.q{background:#f1f5f9;color:#94a3b8}.prop td.n{background:#fef9c3;color:#713f12;animation:okf .6s}
+.cmp{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.cmp th,.cmp td{border:2px solid #cbd5e1;padding:5px}.cmp th{background:#f1f5f9}
+.mon{flex:none!important;height:clamp(290px,44vh,450px)}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.big3 .btn{min-height:72px;font-size:clamp(16px,1.5vw,23px);line-height:1.2;padding:4px}.big3 .btn span{display:block;font-size:1.6em}
+.big3 .btn.on{border-color:#2563eb;background:#dbeafe}.big3 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.cr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cr .btn{min-height:64px;font-size:clamp(15px,1.4vw,22px);padding:4px 14px}.cr .btn.on{border-color:#2563eb;background:#dbeafe}.cr .zb{min-width:64px;font-size:26px}.cr .zv{font-weight:900;font-size:clamp(18px,1.8vw,26px);min-width:56px;text-align:center}
+.cr .lb2{font-weight:900;font-size:clamp(14px,1.25vw,19px);color:var(--mut)}
+.tipb{border-radius:12px;padding:10px 14px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(14px,1.25vw,19px)}.tipb.warn{background:#fef3c7;border-color:#f59e0b;color:#78350f}
+.cmpa{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.cmpa th,.cmpa td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.cmpa th{background:#f1f5f9}.cmpa tr.cur td,.cmpa tr.cur th{background:#fef9c3}
+@media (max-width:980px){.mon{height:380px}.stagewrap{min-height:340px}.stagewrap canvas{position:absolute;inset:0}}
+</style></head><body>
+<header>
+  <h1>⚡ 이온의 이동</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 이온 이동 실험</button>
+    <button class="tab" id="tab2">② 이온 확대</button>
+    <button class="tab" id="tab3">③ 예측하고 확인</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode g2 on" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#e8eef7"><canvas id="a1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh1"></div><div class="big3" id="sel1"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl1"></div><div class="tipb" id="tip1"></div><div class="card ctl" id="info1"></div><div class="tipb warn" id="cc1" style="display:none"></div><div class="fb" id="fb1"></div></div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0b1220"><canvas id="a2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh2"></div><div class="big3" id="sel2"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl2"></div><div class="tipb" id="tip2"></div><div class="card ctl" id="info2"></div><div class="tipb warn" id="cc2" style="display:none"></div><div class="fb" id="fb2"></div></div>
+</section>
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#e8eef7"><canvas id="a3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh3"></div><div class="big3" id="sel3"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl3"></div><div class="tipb" id="tip3"></div><div class="card ctl" id="info3"></div><div class="tipb warn" id="cc3" style="display:none"></div><div class="fb" id="fb3"></div></div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg,fs)=>{g.font='900 '+(fs||13)+'px sans-serif';const w=g.measureText(t).width+14,h=(fs||13)+11;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-h/2,w,h,h/2);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+const CONCL='이온이 들어 있는 수용액에 전류를 흘려 주면 (+)전하를 띠는 양이온은 (-)극으로 이동하고, (-)전하를 띠는 음이온은 (+)극으로 이동한다.';
+// 종: dir -1 = (−)극(왼쪽), +1 = (+)극(오른쪽)
+const SP={
+ cu:{n:'Cu²⁺',kn:'구리 이온',col:'#2f7de1',q:'+',dir:-1,spd:.085,vis:1,cn:'파란색'},
+ mn:{n:'MnO₄⁻',kn:'과망가니즈산 이온',col:'#8e24aa',q:'−',dir:1,spd:.11,vis:1,cn:'보라색'},
+ so:{n:'SO₄²⁻',kn:'황산 이온',col:'#94a3b8',q:'−',dir:1,spd:.1,cn:'색 없음'},
+ kp:{n:'K⁺',kn:'칼륨 이온',col:'#94a3b8',q:'+',dir:-1,spd:.1,cn:'색 없음'},
+ kn:{n:'K⁺',kn:'칼륨 이온',col:'#94a3b8',q:'+',dir:-1,spd:.1,cn:'색 없음',bg:1},
+ nn:{n:'NO₃⁻',kn:'질산 이온',col:'#94a3b8',q:'−',dir:1,spd:.1,cn:'색 없음',bg:1}};
+const S={exp:new Set(),mic:new Set(),pred:new Set(),quiz:-1};
+// ---- 실험 상태 ----
+const E={pw:false,V:12,inv:false,paper:{cu:0,mn:0},p:[],dp:null,t:0,invT:0,prog:{cu:0,mn:0},done:{cu:0,mn:0},ghosts:[],drops:{}};
+function rnd(a,b){return a+Math.random()*(b-a)}
+function chord(x){return Math.sqrt(Math.max(.02,.81-x*x))}
+function bgSpawn(){E.p=E.p.filter(p=>!SP[p.k].bg);for(let i=0;i<26;i++){const k=i%2?'nn':'kn',x=rnd(-.85,.85),c=chord(x);E.p.push({k,x,y:rnd(-c,c)*.95,s:rnd(.75,1.25)})}}
+function spawnDrop(kind){
+  const other=kind==='cu'?'mn':'cu';
+  const py=E.paper[other]?(kind==='cu'?-.3:.3):0;
+  E.paper[kind]=1;E.drops[kind]={py,t0:E.t};
+  for(let i=0;i<150;i++)E.p.push({k:kind,x:rnd(-1,1)*.06+rnd(-1,1)*.03,y:py+rnd(-1,1)*.06,s:rnd(.65,1.35)});
+  const gk=kind==='cu'?'so':'kp';
+  for(let i=0;i<22;i++)E.p.push({k:gk,x:rnd(-1,1)*.07,y:py+rnd(-1,1)*.08,s:rnd(.7,1.3)});
+}
+// ---- 스프라이트 ----
+const SPR={};
+function sprite(col){if(SPR[col])return SPR[col];const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const gr=g.createRadialGradient(24,24,0,24,24,24);gr.addColorStop(0,col+'cc');gr.addColorStop(.45,col+'66');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fillRect(0,0,48,48);return SPR[col]=c}
+function step(dt){
+  E.t+=dt;
+  const v=E.pw?E.V/12:0;
+  for(const p of E.p){const s=SP[p.k];
+    p.x+=s.dir*s.spd*v*p.s*dt+rnd(-1,1)*.004;p.y+=rnd(-1,1)*.004;
+    if(s.bg){if(Math.abs(p.x)>.9){p.x=-s.dir*.88;p.y=rnd(-1,1)*chord(p.x)*.95}}
+    p.x=clamp(p.x,-.9,.9);const c=chord(p.x);p.y=clamp(p.y,-c,c)}
+  if(E.pw){for(const k of ['cu','mn']){if(!E.paper[k])continue;const sp=SP[k];let sx=0,n=0;for(const p of E.p)if(p.k===k){sx+=p.x;n++}const m=n?sx/n:0;E.prog[k]=clamp(sp.dir*m/.55,0,1);
+      if(E.prog[k]>=1&&!E.done[k]){E.done[k]=1;S.exp.add(k);sOK();hud();onDone(k)}}
+    if(E.inv&&(E.paper.cu||E.paper.mn)){E.invT+=dt;if(E.invT>2.5&&!S.exp.has('inv')){S.exp.add('inv');hud();sOK();fbx('#fb1','👁 색이 없어 보이지 않던 이온도 움직여요! <b>황산 이온(SO₄²⁻)은 (+)극, 칼륨 이온(K⁺)은 (−)극</b>으로 이동하고 있어요.','ok')}}}
+}
+function onDone(k){
+  if(k==='cu')fbx('#fb1','🔵 파란색 <b>구리 이온(Cu²⁺)</b>이 <b>(−)극</b>으로 이동했어요! (+)전하를 띠고 있기 때문이에요.','ok');
+  else fbx('#fb1','🟣 보라색 <b>과망가니즈산 이온(MnO₄⁻)</b>이 <b>(+)극</b>으로 이동했어요! (−)전하를 띠고 있기 때문이에요.','ok');
+  if(E.done.cu&&E.done.mn){const c=$('#cc1');c.style.display='';c.innerHTML='🎉 <b>결론</b><br>'+CONCL;fbx('#fb1','✅ 두 가지 색 이온의 이동을 모두 확인했어요. 아래 결론을 읽어 보세요.','ok')}
+}
+// ---- 1: 실험 그리기 ----
+function geo(w,h){const ph=clamp(h*.17,54,88),sx0=w*.16,sx1=w*.84,sy0=8,sy1=8+ph;const top=sy1+8;const R=Math.max(40,Math.min(w*.33,(h-top-26)/2));const cx=w/2,cy=top+(h-top)/2+10;return{ph,sx0,sx1,sy0,sy1,R,cx,cy,pr:R*.9}}
+function paperPt(G,x,y){return[G.cx+x*G.pr,G.cy+y*G.pr]}
+function wire(g,x0,y0,x1,y1,col,sag){g.strokeStyle=col;g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(x0,y0);g.bezierCurveTo(x0,y0+sag,x1,y1-sag*.2,x1,y1);g.stroke();g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=1.5;g.stroke()}
+function clip(g,x,y,dir,col){g.save();g.translate(x,y);g.fillStyle=col;g.strokeStyle='#1e293b';g.lineWidth=2;rr(g,dir<0?-26:-4,-9,30,18,5);g.fill();g.stroke();g.fillStyle='#e2e8f0';g.beginPath();g.moveTo(dir<0?4:-4,-8);g.lineTo(dir<0?22:-22,-3);g.lineTo(dir<0?22:-22,3);g.lineTo(dir<0?4:-4,8);g.closePath();g.fill();g.stroke();g.restore()}
+function dropper(g,x,y,col,sc,sq){g.save();g.translate(x,y);g.scale(sc,sc);
+  g.fillStyle='#ef4444';g.strokeStyle='#7f1d1d';g.lineWidth=2;g.beginPath();g.ellipse(0,-92,13*(1+sq*.08),20*(1-sq*.22),0,0,6.2832);g.fill();g.stroke();
+  g.fillStyle='rgba(255,255,255,.88)';g.strokeStyle='#64748b';g.lineWidth=2;g.beginPath();g.moveTo(-8,-74);g.lineTo(8,-74);g.lineTo(7,-18);g.lineTo(2.2,0);g.lineTo(-2.2,0);g.lineTo(-7,-18);g.closePath();g.fill();g.stroke();
+  g.fillStyle=col;g.beginPath();g.moveTo(-6.5,-48);g.lineTo(6.5,-48);g.lineTo(6,-18);g.lineTo(2,-1);g.lineTo(-2,-1);g.lineTo(-6,-18);g.closePath();g.fill();g.restore()}
+function draw1(cv,now){
+  const{g,w,h}=fit(cv);const G=geo(w,h);const k=w<520;
+  g.clearRect(0,0,w,h);g.fillStyle='#dfe7f1';g.fillRect(0,0,w,h);g.fillStyle='#cfd9e6';g.fillRect(0,h*.3,w,h);
+  // 전원 장치
+  g.fillStyle='#334155';rr(g,G.sx0,G.sy0,G.sx1-G.sx0,G.ph,12);g.fill();g.strokeStyle='#0f172a';g.lineWidth=3;g.stroke();
+  g.fillStyle='#0f172a';rr(g,G.cx-(k?44:62),G.sy0+8,k?88:124,G.ph-16,8);g.fill();
+  g.fillStyle=E.pw?'#4ade80':'#166534';g.font='900 '+clamp(G.ph*.42,18,34)+'px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText((E.pw?E.V:E.V).toFixed(1)+' V',G.cx,G.sy0+G.ph/2);
+  g.fillStyle=E.pw?'#22c55e':'#475569';g.beginPath();g.arc(G.sx0+(k?14:22),G.sy0+14,5,0,6.2832);g.fill();
+  if(!k){g.fillStyle='#cbd5e1';g.font='800 12px sans-serif';g.textAlign='left';g.fillText(E.pw?'전원 ON':'전원 OFF',G.sx0+32,G.sy0+14)}
+  const ty=G.sy1-14;
+  const tl=[G.sx0+(k?20:40),ty],tr=[G.sx1-(k?20:40),ty];
+  [[tl,'#1d4ed8','−'],[tr,'#dc2626','+']].forEach(([t,c,s])=>{g.fillStyle=c;g.strokeStyle='#0f172a';g.lineWidth=2.5;g.beginPath();g.arc(t[0],t[1],13,0,6.2832);g.fill();g.stroke();g.fillStyle='#fff';g.font='900 20px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(s,t[0],t[1]+1)});
+  // 페트리 접시 + 거름종이
+  g.fillStyle='rgba(255,255,255,.55)';g.strokeStyle='#94a3b8';g.lineWidth=4;g.beginPath();g.arc(G.cx,G.cy,G.R,0,6.2832);g.fill();g.stroke();
+  g.strokeStyle='rgba(148,163,184,.6)';g.lineWidth=2;g.beginPath();g.arc(G.cx,G.cy,G.R-6,0,6.2832);g.stroke();
+  g.fillStyle='#f7f3e3';g.beginPath();g.arc(G.cx,G.cy,G.pr,0,6.2832);g.fill();g.strokeStyle='#d8cfae';g.lineWidth=2;g.stroke();
+  // 젖은 종이 광택
+  const wg=g.createRadialGradient(G.cx-G.pr*.3,G.cy-G.pr*.3,5,G.cx,G.cy,G.pr);wg.addColorStop(0,'rgba(190,220,255,.28)');wg.addColorStop(1,'rgba(190,220,255,.1)');g.fillStyle=wg;g.beginPath();g.arc(G.cx,G.cy,G.pr,0,6.2832);g.fill();
+  g.save();g.beginPath();g.arc(G.cx,G.cy,G.pr-1,0,6.2832);g.clip();
+  // 색 이온 (부드러운 번짐)
+  const bs=G.pr*.24;
+  for(const p of E.p){const s=SP[p.k];if(!s.vis)continue;const[px,py]=paperPt(G,p.x,p.y);g.globalAlpha=.55;g.drawImage(sprite(s.col),px-bs/2,py-bs/2,bs,bs)}
+  g.globalAlpha=1;
+  // 보이지 않는 이온
+  if(E.inv){E.ghosts=[];const r=clamp(G.pr*.045,5,9);
+    for(const p of E.p){const s=SP[p.k];if(s.vis)continue;const[px,py]=paperPt(G,p.x,p.y);E.ghosts.push([px,py,p.k]);
+      g.fillStyle=s.q==='+'?'rgba(251,146,60,.28)':'rgba(56,189,248,.28)';g.strokeStyle=s.q==='+'?'rgba(194,65,12,.8)':'rgba(3,105,161,.8)';g.lineWidth=1.5;g.setLineDash([3,2]);g.beginPath();g.arc(px,py,r,0,6.2832);g.fill();g.stroke();g.setLineDash([]);
+      if(!s.bg||(p.s>1.1)){g.fillStyle='#334155';g.font='800 '+clamp(G.pr*.055,9,12)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(s.q,px,py+.5)}}}
+  g.restore();
+  // 시약 위치 라벨
+  for(const kk of ['cu','mn']){if(!E.paper[kk])continue;const d=E.drops[kk];if(E.t-d.t0<1.2&&!E.pw){const[px,py]=paperPt(G,0,d.py);g.strokeStyle=SP[kk].col;g.globalAlpha=.7*(1-(E.t-d.t0)/1.2);g.lineWidth=3;g.beginPath();g.arc(px,py,8+(E.t-d.t0)*30,0,6.2832);g.stroke();g.globalAlpha=1}}
+  // 전선·집게
+  const cl=[G.cx-G.pr+3,G.cy],cr=[G.cx+G.pr-3,G.cy];
+  wire(g,tl[0],tl[1]+10,cl[0]-24,cl[1],'#1e3a8a',60);wire(g,tr[0],tr[1]+10,cr[0]+24,cr[1],'#b91c1c',60);
+  clip(g,cl[0]-2,cl[1],-1,'#1d4ed8');clip(g,cr[0]+2,cr[1],1,'#dc2626');
+  const lf=clamp(w/26,12,17);
+  const mg=Math.max(30,(G.cx-G.R)/2);pill(g,'(−)극',mg,G.cy+34,'#bfdbfe','#1e3a8a',lf);pill(g,'(+)극',w-mg,G.cy+34,'#fecaca','#7f1d1d',lf);
+  // 스포이트
+  if(E.dp){const q=(E.t-E.dp.t0)/1.7,col=SP[E.dp.k].col,d=E.drops[E.dp.k]||{py:E.paper[E.dp.k==='cu'?'mn':'cu']?(E.dp.k==='cu'?-.3:.3):0};
+    const[tx,ty2]=paperPt(G,0,d.py);let dx=tx,dy=ty2-G.pr*.5-4,sq=0;const sc=clamp(G.pr/190,.55,1.1);
+    if(q<.3){const a=q/.3;dx=lerp(tx+G.pr*.55,tx,a);dy=lerp(ty2-G.pr*1.1,ty2-G.pr*.5-4,a)}
+    else if(q<.55){sq=Math.sin((q-.3)/.25*Math.PI)}
+    else{const a=clamp((q-.55)/.4,0,1);dx=lerp(tx,tx+G.pr*.6,a);dy=lerp(ty2-G.pr*.5-4,ty2-G.pr*1.2,a)}
+    dropper(g,dx,dy,col,sc,sq);
+    if(q>=.3&&q<.55){const a=(q-.3)/.25;g.fillStyle=col;g.beginPath();g.ellipse(tx,lerp(dy+2,ty2-4,a*a),4.5,6,0,0,6.2832);g.fill()}}
+  // 안내
+  if(!E.paper.cu&&!E.paper.mn){outText(g,'🧪 아래에서 시약을 골라 거름종이에 떨어뜨리세요',G.cx,G.cy+G.R*.62,clamp(w/32,12,18),'#fde68a')}
+  else if(!E.pw&&!(E.done.cu&&E.done.mn)){outText(g,'⚡ 오른쪽의 전원 스위치를 켜 보세요',G.cx,G.cy+G.R*.7,clamp(w/32,12,18),'#fde68a')}
+}
+// ---- 2: 이온 확대 ----
+const M2={r:'cu',pw:false,bg:true,ions:[],pwT:0,V:12};
+const MIC={cu:[['cu',7],['so',7]],mn:[['mn',8],['kp',8]]};
+function initMic(){M2.ions=[];for(const[k,n]of MIC[M2.r])for(let i=0;i<n;i++)M2.ions.push({k,x:rnd(.14,.86),y:rnd(.16,.8)});
+  for(let i=0;i<5;i++){M2.ions.push({k:'kn',x:rnd(.14,.86),y:rnd(.16,.8),bg:1});M2.ions.push({k:'nn',x:rnd(.14,.86),y:rnd(.16,.8),bg:1})}M2.pwT=0}
+function step2(dt,w,h,r){
+  const v=M2.pw?M2.V/12:0;
+  for(const p of M2.ions){const s=SP[p.k];p.x+=s.dir*(s.vis?(p.k==='cu'?.075:.095):.085)*v*dt+rnd(-1,1)*.0035;p.y+=rnd(-1,1)*.0035}
+  for(let it=0;it<2;it++)for(let i=0;i<M2.ions.length;i++){const a=M2.ions[i];if(!M2.bg&&a.bg)continue;for(let j=i+1;j<M2.ions.length;j++){const b=M2.ions[j];if(!M2.bg&&b.bg)continue;
+    const ra=a.bg?r*.62:r,rb=b.bg?r*.62:r;let dx=(b.x-a.x)*w,dy=(b.y-a.y)*h,d=Math.hypot(dx,dy),m=ra+rb;if(d<m&&d>.01){const f=(m-d)/2/d;a.x-=dx*f/w;a.y-=dy*f/h;b.x+=dx*f/w;b.y+=dy*f/h}else if(d<=.01){a.y+=.01}}}
+  for(const p of M2.ions){p.x=clamp(p.x,.1,.9);p.y=clamp(p.y,.14,.82)}
+  if(M2.pw){M2.pwT+=dt;if(M2.pwT>3.5&&!S.mic.has(M2.r)){S.mic.add(M2.r);hud();sOK();
+    fbx('#fb2',M2.r==='cu'?'🔵 <b>Cu²⁺(+)</b>는 (−)극으로, 색 없는 <b>SO₄²⁻(−)</b>는 (+)극으로 이동했어요. 이온의 전하와 반대 극으로 끌려가요!':'🟣 <b>MnO₄⁻(−)</b>는 (+)극으로, 색 없는 <b>K⁺(+)</b>는 (−)극으로 이동했어요. 이온의 전하와 반대 극으로 끌려가요!','ok')}}
+}
+function sphere(g,x,y,r,col,ghost,lab,fs,q){
+  if(ghost){g.fillStyle='rgba(148,163,184,.22)';g.strokeStyle='rgba(226,232,240,.85)';g.lineWidth=2;g.setLineDash([4,3]);g.beginPath();g.arc(x,y,r,0,6.2832);g.fill();g.stroke();g.setLineDash([])}
+  else{const gr=g.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);gr.addColorStop(0,'#fff');gr.addColorStop(.25,col);gr.addColorStop(1,'#0f172a');g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,6.2832);g.fill()}
+  if(lab){g.font='900 '+fs+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=3.5;g.strokeStyle=ghost?'rgba(15,23,42,.85)':'rgba(15,23,42,.9)';g.strokeText(lab,x,y);g.fillStyle='#fff';g.fillText(lab,x,y)}
+}
+function plates(g,w,h,y0,y1,pwr){
+  [[0,'#1d4ed8','−','(−)극'],[w-w*.085,'#dc2626','+','(+)극']].forEach(([x,c,s,l])=>{const pw=w*.085;g.fillStyle=c;g.globalAlpha=pwr?1:.7;rr(g,x,y0,pw,y1-y0,10);g.fill();g.globalAlpha=1;g.strokeStyle='#e2e8f0';g.lineWidth=2;g.stroke();
+    g.fillStyle='#fff';g.font='900 '+clamp(pw*.8,16,34)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(s,x+pw/2,(y0+y1)/2);g.font='900 '+clamp(w/42,11,15)+'px sans-serif';g.fillText(l,x+pw/2,y0-10)})}
+function draw2(cv,now,dt){
+  const{g,w,h}=fit(cv);const r=clamp(Math.min(w,h)*.046,11,21);
+  step2(dt,w,h,r);
+  g.clearRect(0,0,w,h);const bgr=g.createLinearGradient(0,0,0,h);bgr.addColorStop(0,'#0f2a4a');bgr.addColorStop(1,'#07101f');g.fillStyle=bgr;g.fillRect(0,0,w,h);
+  g.strokeStyle='rgba(148,163,184,.08)';g.lineWidth=1;for(let x=0;x<w;x+=36){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke()}for(let y=0;y<h;y+=36){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke()}
+  const y0=40,y1=h-44;plates(g,w,h,y0+6,y1,M2.pw);
+  outText(g,'🔬 수용액 속 이온 확대 모습',w/2,19,clamp(w/26,13,20),'#fff');
+  const toR=[],ord=M2.ions.slice().sort((a,b)=>(SP[a.k].vis?1:0)-(SP[b.k].vis?1:0));
+  M2.hit=[];
+  for(const p of ord){if(p.bg&&!M2.bg)continue;const s=SP[p.k],rr0=p.bg?r*.62:r,px=p.x*w,py=p.y*h;M2.hit.push([px,py,rr0,p.k]);
+    sphere(g,px,py,rr0,s.col,!s.vis,s.n,clamp(rr0*.62,8,15))}
+  // 범례
+  const ly=h-20;g.font='800 '+clamp(w/50,10,14)+'px sans-serif';g.textBaseline='middle';
+  g.fillStyle='#e2e8f0';g.textAlign='left';
+  const lx=w*.11;sphere(g,lx,ly,8,'#2f7de1',false);g.fillStyle='#e2e8f0';g.fillText('색이 있는 이온(눈에 보임)',lx+14,ly);
+  const lx2=w*.11+clamp(w*.34,150,260);sphere(g,lx2,ly,8,'',true);g.fillStyle='#e2e8f0';g.textAlign='left';g.fillText('색 없는 이온(눈에 안 보임)',lx2+14,ly);
+  if(!M2.pw)outText(g,'⚡ 오른쪽에서 전원을 켜 보세요',w/2,y0+14,clamp(w/32,12,17),'#fde68a');
+  else{const a=SP[M2.r].dir;pill(g,M2.r==='cu'?'Cu²⁺ → (−)극   SO₄²⁻ → (+)극':'K⁺ → (−)극   MnO₄⁻ → (+)극',w/2,y0+14,'#fde68a','rgba(15,23,42,.8)',clamp(w/40,11,15))}
+}
+// ---- 3: 예측하고 확인 ----
+const I3=[
+ {k:'cu',lab:'Cu²⁺',sub:'파란색',ans:-1,why:'Cu²⁺는 (+)전하를 띤 양이온이라 (−)극 쪽으로 끌려가요.'},
+ {k:'mn',lab:'MnO₄⁻',sub:'보라색',ans:1,why:'MnO₄⁻는 (−)전하를 띤 음이온이라 (+)극 쪽으로 끌려가요.'},
+ {k:'kp',lab:'K⁺',sub:'색 없음',ans:-1,why:'K⁺는 색이 없어 보이지 않지만 (+)전하를 띤 양이온이라 (−)극으로 이동해요.'},
+ {k:'so',lab:'SO₄²⁻',sub:'색 없음',ans:1,why:'SO₄²⁻는 색이 없어 보이지 않지만 (−)전하를 띤 음이온이라 (+)극으로 이동해요.'},
+ {k:'nn',lab:'NO₃⁻',sub:'색 없음',ans:1,why:'NO₃⁻도 (−)전하를 띤 음이온이라 (+)극으로 이동해요. 질산 칼륨 수용액의 이온이 전류가 흐르게 도와줘요.'}];
+const P3={sel:-1,x:.5,tx:.5,shake:0,res:{}};
+function draw3(cv,now,dt){
+  const{g,w,h}=fit(cv);g.clearRect(0,0,w,h);const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#e8eef7');gr.addColorStop(1,'#cfd9e6');g.fillStyle=gr;g.fillRect(0,0,w,h);
+  const pw=w*.1,y0=h*.2,y1=h*.8,cy=(y0+y1)/2;
+  g.fillStyle='#f7f3e3';g.strokeStyle='#d8cfae';g.lineWidth=2;rr(g,pw,y0+10,w-2*pw,y1-y0-20,10);g.fill();g.stroke();
+  g.fillStyle='rgba(190,220,255,.3)';rr(g,pw,y0+10,w-2*pw,y1-y0-20,10);g.fill();
+  plates(g,w,h,y0,y1,P3.sel>=0);
+  outText(g,'⚡ 전류를 흘려 주면 이 이온은 어디로 갈까?',w/2,clamp(h*.08,16,30),clamp(w/30,12,19),'#1e3a8a','rgba(255,255,255,.9)');
+  // 토큰
+  P3.x+=(P3.tx-P3.x)*Math.min(1,dt*3);if(P3.shake>0)P3.shake-=dt*3;
+  const I=I3[P3.sel];
+  if(I){const s=SP[I.k],vis=s.vis,r=clamp(Math.min(w,h)*.085,20,44),px=lerp(pw*1.4,w-pw*1.4,P3.x)+(P3.shake>0?Math.sin(now*60)*8*P3.shake:0);
+    sphere(g,px,cy,r,s.col,!vis,I.lab,clamp(r*.62,11,22));
+    g.font='800 '+clamp(w/38,11,15)+'px sans-serif';g.fillStyle='#1e293b';g.textAlign='center';g.fillText(I.sub+' · '+(s.q==='+'?'(+)전하':'(−)전하'),px,cy+r+16);
+    if(P3.res[I.k]){pill(g,'✔ '+(I.ans<0?'(−)극으로 이동':'(+)극으로 이동'),px,cy-r-16,'#14532d','#dcfce7',clamp(w/34,11,15))}
+  } else outText(g,'👇 아래에서 이온을 골라 보세요',w/2,cy,clamp(w/28,13,20),'#fde68a');
+}
+// ---- UI ----
+function info1(){
+  const row=(k,txt,col)=>{const pr=Math.round(E.prog[k]*100),has=E.paper[k],dn=E.done[k];return `<div class="cr" style="margin:4px 0;font-weight:800"><span style="color:${col}">●</span> ${txt} <span style="margin-left:auto;font-weight:900;color:${dn?'#15803d':'#64748b'}">${!has?'시약 없음':dn?'✔ 이동 완료':(E.pw?'이동 중 '+pr+'%':'전원 대기')}</span></div>`};
+  let h='<div class="kv2">📋 관찰 기록</div>'+row('cu','구리 이온 Cu²⁺ (파란색, (+)) → <b>(−)극</b>','#2f7de1')+row('mn','과망가니즈산 이온 MnO₄⁻ (보라색, (−)) → <b>(+)극</b>','#8e24aa');
+  if(E.inv)h+='<div class="kv2" style="margin-top:6px;font-weight:800">👁 색 없는 이온: SO₄²⁻(−) → (+)극 · K⁺(+) → (−)극 · NO₃⁻(−) → (+)극</div>';
+  $('#info1').innerHTML=h}
+function tip1(){$('#tip1').innerHTML=E.inv?'👁 <b>반투명 입자</b>는 색이 없어 눈에 안 보이는 이온이에요. <b>황산 이온(SO₄²⁻)</b>은 (+)극으로, <b>칼륨 이온(K⁺)</b>은 (−)극으로 이동해요. (거름종이를 적신 질산 칼륨의 K⁺·NO₃⁻도 같은 방향!)':'💡 파란색·보라색이 이동하는 방향을 관찰하세요. 색이 없어 보이지 않는 이온도 움직일까요? <b>"👁 보이지 않는 이온 보기"</b>를 눌러 확인해 보세요.'}
+function ctl1(){
+  $('#selh1').textContent='🧪 스포이트로 거름종이 중앙에 떨어뜨릴 시약';
+  $('#sel1').innerHTML='<button class="btn" data-rg="cu"><span>🔵</span>황산 구리(Ⅱ) 수용액<br>CuSO₄</button><button class="btn" data-rg="mn"><span>🟣</span>과망가니즈산 칼륨<br>KMnO₄ 수용액</button><button class="btn" data-rg="new"><span>🧻</span>새 거름종이로<br>교체</button>';
+  $('#ctl1').innerHTML='<div class="cr"><span class="lb2">⚡ 전원 장치</span>'+[6,9,12].map(v=>`<button class="btn" data-vv="${v}" style="min-width:64px;min-height:64px">${v} V</button>`).join('')+'</div><button class="sw2" id="pw1" style="min-height:68px;margin-top:6px">⏻ 전원 켜기</button><button class="sw2" id="inv1" style="min-height:64px;margin-top:6px">👁 보이지 않는 이온 보기</button>';
+  vvUI()}
+function vvUI(){$$('[data-vv]').forEach(b=>b.classList.toggle('on',+b.dataset.vv===E.V));const p=$('#pw1');if(p){p.classList.toggle('on',E.pw);p.textContent=E.pw?'⏻ 전원 끄기 (ON)':'⏻ 전원 켜기 (OFF)'}const i=$('#inv1');if(i){i.classList.toggle('on',E.inv);i.textContent=E.inv?'👁 보이지 않는 이온 숨기기':'👁 보이지 않는 이온 보기'}}
+function ctl2(){
+  $('#selh2').textContent='🧪 확대해서 볼 수용액';
+  $('#sel2').innerHTML='<button class="btn" data-r2="cu"><span>🔵</span>황산 구리(Ⅱ)<br>CuSO₄ 수용액</button><button class="btn" data-r2="mn"><span>🟣</span>과망가니즈산 칼륨<br>KMnO₄ 수용액</button><button class="btn" id="shuf2"><span>🔀</span>입자 다시<br>섞기</button>';
+  $('#ctl2').innerHTML='<div class="cr"><span class="lb2">⚡ 전압 12 V</span></div><button class="sw2" id="pw2" style="min-height:68px;margin-top:6px">⏻ 전원 켜기</button><button class="sw2" id="bg2" style="min-height:60px;margin-top:6px">🧂 거름종이 속 K⁺·NO₃⁻ 보기</button>';
+  mUI();info2()}
+function mUI(){$$('[data-r2]').forEach(b=>{b.classList.toggle('on',b.dataset.r2===M2.r);b.classList.toggle('seen',S.mic.has(b.dataset.r2))});const p=$('#pw2');if(p){p.classList.toggle('on',M2.pw);p.textContent=M2.pw?'⏻ 전원 끄기 (ON)':'⏻ 전원 켜기 (OFF)'}const b=$('#bg2');if(b){b.classList.toggle('on',M2.bg)}}
+function info2(){
+  $('#info2').innerHTML=M2.r==='cu'?'<div class="kv2">🔵 황산 구리(Ⅱ)는 물에 녹아 이온으로 나뉘어요</div><div class="kv2" style="margin-top:4px">CuSO₄ → <b style="color:#2f7de1">Cu²⁺</b>(파란색, +) + SO₄²⁻(색 없음, −)</div>':'<div class="kv2">🟣 과망가니즈산 칼륨은 물에 녹아 이온으로 나뉘어요</div><div class="kv2" style="margin-top:4px">KMnO₄ → <b style="color:#8e24aa">MnO₄⁻</b>(보라색, −) + K⁺(색 없음, +)</div>';
+  $('#tip2').innerHTML=M2.pw?'👀 (+)이온은 <b>(−)극</b>으로, (−)이온은 <b>(+)극</b>으로 이동해요. 이온을 눌러 보세요!':'💡 이온을 눌러 이름과 전하를 확인하고, 전원을 켜서 이동 방향을 관찰해 보세요.'}
+function ctl3(){
+  $('#selh3').textContent='🧪 이동 방향을 예측할 이온을 고르세요';
+  $('#sel3').className='ins5';$('#sel3').innerHTML=I3.map((o,i)=>`<button class="btn" data-i3="${i}"><b>${o.lab}</b><br><small>${o.sub}</small></button>`).join('');
+  $('#ctl3').innerHTML='<div class="kv2">👉 전류를 흘리면 이 이온은 어느 쪽으로 이동할까요?</div><div class="big3" style="grid-template-columns:1fr 1fr;margin-top:6px"><button class="btn" data-pd="-1" style="background:#dbeafe;border-color:#1d4ed8">◀ (−)극으로<br>이동</button><button class="btn" data-pd="1" style="background:#fee2e2;border-color:#dc2626">(+)극으로 ▶<br>이동</button></div>';
+  i3UI();info3()}
+function i3UI(){$$('[data-i3]').forEach(b=>{const i=+b.dataset.i3;b.classList.toggle('on',i===P3.sel);b.classList.toggle('ok',!!P3.res[I3[i].k])})}
+function info3(){
+  $('#info3').innerHTML='<table class="cmpa"><tr><th>이온</th><th>전하</th><th>색</th><th>이동 방향</th></tr>'+I3.map((o,i)=>{const d=P3.res[o.k];return `<tr class="${i===P3.sel?'cur':''}"><th>${o.lab}</th><td>${d?(SP[o.k].q==='+'?'(+) 양이온':'(−) 음이온'):'?'}</td><td>${o.sub}</td><td>${d?(o.ans<0?'(−)극':'(+)극'):'?'}</td></tr>`}).join('')+'</table>';
+  const all=I3.every(o=>P3.res[o.k]);const c=$('#cc3');c.style.display=all?'':'none';if(all)c.innerHTML='🎉 <b>결론</b><br>'+CONCL}
+function tip3(){$('#tip3').innerHTML='💡 <b>힌트</b>: 양이온(+)은 (−)극이, 음이온(−)은 (+)극이 끌어당겨요. 색이 없는 이온도 마찬가지예요!'}
+// ---- 이벤트 ----
+document.addEventListener('click',e=>{let b;
+  if(b=e.target.closest('[data-rg]')){const k=b.dataset.rg;sTap();
+    if(k==='new'){E.paper={cu:0,mn:0};E.p=[];bgSpawn();E.done={cu:0,mn:0};E.prog={cu:0,mn:0};E.drops={};E.dp=null;E.invT=0;$('#cc1').style.display='none';fbx('#fb1','🧻 새 거름종이로 바꿨어요. 시약을 골라 다시 떨어뜨려 보세요.');$$('#sel1 [data-rg]').forEach(x=>x.classList.remove('on'));info1();return}
+    if(E.dp&&E.t-E.dp.t0<1.7){return}
+    if(E.paper[k]){toast('#toast1','이미 떨어뜨렸어요. "새 거름종이로 교체"를 누르면 다시 할 수 있어요.',2600);return}
+    E.dp={k,t0:E.t,sp:0};b.classList.add('on');fbx('#fb1','💧 스포이트로 '+(k==='cu'?'황산 구리(Ⅱ) 수용액':'과망가니즈산 칼륨 수용액')+'을 거름종이 중앙에 떨어뜨리는 중…');return}
+  if(b=e.target.closest('[data-vv]')){E.V=+b.dataset.vv;sTap();vvUI();toast('#toast1','전압 '+E.V+' V — 전압이 클수록 이온이 더 빨리 이동해요.',2400);return}
+  if(e.target.closest('#pw1')){E.pw=!E.pw;E.pw?sOK():sTap();vvUI();if(E.pw&&!E.paper.cu&&!E.paper.mn)toast('#toast1','먼저 시약을 떨어뜨려 보세요. (전원만 켜도 보이지 않는 이온은 움직여요)',3000);return}
+  if(e.target.closest('#inv1')){E.inv=!E.inv;sTap();vvUI();tip1();info1();return}
+  if(b=e.target.closest('[data-r2]')){M2.r=b.dataset.r2;M2.pw=false;initMic();sTap();mUI();info2();fbx('#fb2','🔬 이온을 눌러 보고, 전원을 켜서 이동을 관찰하세요.');return}
+  if(e.target.closest('#shuf2')){initMic();sTap();return}
+  if(e.target.closest('#pw2')){M2.pw=!M2.pw;sTap();mUI();info2();return}
+  if(e.target.closest('#bg2')){M2.bg=!M2.bg;sTap();mUI();return}
+  if(b=e.target.closest('[data-i3]')){P3.sel=+b.dataset.i3;P3.x=.5;P3.tx=P3.res[I3[P3.sel].k]?(I3[P3.sel].ans<0?.08:.92):.5;sTap();i3UI();info3();fbx('#fb3','🤔 '+I3[P3.sel].lab+'는 어느 극으로 이동할까요?');return}
+  if(b=e.target.closest('[data-pd]')){if(P3.sel<0){toast('#toast3','먼저 이온을 골라 주세요.',2200);return}const I=I3[P3.sel],d=+b.dataset.pd;
+    if(d===I.ans){P3.res[I.k]=1;P3.tx=d<0?.08:.92;S.pred.add(I.k);sOK();fbx('#fb3','⭕ 정답! '+I.why,'ok');hud();i3UI();info3()}
+    else{P3.shake=1;sNO();fbx('#fb3','❌ 다시 생각해 봐요. '+I.lab+'의 전하를 떠올려 보세요. 힌트: 반대 전하끼리 끌어당겨요.','no')}return}
+});
+function pickAt(cv,list,e,tf){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=1e9;for(const o of list){const d=Math.hypot(o[0]-x,o[1]-y);if(d<bd&&d<Math.max(18,(o[2]||9)+8)){bd=d;best=o}}return best}
+$('#a1').addEventListener('pointerdown',e=>{const o=pickAt($('#a1'),E.ghosts||[],e);if(!o){return}const s=SP[o[2]];sTick();
+  toast('#toast1',s.n+' ('+s.kn+'): '+(s.q==='+'?'(+)전하 → (−)극':'(−)전하 → (+)극')+' 으로 이동해요. 색이 없어서 눈에는 보이지 않아요!',3200)});
+$('#a2').addEventListener('pointerdown',e=>{const o=pickAt($('#a2'),M2.hit||[],e);if(!o){return}const s=SP[o[3]];sTick();
+  toast('#toast2',s.n+' ('+s.kn+'): '+(s.q==='+'?'(+)전하를 띤 양이온':'(−)전하를 띤 음이온')+' · '+s.cn+' → '+(s.q==='+'?'(−)극':'(+)극')+' 쪽으로 이동',3200)});
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 이온 이동 실험',S.exp.size,3],['② 이온 확대',S.mic.size,2],['③ 예측',S.pred.size,5]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[2];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=QZ.length?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/'+QZ.length}</div>`}
+const QZ=[
+ {q:'황산 구리(Ⅱ) 수용액의 파란색 이온이 (−)극 쪽으로 이동했다. 이로부터 알 수 있는 사실은?',o:['파란색 구리 이온은 (+)전하를 띠고 있다','파란색 구리 이온은 (−)전하를 띠고 있다','구리 이온은 전하가 없다','(−)극이 파란색을 만들어 낸다'],a:0,e:'(+)전하를 띤 양이온은 (−)극으로 끌려가요. 구리 이온(Cu²⁺)이 (−)극으로 이동했으니 (+)전하를 띤다는 것을 알 수 있어요.'},
+ {q:'보라색 과망가니즈산 이온(MnO₄⁻)은 전류를 흘리면 어느 쪽으로 이동할까?',o:['(+)극','(−)극','이동하지 않는다','양쪽으로 똑같이 퍼진다'],a:0,e:'MnO₄⁻는 (−)전하를 띤 음이온이라서 (+)극 쪽으로 이동해요.'},
+ {q:'색이 없는 황산 이온(SO₄²⁻)과 칼륨 이온(K⁺)은 어떻게 될까?',o:['눈에 보이지 않지만 각각 (+)극, (−)극으로 이동한다','색이 없으니 움직이지 않는다','둘 다 (−)극으로 이동한다','둘 다 (+)극으로 이동한다'],a:0,e:'색이 없어 보이지 않을 뿐, SO₄²⁻(−)는 (+)극으로, K⁺(+)는 (−)극으로 이동해요.'},
+ {q:'거름종이를 질산 칼륨 수용액으로 적시는 까닭으로 알맞은 것은?',o:['이온이 들어 있어 전류가 흐를 수 있게 하려고','거름종이를 파랗게 물들이려고','이온이 이동하지 못하게 막으려고','전원 장치의 전압을 높이려고'],a:0,e:'질산 칼륨 수용액에는 K⁺와 NO₃⁻ 이온이 있어서 거름종이에 전류가 흐를 수 있어요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+function resetAll(){S.exp=new Set();S.mic=new Set();S.pred=new Set();S.quiz=-1;
+  E.pw=false;E.V=12;E.inv=false;E.paper={cu:0,mn:0};E.p=[];E.dp=null;E.t=0;E.invT=0;E.prog={cu:0,mn:0};E.done={cu:0,mn:0};E.drops={};bgSpawn();
+  M2.r='cu';M2.pw=false;M2.bg=true;initMic();P3.sel=-1;P3.x=P3.tx=.5;P3.res={};
+  $('#cc1').style.display='none';
+  ctl1();ctl2();ctl3();tip1();info1();tip3();hud();
+  fbx('#fb1','🧪 시약 버튼을 눌러 스포이트로 거름종이에 떨어뜨린 뒤, 전원을 켜서 색 이온의 이동을 관찰하세요.');
+  fbx('#fb2','🔬 이온을 눌러 이름과 전하를 확인하고, 전원을 켜서 이동 방향을 관찰하세요.');
+  fbx('#fb3','🤔 이온을 하나 고르고, 이동할 극을 예측해 보세요.');setMode(1)}
+$('#btnReset').onclick=resetAll;
+let lastT=0,infT=0;
+function loop(){try{const now=performance.now()/1000,dt=Math.min(.05,now-(lastT||now));lastT=now;
+    step(dt);
+    if(E.dp){const q=E.t-E.dp.t0;if(q>=.55&&!E.dp.sp){E.dp.sp=1;spawnDrop(E.dp.k);sTick();fbx('#fb1','💧 '+(E.dp.k==='cu'?'황산 구리(Ⅱ) 수용액':'과망가니즈산 칼륨 수용액')+'을 떨어뜨렸어요. 이제 전원을 켜 보세요!');info1()}if(q>=1.7)E.dp=null}
+    infT+=dt;if(infT>.3){infT=0;info1();vvUI()}
+    if(mode===1)draw1($('#a1'),now);else if(mode===2)draw2($('#a2'),now,dt);else draw3($('#a3'),now,dt)}catch(e){console.error(e)}requestAnimationFrame(loop)}
+resetAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

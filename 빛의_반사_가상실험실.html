@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>빛의 반사 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+</style></head><body>
+<header>
+  <h1>🔦 빛의 반사 가상실험실</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 반사 법칙 측정</button>
+    <button class="tab" id="tab2">② 정반사 vs 난반사</button>
+    <button class="tab" id="tab3">③ 거울 미로·마을</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 전체 리셋</button>
+</div>
+<main>
+<!-- ① 반사 법칙 -->
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="hudc"><div class="i"><span>입사각 θᵢ</span><b id="hI">0°</b></div><div class="r"><span>반사각 θᵣ</span><b id="hR">0°</b></div><div class="m"><span>거울 면과 이루는 각</span><b id="hM">90°</b></div></div>
+      <div class="kv2">🔦 레이저를 <b>반원 궤도 위에서 끌어</b> 보거나 눈금 버튼을 눌러 보세요.</div>
+      <div class="pres" id="pres"><button class="btn" data-a="0">0°</button><button class="btn" data-a="20">20°</button><button class="btn" data-a="40">40°</button><button class="btn" data-a="60">60°</button><button class="btn" data-a="80">80°</button></div>
+      <div class="row sm"><button class="btn" id="aM">－ 1°</button><button class="btn" id="aP">＋ 1°</button><button class="btn" id="sw">⇄ 반대쪽으로</button></div>
+    </div>
+    <div class="card ctl"><div class="tg" id="tg">
+      <button class="btn on" data-t="laser">🔦 레이저 ON</button><button class="btn on" data-t="normal">📏 법선 보이기</button>
+      <button class="btn on" data-t="proto">📐 각도기 보이기</button><button class="btn warn" data-t="mir">⚠ 거울 면 기준 각도 보기</button></div>
+      <div class="alert" id="al" style="display:none">⚠ 주의! 이 회색 각도는 <b>입사각이 아닙니다.</b> 입사각은 <b>법선</b>과 이루는 각이에요!</div></div>
+    <div class="card ctl"><div class="kv2"><b>📝 측정값 표</b> (교과서 탐구 활동)</div>
+      <table class="dt" id="dt"></table>
+      <div class="row sm"><button class="btn go" id="bRec">📝 측정값 표에 기록</button><button class="btn dng" id="bClr">표 지우기</button></div>
+      <div class="fb" id="fb1">입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 기록해 보세요.</div></div>
+  </div>
+</section>
+<!-- ② 정반사 vs 난반사 -->
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="kv2"><b>🧪 표면 재질 고르기</b></div>
+      <div class="mat" id="mat">
+        <button class="btn" data-k="mirror">🪞 매끄러운 거울<br><small>정반사</small></button>
+        <button class="btn" data-k="lake">🏞 잔잔한 호수<br><small>정반사</small></button>
+        <button class="btn" data-k="paper">📄 울퉁불퉁한 종이<br><small>난반사</small></button>
+        <button class="btn" data-k="wave">🌊 출렁이는 물결<br><small>난반사</small></button></div>
+      <div class="row sm"><button class="btn" id="zoom">🔬 현미경 확대</button><button class="btn" id="more">☀ 빛줄기 5개</button><button class="btn" id="rnd">🎲 다른 표면</button></div>
+      <div class="row"><b>입사 각도</b><input type="range" class="big" id="th2" min="15" max="70" value="40" style="flex:1;height:48px"><b id="th2v" style="min-width:2.6em;text-align:right">40°</b></div></div>
+    <div class="card ctl"><div class="kv2" id="info2"></div><div class="ban" id="ban2" style="display:none"></div></div>
+    <div class="card ctl"><div class="kv2"><b>📋 빛줄기마다 입사각 · 반사각</b></div><div id="tb2"></div></div>
+  </div>
+</section>
+<!-- ③ 미로/마을 -->
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#1e293b"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="kv2"><b>🎯 미션 고르기</b></div>
+      <div class="stg3" id="stg3"></div></div>
+    <div class="card ctl" id="pA"><div class="kv2" id="infoA"></div>
+      <div class="row sm"><button class="btn" id="mRet">↺ 거울 모두 회수</button><button class="btn" id="mHint">💡 힌트</button><button class="btn go" id="mNext" style="display:none">다음 ▶</button></div></div>
+    <div class="card ctl" id="pB" style="display:none"><div class="kv2" id="infoB"></div>
+      <div class="row"><b>🪞 거울 기울기</b><b id="bV" style="margin-left:auto;color:#0f766e">0°</b></div>
+      <input type="range" class="big" id="sB" min="-90" max="90" value="0" style="width:100%;height:52px;flex:none">
+      <div class="hudc"><div class="i"><span>입사각</span><b id="bI">0°</b></div><div class="r"><span>반사각</span><b id="bR">0°</b></div><div class="m"><span>거울 기울기</span><b id="bT">0°</b></div></div>
+      <div class="row sm"><button class="btn go" id="bNext" style="display:none">다음 ▶</button></div></div>
+    <div class="fb" id="fb3">미션을 골라 시작해 보세요.</div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+
+const S={rec:{},mat:new Set(),done:new Set(),quiz:-1};
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+/* ═════════ 모드 ①: 반사 법칙 측정 ═════════ */
+const M1={a:40,side:-1,laser:true,normal:true,proto:true,mir:false,drag:false,snap:-1};
+const PRE=[0,20,40,60,80];
+function geo1(w,h){return {O:{x:w/2,y:h*.74},R:Math.min(w*.40,h*.60)}}
+function arcWedge(g,O,r,a0,a1,fill,stroke){g.beginPath();g.moveTo(O.x,O.y);g.arc(O.x,O.y,r,a0,a1,a1<a0);g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=stroke;g.lineWidth=2.5;g.stroke()}
+function ray(g,x0,y0,x1,y1,col,wd){g.save();g.lineCap='round';g.shadowColor=col;g.shadowBlur=16;g.strokeStyle=col;g.lineWidth=wd+3;g.globalAlpha=.45;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.globalAlpha=1;g.shadowBlur=8;g.lineWidth=wd;g.strokeStyle='#ff5a5a';g.stroke();g.shadowBlur=0;g.lineWidth=wd*.35;g.strokeStyle='#fff3f3';g.stroke();
+  const mx=(x0+x1)/2,my=(y0+y1)/2,an=Math.atan2(y1-y0,x1-x0);g.fillStyle='#ffd0d0';g.beginPath();g.moveTo(mx+Math.cos(an)*10,my+Math.sin(an)*10);g.lineTo(mx-Math.cos(an-.6)*12,my-Math.sin(an-.6)*12);g.lineTo(mx-Math.cos(an+.6)*12,my-Math.sin(an+.6)*12);g.closePath();g.fill();g.restore()}
+function scene1(dt,t){const cv=$('#c1'),{g,w,h}=fit(cv),{O,R}=geo1(w,h),a=M1.a,th=a*D2R,s=M1.side;
+  let bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#0b1220');bg.addColorStop(1,'#1e293b');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  // 실험대
+  g.fillStyle='#7c5a3a';g.fillRect(0,O.y+26,w,h-O.y-26);g.fillStyle='#8b6743';g.fillRect(0,O.y+26,w,6);
+  // 궤도(레일)
+  const Rl=R+34;g.strokeStyle='rgba(250,204,21,.35)';g.lineWidth=3;g.setLineDash([6,8]);g.beginPath();g.arc(O.x,O.y,Rl,Math.PI*1.03,Math.PI*1.97);g.stroke();g.setLineDash([]);
+  // 각도기
+  if(M1.proto){g.beginPath();g.arc(O.x,O.y,R,Math.PI,2*Math.PI);g.closePath();g.fillStyle='rgba(186,222,255,.16)';g.fill();g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=2;g.stroke();
+    g.beginPath();g.arc(O.x,O.y,R*.62,Math.PI,2*Math.PI);g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;g.stroke();
+    for(let d=-90;d<=90;d++){const m10=d%10===0,m5=d%5===0;if(!m5&&d%1!==0)continue;const len=m10?16:m5?11:6,ang=d*D2R,sx=Math.sin(ang),cy=-Math.cos(ang);
+      g.strokeStyle='rgba(255,255,255,'+(m10?.95:.6)+')';g.lineWidth=m10?2:1;g.beginPath();g.moveTo(O.x+sx*R,O.y+cy*R);g.lineTo(O.x+sx*(R-len),O.y+cy*(R-len));g.stroke();
+      if(m10){g.strokeStyle='rgba(255,255,255,.18)';g.lineWidth=1;g.beginPath();g.moveTo(O.x+sx*R*.1,O.y+cy*R*.1);g.lineTo(O.x+sx*(R-len),O.y+cy*(R-len));g.stroke();
+        g.font='800 '+clamp(R*.045,11,15)+'px sans-serif';g.fillStyle='#e0f2fe';g.textAlign='center';g.textBaseline='middle';g.fillText(Math.abs(d),O.x+sx*(R-32),O.y+cy*(R-32))}}}
+  // 거울
+  const mw=R*1.12,mg=g.createLinearGradient(0,O.y,0,O.y+22);mg.addColorStop(0,'#f1f5f9');mg.addColorStop(.35,'#cbd5e1');mg.addColorStop(1,'#64748b');g.fillStyle=mg;g.fillRect(O.x-mw,O.y,mw*2,22);
+  g.fillStyle='#334155';g.fillRect(O.x-mw,O.y+14,mw*2,8);g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=1.5;g.beginPath();g.moveTo(O.x-mw,O.y+.5);g.lineTo(O.x+mw,O.y+.5);g.stroke();
+  outText(g,'거울',O.x+mw-26,O.y+38,15,'#e2e8f0');
+  // 법선
+  if(M1.normal){g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;g.setLineDash([9,7]);g.beginPath();g.moveTo(O.x,O.y);g.lineTo(O.x,O.y-R*1.18);g.stroke();g.setLineDash([]);
+    outText(g,'법선',O.x+(a<12?(s<0?24:-24)*-1:24),O.y-R*1.18-12,16,'#fff');g.fillStyle='rgba(255,255,255,.9)';g.fillRect(O.x-1,O.y-10,0,0);
+    g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(O.x+12,O.y);g.lineTo(O.x+12,O.y-12);g.lineTo(O.x,O.y-12);g.stroke()}
+  // 레이저 위치
+  const L={x:O.x+s*Math.sin(th)*Rl,y:O.y-Math.cos(th)*Rl},ia=Math.atan2(O.y-L.y,O.x-L.x);
+  // 각도 호
+  const aI=-Math.PI/2+s*th,aR=-Math.PI/2-s*th,ra=R*.5;
+  if(M1.laser&&a>0.5){
+    arcWedge(g,O,ra,-Math.PI/2,aI,'rgba(59,130,246,.38)','#60a5fa');arcWedge(g,O,ra,-Math.PI/2,aR,'rgba(249,115,22,.38)','#fb923c');
+    const mi=-Math.PI/2+s*th/2,mr=-Math.PI/2-s*th/2;outText(g,'θᵢ = '+Math.round(a)+'°',O.x+Math.cos(mi)*(ra+(a<25?46:34)),O.y+Math.sin(mi)*(ra+(a<25?46:34)),clamp(R*.055,14,19),'#93c5fd');
+    outText(g,'θᵣ = '+Math.round(a)+'°',O.x+Math.cos(mr)*(ra+(a<25?46:34)),O.y+Math.sin(mr)*(ra+(a<25?46:34)),clamp(R*.055,14,19),'#fdba74')}
+  // 거울 면 기준 각도 (오개념)
+  if(M1.mir&&M1.laser&&a<89.5){const rm=R*.28,hzI=s<0?Math.PI:0,hzR=s<0?0:Math.PI;
+    wedge2(g,O,rm,aI,hzI,'rgba(148,163,184,.45)','#cbd5e1');wedge2(g,O,rm,aR,hzR,'rgba(148,163,184,.3)','#94a3b8');
+    const nd=(a0,a1)=>{let d=a1-a0;while(d>Math.PI)d-=6.2832;while(d<-Math.PI)d+=6.2832;return a0+d/2},mi=nd(aI,hzI),mr=nd(aR,hzR);outText(g,'❌ '+Math.round(90-a)+'°',O.x+Math.cos(mi)*(rm+30),O.y+Math.sin(mi)*(rm+30)+(a<20?-6:0),14,'#e2e8f0');outText(g,Math.round(90-a)+'°',O.x+Math.cos(mr)*(rm+22),O.y+Math.sin(mr)*(rm+22),13,'#cbd5e1');
+    g.fillStyle='rgba(127,29,29,.92)';rr(g,w/2-210,10,420,44,12);g.fill();g.strokeStyle='#fecaca';g.lineWidth=2;g.stroke();g.fillStyle='#fff';g.font='900 15px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('주의! 회색 각도(거울 면과 이루는 각)는 입사각이 아닙니다.',w/2,25);g.fillText('입사각은 법선과 이루는 각이에요!',w/2,43)}
+  // 광선
+  if(M1.laser){const v={x:-s*Math.sin(th),y:-Math.cos(th)},len=Math.max(w,h)*.9;
+    ray(g,L.x,L.y,O.x,O.y,'#ff2a2a',4);ray(g,O.x,O.y,O.x+v.x*len*.62,O.y+v.y*len*.62,'#ff2a2a',4);
+    g.fillStyle='#fff';g.beginPath();g.arc(O.x,O.y,6,0,6.2832);g.fill();
+    if(a<.5){outText(g,'법선과 포개져요 → 왔던 길로 되돌아가요',O.x+(w*.2),O.y-R*.5,clamp(R*.05,13,17),'#fde68a')}}
+  // 레이저 본체
+  g.save();g.translate(L.x,L.y);g.rotate(ia);g.fillStyle='#0b0b0f';rr(g,-110,-17,104,34,6);g.fill();g.fillStyle='#475569';g.fillRect(-60,-17,8,34);g.fillStyle='#1f2937';g.fillRect(-6,-9,6,18);
+  g.fillStyle=M1.laser?'#ff4040':'#4b5563';g.beginPath();g.arc(-2,0,4.5,0,6.2832);g.fill();g.fillStyle='#e5e7eb';g.font='800 12px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('슬릿 레이저',-58,-0);g.restore();
+  // 잡는 손잡이
+  g.strokeStyle='rgba(250,204,21,'+(M1.drag?1:.55+.35*Math.sin(t*4))+')';g.lineWidth=3.5;g.setLineDash([5,5]);g.beginPath();g.arc(L.x,L.y,30,0,6.2832);g.stroke();g.setLineDash([]);
+  if(!M1.laser)outText(g,'🔦 레이저가 꺼져 있어요',w/2,h*.14,18,'#fde68a');
+  hud1()}
+function hud1(){const a=Math.round(M1.a);$('#hI').textContent=M1.laser?a+'°':'–';$('#hR').textContent=M1.laser?a+'°':'–';$('#hM').textContent=M1.laser?(90-a)+'°':'–';
+  $$('#pres .btn').forEach(b=>b.classList.toggle('on',Math.abs(+b.dataset.a-M1.a)<.6));
+  const k=PRE.findIndex(p=>Math.abs(p-M1.a)<.6);$$('#dt td.cur').forEach(x=>x.classList.remove('cur'));if(k>=0)$$('#dt .c'+k).forEach(x=>x.classList.add('cur'))}
+function setAng(a,side,quiet){a=clamp(a,0,88);for(const p of PRE)if(Math.abs(a-p)<=1.4){if(!quiet&&M1.snap!==p)sTick();M1.snap=p;a=p;break}else if(M1.snap===p&&Math.abs(a-p)>1.4)M1.snap=-1;M1.a=Math.round(a*2)/2;if(side)M1.side=side}
+(()=>{const cv=$('#c1');let act=null;
+  const upd=e=>{const r=cv.getBoundingClientRect(),{O}=geo1(r.width,r.height),x=e.clientX-r.left-O.x,y=O.y-(e.clientY-r.top);let a=Math.atan2(Math.abs(x),Math.max(y,1))*R2D;if(y<=1)a=88;setAng(a,Math.abs(x)<3?M1.side:(x<0?-1:1));M1.a=Math.round(M1.a)};
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);act=e.pointerId;M1.drag=true;if(!M1.laser){M1.laser=true;syncTg()}upd(e)});
+  cv.addEventListener('pointermove',e=>{if(act===e.pointerId)upd(e)});
+  const up=e=>{if(act===e.pointerId){act=null;M1.drag=false}};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)})();
+$$('#pres .btn').forEach(b=>b.onclick=()=>{M1.laser=true;M1.a=+b.dataset.a;M1.snap=M1.a;syncTg();sTick()});
+$('#aM').onclick=()=>{M1.a=clamp(Math.round(M1.a)-1,0,88)};$('#aP').onclick=()=>{M1.a=clamp(Math.round(M1.a)+1,0,88)};$('#sw').onclick=()=>{M1.side=-M1.side};
+function syncTg(){$$('#tg .btn').forEach(b=>{const k=b.dataset.t,on=k==='laser'?M1.laser:k==='normal'?M1.normal:k==='proto'?M1.proto:M1.mir;b.classList.toggle('on',on);if(k==='laser')b.textContent=M1.laser?'🔦 레이저 ON':'🔦 레이저 OFF'});
+  $('#al').style.display=M1.mir?'':'none'}
+$$('#tg .btn').forEach(b=>b.onclick=()=>{const k=b.dataset.t;if(k==='laser')M1.laser=!M1.laser;else if(k==='normal')M1.normal=!M1.normal;else if(k==='proto')M1.proto=!M1.proto;else M1.mir=!M1.mir;syncTg();sTick()});
+function dtBuild(){$('#dt').innerHTML='<tr><th style="width:26%">비추는 빛의 각도<br><small>입사각</small></th>'+PRE.map((p,i)=>`<th class="c${i}">${p}°</th>`).join('')+'</tr><tr><th>반사된 빛의 각도<br><small>반사각</small></th>'+PRE.map((p,i)=>`<td class="c${i}${S.rec[i]!=null?' f':''}">${S.rec[i]!=null?S.rec[i]+'°':''}</td>`).join('')+'</tr>'}
+$('#bRec').onclick=()=>{if(!M1.laser){toast('#toast1','🔦 레이저를 켜 주세요',1800);sNO();return}
+  const k=PRE.findIndex(p=>Math.abs(p-M1.a)<1.2);if(k<0){toast('#toast1','📏 표의 각도(0·20·40·60·80°)에 맞춰 보세요',2200);sNO();return}
+  S.rec[k]=Math.round(M1.a);dtBuild();hud();sOK();hud1();const n=Object.keys(S.rec).length;
+  $('#fb1').className=n>=5?'fb good':'fb';$('#fb1').innerHTML=n>=5?'🎉 <b>표를 완성했어요!</b> 입사각이 0°, 20°, 40°, 60°, 80°로 커지면 반사각도 똑같이 커져요. 👉 <b>입사각 = 반사각</b> (반사 법칙)':'✔ 기록했어요 ('+n+'/5). 다른 각도도 측정해 보세요.'};
+$('#bClr').onclick=()=>{S.rec={};dtBuild();hud();$('#fb1').className='fb';$('#fb1').textContent='입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 기록해 보세요.'};
+const sTick=()=>beep(660,760,.06,.07);
+/* ═════════ 모드 ②: 정반사 vs 난반사 ═════════ */
+const M2={k:'mirror',th:40,zoom:false,n:5,seed:7,eye:1};
+const MATI={mirror:{n:'매끄러운 거울',d:0},lake:{n:'잔잔한 호수',d:0},paper:{n:'울퉁불퉁한 종이',d:1},wave:{n:'출렁이는 물결',d:1}};
+function prng(sd){let s=sd>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+let PAP=[];function genPaper(){const r=prng(M2.seed*7919+13);PAP=[];for(let i=0;i<120;i++)PAP.push((r()*2-1)*7.5)}genPaper();
+function SY(x,t){const k=M2.k;if(k==='mirror'||k==='lake')return 0;if(k==='wave')return 11*Math.sin(x*2*Math.PI/105-t*1.8);const u=(x+540)/9,i=Math.floor(u),f=u-i;if(i<0||i>=PAP.length-1)return 0;return PAP[i]*(1-f)+PAP[i+1]*f}
+function SD(x,t){const k=M2.k;if(k==='mirror'||k==='lake')return 0;if(k==='wave')return 11*(2*Math.PI/105)*Math.cos(x*2*Math.PI/105-t*1.8);const u=(x+540)/9,i=Math.floor(u);if(i<0||i>=PAP.length-1)return 0;return (PAP[i+1]-PAP[i])/9}
+function beams2(cx,y0,t){const th=M2.th*D2R,d={x:Math.sin(th),y:Math.cos(th)},N=M2.n,sp=N<=5?60:26,out=[];
+  for(let i=0;i<N;i++){const hx=cx+(i-(N-1)/2)*sp,t0=y0/d.y+80,sx=hx-d.x*t0,sy=y0-d.y*t0;let lo=0,hi=t0*1.6,found=false;
+    for(let tt=0;tt<t0*1.6;tt+=2){const px=sx+d.x*tt,py=sy+d.y*tt;if(py>=y0+SY(px-cx,t)){lo=tt-2;hi=tt;found=true;break}}
+    if(!found)continue;for(let k=0;k<14;k++){const m=(lo+hi)/2,px=sx+d.x*m,py=sy+d.y*m;if(py>=y0+SY(px-cx,t))hi=m;else lo=m}
+    const hxx=sx+d.x*hi,hyy=sy+d.y*hi,sl=SD(hxx-cx,t),nl=Math.hypot(sl,1),n={x:sl/nl,y:-1/nl},dn=d.x*n.x+d.y*n.y;
+    if(dn>=0)continue;const r={x:d.x-2*dn*n.x,y:d.y-2*dn*n.y},ti=Math.acos(clamp(-dn,-1,1))*R2D,tr=Math.acos(clamp(r.x*n.x+r.y*n.y,-1,1))*R2D;
+    out.push({sx,sy,hx:hxx,hy:hyy,n,r,ti,tr,ang:Math.atan2(r.x,-r.y)*R2D})}
+  return out}
+function scene2(dt,t){const cv=$('#c2'),{g,w,h}=fit(cv),cx=w*.46,y0=h*.62,B=beams2(cx,y0,t),th=M2.th;
+  let bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#0b1220');bg.addColorStop(1,'#1e293b');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  // 표면
+  const k=M2.k,L=w*1.2;
+  if(k==='lake'||k==='wave'){g.fillStyle=k==='lake'?'rgba(56,130,200,.55)':'rgba(40,110,190,.6)';g.beginPath();g.moveTo(0,h);for(let x=0;x<=w;x+=3)g.lineTo(x,y0+SY(x-cx,t));g.lineTo(w,h);g.closePath();g.fill()}
+  else if(k==='paper'){g.fillStyle='#f1ead2';g.beginPath();g.moveTo(0,h);for(let x=0;x<=w;x+=3)g.lineTo(x,y0+SY(x-cx,t));g.lineTo(w,h);g.closePath();g.fill()}
+  else{g.fillStyle='#94a3b8';g.fillRect(0,y0,w,h-y0);let mg=g.createLinearGradient(0,y0,0,y0+16);mg.addColorStop(0,'#f8fafc');mg.addColorStop(1,'#94a3b8');g.fillStyle=mg;g.fillRect(0,y0,w,16);g.fillStyle='#334155';g.fillRect(0,y0+16,w,h-y0-16)}
+  g.strokeStyle=k==='mirror'?'#fff':k==='paper'?'#8a7f5a':'#bfe6ff';g.lineWidth=3;g.lineJoin='round';g.beginPath();for(let x=0;x<=w;x+=3){const y=y0+SY(x-cx,t);x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+  outText(g,MATI[k].n+' ('+(MATI[k].d?'난반사':'정반사')+')',w/2,h-24,clamp(w*.03,15,22),'#fde68a');
+  // 눈
+  const Re=Math.min(w*.40,h*.52),eyes=[{n:'A',a:-22},{n:'B',a:th},{n:'C',a:Math.max(74,th+24)}];
+  const cnt=eyes.map(e=>B.filter(b=>Math.abs(b.ang-e.a)<=13).length);
+  // 광선
+  for(const b of B){ray(g,b.sx,b.sy,b.hx,b.hy,'#ff2a2a',2.6);const len=Re*.93;const ex=b.hx+b.r.x*len,ey=b.hy+b.r.y*len;ray(g,b.hx,b.hy,ex,ey,'#ff2a2a',2.6);
+    if(MATI[k].d||M2.zoom){g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=1.5;g.setLineDash([4,4]);g.beginPath();g.moveTo(b.hx,b.hy);g.lineTo(b.hx+b.n.x*30,b.hy+b.n.y*30);g.stroke();g.setLineDash([])}}
+  // 눈 아이콘
+  eyes.forEach((e,i)=>{const ex=cx+Math.sin(e.a*D2R)*Re,ey=y0-Math.cos(e.a*D2R)*Re;e.x=ex;e.y=ey;const sel=M2.eye===i;
+    g.fillStyle=sel?'rgba(250,204,21,.28)':'rgba(255,255,255,.1)';g.beginPath();g.arc(ex,ey,28,0,6.2832);g.fill();g.strokeStyle=sel?'#facc15':'rgba(255,255,255,.4)';g.lineWidth=sel?3:1.5;g.stroke();
+    g.font='28px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';g.fillText('👁',ex,ey);outText(g,'관찰자 '+e.n,ex,ey+(ey<60?44:-40),14,sel?'#fde68a':'#e2e8f0');
+    outText(g,cnt[i]+'/'+B.length+'줄기',ex,ey+(ey<60?62:-58),13,cnt[i]?'#86efac':'#fca5a5')});
+  M2.eyes=eyes;M2.cnt=cnt;M2.B=B;
+  // 법선 눈금 (거시)
+  g.strokeStyle='rgba(255,255,255,.35)';g.setLineDash([8,8]);g.beginPath();g.moveTo(cx,y0);g.lineTo(cx,y0-Re*.8);g.stroke();g.setLineDash([]);
+  // 확대 인셋
+  if(M2.zoom){const ir=Math.min(120,w*.2),icx=ir+14,icy=ir+14,Z=3.4;g.save();g.beginPath();g.arc(icx,icy,ir,0,6.2832);g.fillStyle='#0b1220';g.fill();g.clip();g.translate(icx,icy);g.scale(Z,Z);g.translate(-cx,-(y0-12));
+    if(k==='lake'||k==='wave'){g.fillStyle='rgba(56,130,200,.7)'}else g.fillStyle=k==='paper'?'#f1ead2':'#94a3b8';g.beginPath();g.moveTo(cx-80,y0+60);for(let x=cx-80;x<=cx+80;x+=1.5)g.lineTo(x,y0+SY(x-cx,t));g.lineTo(cx+80,y0+60);g.closePath();g.fill();
+    g.strokeStyle=k==='mirror'?'#fff':'#d6ccaa';g.lineWidth=1.6;g.beginPath();for(let x=cx-80;x<=cx+80;x+=1.5){const y=y0+SY(x-cx,t);x>cx-80?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+    for(const b of B){if(Math.abs(b.hx-cx)>62)continue;g.strokeStyle='#ff4a4a';g.lineWidth=1.3;g.beginPath();g.moveTo(b.hx-(b.sx<b.hx?1:-1)*0-Math.sin(th*D2R)*38,b.hy-Math.cos(th*D2R)*38);g.lineTo(b.hx,b.hy);g.lineTo(b.hx+b.r.x*40,b.hy+b.r.y*40);g.stroke();
+      g.strokeStyle='#fff';g.lineWidth=.9;g.setLineDash([2.5,2.5]);g.beginPath();g.moveTo(b.hx,b.hy);g.lineTo(b.hx+b.n.x*24,b.hy+b.n.y*24);g.stroke();g.setLineDash([])}
+    g.restore();g.strokeStyle='#facc15';g.lineWidth=4;g.beginPath();g.arc(icx,icy,ir,0,6.2832);g.stroke();outText(g,'🔬 표면을 확대하면',icx,icy+ir+16,13,'#fde68a');
+    g.strokeStyle='rgba(250,204,21,.7)';g.lineWidth=2;g.setLineDash([5,5]);g.beginPath();g.arc(cx,y0,14,0,6.2832);g.stroke();g.setLineDash([])}
+  // 관찰자가 보는 모습
+  {const bw=Math.min(170,w*.26),bh=bw*.72,bx=w-bw-12,by=12,ei=M2.eye,e=eyes[ei],my=B.filter(b=>Math.abs(b.ang-e.a)<=13);
+    g.fillStyle='rgba(15,23,42,.92)';rr(g,bx,by,bw,bh,12);g.fill();g.strokeStyle='#facc15';g.lineWidth=2.5;g.stroke();
+    g.save();rr(g,bx+3,by+3,bw-6,bh-6,10);g.clip();g.fillStyle='#38546e';g.fillRect(bx,by,bw,bh);
+    if(!my.length){outText(g,'안 보여요',bx+bw/2,by+bh/2-4,18,'#fca5a5');outText(g,'빛이 오지 않아요',bx+bw/2,by+bh/2+18,12,'#e2e8f0')}
+    else{const sz=bh*.55;g.font=sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';const al=my.length>=B.length?1:clamp(.35+my.length/B.length,.3,.8);for(const b of my){const off=(b.ang-e.a)*1.5;g.globalAlpha=my.length>=B.length?1:Math.max(.22,al/my.length*1.6);g.fillText('🌲',bx+bw/2+off,by+bh/2+4+((b.hx%7)-3))}g.globalAlpha=1}
+    g.restore();outText(g,'관찰자 '+e.n+'가 보는 상',bx+bw/2,by+bh+14,13,'#fde68a')}
+  info2(cnt,B)}
+let info2sig='';
+function info2(cnt,B){const k=M2.k,d=MATI[k].d,sig=k+M2.n+cnt.join('')+M2.th+(k==='wave'?'':'')+M2.seed;if(sig===info2sig&&k!=='wave')return;info2sig=sig;
+  const eT=['A','B','C'].map((n,i)=>`관찰자 <b>${n}</b> ${cnt[i]}/${B.length}`).join(' · ');
+  $('#info2').innerHTML=(d?(k==='paper'?'📄 <b>울퉁불퉁한 종이</b>: 현미경으로 보면 표면에 작은 요철이 있어요. 점마다 법선(점선)이 달라서 빛이 <b>사방으로 흩어져 반사</b>돼요 (난반사).':'🌊 <b>출렁이는 물결</b>: 물결이 일렁이면 점마다 법선이 달라져 빛이 <b>여러 방향으로 흩어져 반사</b>돼요 (난반사).')+'<br>👀 '+eT+(B.length<10?'<br>👉 <b>☀ 빛줄기</b> 버튼으로 줄기 수를 늘려 보세요.':'<br>👉 어느 쪽 관찰자도 빛을 받아 <b>어느 방향에서나 볼 수 있어요</b>.'):(k==='mirror'?'🪞 <b>매끄러운 거울</b>: ':'🏞 <b>잔잔한 호수</b>: ')+'표면이 매끄러워 나란한 빛줄기가 <b>모두 같은 각도로 나란히 반사</b>돼요 (정반사).<br>👀 '+eT+'<br>👉 반사 방향에 있는 <b>관찰자 B</b>에게만 빛이 모여 상이 선명하게 보여요.');
+  const ban=$('#ban2');ban.style.display=d?'':'none';ban.innerHTML='⭐ 난반사도 <b>각각의 지점에서는 반사 법칙(입사각 = 반사각)이 성립한다!</b>';
+  const mid=B.slice().sort((a,b)=>Math.abs(a.hx-B[Math.floor(B.length/2)].hx)-Math.abs(b.hx-B[Math.floor(B.length/2)].hx)).slice(0,5).sort((a,b)=>a.hx-b.hx);
+  $('#tb2').innerHTML='<table class="dt"><tr><th>줄기</th><th>입사각</th><th>반사각</th><th>반사 방향</th></tr>'+mid.map((b,i)=>`<tr><td>${i+1}</td><td style="color:#1d4ed8">${Math.round(b.ti)}°</td><td style="color:#c2410c">${Math.round(b.tr)}°</td><td>${b.ang>=0?'→ ':'← '}${Math.abs(Math.round(b.ang))}°</td></tr>`).join('')+'</table>'}
+(()=>{const cv=$('#c2');cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(!M2.eyes)return;M2.eyes.forEach((ey,i)=>{if(Math.hypot(ey.x-x,ey.y-y)<40){M2.eye=i;sTick()}})})})();
+function matUI(){$$('#mat .btn').forEach(b=>{b.classList.toggle('on',b.dataset.k===M2.k);b.classList.toggle('seen',S.mat.has(b.dataset.k)&&b.dataset.k!==M2.k)})}
+$$('#mat .btn').forEach(b=>b.onclick=()=>{M2.k=b.dataset.k;S.mat.add(M2.k);matUI();hud();sTick();info2sig='';if(MATI[M2.k].d)M2.zoom=true,$('#zoom').classList.add('on');toast('#toast2',MATI[M2.k].n+(MATI[M2.k].d?' → 난반사':' → 정반사'),1800)});
+$('#zoom').onclick=()=>{M2.zoom=!M2.zoom;$('#zoom').classList.toggle('on',M2.zoom)};
+$('#more').onclick=()=>{M2.n=M2.n===5?15:5;$('#more').textContent='☀ 빛줄기 '+M2.n+'개';info2sig=''};
+$('#rnd').onclick=()=>{M2.seed=(M2.seed*31+17)%100003;genPaper();info2sig=''};
+$('#th2').oninput=()=>{M2.th=+$('#th2').value;$('#th2v').textContent=M2.th+'°';info2sig=''};
+S.mat.add('mirror');
+/* ═════════ HUD ═════════ */
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 반사 법칙 측정',Object.keys(S.rec).length,5,5],['② 정반사·난반사',S.mat.size,4,4],['③ 미션',S.done.size,6,6]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[3];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=3?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/3'}</div>`}
+/* ═════════ 퀴즈 ═════════ */
+const QZ=[
+ {q:'입사 광선과 거울 면이 이루는 각도가 30°일 때, 입사각과 반사각은 각각 몇 도일까?',o:['입사각 30°, 반사각 30°','입사각 60°, 반사각 60°','입사각 30°, 반사각 60°','입사각 90°, 반사각 90°'],a:1,e:'함정 주의! 입사각은 거울 면이 아니라 “법선”과 이루는 각이에요. 그래서 90° − 30° = 60°이고, 반사각도 60°예요! (① 거울 면 기준 각도 보기)'},
+ {q:'레이저 빛을 거울 면에 수직(법선 방향)으로 비추면 입사각과 반사각은 몇 도일까?',o:['입사각 90°, 반사각 90°','입사각 0°, 반사각 90°','입사각 0°, 반사각 0° (왔던 길로 되돌아간다)','반사하지 않고 거울을 통과한다'],a:2,e:'입사 광선이 법선과 포개어지므로 입사각은 0°이고, 반사각도 0°가 되어 왔던 길로 그대로 되돌아가요! (① 프리셋 0°)'},
+ {q:'거울처럼 매끄럽지 않은 영화관 스크린이나 책가방을 어느 방향에서나 볼 수 있는 까닭은?',o:['표면에서 빛이 한 방향으로만 나란하게 반사되기 때문','표면에서 빛이 여러 방향으로 흩어져 반사되는 “난반사”가 일어나기 때문','표면에서는 반사 법칙이 성립하지 않기 때문','표면이 스스로 빛을 내기 때문'],a:1,e:'거친 표면에서는 빛이 여러 방향으로 흩어져 반사되는 “난반사”가 일어나요. 난반사도 각각의 지점에서는 반사 법칙이 성립해요! (② 울퉁불퉁한 종이)'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+/* ═════════ 모드 ③: 거울 미로 & 산속 마을 ═════════ */
+const LV=[
+ {nm:'A1 거울 미로 ①',cols:7,rows:5,laser:{c:0,r:3,d:[1,0]},target:{c:4,r:0},walls:[[2,2],[3,2],[5,1],[5,2],[1,0]],slots:[[2,3,'/'],[4,3,'/']],sol:{'4,3':'/'},inv:2,goal:'레이저를 🎯 목표에 맞혀 보세요. 거울은 꼭 필요한 곳에만 쓰면 돼요.'},
+ {nm:'A2 거울 미로 ②',cols:7,rows:5,laser:{c:0,r:4,d:[1,0]},target:{c:0,r:1},walls:[[1,2],[2,2],[4,3],[5,0],[6,3]],slots:[[1,4,'/'],[3,4,'/'],[3,1,'\\'],[5,2,'/']],sol:{'3,4':'/','3,1':'\\'},inv:3,goal:'빛이 두 번 꺾여야 해요. 거울을 눌러 45° / 135°로 바꿔 보세요.'},
+ {nm:'A3 거울 미로 ③',cols:7,rows:5,laser:{c:0,r:0,d:[1,0]},target:{c:2,r:1},walls:[[3,1],[3,2],[1,1],[1,2],[6,2],[6,3],[0,3]],slots:[[5,0,'\\'],[5,3,'/'],[2,3,'\\'],[3,3,'/'],[4,1,'/']],sol:{'5,0':'\\','5,3':'/','2,3':'\\'},inv:4,goal:'빛이 세 번 꺾여야 해요. 함정 슬롯에 거울을 놓으면 길이 엉뚱해져요!'}];
+const VIL=[{e:36,vx:.74,nm:'B1 산속 마을 ① (아침, 태양 고도 36°)'},{e:24,vx:.82,nm:'B2 산속 마을 ② (해가 낮아졌어요, 고도 24°)'},{e:12,vx:.68,nm:'B3 산속 마을 ③ (해질녘, 고도 12°)'}];
+const M3={st:0,mir:{},drag:null,hint:0,won:false,phi:0,tap:null,sig:'',vlit:false};
+function lay(w,h){const L=LV[M3.st],cs=Math.max(30,Math.min((w-24)/L.cols,(h-104)/L.rows)),gw=cs*L.cols,ox=(w-gw)/2,oy=12,ty=oy+cs*L.rows+14;return {L,cs,ox,oy,tray:{x:ox,y:ty,w:gw,h:Math.max(50,Math.min(76,h-ty-8))}}}
+function trace(L,mir){const pts=[[L.laser.c,L.laser.r]],hits=[];let c=L.laser.c,r=L.laser.r,d=L.laser.d.slice(),hit=false;
+  for(let i=0;i<90;i++){const nc=c+d[0],nr=r+d[1];
+    if(nc<0||nr<0||nc>=L.cols||nr>=L.rows||L.walls.some(w=>w[0]===nc&&w[1]===nr)){pts.push([c+d[0]*.5,r+d[1]*.5]);break}
+    c=nc;r=nr;pts.push([c,r]);if(c===L.target.c&&r===L.target.r){hit=true;break}
+    const m=mir[c+','+r];if(m){hits.push([c,r,m]);d=m==='/'?[-d[1]+0,-d[0]+0]:[d[1],d[0]]}}
+  return {pts,hit,hits}}
+function drawMir(g,x,y,cs,o,al,lab){const L=cs*.36,a=o==='/'?[-L,L,L,-L]:[-L,-L,L,L];g.save();g.globalAlpha=al==null?1:al;g.lineCap='round';
+  g.strokeStyle='#475569';g.lineWidth=cs*.2;g.beginPath();g.moveTo(x+a[0],y+a[1]);g.lineTo(x+a[2],y+a[3]);g.stroke();
+  g.strokeStyle='#e2e8f0';g.lineWidth=cs*.11;g.stroke();g.strokeStyle='#bae6fd';g.lineWidth=cs*.035;g.stroke();
+  if(lab)outText(g,o==='/'?'45°':'135°',x+(o==='/'?-cs*.28:cs*.28),y+cs*.34,clamp(cs*.17,10,14),'#fde68a');g.restore()}
+function scene3(dt,t){if(M3.st<3)drawMaze(dt,t);else drawVillage(dt,t)}
+function drawMaze(dt,t){const cv=$('#c3'),{g,w,h}=fit(cv),{L,cs,ox,oy,tray}=lay(w,h);M3.lay={ox,oy,cs,tray,L};
+  g.fillStyle='#0f172a';g.fillRect(0,0,w,h);
+  for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){g.fillStyle=(r+c)%2?'#16243b':'#1b2b45';g.fillRect(ox+c*cs,oy+r*cs,cs,cs)}
+  g.strokeStyle='rgba(148,163,184,.25)';g.lineWidth=1;for(let c=0;c<=L.cols;c++){g.beginPath();g.moveTo(ox+c*cs,oy);g.lineTo(ox+c*cs,oy+L.rows*cs);g.stroke()}for(let r=0;r<=L.rows;r++){g.beginPath();g.moveTo(ox,oy+r*cs);g.lineTo(ox+L.cols*cs,oy+r*cs);g.stroke()}
+  for(const [c,r] of L.walls){const x=ox+c*cs,y=oy+r*cs;g.fillStyle='#64748b';g.fillRect(x+2,y+2,cs-4,cs-4);g.strokeStyle='#475569';g.lineWidth=2;g.strokeRect(x+2,y+2,cs-4,cs-4);g.beginPath();g.moveTo(x+2,y+cs/2);g.lineTo(x+cs-2,y+cs/2);g.moveTo(x+cs/3,y+2);g.lineTo(x+cs/3,y+cs/2);g.moveTo(x+cs*2/3,y+cs/2);g.lineTo(x+cs*2/3,y+cs-2);g.stroke()}
+  // 슬롯
+  const free=Object.keys(L.sol).length>=0?L.inv-Object.keys(M3.mir).length-(M3.drag&&M3.drag.from?0:0)-(M3.drag&&!M3.drag.from?0:0):0;
+  for(const [c,r] of L.slots){const x=ox+c*cs,y=oy+r*cs,k=c+','+r;g.strokeStyle=M3.mir[k]?'rgba(250,204,21,.35)':'#facc15';g.lineWidth=2.5;g.setLineDash([6,5]);g.strokeRect(x+5,y+5,cs-10,cs-10);g.setLineDash([]);
+    if(!M3.mir[k]){g.fillStyle='rgba(250,204,21,.08)';g.fillRect(x+5,y+5,cs-10,cs-10)}}
+  const res=trace(L,M3.mir);
+  // 힌트
+  if(M3.hint>0){M3.hint-=dt;const al=.35+.25*Math.sin(t*8);for(const k in L.sol){const [c,r]=k.split(',').map(Number);drawMir(g,ox+(c+.5)*cs,oy+(r+.5)*cs,cs,L.sol[k],al,true)}}
+  // 광선
+  g.save();g.lineCap='round';g.lineJoin='round';const P=res.pts.map(p=>[ox+(p[0]+.5)*cs,oy+(p[1]+.5)*cs]);
+  const path=()=>{g.beginPath();P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]))};
+  g.shadowColor='#ff2a2a';g.shadowBlur=18;g.strokeStyle='rgba(255,60,60,.5)';g.lineWidth=9;path();g.stroke();g.shadowBlur=6;g.strokeStyle='#ff3030';g.lineWidth=4;path();g.stroke();g.strokeStyle='#ffd6d6';g.lineWidth=1.5;path();g.stroke();g.restore();
+  // 거울
+  for(const k in M3.mir){const [c,r]=k.split(',').map(Number);drawMir(g,ox+(c+.5)*cs,oy+(r+.5)*cs,cs,M3.mir[k],1,true)}
+  for(const [c,r,m] of res.hits){if(cs>=44)outText(g,'입사각=반사각=45°',ox+(c+.5)*cs,oy+r*cs+8,clamp(cs*.15,9,12),'#fecaca')}
+  // 발사기 · 목표
+  {const lc=ox+(L.laser.c+.5)*cs,lr=oy+(L.laser.r+.5)*cs;g.fillStyle='#111827';rr(g,lc-cs*.42,lr-cs*.24,cs*.5,cs*.48,6);g.fill();g.fillStyle='#ef4444';g.beginPath();g.arc(lc+cs*.12,lr,cs*.09,0,6.2832);g.fill();g.strokeStyle='#94a3b8';g.lineWidth=2;rr(g,lc-cs*.42,lr-cs*.24,cs*.5,cs*.48,6);g.stroke();outText(g,'레이저',lc-cs*.2,lr+cs*.38,clamp(cs*.15,9,12),'#e2e8f0')}
+  {const tx=ox+(L.target.c+.5)*cs,ty=oy+(L.target.r+.5)*cs;if(res.hit){g.fillStyle='rgba(250,204,21,'+(.25+.15*Math.sin(t*8))+')';g.beginPath();g.arc(tx,ty,cs*.62,0,6.2832);g.fill()}
+    g.font=Math.round(cs*.62)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(res.hit?'🌟':'🎯',tx,ty)}
+  // 트레이
+  const used=Object.keys(M3.mir).length+(M3.drag&&M3.drag.from?1:0)*0,left=L.inv-used-(M3.drag&&!M3.drag.from?1:0)-(M3.drag&&M3.drag.from?1:0)*0;M3.left=L.inv-Object.keys(M3.mir).length;
+  g.fillStyle='rgba(30,41,59,.95)';rr(g,tray.x,tray.y,tray.w,tray.h,14);g.fill();g.strokeStyle='#475569';g.lineWidth=2;g.stroke();
+  outText(g,'🪞 거울 보관함 — 끌어서 슬롯에 놓고, 눌러서 회전',tray.x+tray.w/2,tray.y+12,clamp(w*.022,11,14),'#cbd5e1');
+  const n=M3.left-(M3.drag&&!M3.drag.from?1:0)+(M3.drag&&M3.drag.from?0:0);for(let i=0;i<Math.max(0,M3.left);i++){const x=tray.x+30+i*Math.min(64,cs*.95),y=tray.y+tray.h*.62;if(i===M3.left-1&&M3.drag&&!M3.drag.from)drawMir(g,x,y,Math.min(48,cs*.8),'/',.3);else drawMir(g,x,y,Math.min(48,cs*.8),'/',1)}
+  if(M3.left<=0)outText(g,'보관함이 비었어요 (↺ 거울 회수)',tray.x+tray.w/2,tray.y+tray.h*.62,13,'#94a3b8');
+  // 드래그 중
+  if(M3.drag){drawMir(g,M3.drag.x,M3.drag.y,cs,M3.drag.o,.9,true)}
+  // 상태
+  if(res.hit&&!M3.drag){outText(g,'🎉 명중! 목표에 레이저가 닿았어요',w/2,oy+L.rows*cs-8,clamp(w*.03,14,20),'#fde68a')}
+  if(res.hit&&!M3.won&&!M3.drag){M3.won=true;S.done.add(M3.st);hud();stgUI();sOK();toast('#toast3','🎉 '+LV[M3.st].nm+' 클리어!',2200);$('#fb3').className='fb good';$('#fb3').textContent='🎉 클리어! 입사각 = 반사각이 되도록 거울을 45°/135°로 놓아서 빛을 꺾었어요.'}
+  if(!res.hit&&M3.won){M3.won=false;$('#fb3').className='fb';$('#fb3').textContent=L.goal}
+  $('#mNext').style.display=res.hit&&M3.st<5?'':'none';
+  const sg=M3.st+'|'+M3.left+'|'+res.hit;if(sg!==M3.sig){M3.sig=sg;$('#infoA').innerHTML=`<b>${L.nm}</b><br>${L.goal}<br>🪞 남은 거울 <b>${Math.max(0,M3.left)}</b>개 · 🔴 광선이 거울에서 꺾일 때 <b>입사각 = 반사각</b> (법선 기준)`}
+}
+function cellOf(x,y){const {ox,oy,cs,L}=M3.lay;const c=Math.floor((x-ox)/cs),r=Math.floor((y-oy)/cs);return (c>=0&&r>=0&&c<L.cols&&r<L.rows)?[c,r]:null}
+function isSlot(L,c,r){return L.slots.some(s=>s[0]===c&&s[1]===r)}
+(()=>{const cv=$('#c3');const pos=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
+  cv.addEventListener('pointerdown',e=>{if(M3.st>=3||!M3.lay)return;e.preventDefault();const [x,y]=pos(e),{tray,L,cs}=M3.lay;try{cv.setPointerCapture(e.pointerId)}catch(_){}
+    const cl=cellOf(x,y);
+    if(cl&&isSlot(L,cl[0],cl[1])){const k=cl[0]+','+cl[1];if(M3.mir[k]){M3.drag={o:M3.mir[k],from:k,x,y,sx:x,sy:y};delete M3.mir[k]}else if(M3.left>0)M3.tap=k;return}
+    if(x>=tray.x&&x<=tray.x+tray.w&&y>=tray.y&&y<=tray.y+tray.h&&M3.left>0){M3.drag={o:'/',from:null,x,y,sx:x,sy:y}}});
+  cv.addEventListener('pointermove',e=>{if(!M3.drag)return;const [x,y]=pos(e);M3.drag.x=x;M3.drag.y=y});
+  const up=e=>{if(M3.st>=3||!M3.lay)return;const [x,y]=pos(e),{L}=M3.lay,cl=cellOf(x,y);
+    if(M3.tap){const k=M3.tap;M3.tap=null;if(cl&&cl.join(',')===k&&!M3.mir[k]&&M3.left>0){M3.mir[k]='/';sTap()}return}
+    const d=M3.drag;if(!d)return;M3.drag=null;const moved=Math.hypot(x-d.sx,y-d.sy)>10;
+    if(d.from&&!moved){M3.mir[d.from]=d.o==='/'?'\\':'/';sTap();return}
+    if(cl&&isSlot(L,cl[0],cl[1])&&!M3.mir[cl.join(',')]){M3.mir[cl.join(',')]=d.o;sTap()}else if(d.from){sNO()}};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',e=>{if(M3.drag&&M3.drag.from)M3.mir[M3.drag.from]=M3.drag.o;M3.drag=null;M3.tap=null})})();
+$('#mRet').onclick=()=>{M3.mir={};M3.drag=null;sTap()};
+$('#mHint').onclick=()=>{M3.hint=4;sTap()};
+$('#mNext').onclick=()=>setStage(M3.st+1);
+$('#bNext').onclick=()=>setStage(M3.st+1);
+
+/* ── 산속 마을 ── */
+const MTN=[[.04,0],[.2,.55],[.38,.3],[.46,.5],[.57,0]];
+function inPoly(p,x,y){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){if(((p[i][1]>y)!==(p[j][1]>y))&&(x<(p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0]))c=!c}return c}
+function vgeo(w,h){const gy=h*.88,poly=MTN.map(p=>[p[0]*w,p[1]===0?gy:p[1]*h]),P={x:.38*w,y:.3*h-6},V=VIL[M3.st-3],pw=Math.max(40,w*.08);return {gy,poly,P,V,vx:V.vx*w,pw}}
+function vcalc(w,h,phi){const G=vgeo(w,h),e=G.V.e*D2R,d={x:Math.cos(e),y:Math.sin(e)},p=phi*D2R;let n={x:Math.sin(p),y:Math.cos(p)};if(n.x*-d.x+n.y*-d.y<0){n={x:-n.x,y:-n.y}}
+  const dn=d.x*n.x+d.y*n.y,r={x:d.x-2*dn*n.x,y:d.y-2*dn*n.y},ti=Math.acos(clamp(-dn,-1,1))*R2D;
+  let ex=G.P.x,ey=G.P.y,occ=false,gx=null;
+  for(let s=4;s<3000;s+=3){const x=G.P.x+r.x*s,y=G.P.y+r.y*s;if(x<-20||x>w+20||y<-20)break;if(s>10&&inPoly(G.poly,x,y)){occ=true;ex=x;ey=y;break}if(y>=G.gy){const k=(G.gy-G.P.y)/r.y;gx=G.P.x+r.x*k;ex=gx;ey=G.gy;break}ex=x;ey=y}
+  const lit=gx!=null&&!occ&&Math.abs(gx-G.vx)<=G.pw;return {G,d,n,r,ti,ex,ey,occ,gx,lit}}
+function solvePhi(w,h){const G=vgeo(w,h),e=G.V.e*D2R,d={x:Math.cos(e),y:Math.sin(e)},vx=G.vx,vy=G.gy;const l=Math.hypot(vx-G.P.x,vy-G.P.y),r={x:(vx-G.P.x)/l,y:(vy-G.P.y)/l};let nx=r.x-d.x,ny=r.y-d.y;const q=Math.hypot(nx,ny);nx/=q;ny/=q;let phi=Math.atan2(-nx,-ny)*R2D;while(phi>90)phi-=180;while(phi<=-90)phi+=180;return phi}
+function wedge2(g,O,rad,a0,a1,fill,stroke){let dl=a1-a0;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;g.beginPath();g.moveTo(O.x,O.y);g.arc(O.x,O.y,rad,a0,a0+dl,dl<0);g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=stroke;g.lineWidth=2;g.stroke()}
+function drawVillage(dt,t){const cv=$('#c3'),{g,w,h}=fit(cv),c=vcalc(w,h,M3.phi),{G,d,n,r}=c,P=G.P,gy=G.gy,e=G.V.e;M3.vw=[w,h];
+  const sk=g.createLinearGradient(0,0,0,gy);sk.addColorStop(0,e>=30?'#38bdf8':e>=18?'#fb923c':'#7c3aed');sk.addColorStop(1,e>=30?'#bae6fd':e>=18?'#fde68a':'#fda4af');g.fillStyle=sk;g.fillRect(0,0,w,h);
+  // 태양
+  const Ls=Math.min(P.x/d.x-40,P.y/d.y-24),S0={x:P.x-d.x*Ls,y:P.y-d.y*Ls};g.fillStyle='rgba(255,240,150,.35)';g.beginPath();g.arc(S0.x,S0.y,34,0,6.2832);g.fill();g.fillStyle='#fde047';g.beginPath();g.arc(S0.x,S0.y,20,0,6.2832);g.fill();
+  // 땅
+  g.fillStyle='#3f6212';g.fillRect(0,gy,w,h-gy);g.fillStyle='#4d7c0f';g.fillRect(0,gy,w,8);
+  // 그림자(마을)
+  const tn=Math.tan(e*D2R);let sx=P.x+(gy-P.y)/tn;const shp=[[P.x,P.y],[G.poly[3][0],G.poly[3][1]],[G.poly[4][0],gy]];
+  if(sx>w){shp.push([w,gy]);shp.push([w,P.y+(w-P.x)*tn])}else shp.push([sx,gy]);g.fillStyle='rgba(15,23,60,.42)';g.beginPath();shp.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();
+  // 산
+  g.beginPath();G.poly.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();const mg=g.createLinearGradient(P.x-60,P.y,P.x+70,gy);mg.addColorStop(0,'#94a3b8');mg.addColorStop(.4,'#64748b');mg.addColorStop(1,'#334155');g.fillStyle=mg;g.fill();
+  g.beginPath();g.moveTo(G.poly[1][0]+10,G.poly[1][1]+8);g.lineTo(P.x,P.y+6);g.lineTo(P.x+34,P.y+36);g.lineTo(P.x+4,P.y+46);g.lineTo(P.x-14,P.y+34);g.closePath();g.fillStyle='rgba(255,255,255,.7)';g.fill();
+  outText(g,'높은 산',(G.poly[1][0]+G.poly[0][0])/2+20,gy-24,15,'#e2e8f0');
+  // 마을
+  const hx=G.vx;for(let i=-2;i<=2;i++){if(i===0)continue;const x=hx+i*G.pw*.9,hh=26+((i*7)&7);g.fillStyle=c.lit?'#fcd34d':'#52525b';g.fillRect(x-15,gy-hh,30,hh);g.fillStyle=c.lit?'#ef4444':'#3f3f46';g.beginPath();g.moveTo(x-19,gy-hh);g.lineTo(x,gy-hh-16);g.lineTo(x+19,gy-hh);g.closePath();g.fill();g.fillStyle=c.lit?'#fff7c2':'#18181b';g.fillRect(x-4,gy-hh+8,8,9)}
+  g.strokeStyle='#facc15';g.lineWidth=4;g.beginPath();g.moveTo(hx-G.pw,gy+4);g.lineTo(hx+G.pw,gy+4);g.stroke();g.beginPath();g.moveTo(hx-G.pw,gy-4);g.lineTo(hx-G.pw,gy+10);g.moveTo(hx+G.pw,gy-4);g.lineTo(hx+G.pw,gy+10);g.stroke();
+  outText(g,'마을 광장',hx,gy+26,15,'#fef9c3');
+  if(c.lit){const gr=g.createRadialGradient(hx,gy,5,hx,gy,G.pw*2.4);gr.addColorStop(0,'rgba(255,240,150,.85)');gr.addColorStop(1,'rgba(255,240,150,0)');g.fillStyle=gr;g.fillRect(hx-G.pw*3,gy-G.pw*3,G.pw*6,G.pw*3.2);outText(g,'☀ 환해졌어요!',hx,gy-G.pw*2.2,clamp(w*.03,15,22),'#fff7ad')}
+  else outText(g,'🌙 그늘 속',hx,gy-62,15,'#c7d2fe');
+  // 광선
+  const ray2=(x0,y0,x1,y1,col)=>ray(g,x0,y0,x1,y1,col,4);
+  ray2(S0.x+d.x*24,S0.y+d.y*24,P.x,P.y,'#facc15');ray2(P.x,P.y,c.ex,c.ey,'#ff7a1a');
+  // 법선, 각
+  const nl=78;g.strokeStyle='#fff';g.lineWidth=2;g.setLineDash([7,6]);g.beginPath();g.moveTo(P.x,P.y);g.lineTo(P.x+n.x*nl,P.y+n.y*nl);g.stroke();g.setLineDash([]);outText(g,'법선',P.x+n.x*(nl+14),P.y+n.y*(nl+14),13,'#fff');
+  const an=Math.atan2(n.y,n.x),a1=Math.atan2(-d.y,-d.x),ar=Math.atan2(r.y,r.x);wedge2(g,P,44,an,a1,'rgba(59,130,246,.45)','#60a5fa');wedge2(g,P,44,an,ar,'rgba(249,115,22,.45)','#fb923c');
+  // 거울
+  const p=M3.phi*D2R,tx=Math.cos(p),ty=-Math.sin(p);g.strokeStyle='#52525b';g.lineWidth=6;g.beginPath();g.moveTo(P.x,P.y+4);g.lineTo(P.x,P.y+22);g.stroke();
+  g.lineCap='round';g.strokeStyle='#475569';g.lineWidth=11;g.beginPath();g.moveTo(P.x-tx*30,P.y-ty*30);g.lineTo(P.x+tx*30,P.y+ty*30);g.stroke();g.strokeStyle='#e2e8f0';g.lineWidth=6;g.stroke();g.strokeStyle='#bae6fd';g.lineWidth=2;g.stroke();g.lineCap='butt';
+  outText(g,'대형 거울',P.x-4,P.y-30,13,'#fff');
+  // 상태
+  M3.vlit=c.lit;
+  if(c.lit&&!M3.won){M3.won=true;S.done.add(M3.st);hud();stgUI();sOK();toast('#toast3','☀ 마을 광장이 환해졌어요!',2200)}
+  if(!c.lit&&M3.won)M3.won=false;
+  $('#bNext').style.display=c.lit&&M3.st<5?'':'none';
+  const ti=Math.round(c.ti);$('#bV').textContent=Math.round(M3.phi)+'°';$('#bI').textContent=ti+'°';$('#bR').textContent=ti+'°';$('#bT').textContent=Math.round(M3.phi)+'°';
+  const fb=$('#fb3');let msg,cls='fb';
+  if(c.lit){msg='☀ 성공! 법선이 입사 광선과 반사 광선의 한가운데에 오도록 거울을 기울였어요 (입사각 = 반사각 = '+ti+'°).';cls='fb good'}
+  else if(c.occ)msg='반사된 빛이 산에 막혔어요. 거울을 조금 더 눕혀 보세요.';
+  else if(c.gx==null)msg='반사된 빛이 하늘로 날아가요. 거울을 더 기울여 빛을 아래로 보내 보세요.';
+  else msg=c.gx<G.vx?'빛이 마을보다 왼쪽(산 쪽)에 떨어져요. 거울 기울기를 바꿔 보세요.':'빛이 마을보다 오른쪽에 떨어져요. 거울 기울기를 바꿔 보세요.';
+  if(fb.textContent!==msg||fb.className!==cls){fb.className=cls;fb.textContent=msg}}
+$('#sB').oninput=()=>{M3.phi=+$('#sB').value;sTick()};
+
+/* ── 미션 선택 ── */
+const STN=['A1 미로 ①','A2 미로 ②','A3 미로 ③','B1 산속 마을 ①','B2 산속 마을 ②','B3 산속 마을 ③'];
+function stgUI(){$('#stg3').innerHTML=STN.map((n,i)=>`<button class="btn${M3.st===i?' on':''}${S.done.has(i)?' ok':''}" data-i="${i}">${S.done.has(i)?'✔ ':''}${n}</button>`).join('');$$('#stg3 .btn').forEach(b=>b.onclick=()=>setStage(+b.dataset.i))}
+function setStage(i){M3.st=clamp(i,0,5);M3.mir={};M3.drag=null;M3.tap=null;M3.hint=0;M3.won=false;M3.phi=0;M3.sig='';$('#sB').value=0;
+  const maze=M3.st<3;$('#pA').style.display=maze?'':'none';$('#pB').style.display=maze?'none':'';$('#mNext').style.display='none';$('#bNext').style.display='none';
+  if(maze){$('#fb3').className='fb';$('#fb3').textContent=LV[M3.st].goal}
+  else{const V=VIL[M3.st-3];$('#infoB').innerHTML='<b>'+V.nm+'</b><br>높은 산에 가려 마을은 그늘이에요. 산꼭대기 <b>대형 거울</b>의 기울기를 슬라이더로 조절해 햇빛을 <b>마을 광장</b>으로 보내세요.<br>💡 법선은 입사 광선과 반사 광선의 한가운데에 있어야 해요.'}
+  stgUI()}
+
+/* ═════════ 리셋 · 루프 ═════════ */
+function resetAll(){
+  Object.assign(M1,{a:40,side:-1,laser:true,normal:true,proto:true,mir:false,drag:false,snap:-1});syncTg();S.rec={};dtBuild();
+  $('#fb1').className='fb';$('#fb1').textContent='입사각을 0°, 20°, 40°, 60°, 80°에 맞추고 기록해 보세요.';
+  Object.assign(M2,{k:'mirror',th:40,zoom:false,n:5,seed:7,eye:1});genPaper();$('#th2').value=40;$('#th2v').textContent='40°';$('#zoom').classList.remove('on');$('#more').textContent='☀ 빛줄기 5개';S.mat=new Set(['mirror']);matUI();info2sig='';
+  S.done=new Set();S.quiz=-1;setStage(0);hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode===1)scene1(dt,t);else if(mode===2)scene2(dt,t);else scene3(dt,t)}catch(e){console.error(e)}
+  requestAnimationFrame(loop)}
+dtBuild();syncTg();matUI();setStage(0);hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

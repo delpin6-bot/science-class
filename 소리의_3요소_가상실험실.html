@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>소리의 3요소 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:1;min-height:150px}
+.bin{border:4px dashed #94a3b8;border-radius:14px;padding:6px;font-weight:900;background:#fff;display:flex;flex-direction:column;gap:5px;align-content:flex-start;font-size:clamp(13px,1.15vw,17px);line-height:1.25}.bin.hot{border-color:#f59e0b;background:#fffbeb}.bin small{font-weight:700;color:var(--mut);font-size:.78em}
+.cardf{min-height:100px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;font-size:clamp(12px,1.05vw,16px);text-align:center}.cardf span{font-size:clamp(26px,2.8vw,40px)}.cardf.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardf.back{background:#eff6ff;border-color:#60a5fa}.cardf.back small{font-weight:800;color:#1e3a8a;font-size:.9em}.cardf.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+.ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.06);width:150px}
+input[type=range].big{width:100%;height:48px}
+.rec td{font-size:clamp(11px,.95vw,14px);line-height:1.25;vertical-align:middle}.rec .ic{display:inline-block;line-height:1}
+.lr{display:grid;grid-template-columns:minmax(96px,150px) minmax(0,1fr) 52px;gap:8px;align-items:center}.lr b{text-align:right;font-variant-numeric:tabular-nums;font-size:clamp(14px,1.2vw,19px)}
+.lt{min-height:56px!important;line-height:1.15}
+.lt.r.on{background:#fecaca;border-color:#ef4444;color:#7f1d1d}.lt.g.on{background:#bbf7d0;border-color:#22c55e;color:#14532d}.lt.b.on{background:#bfdbfe;border-color:#3b82f6;color:#1e3a8a}
+.lt.w.on{background:#f1f5f9;border-color:#475569;color:#0f172a}
+.r2{accent-color:#dc2626}.g2s{accent-color:#16a34a}.b2s{accent-color:#2563eb}
+.sw{display:flex;align-items:center;gap:10px}.sw i{display:block;width:clamp(56px,6vw,96px);height:clamp(56px,6vw,96px);border-radius:14px;border:3px solid #334155;flex:0 0 auto}
+.sw div{font-weight:900;line-height:1.35;font-size:clamp(14px,1.25vw,20px)}.sw small{display:block;font-weight:800;color:var(--mut);font-size:.78em}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found span{min-height:40px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;color:#94a3b8;font-weight:900;display:inline-flex;align-items:center;gap:6px;font-size:clamp(12px,1.05vw,16px)}.found span.on{border-style:solid;border-color:#22c55e;background:#f0fdf4;color:#166534}
+.found i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #334155}
+.ptab{width:100%;border-collapse:collapse;font-weight:800;font-size:clamp(11px,.98vw,15px);text-align:center}.ptab th,.ptab td{border:2px solid #cbd5e1;padding:4px 3px}.ptab th{background:#dbeafe;color:#1e3a8a}.ptab td i{display:inline-block;width:22px;height:22px;border-radius:6px;border:2px solid #334155;vertical-align:middle}
+.ptab td.cur{outline:3px solid #f59e0b}
+.pxs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pxs .btn{min-height:52px;padding:2px 4px;line-height:1.1;font-size:clamp(11px,.98vw,15px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.pxs .btn i{width:30px;height:14px;border-radius:4px;border:2px solid #334155}.pxs .btn.seen{border-color:#22c55e}.pxs .btn.on{border-color:#f59e0b;background:#fffbeb}
+.bars{display:grid;gap:5px}.bars div{display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.bars em{display:block;height:20px;border-radius:6px;background:#e2e8f0;position:relative;overflow:hidden}.bars em u{display:block;height:100%;width:0}
+.c4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c4 .btn{min-height:76px;line-height:1.25;padding:4px 6px;font-size:clamp(13px,1.15vw,18px)}.c4 .btn span{display:block;font-size:1.7em}.c4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.c4 .btn.ok{border-color:#22c55e}
+.info4{font-weight:800;line-height:1.6;font-size:clamp(13px,1.15vw,18px)}.info4 b{color:#1d4ed8}
+.prs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.prs .btn{min-height:52px;padding:2px 4px;line-height:1.15;font-size:clamp(12px,1.05vw,16px)}
+.ins4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ins4 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(12px,1.05vw,16px)}.ins4 .btn span{display:block;font-size:1.5em}.ins4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.ins5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ins5 .btn{min-height:56px;line-height:1.15;padding:2px 4px;font-size:clamp(12px,1.05vw,16px)}.ins5 .btn.on{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.stat div{border:3px solid var(--line);border-radius:12px;padding:4px 8px;background:#f8fafc;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.stat b{display:block;font-size:clamp(20px,2vw,30px);font-variant-numeric:tabular-nums;color:#1d4ed8}
+.tip{border-radius:12px;padding:9px 13px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(13px,1.12vw,18px)}.tip b{color:#be123c}
+.sw2{min-height:56px;border-radius:14px;border:3px solid #94a3b8;background:#f8fafc;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:clamp(14px,1.2vw,19px)}.sw2.on{background:#dcfce7;border-color:#22c55e;color:#14532d}
+.sldr{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.sldr b{text-align:right;font-variant-numeric:tabular-nums}
+.sldr.dis{opacity:.45}
+</style></head><body>
+<header>
+  <h1>🔊 소리의 3요소</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 세기·진폭</button>
+    <button class="tab" id="tab2">② 높낮이·진동수</button>
+    <button class="tab" id="tab3">③ 음색·파형</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode on g2" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="tip" id="tip1">🎵 <b>큰 소리는 작은 소리보다 진폭이 커요.</b> 소리의 세기는 파동의 <b>진폭</b>에 따라 달라져요.</div></div>
+    <div class="card ctl"><div class="kv2">🪘 칼림바의 금속 막대를 눌러 튕겨 보세요 <small style="font-weight:700;color:var(--mut)">(왼쪽 화면의 막대)</small></div>
+      <div class="sldr"><span>튕기는 세기</span><input type="range" class="big" id="str" min="10" max="100" value="55"><b id="strv">55</b></div>
+      <div class="seg" id="pre1" style="grid-template-columns:repeat(3,1fr)"><button class="btn" data-s="20">🤏 약하게</button><button class="btn" data-s="55">👆 보통</button><button class="btn" data-s="95">💪 세게</button></div>
+      <button class="sw2 on" id="sus1">🔁 계속 보기 <small>(슬라이더를 움직이면 파형이 바로 바뀌어요)</small></button></div>
+    <div class="card ctl"><div class="stat" id="stat1"></div></div>
+    <div class="fb" id="fb1"></div>
+  </div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="tip" id="tip2">🎵 <b>높은 소리는 낮은 소리보다 진동수가 커요.</b> 소리의 높낮이는 파동의 <b>진동수</b>에 따라 달라져요.</div></div>
+    <div class="card ctl"><div class="seg" id="ins2" style="grid-template-columns:1fr 1fr"><button class="btn on" data-i="k">🪘 칼림바 막대 길이</button><button class="btn" data-i="r">🎶 리코더 구멍 막기</button></div>
+      <div id="ctlK"><div class="sldr"><span>막대 길이</span><input type="range" class="big" id="len" min="30" max="120" value="70"><b id="lenv">7.0 cm</b></div>
+        <div class="seg" id="pre2" style="grid-template-columns:repeat(3,1fr)"><button class="btn" data-l="40">짧은 막대<br><small>4 cm</small></button><button class="btn" data-l="70">보통 막대<br><small>7 cm</small></button><button class="btn" data-l="110">긴 막대<br><small>11 cm</small></button></div></div>
+      <div id="ctlR" style="display:none"><div class="kv2">👆 구멍을 눌러 막거나 열어 보세요 (왼쪽 화면의 구멍도 눌러져요)</div><div class="seg" id="holes" style="grid-template-columns:repeat(6,1fr)"></div>
+        <div class="seg" style="grid-template-columns:1fr 1fr"><button class="btn" id="allOpen">🕳️ 모두 열기</button><button class="btn" id="allCov">🖐️ 모두 막기</button></div></div>
+      <button class="sw2 on" id="ref2">👥 낮은 소리(기준)와 겹쳐 보기</button>
+      <button class="btn go" id="play2" style="min-height:56px">🔊 소리 들어 보기</button></div>
+    <div class="card ctl"><div class="stat" id="stat2"></div></div>
+    <div class="fb" id="fb2"></div>
+  </div>
+</section>
+<section class="mode g2" id="m3">
+  <div class="col"><div class="card stagewrap" style="background:#0f172a"><canvas id="c3" style="touch-action:none"></canvas><div class="toast" id="toast3"></div></div></div>
+  <div class="col" style="overflow:auto">
+    <div class="card ctl"><div class="tip" id="tip3">🎵 세기와 높낮이가 같아도 <b>파형</b>이 다르기 때문에 악기 소리를 구별할 수 있어요. 이것을 소리의 <b>음색</b>이라고 해요.</div></div>
+    <div class="card ctl"><div class="kv2">🔵 악기 A <small style="font-weight:700;color:var(--mut)">(파랑 파형)</small></div><div class="ins4" id="selA"></div>
+      <div class="kv2" style="margin-top:4px">🟠 악기 B와 겹쳐 비교 <small style="font-weight:700;color:var(--mut)">(주황 파형)</small></div><div class="ins5" id="selB"></div>
+      <div class="row sm"><button class="btn go" id="playA">🔊 A 듣기</button><button class="btn go" id="playB">🔊 B 듣기</button></div></div>
+    <div class="card ctl"><button class="sw2 on" id="lock3">🔒 높이·세기 고정 (A4 440 Hz · 같은 진폭)</button>
+      <div class="sldr dis" id="rf3"><span>높낮이</span><input type="range" class="big" id="f3" min="200" max="800" value="440" disabled><b id="f3v">440</b></div>
+      <div class="sldr dis" id="ra3"><span>세기</span><input type="range" class="big" id="a3" min="20" max="95" value="70" disabled><b id="a3v">70</b></div></div>
+    <div class="fb" id="fb3"></div>
+  </div>
+</section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg)=>{g.font='900 13px sans-serif';const w=g.measureText(t).width+14;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-12,w,24,12);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+function ray(g,x0,y0,x1,y1,col,wd,al,noarrow){g.save();g.lineCap='round';const A=al==null?1:al;g.shadowColor=col;g.shadowBlur=12;g.strokeStyle=col;g.lineWidth=wd+3;g.globalAlpha=A*.4;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+  g.globalAlpha=A;g.shadowBlur=5;g.lineWidth=wd;g.stroke();g.shadowBlur=0;g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=Math.max(1,wd*.35);g.stroke();
+  if(!noarrow&&Math.hypot(x1-x0,y1-y0)>40){const mx=(x0+x1)/2,my=(y0+y1)/2,an=Math.atan2(y1-y0,x1-x0);g.fillStyle='#fff';g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();g.moveTo(mx+Math.cos(an)*11,my+Math.sin(an)*11);g.lineTo(mx-Math.cos(an-.6)*12,my-Math.sin(an-.6)*12);g.lineTo(mx-Math.cos(an+.6)*12,my-Math.sin(an+.6)*12);g.closePath();g.fill();g.stroke()}g.restore()}
+const S={weak:0,strong:0,lo:false,hi:false,ins:new Set(['flute']),quiz:-1};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+/* ═════════ 파형·소리 ═════════ */
+const HARM={sine:[1],flute:[1,.12,.03],violin:[1,.5,.333,.25,.2,.167,.143,.125,.111,.1],kalimba:[1,0,0,.15,0,.1],recorder:[1,0,.24,0,.12,0,.07]};
+const NORM={};Object.keys(HARM).forEach(k=>{let m=0;for(let p=0;p<1;p+=.002){let s=0;HARM[k].forEach((a,i)=>s+=a*Math.sin(6.2832*(i+1)*p));m=Math.max(m,Math.abs(s))}NORM[k]=m});
+function wv(id,ph){let s=0;const h=HARM[id];for(let i=0;i<h.length;i++)if(h[i])s+=h[i]*Math.sin(6.2832*(i+1)*ph);return s/NORM[id]}
+const INS={flute:{nm:'플루트',ic:'🪈',col:'#38bdf8'},violin:{nm:'바이올린',ic:'🎻',col:'#fb923c'},kalimba:{nm:'칼림바',ic:'🎵',col:'#4ade80'},recorder:{nm:'리코더',ic:'🎶',col:'#f472b6'}};
+let AC2=null;
+function tone(f,id,peak,dur,pluck){try{AC2=AC2||new (window.AudioContext||window.webkitAudioContext)();if(AC2.state==='suspended')AC2.resume();const a=AC2,im=new Float32Array(HARM[id].length+1),re=new Float32Array(im.length);HARM[id].forEach((v,i)=>im[i+1]=v);
+  const o=a.createOscillator(),gn=a.createGain(),t=a.currentTime;o.setPeriodicWave(a.createPeriodicWave(re,im));o.frequency.value=f;const pk=Math.max(.003,peak);gn.gain.setValueAtTime(.0001,t);gn.gain.exponentialRampToValueAtTime(pk,t+.012);
+  if(!pluck)gn.gain.setValueAtTime(pk,t+dur-.15);gn.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(gn);gn.connect(a.destination);o.start(t);o.stop(t+dur+.05)}catch(e){}}
+/* 오실로스코프 */
+function scope(g,x,y,w,h,Wms,traces,opt){opt=opt||{};g.save();g.fillStyle='#04140b';rr(g,x,y,w,h,12);g.fill();g.save();g.beginPath();g.rect(x,y,w,h);g.clip();
+  const cy=y+h/2,ay=h/2*.9,nx=opt.nx||10;g.lineWidth=1;g.strokeStyle='#0f3d22';
+  for(let i=0;i<=nx;i++){const xx=x+w*i/nx;g.beginPath();g.moveTo(xx,y);g.lineTo(xx,y+h);g.stroke()}for(let j=0;j<=8;j++){const yy=y+h*j/8;g.beginPath();g.moveTo(x,yy);g.lineTo(x+w,yy);g.stroke()}
+  g.strokeStyle='#166534';g.lineWidth=1.5;g.beginPath();g.moveTo(x,cy);g.lineTo(x+w,cy);g.stroke();
+  (opt.under||(()=>0))(g,{x,y,w,h,cy,ay});
+  traces.forEach(t=>{g.beginPath();for(let px=0;px<=w;px+=2){const tau=px/w*Wms/1000,v=t.amp*wv(t.id,t.f*(tau+(t.phi||0))),yy=cy-v*ay;px?g.lineTo(x+px,yy):g.moveTo(x+px,yy)}
+    g.save();g.globalAlpha=t.al==null?1:t.al;g.strokeStyle=t.col;g.lineWidth=t.lw||3;g.lineJoin='round';g.shadowColor=t.col;g.shadowBlur=t.al<1?0:10;g.stroke();g.restore()});
+  g.restore();g.strokeStyle='#334155';g.lineWidth=2;rr(g,x,y,w,h,12);g.stroke();
+  if(!opt.mini){g.font='800 12px sans-serif';g.fillStyle='#86efac';g.textBaseline='middle';g.textAlign='left';[['+1',y+h*.05],['0',cy],['−1',y+h*.95]].forEach(a=>g.fillText(a[0],x+6,a[1]));
+    g.textAlign='center';for(let i=1;i<nx;i+=2)g.fillText((Wms*i/nx).toFixed(0),x+w*i/nx,y+h-9);g.textAlign='right';g.fillText('시간 (ms)',x+w-8,y+h-24)}
+  g.restore()}
+const phi=t=>t*.0008;
+/* ═════════ 모드 1: 세기와 진폭 ═════════ */
+const TF=[261.63,293.66,329.63,349.23,392,440,493.88],TN=['도','레','미','파','솔','라','시'];
+const M1={str:55,sus:true,t0:-99,a0:0,tine:2,L:null,wA:0,sA:0};
+const ampOf=s=>.08+.87*(s-10)/90;
+function amp1(now){return M1.sus?ampOf(M1.str):M1.a0*Math.exp(-(now-M1.t0)/1.6)}
+function pluck(i){const now=performance.now()/1000;M1.tine=i;M1.a0=ampOf(M1.str);M1.t0=now;tone(TF[i],'kalimba',.04+.4*M1.a0,1.8,true);
+  if(M1.str<=40){M1.wA=M1.a0;if(!S.weak){S.weak=1;sOK()}}if(M1.str>=70){M1.sA=M1.a0;if(!S.strong){S.strong=1;sOK()}}
+  if(S.weak&&S.strong)fbx('#fb1','🎉 <b>약하게</b>(진폭 '+M1.wA.toFixed(2)+')와 <b>세게</b>(진폭 '+M1.sA.toFixed(2)+')를 모두 비교했어요! 세게 튕길수록 파동의 위아래 폭, 즉 <b>진폭</b>이 커지고 소리도 커져요.','good');
+  else fbx('#fb1',TN[i]+' 막대를 '+(M1.str<=40?'<b>약하게</b>':M1.str>=70?'<b>세게</b>':'보통 세기로')+' 튕겼어요. 파형의 위아래 폭(진폭)을 확인해 보세요. '+(S.weak?'':'약하게 ')+(S.strong?'':'세게 ')+(S.weak&&S.strong?'':'도 튕겨 비교해 보세요.'));
+  info1();hud()}
+function info1(){const a=amp1(performance.now()/1000);$('#stat1').innerHTML=`<div>진폭 A<b>${a.toFixed(2)}</b></div><div>소리의 세기<b>${a<.05?'거의 없음':a<.35?'작은 소리':a<.65?'보통 소리':'큰 소리'}</b></div><div>약하게 튕긴 진폭<b>${M1.wA?M1.wA.toFixed(2):'–'}</b></div><div>세게 튕긴 진폭<b>${M1.sA?M1.sA.toFixed(2):'–'}</b></div>`}
+function scene1(){const {g,w,h}=fit($('#c1')),now=performance.now()/1000,a=Math.max(0,amp1(now)),sh=Math.round(h*.54);M1.L={w,h,sh};g.fillStyle='#0f172a';g.fillRect(0,0,w,h);
+  const under=(g,r)=>{[[M1.wA,'약하게 튕긴 소리','#60a5fa'],[M1.sA,'세게 튕긴 소리','#f87171']].forEach(([A,t,c])=>{if(!A)return;g.setLineDash([8,6]);g.strokeStyle=c;g.lineWidth=2;[-1,1].forEach(s=>{g.beginPath();g.moveTo(r.x,r.cy-s*A*r.ay);g.lineTo(r.x+r.w,r.cy-s*A*r.ay);g.stroke()});g.setLineDash([]);g.font='900 12px sans-serif';g.fillStyle=c;g.textAlign='right';g.fillText(t+' (A='+A.toFixed(2)+')',r.x+r.w-8,r.cy-A*r.ay-9)})};
+  scope(g,10,10,w-20,sh,20,a>.012?[{f:TF[M1.tine],amp:a,id:'kalimba',col:'#4ade80',phi:phi(now)}]:[],{under});
+  const cy=10+sh/2,ay=sh/2*.9,ax=w-46;if(a>.04){g.strokeStyle='#fde68a';g.fillStyle='#fde68a';g.lineWidth=3;g.beginPath();g.moveTo(ax,cy);g.lineTo(ax,cy-a*ay);g.stroke();g.beginPath();g.moveTo(ax,cy-a*ay);g.lineTo(ax-7,cy-a*ay+12);g.lineTo(ax+7,cy-a*ay+12);g.closePath();g.fill();outText(g,'진폭 A',ax-28,cy-a*ay/2,13,'#fde68a')}
+  if(a<=.012)outText(g,'막대를 튕겨 보세요 👇',w/2,10+sh/2,18,'#fde68a');
+  const by=10+sh+16,bh=h-by-10,bx=w*.06,bw=w*.88;g.fillStyle='#92400e';rr(g,bx,by+bh*.52,bw,bh*.58,18);g.fill();g.fillStyle='#b45309';rr(g,bx+6,by+bh*.52+6,bw-12,bh*.58-12,14);g.fill();
+  g.fillStyle='#d6d3d1';g.fillRect(bx+14,by+bh*.5,bw-28,10);const tw=Math.min(34,bw/7*.5);
+  for(let i=0;i<7;i++){const x=bx+bw*(i+.5)/7,len=bh*(.42-i*.025),act=(i===M1.tine)&&(M1.sus||now-M1.t0<3),off=act?Math.sin(now*45)*Math.min(14,a*16):0;
+    const gr=g.createLinearGradient(x-tw/2,0,x+tw/2,0);gr.addColorStop(0,'#94a3b8');gr.addColorStop(.5,'#f1f5f9');gr.addColorStop(1,'#94a3b8');g.fillStyle=gr;g.strokeStyle=i===M1.tine?'#fde68a':'#475569';g.lineWidth=i===M1.tine?3:1.5;
+    g.beginPath();g.moveTo(x-tw/2,by+bh*.5);g.lineTo(x-tw/2+off,by+bh*.5-len);g.lineTo(x+tw/2+off,by+bh*.5-len);g.lineTo(x+tw/2,by+bh*.5);g.closePath();g.fill();g.stroke();
+    if(act&&a>.05){g.strokeStyle='rgba(253,230,138,'+Math.min(.8,a)+')';g.lineWidth=2;for(let k=1;k<=2;k++){g.beginPath();g.arc(x,by+bh*.5-len,tw*.7+k*8+(now*30%8),-2.6,-.55);g.stroke()}}
+    outText(g,TN[i],x,by+bh*.72,clamp(tw*.55,12,18),'#fff','rgba(69,26,3,.9)')}
+  pill(g,'👆 막대를 눌러 튕기기',w/2,by+bh*.9,'#fde68a')}
+(()=>{const cv=$('#c1');cv.onpointerdown=e=>{const L=M1.L;if(!L)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(y<10+L.sh+16)return;const bx=L.w*.06,bw=L.w*.88,i=Math.floor((x-bx)/bw*7);if(i>=0&&i<7){sTick();pluck(i)}}})();
+$('#str').oninput=e=>{M1.str=+e.target.value;$('#strv').textContent=M1.str;info1()};
+$$('#pre1 .btn').forEach(b=>b.onclick=()=>{M1.str=+b.dataset.s;$('#str').value=M1.str;$('#strv').textContent=M1.str;pluck(M1.tine)});
+$('#sus1').onclick=()=>{M1.sus=!M1.sus;$('#sus1').classList.toggle('on',M1.sus);if(!M1.sus){M1.t0=performance.now()/1000;M1.a0=ampOf(M1.str)}sTap();info1()};
+/* ═════════ 모드 2: 높낮이와 진동수 ═════════ */
+const REC=[987.77,880,783.99,698.46,659.26,587.33,523.25],RN=['시','라','솔','파','미','레','도'],HP=[.530,.595,.667,.749,.794,.891],FREF=261.63;
+const M2={ins:'k',L:7.0,n:6,ref:true,holes:[],L2:null};
+const f2=()=>M2.ins==='k'?3000/M2.L:REC[M2.n];
+const Lcm2=()=>M2.ins==='k'?M2.L:17150/REC[M2.n];
+function track2(){const f=f2();if(f<=330&&!S.lo){S.lo=true;sOK();toast('#toast2','🔈 낮은 소리를 관찰했어요!',1500)}if(f>=800&&!S.hi){S.hi=true;sOK();toast('#toast2','🔊 높은 소리를 관찰했어요!',1500)}hud()}
+function info2(){const f=f2(),T=1000/f;$('#stat2').innerHTML=`<div>${M2.ins==='k'?'막대 길이':'공기 기둥 길이'}<b>${Lcm2().toFixed(1)} cm</b></div><div>주기 T (한 번 진동하는 시간)<b>${T.toFixed(2)} ms</b></div><div>진동수 f (1초에 진동하는 횟수)<b>${f.toFixed(0)} Hz</b></div><div>20 ms 동안 진동 횟수<b>${(f*.02).toFixed(1)} 회</b></div>`;
+  $('#lenv').textContent=M2.L.toFixed(1)+' cm';
+  fbx('#fb2',(M2.ins==='k'?'막대 길이 <b>'+M2.L.toFixed(1)+' cm</b>':'공기 기둥 길이 <b>'+Lcm2().toFixed(1)+' cm</b>')+' → 진동수 <b>'+f.toFixed(0)+' Hz</b>. '+(f>FREF*1.05?'기준(낮은 소리)보다 <b>촘촘한 파형</b>, 즉 진동수가 커서 <b>높은 소리</b>예요.':f<FREF*.95?'기준보다 파형이 <b>듬성듬성</b>해요. 진동수가 작아 <b>낮은 소리</b>예요.':'기준과 비슷한 높이예요.'),f>FREF*1.05?'good':'')}
+function scene2(){const {g,w,h}=fit($('#c2')),now=performance.now()/1000,f=f2(),sh=Math.round(h*.48),id=M2.ins==='k'?'kalimba':'recorder';M2.L2={w,h,sh};g.fillStyle='#0f172a';g.fillRect(0,0,w,h);
+  const under=(g,r)=>{const ph=phi(now);let first=null,second=null;for(let k=0;k<400;k++){const tau=k/f-ph;if(tau<0.0005)continue;if(tau>.0198)break;const xx=r.x+tau/.02*r.w;g.setLineDash([5,6]);g.strokeStyle='rgba(253,230,138,.7)';g.lineWidth=1.5;g.beginPath();g.moveTo(xx,r.y+8);g.lineTo(xx,r.y+r.h-8);g.stroke();g.setLineDash([]);if(first==null)first=xx;else if(second==null)second=xx}
+    if(first!=null&&second!=null){const yy=r.y+22;g.strokeStyle='#fde68a';g.fillStyle='#fde68a';g.lineWidth=3;g.beginPath();g.moveTo(first,yy);g.lineTo(second,yy);g.stroke();[[first,1],[second,-1]].forEach(([x,s])=>{g.beginPath();g.moveTo(x,yy);g.lineTo(x+s*9,yy-6);g.lineTo(x+s*9,yy+6);g.closePath();g.fill()});outText(g,'1주기 T = '+(1000/f).toFixed(2)+' ms',(first+second)/2,yy+17,13,'#fde68a')}};
+  const tr=[];if(M2.ref)tr.push({f:FREF,amp:.7,id,col:'#94a3b8',al:.55,lw:2.5,phi:phi(now)});tr.push({f,amp:.7,id,col:'#4ade80',phi:phi(now)});
+  scope(g,10,10,w-20,sh,20,tr,{under});if(M2.ref)pill(g,'회색: 낮은 소리(기준 262 Hz)',w-170,sh-4,'#94a3b8');pill(g,'초록: 지금 소리 '+f.toFixed(0)+' Hz',170,sh-4,'#4ade80');
+  const by=10+sh+14,bh=h-by-8;M2.holes=[];
+  if(M2.ins==='k'){const sc=(bh-70)/12.5,base=by+bh-26;g.fillStyle='#92400e';rr(g,w*.12,base,w*.76,22,8);g.fill();g.fillStyle='#d6d3d1';g.fillRect(w*.12,base-6,w*.76,6);
+    [[FREF,w*.32,'#94a3b8','기준'],[f,w*.62,'#4ade80','지금']].forEach(([ff,x,c,lb])=>{const L=3000/ff,len=L*sc,off=Math.sin(now*40)*6,gr=g.createLinearGradient(x-18,0,x+18,0);gr.addColorStop(0,'#94a3b8');gr.addColorStop(.5,'#f1f5f9');gr.addColorStop(1,'#94a3b8');g.fillStyle=gr;g.strokeStyle=c;g.lineWidth=3;
+      g.beginPath();g.moveTo(x-18,base-6);g.lineTo(x-18+off,base-6-len);g.lineTo(x+18+off,base-6-len);g.lineTo(x+18,base-6);g.closePath();g.fill();g.stroke();
+      g.strokeStyle=c;g.fillStyle=c;g.lineWidth=2;const ax=x+40;g.beginPath();g.moveTo(ax,base-6);g.lineTo(ax,base-6-len);g.stroke();[[base-6,-1],[base-6-len,1]].forEach(([yy,s])=>{g.beginPath();g.moveTo(ax,yy);g.lineTo(ax-5,yy+s*9);g.lineTo(ax+5,yy+s*9);g.closePath();g.fill()});
+      outText(g,lb+' '+L.toFixed(1)+' cm',x,base-6-len-14,13,c==='#94a3b8'?'#e2e8f0':'#bbf7d0')})}
+  else{const x0=w*.1,Lf=w*.78,cy=by+bh*.42,th=Math.min(44,bh*.3),n=M2.n,end=x0+(n===6?1:HP[n])*Lf;g.fillStyle='#b45309';rr(g,x0-24,cy-th/2-4,Lf+34,th+8,14);g.fill();g.fillStyle='#fbbf24';rr(g,x0-24,cy-th/2,Lf+30,th,12);g.fill();
+    g.fillStyle='rgba(147,197,253,.55)';g.fillRect(x0,cy-th/2+3,end-x0,th-6);g.strokeStyle='rgba(30,64,175,.9)';g.lineWidth=3;g.beginPath();for(let px=0;px<=end-x0;px+=3){const yy=cy+Math.sin(px/Lf*6.2832*f/520*2.2)*Math.sin(now*14)*th*.3;px?g.lineTo(x0+px,yy):g.moveTo(x0+px,yy)}g.stroke();
+    g.fillStyle='#7c2d12';g.beginPath();g.moveTo(x0-24,cy-th/2);g.lineTo(x0-24,cy+th/2);g.lineTo(x0-46,cy+th/2*.5);g.lineTo(x0-46,cy-th/2*.5);g.closePath();g.fill();
+    for(let k=1;k<=6;k++){const hx=x0+HP[k-1]*Lf,cov=k<=n,r=Math.min(12,th*.32);M2.holes.push({x:hx,y:cy,r:r+10,k});g.fillStyle=cov?'#7c2d12':'#fff';g.strokeStyle='#451a03';g.lineWidth=3;g.beginPath();g.arc(hx,cy,r,0,6.3);g.fill();g.stroke();if(cov){g.fillStyle='#fcd34d';g.beginPath();g.arc(hx,cy-th*.55-6,9,0,6.3);g.fill();g.strokeStyle='#92400e';g.lineWidth=2;g.stroke()}outText(g,String(k),hx,cy+th*.5+16,12,'#fde68a')}
+    const hx=end;g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=2;for(let k=1;k<=3;k++){g.beginPath();g.arc(n===6?x0+Lf+4:hx,cy,10+k*9+(now*30%9),-1,1);g.stroke()}
+    const dy=cy+th/2+34;g.strokeStyle='#4ade80';g.fillStyle='#4ade80';g.lineWidth=3;g.beginPath();g.moveTo(x0,dy);g.lineTo(end,dy);g.stroke();[[x0,1],[end,-1]].forEach(([x,s])=>{g.beginPath();g.moveTo(x,dy);g.lineTo(x+s*10,dy-6);g.lineTo(x+s*10,dy+6);g.closePath();g.fill()});outText(g,'소리가 나는 공기 기둥 길이 ≈ '+Lcm2().toFixed(1)+' cm ('+RN[n]+')',(x0+end)/2,dy+18,13,'#bbf7d0');
+    pill(g,'🎶 입 쪽',x0-30,cy-th/2-24,'#fde68a')}
+  }
+(()=>{const cv=$('#c2');cv.onpointerdown=e=>{if(M2.ins!=='r')return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;const H=M2.holes.filter(o=>Math.hypot(x-o.x,y-o.y)<o.r).sort((a,b)=>a.k-b.k)[0];if(H){setHole(H.k)}}})();
+function setHole(k){M2.n=M2.n>=k?k-1:k;sTap();upd2(true)}
+function upd2(snd){$$('#holes .btn').forEach((b,i)=>b.classList.toggle('on',i+1<=M2.n));$('#ctlK').style.display=M2.ins==='k'?'':'none';$('#ctlR').style.display=M2.ins==='r'?'':'none';$$('#ins2 .btn').forEach(b=>b.classList.toggle('on',b.dataset.i===M2.ins));$('#len').value=Math.round(M2.L*10);info2();track2();if(snd)tone(f2(),M2.ins==='k'?'kalimba':'recorder',.25,.8)}
+for(let k=1;k<=6;k++){const b=document.createElement('button');b.className='btn';b.innerHTML='구멍 '+k;b.onclick=()=>setHole(k);$('#holes').appendChild(b)}
+$$('#ins2 .btn').forEach(b=>b.onclick=()=>{M2.ins=b.dataset.i;sTap();upd2(true)});
+$('#len').oninput=e=>{M2.L=+e.target.value/10;upd2(false)};$('#len').onchange=()=>tone(f2(),'kalimba',.25,.8);
+$$('#pre2 .btn').forEach(b=>b.onclick=()=>{M2.L=+b.dataset.l/10;sTap();upd2(true)});
+$('#allOpen').onclick=()=>{M2.n=0;sTap();upd2(true)};$('#allCov').onclick=()=>{M2.n=6;sTap();upd2(true)};
+$('#ref2').onclick=()=>{M2.ref=!M2.ref;$('#ref2').classList.toggle('on',M2.ref);sTap()};$('#play2').onclick=()=>tone(f2(),M2.ins==='k'?'kalimba':'recorder',.3,1.1);
+/* ═════════ 모드 3: 음색과 파형 ═════════ */
+const IK=['flute','violin','kalimba','recorder'],M3={A:'flute',B:null,lock:true,f:440,a:.7,L:null};
+const f3=()=>M3.lock?440:M3.f,a3=()=>M3.lock?.7:M3.a;
+function info3(){const A=INS[M3.A],B=M3.B&&INS[M3.B];fbx('#fb3','<b>'+A.nm+'</b>'+(B?' 와(과) <b>'+B.nm+'</b>':'')+': 진동수 <b>'+f3().toFixed(0)+' Hz</b>, 진폭 <b>'+a3().toFixed(2)+'</b>'+(B?'이 <b>같은데</b>도':'일 때') +' 파형의 <b>모양</b>이 '+(B?'서로 달라요! 그래서 소리를 구별할 수 있어요 → <b>음색</b>':'이런 모양이에요. 다른 악기를 겹쳐 비교해 보세요.'),B?'good':'')}
+function scene3(){const {g,w,h}=fit($('#c3')),now=performance.now()/1000,f=f3(),a=a3(),sh=Math.round(h*.52);M3.L={w,h,sh};g.fillStyle='#0f172a';g.fillRect(0,0,w,h);
+  const under=(g,r)=>{const ph=phi(now);for(let k=0;k<400;k++){const tau=k/f-ph;if(tau<.0003)continue;if(tau>.0199)break;const xx=r.x+tau/.02*r.w;g.setLineDash([4,6]);g.strokeStyle='rgba(253,230,138,.45)';g.lineWidth=1.2;g.beginPath();g.moveTo(xx,r.y+8);g.lineTo(xx,r.y+r.h-8);g.stroke();g.setLineDash([])}};
+  const tr=[{f,amp:a,id:M3.A,col:'#38bdf8',phi:phi(now),lw:3.5}];if(M3.B)tr.push({f,amp:a,id:M3.B,col:'#fb923c',phi:phi(now),lw:3});scope(g,10,10,w-20,sh,20,tr,{under});
+  pill(g,'🔵 '+INS[M3.A].nm,90,26,'#38bdf8');if(M3.B)pill(g,'🟠 '+INS[M3.B].nm,200,26,'#fb923c');pill(g,'높낮이 '+f.toFixed(0)+' Hz · 세기 '+a.toFixed(2)+(M3.lock?' (고정)':''),w-160,26,'#fde68a');
+  const my=10+sh+26,mh=h-my-10,mw=(w-20-18)/4;IK.forEach((k,i)=>{const x=10+i*(mw+6);scope(g,x,my,mw,mh,3000/f,[{f,amp:a,id:k,col:INS[k].col,phi:phi(now),lw:2.5}],{mini:true,nx:6});g.strokeStyle=k===M3.A?'#38bdf8':k===M3.B?'#fb923c':'rgba(0,0,0,0)';g.lineWidth=4;rr(g,x,my,mw,mh,12);g.stroke();outText(g,INS[k].nm,x+mw/2,my+16,clamp(mw*.075,12,16),INS[k].col)});
+  pill(g,'같은 높이·같은 세기인데 모양이 달라요! (아래 파형을 눌러 A 선택)',w/2,my-13,'#fde68a')}
+(()=>{const cv=$('#c3');cv.onpointerdown=e=>{const L=M3.L;if(!L)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(y>10+L.sh+26){const i=Math.floor((x-10)/((L.w-20)/4));if(i>=0&&i<4)setA(IK[i])}}})();
+function setA(k){M3.A=k;S.ins.add(k);sTap();ui3();tone(f3(),k,.1+.25*a3(),.8);hud()}
+function ui3(){$$('#selA .btn').forEach(b=>b.classList.toggle('on',b.dataset.k===M3.A));$$('#selB .btn').forEach(b=>b.classList.toggle('on',(b.dataset.k||'')===(M3.B||'')));$('#lock3').classList.toggle('on',M3.lock);$('#lock3').innerHTML=M3.lock?'🔒 높이·세기 고정 (A4 440 Hz · 같은 진폭)':'🔓 고정 해제 — 높이·세기를 바꿔도 음색은 그대로예요';['#f3','#a3'].forEach(i=>{$(i).disabled=M3.lock;$(i).parentElement.classList.toggle('dis',M3.lock)});$('#f3v').textContent=f3().toFixed(0);$('#a3v').textContent=Math.round(a3()*100);info3()}
+IK.forEach(k=>{const b=document.createElement('button');b.className='btn';b.dataset.k=k;b.innerHTML='<span>'+INS[k].ic+'</span>'+INS[k].nm;b.onclick=()=>setA(k);$('#selA').appendChild(b)});
+[null,...IK].forEach(k=>{const b=document.createElement('button');b.className='btn';b.dataset.k=k||'';b.innerHTML=k?INS[k].ic+'<br>'+INS[k].nm:'없음';b.onclick=()=>{M3.B=k;if(k)S.ins.add(k);sTap();ui3();hud()};$('#selB').appendChild(b)});
+$('#playA').onclick=()=>tone(f3(),M3.A,.1+.25*a3(),1.2);$('#playB').onclick=()=>{if(M3.B)tone(f3(),M3.B,.1+.25*a3(),1.2)};
+$('#lock3').onclick=()=>{M3.lock=!M3.lock;sTap();ui3()};$('#f3').oninput=e=>{M3.f=+e.target.value;ui3()};$('#a3').oninput=e=>{M3.a=+e.target.value/100;ui3()};
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const it=[['① 약·세게 비교',S.weak+S.strong,2],['② 낮은·높은 소리',(S.lo?1:0)+(S.hi?1:0),2],['③ 악기 음색',S.ins.size,4]];
+  el.innerHTML=it.map(a=>{const ok=a[1]>=a[2];return `<div class="pseg${ok?' ok':''}">${a[0]} ${a[1]}/${a[2]}${ok?' ✔':''}</div>`}).join('')+`<div class="pseg${S.quiz>=4?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/4'}</div>`}
+const QZ=[
+ {q:'큰 소리와 작은 소리를 오실로스코프 파형으로 비교하면 무엇이 달라질까?',o:['파형의 위아래 폭(진폭)','파형이 반복되는 촘촘함(진동수)','파형의 모양(음색)','소리가 퍼지는 속력'],a:0,e:'소리의 세기는 파동의 진폭에 따라 달라져요. 세게 튕길수록 진폭이 커지고 큰 소리가 나요. 진동수(높낮이)와 파형 모양(음색)은 그대로예요.'},
+ {q:'리코더의 구멍을 더 많이 막아 소리가 나는 관의 길이가 길어지면 소리는 어떻게 될까?',o:['더 높아진다','더 낮아진다','더 커진다','음색이 바뀐다'],a:1,e:'관(또는 막대)이 길어지면 진동이 느려져 진동수가 작아지고, 소리가 낮아져요. 짧을수록 진동수가 커져 높은 소리가 나요.'},
+ {q:'소리의 높낮이를 결정하는 것은 파동의 무엇일까?',o:['진폭','진동수','파형의 모양','소리를 낸 시간'],a:1,e:'높은 소리는 낮은 소리보다 진동수가 커요. 그래서 같은 시간 동안 파형이 더 촘촘하게 반복돼요.'},
+ {q:'같은 높이, 같은 세기로 플루트와 바이올린을 연주해도 두 소리를 구별할 수 있는 까닭은?',o:['진폭이 다르기 때문에','진동수가 다르기 때문에','파형의 모양이 다르기 때문에','소리의 속력이 다르기 때문에'],a:2,e:'진폭과 진동수가 같아도 악기마다 파형의 모양이 달라요. 이 차이가 음색이고, 그래서 악기 소리를 구별할 수 있어요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+function resetAll(){Object.assign(S,{weak:0,strong:0,lo:false,hi:false,ins:new Set(['flute']),quiz:-1});Object.assign(M1,{str:55,sus:true,t0:-99,a0:0,tine:2,wA:0,sA:0});$('#str').value=55;$('#strv').textContent=55;$('#sus1').classList.add('on');
+  Object.assign(M2,{ins:'k',L:7,n:6,ref:true});$('#ref2').classList.add('on');Object.assign(M3,{A:'flute',B:null,lock:true,f:440,a:.7});$('#f3').value=440;$('#a3').value=70;
+  fbx('#fb1','도~시 막대를 약하게·세게 튕겨 파형의 위아래 폭(진폭)을 비교해 보세요.');ui3();upd2(false);info1();hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+function loop(now){try{if(mode===1){scene1();info1()}else if(mode===2)scene2();else scene3()}catch(e){console.error(e)}requestAnimationFrame(loop)}
+fbx('#fb1','도~시 막대를 약하게·세게 튕겨 파형의 위아래 폭(진폭)을 비교해 보세요.');ui3();upd2(false);info1();hud();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
