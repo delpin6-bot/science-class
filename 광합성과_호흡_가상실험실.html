@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>광합성과 호흡 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:1;min-height:150px}
+.bin{border:4px dashed #94a3b8;border-radius:14px;padding:6px;font-weight:900;background:#fff;display:flex;flex-direction:column;gap:5px;align-content:flex-start;font-size:clamp(13px,1.15vw,17px);line-height:1.25}.bin.hot{border-color:#f59e0b;background:#fffbeb}.bin small{font-weight:700;color:var(--mut);font-size:.78em}
+.cardf{min-height:100px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;font-size:clamp(12px,1.05vw,16px);text-align:center}.cardf span{font-size:clamp(26px,2.8vw,40px)}.cardf.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardf.back{background:#eff6ff;border-color:#60a5fa}.cardf.back small{font-weight:800;color:#1e3a8a;font-size:.9em}.cardf.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+.ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.06);width:150px}
+input[type=range].big{width:100%;height:48px}
+.rec td{font-size:clamp(11px,.95vw,14px);line-height:1.25;vertical-align:middle}.rec .ic{display:inline-block;line-height:1}
+.lr{display:grid;grid-template-columns:minmax(96px,150px) minmax(0,1fr) 52px;gap:8px;align-items:center}.lr b{text-align:right;font-variant-numeric:tabular-nums;font-size:clamp(14px,1.2vw,19px)}
+.lt{min-height:56px!important;line-height:1.15}
+.lt.r.on{background:#fecaca;border-color:#ef4444;color:#7f1d1d}.lt.g.on{background:#bbf7d0;border-color:#22c55e;color:#14532d}.lt.b.on{background:#bfdbfe;border-color:#3b82f6;color:#1e3a8a}
+.lt.w.on{background:#f1f5f9;border-color:#475569;color:#0f172a}
+.r2{accent-color:#dc2626}.g2s{accent-color:#16a34a}.b2s{accent-color:#2563eb}
+.sw{display:flex;align-items:center;gap:10px}.sw i{display:block;width:clamp(56px,6vw,96px);height:clamp(56px,6vw,96px);border-radius:14px;border:3px solid #334155;flex:0 0 auto}
+.sw div{font-weight:900;line-height:1.35;font-size:clamp(14px,1.25vw,20px)}.sw small{display:block;font-weight:800;color:var(--mut);font-size:.78em}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found span{min-height:40px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;color:#94a3b8;font-weight:900;display:inline-flex;align-items:center;gap:6px;font-size:clamp(12px,1.05vw,16px)}.found span.on{border-style:solid;border-color:#22c55e;background:#f0fdf4;color:#166534}
+.found i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #334155}
+.ptab{width:100%;border-collapse:collapse;font-weight:800;font-size:clamp(11px,.98vw,15px);text-align:center}.ptab th,.ptab td{border:2px solid #cbd5e1;padding:4px 3px}.ptab th{background:#dbeafe;color:#1e3a8a}.ptab td i{display:inline-block;width:22px;height:22px;border-radius:6px;border:2px solid #334155;vertical-align:middle}
+.ptab td.cur{outline:3px solid #f59e0b}
+.pxs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pxs .btn{min-height:52px;padding:2px 4px;line-height:1.1;font-size:clamp(11px,.98vw,15px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.pxs .btn i{width:30px;height:14px;border-radius:4px;border:2px solid #334155}.pxs .btn.seen{border-color:#22c55e}.pxs .btn.on{border-color:#f59e0b;background:#fffbeb}
+.bars{display:grid;gap:5px}.bars div{display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.bars em{display:block;height:20px;border-radius:6px;background:#e2e8f0;position:relative;overflow:hidden}.bars em u{display:block;height:100%;width:0}
+.c4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c4 .btn{min-height:76px;line-height:1.25;padding:4px 6px;font-size:clamp(13px,1.15vw,18px)}.c4 .btn span{display:block;font-size:1.7em}.c4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.c4 .btn.ok{border-color:#22c55e}
+.info4{font-weight:800;line-height:1.6;font-size:clamp(13px,1.15vw,18px)}.info4 b{color:#1d4ed8}
+.prs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.prs .btn{min-height:52px;padding:2px 4px;line-height:1.15;font-size:clamp(12px,1.05vw,16px)}
+.ins4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ins4 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(12px,1.05vw,16px)}.ins4 .btn span{display:block;font-size:1.5em}.ins4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.ins5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ins5 .btn{min-height:56px;line-height:1.15;padding:2px 4px;font-size:clamp(12px,1.05vw,16px)}.ins5 .btn.on{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.stat div{border:3px solid var(--line);border-radius:12px;padding:4px 8px;background:#f8fafc;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.stat b{display:block;font-size:clamp(20px,2vw,30px);font-variant-numeric:tabular-nums;color:#1d4ed8}
+.tip{border-radius:12px;padding:9px 13px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(13px,1.12vw,18px)}.tip b{color:#be123c}
+.sw2{min-height:56px;border-radius:14px;border:3px solid #94a3b8;background:#f8fafc;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:clamp(14px,1.2vw,19px)}.sw2.on{background:#dcfce7;border-color:#22c55e;color:#14532d}
+.sldr{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.sldr b{text-align:right;font-variant-numeric:tabular-nums}
+.sldr.dis{opacity:.45}
+.sub6{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.sub6 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(13px,1.15vw,18px)}.sub6 .btn span{display:block;font-size:1.5em}
+.sub6.el .btn.on{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.sub6.co .btn.on{background:#ffedd5;border-color:#f97316;color:#7c2d12}.sub6 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.gm{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:12px;background:#f1f5f9;overflow:auto}
+.bk2{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:150px}
+.bk{border:4px dashed #94a3b8;border-radius:18px;background:#fff;padding:8px 10px;font-weight:900;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.45vw,22px);transition:.15s}.bk small{font-weight:700;color:var(--mut);font-size:.62em}.bk.hot{border-color:#f59e0b;background:#fffbeb}
+.bk.e{border-color:#60a5fa}.bk.c{border-color:#fb923c}.bk.ok{animation:okf .5s}.bk.no{animation:nof .5s}
+@keyframes okf{50%{background:#bbf7d0;border-color:#22c55e}}@keyframes nof{50%{background:#fecaca;border-color:#ef4444}}
+.cp2{display:flex;flex-wrap:wrap;gap:5px}.cp2 span{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:2px 8px;font-size:clamp(11px,.95vw,15px)}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{min-height:92px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;text-align:center;font-size:clamp(12px,1.1vw,17px)}.mc span{font-size:clamp(26px,2.8vw,40px)}.mc.sel{border-color:#f59e0b;background:#fffbeb}.mc.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.res3{position:absolute;inset:0;background:rgba(15,23,42,.8);display:none;align-items:center;justify-content:center;z-index:5}.res3.on{display:flex}.res3>div{background:#fff;border-radius:24px;padding:22px 30px;text-align:center;font-weight:900;max-width:80%;font-size:clamp(16px,1.6vw,24px);line-height:1.6}.res3 b{font-size:1.6em;color:#15803d}
+.cfx{position:fixed;top:-40px;z-index:70;font-size:30px;pointer-events:none;animation:fall 2.6s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.prop{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(11px,1vw,15px)}.prop th,.prop td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.prop th{background:#dbeafe;color:#1e3a8a}.prop td.q{background:#f1f5f9;color:#94a3b8}.prop td.n{background:#fef9c3;color:#713f12;animation:okf .6s}
+.cmp{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.cmp th,.cmp td{border:2px solid #cbd5e1;padding:5px}.cmp th{background:#f1f5f9}
+.mon{flex:none!important;height:clamp(290px,44vh,450px)}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.big3 .btn{min-height:72px;font-size:clamp(16px,1.5vw,23px);line-height:1.2;padding:4px}.big3 .btn span{display:block;font-size:1.6em}
+.big3 .btn.on{border-color:#2563eb;background:#dbeafe}.big3 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.cr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cr .btn{min-height:64px;font-size:clamp(15px,1.4vw,22px);padding:4px 14px}.cr .btn.on{border-color:#2563eb;background:#dbeafe}.cr .zb{min-width:64px;font-size:26px}.cr .zv{font-weight:900;font-size:clamp(18px,1.8vw,26px);min-width:56px;text-align:center}
+.cr .lb2{font-weight:900;font-size:clamp(14px,1.25vw,19px);color:var(--mut)}
+.tipb{border-radius:12px;padding:10px 14px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(14px,1.25vw,19px)}.tipb.warn{background:#fef3c7;border-color:#f59e0b;color:#78350f}
+.cmpa{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.cmpa th,.cmpa td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.cmpa th{background:#f1f5f9}.cmpa tr.cur td,.cmpa tr.cur th{background:#fef9c3}
+@media (max-width:980px){.mon{height:380px}.stagewrap{min-height:340px}.stagewrap canvas{position:absolute;inset:0}}
+</style></head><body>
+<header>
+  <h1>🌱 광합성과 호흡</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 낮과 밤의 기체 출입</button>
+    <button class="tab" id="tab2">② 세포 내 물질과 에너지 순환</button>
+    <button class="tab" id="tab3" style="display:none"></button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode g2 on" id="m1">
+  <div class="col"><div class="card stagewrap" style="background:#e0f2fe"><canvas id="a1" style="touch-action:none"></canvas><div class="toast" id="toast1"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh1"></div><div id="sel1"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl1"></div><div class="tipb" id="tip1"></div><div class="card ctl" id="info1"></div><div class="tipb warn" id="cc1" style="display:none"></div><div class="fb" id="fb1"></div></div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#e0f2fe"><canvas id="a2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh2"></div><div id="sel2"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl2"></div><div class="tipb" id="tip2"></div><div class="card ctl" id="info2"></div><div class="tipb warn" id="cc2" style="display:none"></div><div class="fb" id="fb2"></div></div>
+</section>
+<section class="mode g2" id="m3"></section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg,fs)=>{g.font='900 '+(fs||13)+'px sans-serif';const w=g.measureText(t).width+14,h=(fs||13)+11;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-h/2,w,h,h/2);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const S={a:new Set(),c:new Set(),quiz:-1};
+// 분자 그리기 (O₂ 빨간 쌍, CO₂ 회색+빨강, H₂O, 포도당)
+function mol(g,k,x,y,r,al){
+  g.save();g.translate(x,y);g.globalAlpha=al==null?1:al;g.lineWidth=1.4;g.strokeStyle='#0f172a';
+  if(k==='co2'){[[-1.6,'#ef4444',.8],[1.6,'#ef4444',.8],[0,'#475569',1]].forEach(a=>{g.fillStyle=a[1];g.beginPath();g.arc(a[0]*r,0,r*a[2],0,6.2832);g.fill();g.stroke()})}
+  else if(k==='h2o'){g.fillStyle='#ef4444';g.beginPath();g.arc(0,0,r,0,6.2832);g.fill();g.stroke();g.fillStyle='#f8fafc';[[-1.1,-.9],[1.1,-.9]].forEach(a=>{g.beginPath();g.arc(a[0]*r,a[1]*r,r*.62,0,6.2832);g.fill();g.stroke()})}
+  else if(k==='o2'){g.fillStyle='#ef4444';[-.9,.9].forEach(a=>{g.beginPath();g.arc(a*r,0,r*.95,0,6.2832);g.fill();g.stroke()});g.strokeStyle='#fff';g.lineWidth=2.2;g.beginPath();g.moveTo(-.9*r,0);g.lineTo(.9*r,0);g.stroke()}
+  else if(k==='glc'){g.fillStyle='#fbbf24';g.strokeStyle='#92400e';g.lineWidth=2;g.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3+.5;g.lineTo(Math.cos(a)*r*1.9,Math.sin(a)*r*1.9)}g.closePath();g.fill();g.stroke();g.fillStyle='#78350f';g.font='900 '+Math.max(8,r*1.05)+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('포도당',0,1)}
+  else if(k==='en'){g.fillStyle='#fde047';g.strokeStyle='#b45309';g.lineWidth=2;g.beginPath();g.moveTo(r*.5,-r*1.8);g.lineTo(-r*.9,r*.2);g.lineTo(-r*.05,r*.2);g.lineTo(-r*.5,r*1.8);g.lineTo(r*.9,-r*.3);g.lineTo(r*.05,-r*.3);g.closePath();g.fill();g.stroke()}
+  g.restore()}
+const MLAB={co2:'이산화 탄소(CO₂)',h2o:'물(H₂O)',o2:'산소(O₂)',glc:'포도당(C₆H₁₂O₆)',en:'생명활동 에너지'};
+// ================= 모드 1: 낮과 밤의 기체 출입 =================
+const D1={day:true,auto:false,t:0,p:[],acc:{ci:0,oo:0,oi:0,co:0},tm:{day:0,night:0},sky:1,autoT:0};
+function leafPts(w,h){const cx=w*.5,by=h*.8;return[[cx-w*.17,by-h*.38,-.8],[cx+w*.17,by-h*.4,.8],[cx-w*.1,by-h*.58,-.35],[cx+w*.1,by-h*.6,.35],[cx,by-h*.72,0]]}
+function addG1(k,dir,w,h,big){
+  const L=leafPts(w,h),lf=L[Math.floor(Math.random()*L.length)];
+  const ang=rnd(0,6.2832),R=Math.min(w,h)*rnd(.4,.5);
+  const ox=w*.5+Math.cos(ang)*R*1.25,oy=Math.max(h*.08,Math.min(h*.78,h*.46+Math.sin(ang)*R*.9));
+  const sx=lf[0]+Math.cos(lf[2]-1.57)*0+rnd(-.5,.5)*30,sy=lf[1]+rnd(-.4,.4)*24;
+  if(dir==='in')D1.p.push({k,dir,x:ox,y:oy,tx:sx,ty:sy,v:rnd(55,85),big});
+  else D1.p.push({k,dir,x:sx,y:sy,tx:ox,ty:oy,v:rnd(55,85),big})}
+function step1(dt,w,h){
+  D1.t+=dt;
+  if(D1.auto){D1.autoT+=dt;if(D1.autoT>7){D1.autoT=0;D1.day=!D1.day;modeUI1();}}
+  D1.sky+=((D1.day?1:0)-D1.sky)*Math.min(1,dt*3);
+  const A=D1.acc,day=D1.day;
+  const rate=day?{ci:2.4,oo:2.4,oi:.6,co:.6}:{ci:0,oo:0,oi:1.2,co:1.2};
+  for(const k in rate){A[k]+=rate[k]*dt;while(A[k]>=1){A[k]-=1;
+    if(k==='ci')addG1('co2','in',w,h,1);else if(k==='oo')addG1('o2','out',w,h,1);else if(k==='oi')addG1('o2','in',w,h,0);else addG1('co2','out',w,h,0)}}
+  D1.tm[day?'day':'night']+=dt;
+  if(D1.tm.day>4&&!S.a.has('day')){S.a.add('day');hud();sOK();fbx('#fb1','🌞 낮에는 광합성량 > 호흡량! 식물이 <b>이산화 탄소를 흡수</b>하고 <b>산소를 방출</b>해요.','ok')}
+  if(D1.tm.night>4&&!S.a.has('night')){S.a.add('night');hud();sOK();fbx('#fb1','🌙 밤에는 호흡만 일어나요! 식물이 <b>산소를 흡수</b>하고 <b>이산화 탄소를 방출</b>해요.','ok')}
+  if(S.a.has('day')&&S.a.has('night')&&!S.a.has('both')){S.a.add('both');hud();const c=$('#cc1');c.style.display='';c.innerHTML='🎉 <b>결론</b><br>광합성은 빛이 있는 <b>낮</b>에만 일어나지만, 호흡은 <b>낮과 밤 관계없이 항상</b> 일어난다. 낮에는 광합성량이 호흡량보다 많아 이산화 탄소를 흡수하고 산소를 방출하며, 밤에는 호흡만 일어나 산소를 흡수하고 이산화 탄소를 방출한다.'}
+  for(const q of D1.p){const dx=q.tx-q.x,dy=q.ty-q.y,d=Math.hypot(dx,dy),m=q.v*dt;if(d<=m){q.dead=1}else{q.x+=dx/d*m;q.y+=dy/d*m+Math.sin(D1.t*5+q.v)*.3}}
+  D1.p=D1.p.filter(q=>!q.dead);
+  // 막대
+  const pv=day?5:0,rv=2;$('#bp1')&&($('#bp1').style.width=(pv*20)+'%',$('#br1').style.width=(rv*20)+'%',$('#bp1t').textContent=day?'많음':'없음',$('#br1t').textContent='항상');
+}
+function drawPlant(g,w,h,day){
+  const cx=w*.5,by=h*.8;
+  g.fillStyle='#b45309';g.strokeStyle='#78350f';g.lineWidth=3;g.beginPath();g.moveTo(cx-w*.07,by);g.lineTo(cx+w*.07,by);g.lineTo(cx+w*.055,by+h*.12);g.lineTo(cx-w*.055,by+h*.12);g.closePath();g.fill();g.stroke();
+  g.fillStyle='#78350f';g.beginPath();g.ellipse(cx,by,w*.07,h*.018,0,0,6.2832);g.fill();
+  g.strokeStyle=day?'#15803d':'#166534';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(cx,by);g.lineTo(cx,by-h*.7);g.stroke();
+  const L=leafPts(w,h);const gc=day?['#4ade80','#16a34a']:['#2f8f4f','#14532d'];
+  L.forEach((l,i)=>{g.save();g.translate(l[0],l[1]);g.rotate(l[2]);const gr=g.createLinearGradient(-w*.1,0,w*.1,0);gr.addColorStop(0,gc[0]);gr.addColorStop(1,gc[1]);g.fillStyle=gr;g.strokeStyle='#14532d';g.lineWidth=2.5;g.beginPath();g.ellipse(0,0,w*.095,h*.055,0,0,6.2832);g.fill();g.stroke();g.strokeStyle='rgba(20,83,45,.5)';g.lineWidth=1.5;g.beginPath();g.moveTo(-w*.09,0);g.lineTo(w*.09,0);g.stroke();g.restore();
+    g.strokeStyle=day?'#15803d':'#166534';g.lineWidth=4;g.beginPath();g.moveTo(cx,Math.min(h*.8-h*.1,Math.max(l[1]+h*.03,h*.3)));g.lineTo(l[0]+(l[0]<cx?w*.08:-w*.08),l[1]);g.stroke()})}
+function draw1(cv,now,dt){
+  const{g,w,h}=fit(cv);step1(dt,w,h);const day=D1.day,sk=D1.sky;
+  g.clearRect(0,0,w,h);
+  const mix=(a,b)=>a.map((v,i)=>Math.round(lerp(b[i],v,sk)));
+  const c1=mix([125,200,252],[10,18,48]),c2=mix([224,242,254],[30,41,90]);
+  const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,`rgb(${c1})`);bg.addColorStop(1,`rgb(${c2})`);g.fillStyle=bg;g.fillRect(0,0,w,h);
+  g.fillStyle=day?'#bbf7d0':'#14532d';g.fillRect(0,h*.9,w,h*.1);
+  // 해/달
+  const sx=w*.14,sy=h*.17,sr=clamp(w*.055,22,44);
+  if(sk>.5){g.save();g.translate(sx,sy);g.rotate(D1.t*.4);g.strokeStyle='#fbbf24';g.lineWidth=5;g.lineCap='round';for(let i=0;i<12;i++){g.rotate(Math.PI/6);g.beginPath();g.moveTo(sr*1.25,0);g.lineTo(sr*(1.6+.15*Math.sin(D1.t*4+i)),0);g.stroke()}g.restore();g.fillStyle='#fde047';g.strokeStyle='#f59e0b';g.lineWidth=4;g.beginPath();g.arc(sx,sy,sr,0,6.2832);g.fill();g.stroke()}
+  else{g.fillStyle='#f1f5f9';g.beginPath();g.arc(sx,sy,sr,0,6.2832);g.fill();g.fillStyle='#0f172a';g.beginPath();g.arc(sx+sr*.45,sy-sr*.2,sr*.85,0,6.2832);g.fill();
+    g.fillStyle='#fff';for(let i=0;i<22;i++){const a=(i*127.3)%w,b=(i*71.7)%(h*.55);g.globalAlpha=.5+.5*Math.sin(D1.t*2+i);g.beginPath();g.arc(a,b+h*.02,1.8,0,6.2832);g.fill()}g.globalAlpha=1}
+  drawPlant(g,w,h,day);
+  // 기체 입자
+  const r=clamp(w*.013,6,11);
+  for(const q of D1.p){const t=Math.hypot(q.tx-q.x,q.ty-q.y);let al=1;const R0=Math.min(w,h)*.5;
+    // 화살표 방향 힌트용 꼬리
+    const ang=Math.atan2(q.ty-q.y,q.tx-q.x);g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=2;g.beginPath();g.moveTo(q.x-Math.cos(ang)*14,q.y-Math.sin(ang)*14);g.lineTo(q.x,q.y);g.stroke();
+    mol(g,q.k,q.x,q.y,q.big?r:r*.8,al)}
+  // 큰 화살표 + 라벨
+  const lf=clamp(w/26,13,20);
+  const aw=(x0,y0,x1,y1,col)=>{g.strokeStyle=col;g.fillStyle=col;g.lineWidth=7;g.lineCap='round';g.setLineDash([12,9]);g.lineDashOffset=-D1.t*40*(x1>x0||y1>y0?1:1);g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.setLineDash([]);const a=Math.atan2(y1-y0,x1-x0);g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-Math.cos(a-.5)*16,y1-Math.sin(a-.5)*16);g.lineTo(x1-Math.cos(a+.5)*16,y1-Math.sin(a+.5)*16);g.closePath();g.fill()};
+  if(day){aw(w*.24,h*.5,w*.38,h*.5,'#38bdf8');aw(w*.64,h*.36,w*.78,h*.36,'#f87171');
+    pill(g,'CO₂ 흡수 ▶',w*.2,h*.44,'#e0f2fe','#075985',lf);pill(g,'▶ O₂ 방출',w*.84,h*.3,'#fee2e2','#7f1d1d',lf);
+    pill(g,'🌞 낮: 광합성 > 호흡',w*.5,h*.06,'#fef9c3','#713f12',lf+2);
+  }else{aw(w*.78,h*.5,w*.64,h*.5,'#f87171');aw(w*.38,h*.36,w*.24,h*.36,'#38bdf8');
+    pill(g,'◀ O₂ 흡수',w*.84,h*.44,'#fee2e2','#7f1d1d',lf);pill(g,'CO₂ 방출 ◀',w*.2,h*.3,'#e0f2fe','#075985',lf);
+    pill(g,'🌙 밤: 호흡만 일어남',w*.5,h*.06,'#e0e7ff','#312e81',lf+2)}
+  // 범례
+  const ly=h*.95;mol(g,'o2',w*.12,ly,r*.9);g.font='900 '+clamp(w/34,11,16)+'px sans-serif';g.fillStyle=day?'#0f172a':'#fff';g.textAlign='left';g.textBaseline='middle';g.fillText('산소(O₂)',w*.12+r*2.2,ly);mol(g,'co2',w*.4,ly,r*.9);g.fillText('이산화 탄소(CO₂)',w*.4+r*3.4,ly);
+  D1.leaf=leafPts(w,h);
+}
+// ================= 모드 2: 세포 내 물질과 에너지 순환 =================
+const C2={light:true,focus:'all',run:true,t:0,p:[],ph:[],acc:{ci:0,hi:0,ph:0,ext:0},cArr:{co2:0,h2o:0},mArr:{glc:0,o2:0},n:{glc:0,en:0,loop:0,dark:0},wasDark:false};
+function g2(w,h){return{C:{x:w*.26,y:h*.5},M:{x:w*.74,y:h*.5},rx:Math.min(w*.17,150),ry:Math.min(w*.17,150)*.62,mx:Math.min(w*.14,125),my:Math.min(w*.14,125)*.62,sun:{x:w*.06,y:h*.1}}}
+function sp2(k,G,w,h,from){
+  const v=clamp(w*.12,55,130);const C=G.C,M=G.M;let p={k,x:0,y:0,wp:[],i:0,v:v*rnd(.85,1.15),age:0};
+  const top=h*.16,bot=h*.86;
+  if(k==='co2'&&from==='ext'){p.x=w*.03;p.y=h*.34;p.wp=[[C.x-G.rx*.85,C.y-G.ry*.2]]}
+  else if(k==='h2o'&&from==='ext'){p.x=w*.03;p.y=h*.66;p.wp=[[C.x-G.rx*.85,C.y+G.ry*.25]]}
+  else if(k==='glc'&&from==='cl'){p.x=C.x+G.rx*.4;p.y=C.y-G.ry*.2;p.wp=[[C.x+G.rx*1.05,h*.34],[M.x-G.mx*1.05,h*.34],[M.x-G.mx*.4,M.y-G.my*.2]]}
+  else if(k==='o2'&&from==='cl'){p.x=C.x+G.rx*.4;p.y=C.y+G.ry*.1;p.wp=[[C.x+G.rx*1.05,h*.43],[M.x-G.mx*1.05,h*.43],[M.x-G.mx*.4,M.y+G.my*.05]]}
+  else if(k==='o2'&&from==='out'){p.x=C.x+G.rx*.2;p.y=C.y-G.ry*.5;p.wp=[[C.x+G.rx*.4,top],[C.x+G.rx*.6,-10]]}
+  else if(k==='glc'&&from==='ext'){p.x=w*.97;p.y=h*.24;p.wp=[[M.x+G.mx*.9,h*.3],[M.x+G.mx*.3,M.y-G.my*.2]]}
+  else if(k==='o2'&&from==='ext'){p.x=w*.97;p.y=h*.74;p.wp=[[M.x+G.mx*.95,M.y+G.my*.5],[M.x+G.mx*.3,M.y+G.my*.1]]}
+  else if(k==='co2'&&from==='mt'){p.x=M.x-G.mx*.2;p.y=M.y+G.my*.5;p.wp=[[M.x-G.mx*.6,bot],[C.x+G.rx*.4,bot],[C.x-G.rx*.1,C.y+G.ry*.9],[C.x-G.rx*.1,C.y+G.ry*.3]];p.ret=1}
+  else if(k==='h2o'&&from==='mt'){p.x=M.x-G.mx*.4;p.y=M.y+G.my*.6;p.wp=[[M.x-G.mx*.8,bot+10],[C.x+G.rx*.2,bot+10],[C.x-G.rx*.35,C.y+G.ry*.95],[C.x-G.rx*.3,C.y+G.ry*.35]];p.ret=1}
+  else if(k==='co2'&&from==='mtout'){p.x=M.x-G.mx*.2;p.y=M.y+G.my*.5;p.wp=[[M.x-G.mx*.6,bot],[M.x-G.mx*.8,h*1.05]]}
+  else if(k==='h2o'&&from==='mtout'){p.x=M.x-G.mx*.4;p.y=M.y+G.my*.6;p.wp=[[M.x-G.mx*.3,bot+10],[M.x,h*1.05]]}
+  else if(k==='en'){p.x=M.x+rnd(-.3,.3)*G.mx;p.y=M.y-G.my*.4;p.wp=[[M.x+rnd(-1,1)*G.mx*.6,h*.1]];p.v=v*.9}
+  p.from=from;C2.p.push(p)}
+function step2(dt,w,h){
+  C2.t+=dt;if(!C2.run)return;const G=g2(w,h);const f=C2.focus,ph=(f==='all'||f==='ph'),rs=(f==='all'||f==='rs');
+  const day=C2.light;
+  if(day&&ph){C2.acc.ph+=dt;if(C2.acc.ph>.16){C2.acc.ph=0;C2.ph.push({x:G.sun.x+22,y:G.sun.y+22,tx:G.C.x+rnd(-.6,.6)*G.rx,ty:G.C.y+rnd(-.5,.5)*G.ry,t:0})}
+    C2.acc.ci+=dt;if(C2.acc.ci>(f==='all'?1.6:1.0)){C2.acc.ci=0;sp2('co2',G,w,h,'ext');sp2('h2o',G,w,h,'ext')}}
+  if(!day&&rs){C2.acc.ext+=dt;if(C2.acc.ext>1.5){C2.acc.ext=0;sp2('glc',G,w,h,'ext');sp2('o2',G,w,h,'ext')}}
+  if(day&&f==='rs'){C2.acc.ext+=dt;if(C2.acc.ext>1.5){C2.acc.ext=0;sp2('glc',G,w,h,'ext');sp2('o2',G,w,h,'ext')}}
+  for(const q of C2.ph)q.t+=dt/.7;C2.ph=C2.ph.filter(q=>q.t<1);
+  const out=[];
+  for(const p of C2.p){const t=p.wp[p.i];const dx=t[0]-p.x,dy=t[1]-p.y,d=Math.hypot(dx,dy),m=p.v*dt;
+    if(d<=m){p.x=t[0];p.y=t[1];p.i++;
+      if(p.i>=p.wp.length){
+        if(p.k==='co2'||p.k==='h2o'){if(day||p.from==='ext'){C2.cArr[p.k]++;if(p.ret)C2.n.loop++;
+            if(C2.cArr.co2>=1&&C2.cArr.h2o>=1&&day&&ph){C2.cArr.co2--;C2.cArr.h2o--;C2.n.glc++;sp2('glc',G,w,h,'cl');sp2('o2',G,w,h,'cl');if(Math.random()<.5)sp2('o2',G,w,h,'out');chk2()}}}
+        else if(p.k==='glc'||p.k==='o2'){C2.mArr[p.k]++;if(C2.mArr.glc>=1&&C2.mArr.o2>=1&&rs){C2.mArr.glc--;C2.mArr.o2--;C2.n.en++;if(!day)C2.n.dark++;for(let i=0;i<3;i++)sp2('en',G,w,h);const cyc=day&&f==='all';sp2('co2',G,w,h,cyc?'mt':'mtout');sp2('h2o',G,w,h,cyc?'mt':'mtout');chk2()}}
+        continue}}
+    else{p.x+=dx/d*m;p.y+=dy/d*m}
+    out.push(p)}
+  C2.p=out}
+function chk2(){const n=C2.n;
+  if(n.glc>=3&&!S.c.has('ph')){S.c.add('ph');hud();sOK();fbx('#fb2','☀️ 엽록체에서 <b>광합성</b>이 일어나 포도당과 산소가 만들어졌어요!','ok')}
+  if(n.en>=3&&!S.c.has('rs')){S.c.add('rs');hud();sOK();fbx('#fb2','🔥 마이토콘드리아의 <b>호흡</b>으로 포도당이 분해되어 <b>생명활동 에너지</b>가 방출됐어요!','ok')}
+  if(n.loop>=2&&!S.c.has('loop')){S.c.add('loop');hud();sOK();fbx('#fb2','🔄 호흡으로 생긴 <b>이산화 탄소와 물</b>이 다시 엽록체에서 광합성 재료로 쓰여요 — 물질이 순환해요!','ok')}
+  if(n.dark>=2&&!S.c.has('dark')){S.c.add('dark');hud();sOK();fbx('#fb2','🌙 빛이 없어도 마이토콘드리아에서 <b>호흡은 계속</b> 일어나 에너지를 내요. (광합성은 멈춰요)','ok')}
+  if(S.c.size>=4&&!$('#cc2').innerHTML){const c=$('#cc2');c.style.display='';c.innerHTML='🎉 <b>결론</b><br>광합성은 엽록체에서 빛에너지로 이산화 탄소와 물을 포도당과 산소로 바꾸는 과정이고, 호흡은 마이토콘드리아에서 포도당을 분해해 생명활동에 필요한 에너지를 얻는 과정이다. 호흡의 산물(이산화 탄소·물)은 다시 광합성의 재료가 되어 물질이 순환한다.'}}
+function chloroC(g,x,y,rx,ry,glow,t){g.save();g.translate(x,y);if(glow>0){g.shadowColor='#bef264';g.shadowBlur=26*glow}
+  let gr=g.createLinearGradient(-rx,-ry,rx,ry);gr.addColorStop(0,'#4ade80');gr.addColorStop(1,'#15803d');g.fillStyle=gr;g.strokeStyle='#14532d';g.lineWidth=4;g.beginPath();g.ellipse(0,0,rx,ry,0,0,6.2832);g.fill();g.stroke();g.shadowBlur=0;
+  g.fillStyle='#166534';g.strokeStyle='#052e16';g.lineWidth=1.5;for(let i=-2;i<=2;i++)for(let j=-1;j<=1;j++){const px=i*rx*.3,py=j*ry*.42;if(Math.hypot(px/rx,py/ry)<.82){g.beginPath();g.ellipse(px,py,rx*.12,ry*.13,0,0,6.2832);g.fill();g.stroke()}}
+  g.restore()}
+function mitoC(g,x,y,rx,ry,glow){g.save();g.translate(x,y);if(glow>0){g.shadowColor='#fdba74';g.shadowBlur=26*glow}
+  let gr=g.createLinearGradient(-rx,-ry,rx,ry);gr.addColorStop(0,'#fb923c');gr.addColorStop(1,'#c2410c');g.fillStyle=gr;g.strokeStyle='#7c2d12';g.lineWidth=4;rr(g,-rx,-ry,rx*2,ry*2,ry);g.fill();g.stroke();g.shadowBlur=0;
+  g.strokeStyle='#9a3412';g.lineWidth=3;g.fillStyle='rgba(124,45,18,.28)';rr(g,-rx*.85,-ry*.7,rx*1.7,ry*1.4,ry*.7);g.fill();g.stroke();
+  g.beginPath();for(let i=-3;i<=3;i++){const px=i*rx*.22,s=(i%2)?1:-1;g.moveTo(px,s*ry*.68);g.lineTo(px,-s*ry*.05)}g.stroke();g.restore()}
+function draw2(cv,now,dt){
+  const{g,w,h}=fit(cv);step2(dt,w,h);const G=g2(w,h);const f=C2.focus,day=C2.light;
+  g.clearRect(0,0,w,h);const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,day?'#f0fdf4':'#cbd5e1');bg.addColorStop(1,day?'#e0f2fe':'#94a3b8');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  // 세포막 느낌의 점선 영역
+  g.strokeStyle='rgba(100,116,139,.4)';g.lineWidth=3;g.setLineDash([10,8]);rr(g,w*.015,h*.1,w*.97,h*.86,28);g.stroke();g.setLineDash([]);
+  const lf=clamp(w/30,12,19);
+  // 햇빛
+  const sx=G.sun.x,sy=G.sun.y,sr=clamp(w*.035,16,30);
+  if(day){g.save();g.translate(sx,sy);g.rotate(C2.t*.4);g.strokeStyle='#fbbf24';g.lineWidth=4;g.lineCap='round';for(let i=0;i<10;i++){g.rotate(Math.PI/5);g.beginPath();g.moveTo(sr*1.25,0);g.lineTo(sr*1.6,0);g.stroke()}g.restore()}
+  g.fillStyle=day?'#fde047':'#cbd5e1';g.strokeStyle=day?'#f59e0b':'#94a3b8';g.lineWidth=3;g.beginPath();g.arc(sx,sy,sr,0,6.2832);g.fill();g.stroke();
+  // 안내 곡선 화살표 (물질 순환)
+  const dash=(f2)=>{g.setLineDash([12,9]);g.lineDashOffset=-C2.t*50*f2};
+  const arc=(pts,col)=>{g.strokeStyle=col;g.lineWidth=5;g.lineCap='round';dash(1);g.beginPath();g.moveTo(pts[0][0],pts[0][1]);g.bezierCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1],pts[3][0],pts[3][1]);g.stroke();g.setLineDash([]);const a=Math.atan2(pts[3][1]-pts[2][1],pts[3][0]-pts[2][0]);g.fillStyle=col;g.beginPath();g.moveTo(pts[3][0],pts[3][1]);g.lineTo(pts[3][0]-Math.cos(a-.5)*15,pts[3][1]-Math.sin(a-.5)*15);g.lineTo(pts[3][0]-Math.cos(a+.5)*15,pts[3][1]-Math.sin(a+.5)*15);g.closePath();g.fill()};
+  const ph=(f==='all'||f==='ph'),rs=(f==='all'||f==='rs');
+  g.globalAlpha=(ph&&day)?1:.28;arc([[G.C.x+G.rx*1.1,h*.34],[w*.4,h*.2],[w*.6,h*.2],[G.M.x-G.mx*1.15,h*.34]],'#f59e0b');
+  g.globalAlpha=(f==='all'&&day)?1:.28;arc([[G.M.x-G.mx*.9,h*.88],[w*.6,h*.98],[w*.4,h*.98],[G.C.x+G.rx*.5,h*.88]],'#38bdf8');g.globalAlpha=1;
+  pill(g,'포도당 + 산소 ➜',w*.5,h*.215,'#fef3c7','#78350f',lf);
+  pill(g,'⬅ 이산화 탄소 + 물',w*.5,h*.965,'#e0f2fe','#075985',lf);
+  // 소기관
+  const gl1=(ph&&day)?(.4+Math.min(1,C2.ph.length*.05)):0;const gl2=rs?(.3+.3*Math.sin(C2.t*5)):0;
+  g.globalAlpha=ph?1:.35;chloroC(g,G.C.x,G.C.y,G.rx,G.ry,gl1,C2.t);g.globalAlpha=rs?1:.35;mitoC(g,G.M.x,G.M.y,G.mx,G.my,gl2);g.globalAlpha=1;
+  pill(g,'엽록체 (광합성)',G.C.x,G.C.y-G.ry-18,'#bbf7d0','#14532d',lf+1);pill(g,'마이토콘드리아 (호흡)',G.M.x,G.M.y-G.my-18,'#fed7aa','#7c2d12',lf+1);
+  // 광자
+  for(const q of C2.ph){const x=lerp(q.x,q.tx,q.t),y=lerp(q.y,q.ty,q.t),t0=Math.max(0,q.t-.14);g.strokeStyle='rgba(250,204,21,.95)';g.lineWidth=3.5;g.lineCap='round';g.beginPath();g.moveTo(lerp(q.x,q.tx,t0),lerp(q.y,q.ty,t0));g.lineTo(x,y);g.stroke()}
+  if(day&&ph)pill(g,'☀️ 빛에너지',sx+sr*1.1+46,sy+sr*.9,'#fef08a','#713f12',lf-1);
+  // 분자
+  const r=clamp(w*.012,6,10);
+  for(const p of C2.p){if(p.k==='en')continue;mol(g,p.k,p.x,p.y,r,1)}
+  for(const p of C2.p){if(p.k!=='en')continue;const a=1-Math.max(0,(h*.9-p.y)/(h*.8))*0;mol(g,'en',p.x,p.y,r*1.1,1)}
+  if(C2.n.en>0||rs)pill(g,'⚡ 생명활동 에너지 방출',G.M.x,h*.12,'#fef9c3','#92400e',lf);
+  if(!day&&rs)pill(g,'🌙 빛이 없어도 호흡은 계속!',G.M.x,h*.9,'#e0e7ff','#312e81',lf);
+  if(!day&&ph)pill(g,'광합성 멈춤 (빛 필요)',G.C.x,G.C.y+G.ry+22,'#e2e8f0','#334155',lf);
+  if(!C2.run)outText(g,'⏸ 일시 정지',w/2,h*.5,clamp(w/18,18,36),'#fde68a');
+}
+// ================= UI =================
+function modeUI1(){$('#bd1')&&$('#bd1').classList.toggle('on',D1.day);$('#bn1')&&$('#bn1').classList.toggle('on',!D1.day);$('#au1')&&$('#au1').classList.toggle('on',D1.auto);tip1();
+  $('#bp1')&&0}
+function tip1(){$('#tip1').innerHTML=D1.day?'💡 <b>광합성은 빛이 있는 낮에 일어나요.</b> 낮에는 광합성량이 호흡량보다 많아서 이산화 탄소를 <b>순수하게 흡수</b>하고 산소를 방출해요. 그래도 호흡은 <b>작게 계속</b> 일어나요! (식물을 눌러 보세요)':'💡 <b>밤에는 빛이 없어 광합성이 멈추고 호흡만 일어나요.</b> 그래서 산소를 흡수하고 이산화 탄소를 방출해요. <b>호흡은 낮과 밤 관계없이 항상</b> 일어나요!'}
+function ctl1(){
+  $('#selh1').textContent='🌞🌙 낮과 밤을 바꿔 보세요';
+  $('#sel1').innerHTML='<div class="big3" style="grid-template-columns:1fr 1fr 1fr"><button class="btn" id="bd1" style="min-height:72px"><span>🌞</span>낮</button><button class="btn" id="bn1" style="min-height:72px"><span>🌙</span>밤</button><button class="btn" id="au1" style="min-height:72px"><span>🔁</span>자동 전환</button></div>';
+  $('#ctl1').innerHTML='<div class="kv2">⚖️ 광합성량과 호흡량 비교</div><div style="margin-top:8px;font-weight:900"><div style="display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;margin:6px 0"><span style="color:#15803d">광합성</span><div style="height:22px;background:#e2e8f0;border-radius:8px;overflow:hidden"><div id="bp1" style="height:100%;width:0;background:#22c55e;transition:width .6s"></div></div><span id="bp1t">많음</span></div><div style="display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;margin:6px 0"><span style="color:#c2410c">호흡</span><div style="height:22px;background:#e2e8f0;border-radius:8px;overflow:hidden"><div id="br1" style="height:100%;width:0;background:#f97316;transition:width .6s"></div></div><span id="br1t">항상</span></div></div>';
+  $('#info1').innerHTML='<div class="kv2">📋 기체 출입 정리</div><table class="cmpa" style="margin-top:6px"><tr><th></th><th>이산화 탄소</th><th>산소</th></tr><tr id="r1d"><th>🌞 낮</th><td>들어옴 (많이)</td><td>나감 (많이)</td></tr><tr id="r1n"><th>🌙 밤</th><td>나감</td><td>들어옴</td></tr></table>';modeUI1()}
+function hl1(){$('#r1d')&&$('#r1d').classList.toggle('cur',D1.day);$('#r1n')&&$('#r1n').classList.toggle('cur',!D1.day)}
+function ctl2(){
+  $('#selh2').textContent='🔎 관찰할 과정을 고르세요';
+  $('#sel2').innerHTML='<div class="big3"><button class="btn" data-f="ph" style="min-height:72px"><span>☀️</span>광합성</button><button class="btn" data-f="rs" style="min-height:72px"><span>🔥</span>호흡</button><button class="btn" data-f="all" style="min-height:72px"><span>🔄</span>순환 연결</button></div>';
+  $('#ctl2').innerHTML='<div class="cr" style="gap:8px"><button class="sw2" id="lt2" style="min-height:64px;flex:1">☀️ 빛 켜짐</button><button class="sw2" id="pl2" style="min-height:64px;flex:1">⏸ 일시 정지</button></div>';
+  $('#info2').innerHTML='<div class="kv2">📋 두 과정의 식</div><div class="kv2" style="margin-top:6px;line-height:1.7"><span style="color:#15803d">광합성(엽록체)</span><br>이산화 탄소 + 물 <span style="color:#d97706">—빛에너지→</span> 포도당 + 산소<br><span style="color:#c2410c">호흡(마이토콘드리아)</span><br>포도당 + 산소 → 이산화 탄소 + 물 + <span style="color:#b45309">에너지</span></div>';
+  tip2();ui2()}
+function tip2(){$('#tip2').innerHTML=C2.focus==='ph'?'☀️ <b>광합성</b>: 엽록체가 <b>빛에너지</b>로 이산화 탄소와 물을 포도당과 산소로 바꿔요. 만든 포도당과 산소는 호흡에도 쓰여요.':C2.focus==='rs'?'🔥 <b>호흡</b>: 마이토콘드리아에서 포도당이 산소와 반응해 분해되며 <b>생명활동에 필요한 에너지</b>를 내요. 이산화 탄소와 물이 생겨요.':'🔄 <b>순환</b>: 광합성의 산물(포도당·산소)이 호흡의 재료가 되고, 호흡의 산물(이산화 탄소·물)이 다시 광합성의 재료가 돼요. 빛을 끄면 어떻게 될까요?'}
+function ui2(){$$('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f===C2.focus));$('#lt2').classList.toggle('on',C2.light);$('#lt2').textContent=C2.light?'☀️ 빛 켜짐 (끄기)':'🌙 빛 꺼짐 (켜기)';$('#pl2').classList.toggle('on',!C2.run);$('#pl2').textContent=C2.run?'⏸ 일시 정지':'▶ 다시 재생'}
+document.addEventListener('click',e=>{let b;
+  if(e.target.closest('#bd1')){D1.day=true;D1.auto=false;sTap();modeUI1();hl1();return}
+  if(e.target.closest('#bn1')){D1.day=false;D1.auto=false;sTap();modeUI1();hl1();return}
+  if(e.target.closest('#au1')){D1.auto=!D1.auto;D1.autoT=0;sTap();modeUI1();return}
+  if(b=e.target.closest('[data-f]')){C2.focus=b.dataset.f;C2.p=[];C2.ph=[];C2.cArr={co2:0,h2o:0};C2.mArr={glc:0,o2:0};sTap();tip2();ui2();return}
+  if(e.target.closest('#lt2')){C2.light=!C2.light;C2.p=C2.light?C2.p:C2.p.filter(p=>p.k!=='co2'||p.from==='mtout');C2.cArr={co2:0,h2o:0};sTap();ui2();return}
+  if(e.target.closest('#pl2')){C2.run=!C2.run;sTap();ui2();return}
+});
+$('#a1').addEventListener('pointerdown',e=>{const r=$('#a1').getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;const w=r.width,h=r.height;
+  if(Math.abs(x-w*.5)<w*.3&&y>h*.1&&y<h*.92){sTick();if(!S.a.has('tip')){S.a.add('tip');hud()}toast('#toast1',D1.day?'낮에도 호흡은 계속돼요! 다만 광합성이 더 많아서 이산화 탄소는 순수하게 흡수돼요.':'밤에는 광합성이 멈추고 호흡만 일어나요. 호흡은 낮과 밤 관계없이 항상 일어나요!',3400)}});
+$('#a2').addEventListener('pointerdown',e=>{const r=$('#a2').getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;const G=g2(r.width,r.height);
+  if(Math.hypot((x-G.C.x)/G.rx,(y-G.C.y)/G.ry)<1.1){sTick();toast('#toast2','엽록체: 빛에너지를 이용해 이산화 탄소와 물로 포도당과 산소를 만들어요 (광합성).',3200)}
+  else if(Math.hypot((x-G.M.x)/G.mx,(y-G.M.y)/G.my)<1.1){sTick();toast('#toast2','마이토콘드리아: 포도당을 분해해 생명활동에 필요한 에너지를 얻어요 (호흡).',3200)}});
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const a=S.a,c=S.c;const it=[['🌞 낮',a.has('day')],['🌙 밤',a.has('night')],['호흡은 항상',a.has('both')||a.has('tip')],['☀️ 광합성',c.has('ph')],['🔥 호흡',c.has('rs')],['🔄 순환',c.has('loop')],['🌙 빛 없이 호흡',c.has('dark')]];
+  el.innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${S.quiz>=QZ.length?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/'+QZ.length}</div>`}
+const QZ=[
+ {q:'낮에 식물에서 일어나는 기체 출입으로 옳은 것은?',o:['이산화 탄소가 들어가고 산소가 나온다(광합성량이 호흡량보다 많음)','산소가 들어가고 이산화 탄소가 나온다','기체 출입이 전혀 없다','질소만 드나든다'],a:0,e:'낮에는 광합성량이 호흡량보다 많아 이산화 탄소를 흡수하고 산소를 방출하는 것처럼 보여요.'},
+ {q:'밤에 식물은 어떤 과정을 할까?',o:['호흡만 한다','광합성만 한다','광합성과 호흡을 모두 활발히 한다','아무것도 하지 않는다'],a:0,e:'빛이 없는 밤에는 광합성이 멈추고 호흡만 일어나 산소를 흡수하고 이산화 탄소를 방출해요.'},
+ {q:'호흡이 일어나는 시간은?',o:['낮과 밤 관계없이 항상','낮에만','밤에만','빛이 강할 때만'],a:0,e:'호흡은 살아 있는 모든 세포에서 낮과 밤 관계없이 항상 일어나요.'},
+ {q:'엽록체에서 일어나는 광합성의 재료와 산물은?',o:['이산화 탄소·물 → 포도당·산소','포도당·산소 → 이산화 탄소·물','포도당 → 에너지','산소 → 이산화 탄소'],a:0,e:'광합성은 빛에너지를 이용해 이산화 탄소와 물로 포도당과 산소를 만들어요.'},
+ {q:'마이토콘드리아에서 호흡을 하면 만들어지는 것은?',o:['생명활동에 필요한 에너지, 이산화 탄소, 물','포도당과 산소','빛에너지','엽록소'],a:0,e:'호흡은 포도당을 산소로 분해해 에너지를 얻고 이산화 탄소와 물이 생겨요.'},
+ {q:'광합성과 호흡의 물질 관계로 옳은 것은?',o:['광합성 산물은 호흡의 재료, 호흡 산물은 광합성의 재료','둘은 서로 관계가 없다','호흡 산물이 광합성 산물과 같다','광합성에서만 에너지가 생긴다'],a:0,e:'포도당·산소는 호흡의 재료, 이산화 탄소·물은 광합성의 재료가 되어 물질이 순환해요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+function resetAll(){
+  S.a=new Set();S.c=new Set();S.quiz=-1;
+  Object.assign(D1,{day:true,auto:false,t:0,p:[],acc:{ci:0,oo:0,oi:0,co:0},tm:{day:0,night:0},autoT:0});
+  Object.assign(C2,{light:true,focus:'all',run:true,t:0,p:[],ph:[],acc:{ci:0,hi:0,ph:0,ext:0},cArr:{co2:0,h2o:0},mArr:{glc:0,o2:0},n:{glc:0,en:0,loop:0,dark:0}});
+  const c1=$('#cc1'),c2=$('#cc2');c1.style.display='none';c1.innerHTML='';c2.style.display='none';c2.innerHTML='';
+  ctl1();hl1();ctl2();
+  fbx('#fb1','🌞🌙 낮과 밤을 바꿔 가며 기체가 드나드는 방향을 관찰해 보세요. 식물을 눌러도 좋아요.');
+  fbx('#fb2','🔬 엽록체와 마이토콘드리아에서 물질이 어떻게 이동하는지 지켜보세요. 빛을 꺼 보세요!');
+  hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let lastT=0;
+function loop(){try{const now=performance.now()/1000,dt=Math.min(.05,now-(lastT||now));lastT=now;
+    if(mode===1){draw1($('#a1'),now,dt);hl1()}else draw2($('#a2'),now,dt)}catch(e){console.error(e)}requestAnimationFrame(loop)}
+resetAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

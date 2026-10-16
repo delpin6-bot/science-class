@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>소화 작용 탐구 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.kv2{font-weight:800;line-height:1.5;font-size:clamp(13px,1.1vw,17px)}
+.sm .btn{min-height:48px;font-size:clamp(12px,1.05vw,16px);padding:0 10px}
+.hudc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hudc div{border:3px solid var(--line);border-radius:12px;padding:4px 6px;text-align:center;background:#f8fafc}
+.hudc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}.hudc b{display:block;font-size:clamp(20px,2.1vw,32px);font-variant-numeric:tabular-nums}
+.hudc .i{border-color:#3b82f6;background:#eff6ff}.hudc .i b{color:#1d4ed8}.hudc .r{border-color:#f97316;background:#fff7ed}.hudc .r b{color:#c2410c}.hudc .m{border-color:#94a3b8}.hudc .m b{color:#475569}
+.pres{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pres .btn{min-height:52px;padding:0}.pres .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tg .btn{min-height:52px;line-height:1.2;padding:2px 8px;font-size:clamp(12px,1.05vw,16px)}.tg .btn.on{background:#dcfce7;border-color:#22c55e;color:#14532d}.tg .btn.warn.on{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.dt{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.dt th,.dt td{border:2px solid #cbd5e1;padding:6px 3px}.dt th{background:#dbeafe;color:#1e3a8a}.dt td.f{background:#fef9c3;color:#166534}.dt td.cur{outline:3px solid #f59e0b}
+.mat{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mat .btn{min-height:60px;text-align:left;line-height:1.2;padding:4px 10px;font-size:clamp(12px,1.05vw,16px)}.mat .btn.on{background:#fffbeb;border-color:#f59e0b}.mat .btn.seen{border-color:#86efac}
+.stg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stg3 .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.stg3 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.stg3 .btn.ok{background:#dcfce7;border-color:#22c55e}
+.alert{border-radius:12px;padding:8px 12px;font-weight:900;line-height:1.45;background:#fef2f2;border:3px solid #ef4444;color:#7f1d1d;font-size:clamp(13px,1.1vw,17px)}
+.cv{width:100%;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;display:block}
+input[type=range].big{accent-color:#0f766e}
+
+.seg{display:grid;gap:6px}.seg .btn{min-height:52px;line-height:1.15;padding:2px 6px;font-size:clamp(12px,1.05vw,16px)}.seg .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.seg .btn.ok{border-color:#22c55e}
+.spd{display:grid;grid-template-columns:1fr 1fr;gap:6px}.spd div{border:2px solid var(--line);border-radius:12px;padding:4px 8px;font-weight:800;font-size:clamp(12px,1.02vw,15px);background:#f8fafc}.spd i{display:block;height:9px;border-radius:5px;background:#38bdf8;margin-top:3px}
+.hudc .g b{color:#15803d}.hudc .g{border-color:#22c55e;background:#f0fdf4}
+.med{display:grid;grid-template-columns:1fr 1fr;gap:6px}.med .btn{min-height:58px;line-height:1.2;padding:3px 8px;text-align:left;font-size:clamp(12px,1.05vw,16px)}.med .btn.on{background:#fffbeb;border-color:#f59e0b}
+
+.ban{border-radius:12px;padding:8px 12px;font-weight:900;background:#fef9c3;border:3px solid #facc15;color:#713f12;line-height:1.45;font-size:clamp(13px,1.1vw,17px)}.ban:empty{display:none}
+
+.badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:900;font-size:clamp(12px,1.05vw,16px);border:2px solid}
+.b-d{background:#fef9c3;border-color:#eab308;color:#713f12}.b-r{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.b-f{background:#dcfce7;border-color:#22c55e;color:#14532d}.b-n{background:#e5e7eb;border-color:#9ca3af;color:#374151}
+.hi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hi div{border:2px solid var(--line);border-radius:12px;padding:5px 9px;font-weight:800;background:#f8fafc;font-size:clamp(12px,1.05vw,16px);line-height:1.4}
+.sortbox{position:absolute;inset:0;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px;background:#f1f5f9}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cardb{min-height:84px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(13px,1.2vw,18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;line-height:1.2;padding:4px}.cardb span{font-size:clamp(26px,3vw,42px)}.cardb.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardb.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:150px}.zone{border:4px dashed #94a3b8;border-radius:16px;padding:8px;font-weight:900;display:flex;flex-direction:column;gap:6px;align-content:flex-start;cursor:pointer;font-size:clamp(14px,1.3vw,19px);background:#fff}.zone.on{border-color:#f59e0b;background:#fffbeb}
+.zone.src{border-color:#f59e0b}.zone.non{border-color:#64748b}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:3px 8px;font-size:clamp(12px,1.05vw,16px)}
+
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:1;min-height:150px}
+.bin{border:4px dashed #94a3b8;border-radius:14px;padding:6px;font-weight:900;background:#fff;display:flex;flex-direction:column;gap:5px;align-content:flex-start;font-size:clamp(13px,1.15vw,17px);line-height:1.25}.bin.hot{border-color:#f59e0b;background:#fffbeb}.bin small{font-weight:700;color:var(--mut);font-size:.78em}
+.cardf{min-height:100px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;font-size:clamp(12px,1.05vw,16px);text-align:center}.cardf span{font-size:clamp(26px,2.8vw,40px)}.cardf.sel{border-color:#f59e0b;background:#fffbeb;transform:scale(1.04)}.cardf.back{background:#eff6ff;border-color:#60a5fa}.cardf.back small{font-weight:800;color:#1e3a8a;font-size:.9em}.cardf.shake{animation:shk .4s;border-color:#ef4444;background:#fef2f2}
+.ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%) scale(1.06);width:150px}
+input[type=range].big{width:100%;height:48px}
+.rec td{font-size:clamp(11px,.95vw,14px);line-height:1.25;vertical-align:middle}.rec .ic{display:inline-block;line-height:1}
+.lr{display:grid;grid-template-columns:minmax(96px,150px) minmax(0,1fr) 52px;gap:8px;align-items:center}.lr b{text-align:right;font-variant-numeric:tabular-nums;font-size:clamp(14px,1.2vw,19px)}
+.lt{min-height:56px!important;line-height:1.15}
+.lt.r.on{background:#fecaca;border-color:#ef4444;color:#7f1d1d}.lt.g.on{background:#bbf7d0;border-color:#22c55e;color:#14532d}.lt.b.on{background:#bfdbfe;border-color:#3b82f6;color:#1e3a8a}
+.lt.w.on{background:#f1f5f9;border-color:#475569;color:#0f172a}
+.r2{accent-color:#dc2626}.g2s{accent-color:#16a34a}.b2s{accent-color:#2563eb}
+.sw{display:flex;align-items:center;gap:10px}.sw i{display:block;width:clamp(56px,6vw,96px);height:clamp(56px,6vw,96px);border-radius:14px;border:3px solid #334155;flex:0 0 auto}
+.sw div{font-weight:900;line-height:1.35;font-size:clamp(14px,1.25vw,20px)}.sw small{display:block;font-weight:800;color:var(--mut);font-size:.78em}
+.found{display:flex;gap:6px;flex-wrap:wrap}.found span{min-height:40px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;color:#94a3b8;font-weight:900;display:inline-flex;align-items:center;gap:6px;font-size:clamp(12px,1.05vw,16px)}.found span.on{border-style:solid;border-color:#22c55e;background:#f0fdf4;color:#166534}
+.found i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #334155}
+.ptab{width:100%;border-collapse:collapse;font-weight:800;font-size:clamp(11px,.98vw,15px);text-align:center}.ptab th,.ptab td{border:2px solid #cbd5e1;padding:4px 3px}.ptab th{background:#dbeafe;color:#1e3a8a}.ptab td i{display:inline-block;width:22px;height:22px;border-radius:6px;border:2px solid #334155;vertical-align:middle}
+.ptab td.cur{outline:3px solid #f59e0b}
+.pxs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pxs .btn{min-height:52px;padding:2px 4px;line-height:1.1;font-size:clamp(11px,.98vw,15px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.pxs .btn i{width:30px;height:14px;border-radius:4px;border:2px solid #334155}.pxs .btn.seen{border-color:#22c55e}.pxs .btn.on{border-color:#f59e0b;background:#fffbeb}
+.bars{display:grid;gap:5px}.bars div{display:grid;grid-template-columns:70px 1fr 56px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.bars em{display:block;height:20px;border-radius:6px;background:#e2e8f0;position:relative;overflow:hidden}.bars em u{display:block;height:100%;width:0}
+.c4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c4 .btn{min-height:76px;line-height:1.25;padding:4px 6px;font-size:clamp(13px,1.15vw,18px)}.c4 .btn span{display:block;font-size:1.7em}.c4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.c4 .btn.ok{border-color:#22c55e}
+.info4{font-weight:800;line-height:1.6;font-size:clamp(13px,1.15vw,18px)}.info4 b{color:#1d4ed8}
+.prs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.prs .btn{min-height:52px;padding:2px 4px;line-height:1.15;font-size:clamp(12px,1.05vw,16px)}
+.ins4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ins4 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(12px,1.05vw,16px)}.ins4 .btn span{display:block;font-size:1.5em}.ins4 .btn.on{background:#fde68a;border-color:#f59e0b;color:#78350f}
+.ins5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ins5 .btn{min-height:56px;line-height:1.15;padding:2px 4px;font-size:clamp(12px,1.05vw,16px)}.ins5 .btn.on{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.stat div{border:3px solid var(--line);border-radius:12px;padding:4px 8px;background:#f8fafc;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.stat b{display:block;font-size:clamp(20px,2vw,30px);font-variant-numeric:tabular-nums;color:#1d4ed8}
+.tip{border-radius:12px;padding:9px 13px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(13px,1.12vw,18px)}.tip b{color:#be123c}
+.sw2{min-height:56px;border-radius:14px;border:3px solid #94a3b8;background:#f8fafc;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-size:clamp(14px,1.2vw,19px)}.sw2.on{background:#dcfce7;border-color:#22c55e;color:#14532d}
+.sldr{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;font-weight:900;font-size:clamp(13px,1.1vw,17px)}.sldr b{text-align:right;font-variant-numeric:tabular-nums}
+.sldr.dis{opacity:.45}
+.sub6{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.sub6 .btn{min-height:62px;line-height:1.2;padding:3px 4px;font-size:clamp(13px,1.15vw,18px)}.sub6 .btn span{display:block;font-size:1.5em}
+.sub6.el .btn.on{background:#dbeafe;border-color:#3b82f6;color:#1e3a8a}.sub6.co .btn.on{background:#ffedd5;border-color:#f97316;color:#7c2d12}.sub6 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.gm{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:12px;background:#f1f5f9;overflow:auto}
+.bk2{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:150px}
+.bk{border:4px dashed #94a3b8;border-radius:18px;background:#fff;padding:8px 10px;font-weight:900;display:flex;flex-direction:column;gap:6px;font-size:clamp(15px,1.45vw,22px);transition:.15s}.bk small{font-weight:700;color:var(--mut);font-size:.62em}.bk.hot{border-color:#f59e0b;background:#fffbeb}
+.bk.e{border-color:#60a5fa}.bk.c{border-color:#fb923c}.bk.ok{animation:okf .5s}.bk.no{animation:nof .5s}
+@keyframes okf{50%{background:#bbf7d0;border-color:#22c55e}}@keyframes nof{50%{background:#fecaca;border-color:#ef4444}}
+.cp2{display:flex;flex-wrap:wrap;gap:5px}.cp2 span{background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:2px 8px;font-size:clamp(11px,.95vw,15px)}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{min-height:92px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;cursor:grab;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25;padding:4px;text-align:center;font-size:clamp(12px,1.1vw,17px)}.mc span{font-size:clamp(26px,2.8vw,40px)}.mc.sel{border-color:#f59e0b;background:#fffbeb}.mc.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.res3{position:absolute;inset:0;background:rgba(15,23,42,.8);display:none;align-items:center;justify-content:center;z-index:5}.res3.on{display:flex}.res3>div{background:#fff;border-radius:24px;padding:22px 30px;text-align:center;font-weight:900;max-width:80%;font-size:clamp(16px,1.6vw,24px);line-height:1.6}.res3 b{font-size:1.6em;color:#15803d}
+.cfx{position:fixed;top:-40px;z-index:70;font-size:30px;pointer-events:none;animation:fall 2.6s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.prop{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(11px,1vw,15px)}.prop th,.prop td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.prop th{background:#dbeafe;color:#1e3a8a}.prop td.q{background:#f1f5f9;color:#94a3b8}.prop td.n{background:#fef9c3;color:#713f12;animation:okf .6s}
+.cmp{width:100%;border-collapse:collapse;font-weight:800;text-align:center;font-size:clamp(12px,1.05vw,16px)}.cmp th,.cmp td{border:2px solid #cbd5e1;padding:5px}.cmp th{background:#f1f5f9}
+.mon{flex:none!important;height:clamp(290px,44vh,450px)}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.big3 .btn{min-height:72px;font-size:clamp(16px,1.5vw,23px);line-height:1.2;padding:4px}.big3 .btn span{display:block;font-size:1.6em}
+.big3 .btn.on{border-color:#2563eb;background:#dbeafe}.big3 .btn.seen{box-shadow:inset 0 -5px 0 #22c55e}
+.cr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cr .btn{min-height:64px;font-size:clamp(15px,1.4vw,22px);padding:4px 14px}.cr .btn.on{border-color:#2563eb;background:#dbeafe}.cr .zb{min-width:64px;font-size:26px}.cr .zv{font-weight:900;font-size:clamp(18px,1.8vw,26px);min-width:56px;text-align:center}
+.cr .lb2{font-weight:900;font-size:clamp(14px,1.25vw,19px);color:var(--mut)}
+.tipb{border-radius:12px;padding:10px 14px;font-weight:800;line-height:1.55;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(14px,1.25vw,19px)}.tipb.warn{background:#fef3c7;border-color:#f59e0b;color:#78350f}
+.cmpa{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(12px,1.05vw,16px)}.cmpa th,.cmpa td{border:2px solid #cbd5e1;padding:5px 4px;line-height:1.3}.cmpa th{background:#f1f5f9}.cmpa tr.cur td,.cmpa tr.cur th{background:#fef9c3}
+@media (max-width:980px){.mon{height:380px}.stagewrap{min-height:340px}.stagewrap canvas{position:absolute;inset:0}}
+#pbar{overflow-x:auto}#pbar .pseg{white-space:nowrap;flex:0 0 auto}
+
+.tubes{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(4px,1vw,14px);align-items:end;padding:6px 4px 0}
+.tb{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;border-radius:14px;padding:4px 0 6px;transition:background .2s}
+.tb.hov{background:#fef9c3;outline:4px solid #f59e0b}
+.glass{position:relative;width:clamp(52px,62%,110px);height:clamp(210px,38vh,330px);border:4px solid #94a3b8;border-top:none;border-radius:0 0 999px 999px;background:rgba(255,255,255,.55);overflow:hidden;box-shadow:inset 6px 0 10px rgba(255,255,255,.7),inset -4px 0 8px rgba(100,116,139,.15)}
+.glass:before{content:"";position:absolute;left:-4px;right:-4px;top:0;height:6px;background:#cbd5e1}
+.liq{position:absolute;left:0;right:0;bottom:0;height:60%;background:#e8f6fd;transition:background-color 1.4s ease}
+.liq:after{content:"";position:absolute;left:8%;top:6px;bottom:30%;width:12%;border-radius:8px;background:rgba(255,255,255,.45)}
+.ppt{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#e2531f,#a3260d);transition:height 1.2s ease;border-radius:0 0 999px 999px}
+.tb.ok .ppt{height:16%}
+.dropf{position:absolute;left:50%;top:-14px;width:14px;height:20px;margin-left:-7px;border-radius:50% 50% 50% 50%/65% 65% 35% 35%;animation:fall .55s ease-in forwards;z-index:3}
+@keyframes fall{to{top:48%;opacity:.9}}
+.tb.heating .glass{animation:shk .25s linear infinite}
+@keyframes shk{50%{transform:translateX(2px)}}
+.bub{position:absolute;bottom:4px;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.85);animation:rise 1s linear infinite}
+@keyframes rise{to{bottom:60%;opacity:0}}
+.fire{position:absolute;bottom:-4px;font-size:clamp(22px,3vw,34px);animation:fl .35s infinite alternate}
+@keyframes fl{to{transform:scale(1.2) translateY(-4px)}}
+.tbn{margin-top:6px;font-weight:900;text-align:center;line-height:1.15;font-size:clamp(13px,1.5vw,24px)}.tbn b{display:block;font-size:clamp(26px,3.4vw,50px)}
+.tbc{font-weight:800;font-size:clamp(11px,1.15vw,17px);min-height:1.2em;text-align:center;color:#334155}
+.rgcard{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.rgt{font-weight:900;font-size:clamp(16px,1.55vw,25px);line-height:1.45}.rgt .nm{font-size:clamp(17px,1.7vw,27px);color:#1e3a8a}
+.dpw{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:900;font-size:clamp(12px,1.1vw,17px);color:#475569;text-align:center;max-width:130px}
+.dp{width:64px;height:132px;position:relative;cursor:grab;touch-action:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.dp .bulb{position:absolute;left:10px;top:0;width:44px;height:48px;border-radius:50% 50% 40% 40%;background:#dc2626;border:3px solid #7f1d1d}
+.dp .stem{position:absolute;left:25px;top:44px;width:14px;height:84px;border:3px solid #64748b;border-top:none;border-radius:0 0 10px 10px;background:rgba(255,255,255,.7);overflow:hidden}
+.dp .stem i{position:absolute;left:0;right:0;bottom:0;height:75%;background:var(--rg,#c98a2b)}
+.dp.ghost{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-100%) rotate(-12deg)}
+.mtx td{padding:4px 2px}.mtx .dot{display:inline-block;width:clamp(14px,1.6vw,22px);height:clamp(14px,1.6vw,22px);border-radius:50%;border:2px solid #475569;vertical-align:middle}
+.mtx td small{display:block;font-size:clamp(10px,.95vw,14px);line-height:1.1}
+.mtx tr.cur th{background:#fef9c3}
+.rgtab.tab{font-size:clamp(12px,1.05vw,17px)}
+
+.stbar{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-weight:900;font-size:clamp(15px,1.5vw,24px)}
+.stbar span.s{padding:6px 12px;border-radius:12px;background:#e2e8f0;color:#64748b}.stbar span.s.on{background:#fde68a;color:#78350f;box-shadow:0 0 0 3px #f59e0b}.stbar span.s.dn{background:#bbf7d0;color:#14532d}
+.warnbox{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);background:#fee2e2;border:5px solid #ef4444;color:#7f1d1d;font-weight:900;font-size:clamp(20px,2.4vw,34px);padding:16px 22px;border-radius:18px;text-align:center;z-index:5;display:none;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.warnbox.on{display:block;animation:pop .25s}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.6)}}
+.bth{position:relative;border:4px solid #60a5fa;border-radius:0 0 22px 22px;background:linear-gradient(#bfdbfe,#93c5fd);padding:10px 4px 0;margin-top:8px}
+.bth.on{border-color:#f97316;background:linear-gradient(#fed7aa,#fb923c)}
+.small .glass{height:clamp(120px,20vh,170px);width:clamp(40px,60%,76px)}
+.stp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stp .btn{min-height:64px;font-size:clamp(14px,1.35vw,21px);padding:4px 8px}
+.stp .btn.done{background:#dcfce7;border-color:#22c55e}
+.eb{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.eb .btn{min-height:72px;font-size:clamp(13px,1.3vw,20px);line-height:1.2;padding:4px}.eb .btn span{display:block;font-size:1.5em}
+.sel3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.sel3 .btn{min-height:72px;font-size:clamp(16px,1.6vw,24px)}.sel3 .btn span{display:block;font-size:1.6em}.sel3 .btn.on{border-color:#2563eb;background:#dbeafe}
+#lab1 .glass{height:clamp(100px,18vh,180px)!important}#lab1 .small .glass{height:clamp(70px,11vh,110px)!important}#lab1 .tbn b{font-size:clamp(18px,2.4vw,34px)}
+</style></head><body>
+<header>
+  <h1>🍞 소화 작용 탐구</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 침의 소화 작용 실험</button>
+    <button class="tab" id="tab2">② 영양소별 소화효소 시뮬레이션</button>
+    <button class="tab" id="tab3" style="display:none"></button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top">
+  <div id="pbar" style="flex:1 1 0;min-width:0"></div>
+  <button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px)">↺ 실험 초기화</button>
+</div>
+<main>
+<section class="mode g2 on" id="m1">
+  <div class="col"><div class="card" style="background:linear-gradient(#f8fafc,#e0f2fe);flex:1;position:relative;overflow:auto"><div class="toast" id="toast1"></div><div class="kv2" id="hd1" style="margin-bottom:4px"></div><div id="lab1"></div></div>
+    <div class="card ctl"><div class="kv2" id="selh1"></div><div id="sel1"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl1"></div><div class="tipb" id="tip1"></div><div class="card ctl" id="info1"></div><div class="tipb warn" id="cc1" style="display:none"></div><div class="fb" id="fb1"></div></div>
+</section>
+<section class="mode g2" id="m2">
+  <div class="col"><div class="card stagewrap" style="background:#fff7ed"><canvas id="a2" style="touch-action:none"></canvas><div class="toast" id="toast2"></div><div class="warnbox" id="warn2">⚠️ 효소는 특정 영양소에만 작용합니다!</div></div>
+    <div class="card ctl"><div class="kv2" id="selh2"></div><div id="sel2"></div></div></div>
+  <div class="col" style="overflow:auto"><div class="card ctl" id="ctl2"></div><div class="tipb" id="tip2"></div><div class="card ctl" id="info2"></div><div class="tipb warn" id="cc2" style="display:none"></div><div class="fb" id="fb2"></div></div>
+</section>
+<section class="mode" id="m3"></section>
+</main>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+function outText(g,t,x,y,sz,col,sk){g.font='900 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4.5;g.lineJoin='round';g.strokeStyle=sk||'rgba(15,23,42,.9)';g.strokeText(t,x,y);g.fillStyle=col||'#fff';g.fillText(t,x,y)}
+const pill=(g,t,x,y,col,bg,fs)=>{g.font='900 '+(fs||13)+'px sans-serif';const w=g.measureText(t).width+14,h=(fs||13)+11;g.fillStyle=bg||'rgba(15,23,42,.9)';rr(g,x-w/2,y-h/2,w,h,h/2);g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';g.fillText(t,x,y)};
+const fbx=(id,msg,cls)=>{const f=$(id);f.className='fb'+(cls?' '+cls:'');f.innerHTML=msg};
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const S={quiz:-1,a:new Set(),d:new Set()};
+// ================= 탭1: 침의 소화 작용 =================
+const E={starch:false,water:false,saliva:false,warm:false,iod:false,ben:false,busy:false};
+function resetE(){Object.assign(E,{starch:false,water:false,saliva:false,warm:false,iod:false,ben:false,busy:false})}
+const IOD={a:'#1f2a7c',b:'#d9a441'},BEN={a:'#3b8fd8',b:'#d2491b'};
+function tube1(id,lbl,col,txt,extra){return `<div class="tb${id==="BB"?" ok":""}" style="cursor:default"><div class="glass" id="g${id}"><div class="liq" id="l${id}" style="background:${col};height:${col?'60':'0'}%"></div><div class="ppt"></div></div><div class="tbn"><b>${lbl}</b></div><div class="tbc" id="c${id}">${txt||''}</div></div>`}
+function liqCol(k){if(!E.starch&&!(k==='a'?E.water:E.saliva))return null;if(k==='a')return E.water?(E.starch?'#eceff3':'#e6f5fc'):(E.starch?'#eceff3':null);return E.saliva?(E.starch?(E.warm?'#f5f2e2':'#eceae0'):'#f3ecc9'):(E.starch?'#eceff3':null)}
+function rend1(){
+  const ca=E.starch||E.water?(E.starch&&E.water?'#eceff3':E.starch?'#eceff3':'#e6f5fc'):null;
+  const cb=E.starch||E.saliva?(E.starch&&E.saliva?(E.warm?'#f6f3e4':'#eceae0'):E.starch?'#eceff3':'#f3ecc9'):null;
+  const ta=(E.starch?'녹말 ':'')+(E.water?'+ 증류수':''),tb=(E.starch?'녹말 ':'')+(E.saliva?'+ 침 용액':'');
+  $('#hd1').innerHTML='🧪 시험관 (가)와 (나)에 같은 양의 녹말 용액을 넣고, 증류수·침 용액을 각각 넣어 비교해요';
+  let h='<div class="bth'+(E.warm?' on':'')+'" id="bth"><div class="tubes" style="grid-template-columns:1fr 1fr">'+tube1('A','(가)',ca,ta)+tube1('B','(나)',cb,tb)+'</div><div style="text-align:center;font-weight:900;font-size:clamp(14px,1.4vw,22px);padding:4px">'+(E.warm?'🌡️ 35~40℃ 물중탕 중':'🌡️ 물중탕 (35~40℃)')+'</div></div>';
+  if(E.iod||E.ben){h+='<div class="kv2" style="margin-top:8px">🔬 결과 확인용 시험관</div><div class="tubes small" style="grid-template-columns:repeat(4,1fr)">';
+    h+=E.iod?tube1('IA','(가)+아이오딘',IOD.a,'청람색')+tube1('IB','(나)+아이오딘',IOD.b,'변화 없음'):'<div></div><div></div>';
+    h+=E.ben?tube1('BA','(가)+베네딕트',BEN.a,'변화 없음')+tube1('BB','(나)+베네딕트',BEN.b,'황적색'):'<div></div><div></div>';h+='</div>'}
+  $('#lab1').innerHTML=h;if(E.iod||E.ben){const c=$('#lab1').parentElement;setTimeout(()=>{c.scrollTop=c.scrollHeight},50)}
+  if(E.ben){const t=$('#gBB');t&&t.nextElementSibling}
+  const q=(x)=>x?' done':'';
+  $('#sel1').innerHTML=`<div class="stp"><button class="btn${q(E.starch)}" id="b_st">① 5% 녹말 용액 넣기</button><button class="btn${q(E.water)}" id="b_wa">② 증류수 넣기 (가)</button><button class="btn${q(E.saliva)}" id="b_sa">③ 침 용액 넣기 (나)</button><button class="btn${q(E.warm)}" id="b_wm">④ 35~40℃ 유지하기</button><button class="btn${q(E.iod)}" id="b_io">⑤ 아이오딘 용액 떨어뜨리기</button><button class="btn${q(E.ben)}" id="b_be">⑥ 베네딕트 용액 떨어뜨리고 가열하기</button></div>`;
+  $('#selh1').textContent='🧴 실험 순서대로 눌러 보세요 (①→⑥)';
+  const tr=(a,b)=>`<td>${a?`<span class="dot" style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #475569;background:${a}"></span> ${b}`:'–'}</td>`;
+  $('#info1').innerHTML='<div class="kv2">📋 실험 결과 (교과서 표 완성)</div><table class="cmpa" style="margin-top:6px"><tr><th>구분</th><th>아이오딘-아이오딘화 칼륨 용액</th><th>베네딕트 용액(가열)</th></tr><tr><th>(가) 녹말+증류수</th>'+tr(E.iod&&IOD.a,'청람색')+tr(E.ben&&BEN.a,'변화 없음(파란색)')+'</tr><tr><th>(나) 녹말+침 용액</th>'+tr(E.iod&&IOD.b,'변화 없음(황갈색)')+tr(E.ben&&BEN.b,'황적색')+'</tr></table>';
+  $('#ctl1').innerHTML='<div class="kv2">🎯 알아볼 점: 침은 녹말에 어떤 작용을 할까?</div><div class="rgt" style="margin-top:6px;font-weight:900;font-size:clamp(14px,1.3vw,20px);line-height:1.6">☑ 아이오딘 용액 → <b>녹말</b>이 있으면 청람색<br>☑ 베네딕트 용액(가열) → <b>엿당(당분)</b>이 있으면 황적색</div>'}
+function warm1(){E.busy=true;const b=$('#bth');b&&b.classList.add('on');const tb=$$('#lab1 .tb');tb.forEach(t=>t.classList.add('heating'));
+  const bar=document.createElement('div');bar.style.cssText='height:14px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin:6px 8px';bar.innerHTML='<div id="wbar" style="height:100%;width:0;background:#f97316;transition:width 3s linear"></div>';$('#bth').appendChild(bar);requestAnimationFrame(()=>{$('#wbar').style.width='100%'});
+  fbx('#fb1','⏱ 약 10분 동안 35~40℃에서 유지하는 중… (침 속 소화 효소는 체온 정도에서 잘 작용해요)');
+  setTimeout(()=>{E.warm=true;E.busy=false;S.a.add('warm');hud();rend1();sOK();fbx('#fb1','✅ 10분이 지났어요. 이제 각 시험관의 용액을 덜어 아이오딘 용액·베네딕트 용액으로 확인해 보세요.','ok')},3100)}
+function step1(id){if(E.busy)return;
+  const hint=m=>{sNO();$('#tip1').innerHTML='💡 '+m;toast('#toast1',m,2400)};
+  if(id==='b_st'){if(E.starch)return;E.starch=true;sTap()}
+  else if(id==='b_wa'){if(!E.starch)return hint('먼저 ① 5% 녹말 용액을 넣어요.');E.water=true;sTap()}
+  else if(id==='b_sa'){if(!E.starch)return hint('먼저 ① 5% 녹말 용액을 넣어요.');E.saliva=true;sTap()}
+  else if(id==='b_wm'){if(!(E.starch&&E.water&&E.saliva))return hint('녹말 용액, 증류수(가), 침 용액(나)을 모두 넣은 뒤 35~40℃로 유지해요.');if(E.warm)return;rend1();return warm1()}
+  else if(id==='b_io'){if(!E.warm)return hint('먼저 ④ 35~40℃에서 반응시켜요.');E.iod=true;S.a.add('iod');sTap();
+    $('#tip1').innerHTML='✅ <b>(가)</b>는 녹말이 그대로 남아 <b>청람색</b>, <b>(나)</b>는 녹말이 분해되어 <b>변화가 없어요</b>(아이오딘 용액 본래 색).'}
+  else if(id==='b_be'){if(!E.warm)return hint('먼저 ④ 35~40℃에서 반응시켜요.');if(E.ben)return;E.ben=true;E.busy=true;sTap();rend1();
+    const gl=['A','B'];gl.forEach(k=>{const t=$('#l'+'B'+k);});
+    setTimeout(()=>{E.busy=false;S.a.add('ben');hud();sOK();rend1();$('#tip1').innerHTML='✅ <b>(가)</b>는 엿당이 없어 <b>변화 없음</b>, <b>(나)</b>는 엿당이 만들어져 <b>황적색</b>으로 변했어요.';if(S.a.has('iod')&&S.a.has('ben'))concl1()},1800);
+    const bb=$('#gBB'),ba=$('#gBA');[bb,ba].forEach(g=>g&&g.parentElement.classList.add('heating'));const lb=$('#lBB');lb&&(lb.style.background='#3b8fd8');setTimeout(()=>{const l=$('#lBB');l&&(l.style.background='#d2491b');const p=$('#gBB')&&$('#gBB').parentElement;p&&p.classList.add('ok')},900);return}
+  rend1();hud();if(S.a.has('iod')&&S.a.has('ben'))concl1()}
+function concl1(){if($('#cc1').innerHTML)return;const c=$('#cc1');c.style.display='';c.innerHTML='🎉 <b>결론</b><br>침 속의 소화효소(아밀레이스)가 녹말을 엿당으로 분해한다. (가)는 녹말이 남아 청람색, (나)는 녹말이 사라지고 엿당이 생겨 황적색(베네딕트 반응)을 나타낸다.'}
+// ================= 탭2: 영양소별 소화효소 =================
+const NU={starch:{nm:'녹말',e:'🍞',st:['녹말','엿당','포도당']},protein:{nm:'단백질',e:'🥩',st:['단백질','작은 단백질','아미노산']},fat:{nm:'지방',e:'🧈',st:['지방','작은 지방 방울','지방산 + 모노글리세라이드']}};
+const EZ=[{id:'amy',e:'👄',nm:'입(아밀레이스)',sub:'침·이자액',f:'starch'},{id:'pep',e:'🫃',nm:'위(펩신)',sub:'위액',f:'protein'},{id:'try',e:'🧬',nm:'작은창자(트립신)',sub:'이자액',f:'protein'},{id:'lip',e:'✂️',nm:'작은창자(라이페이스)',sub:'이자액',f:'fat'},{id:'bil',e:'🟢',nm:'쓸개즙 (소화 돕기)',sub:'쓸개즙',f:'fat-helper'}];
+const C2={nut:'starch',stage:0,P:[],fx:[],t:0,w:0,h:0};
+const PAL=['#a855f7','#22c55e','#3b82f6','#f97316','#ec4899'];
+function specs(n,st){if(n==='starch')return st===0?[{k:'bead',n:12}]:st===1?Array(6).fill({k:'bead',n:2}):Array(12).fill({k:'bead',n:1,g:1});
+  if(n==='protein')return st===0?[{k:'prot',n:12}]:st===1?Array(3).fill({k:'prot',n:4}):Array(12).fill({k:'prot',n:1});
+  return st===0?[{k:'fat',n:9}]:st===1?Array(8).fill({k:'fat',n:2}):[...Array(8).fill({k:'fa',n:1}),...Array(8).fill({k:'mg',n:1})]}
+function gridPos(c,w,h){const cols=c===1?1:c<=3?c:c<=6?3:c<=8?4:4,rows=Math.ceil(c/cols),bx=w*.12,bw=w*.76,by=h*.18,bh=h*.58;const o=[];for(let i=0;i<c;i++){const cx=i%cols,cy=Math.floor(i/cols);o.push([bx+bw*(cols===1?.5:(cx+.5)/cols),by+bh*(rows===1?.5:(cy+.5)/rows)])}return o}
+function build2(from){const w=C2.w||600,h=C2.h||400,sp=specs(C2.nut,C2.stage),pos=gridPos(sp.length,w,h);const old=C2.P;
+  C2.P=sp.map((s,i)=>{const par=old.length?old[Math.min(old.length-1,Math.floor(i*old.length/sp.length))]:null;return {...s,seed:i*3,x:par?par.x:pos[i][0],y:par?par.y:pos[i][1],tx:pos[i][0],ty:pos[i][1]}})}
+function stbar2(){const N=NU[C2.nut];$('#ctl2').innerHTML='<div class="stbar">'+N.st.map((s,i)=>`<span class="s${i===C2.stage?' on':i<C2.stage?' dn':''}">${s}</span>`+(i<2?'<span>➜</span>':'')).join('')+'</div>'}
+function ui2(){$$('[data-n]').forEach(b=>b.classList.toggle('on',b.dataset.n===C2.nut));stbar2()}
+function selN(n){C2.nut=n;C2.stage=0;C2.P=[];build2();sTap();ui2();
+  $('#tip2').innerHTML=n==='starch'?'🍞 <b>녹말</b>은 아밀레이스가 엿당으로, 작은창자에서 최종적으로 <b>포도당</b>으로 분해해요.':n==='protein'?'🥩 <b>단백질</b>은 위액의 펩신, 이자액의 트립신 등에 의해 최종적으로 <b>아미노산</b>으로 분해돼요.':'🧈 <b>지방</b>은 쓸개즙이 잘게 쪼개 주면(소화 효소는 아님), 라이페이스가 <b>지방산과 모노글리세라이드</b>로 분해해요.';
+  fbx('#fb2','알맞은 소화효소를 눌러 '+NU[n].nm+'이(가) 작게 분해되는 모습을 관찰하세요.')}
+function warn2(m){const w=$('#warn2');w.innerHTML='⚠️ '+(m||'효소는 특정 영양소에만 작용합니다!');w.classList.remove('on');void w.offsetWidth;w.classList.add('on');sNO();clearTimeout(warn2.t);warn2.t=setTimeout(()=>w.classList.remove('on'),2600)}
+function enz(id){const z=EZ.find(e=>e.id===id),n=C2.nut;let ok=false,adv=0,msg='';
+  if(id==='bil'){if(n!=='fat')return warn2('쓸개즙은 지방의 소화를 도와요! (지방을 선택하세요)');
+    if(C2.stage===0){adv=1;msg='쓸개즙이 지방을 작은 방울로 쪼개 주었어요. 쓸개즙은 소화효소는 아니에요.'}else return toast('#toast2','이미 지방이 잘게 쪼개졌어요. 라이페이스를 넣어 보세요.',2200)}
+  else if(z.f!==n)return warn2();
+  else if(id==='amy'){if(C2.stage>=2)return toast('#toast2','녹말은 이미 포도당까지 분해되었어요.',2000);adv=1;msg=C2.stage===0?'침 속 아밀레이스가 녹말을 엿당으로 분해해요.':'작은창자에서 엿당이 포도당으로 최종 분해돼요.'}
+  else if(id==='pep'){if(C2.stage===0){adv=1;msg='위액의 펩신이 단백질을 더 작은 크기로 분해해요.'}else return toast('#toast2',C2.stage===1?'작은 단백질은 작은창자의 트립신이 아미노산으로 분해해요.':'이미 아미노산까지 분해되었어요.',2400)}
+  else if(id==='try'){if(C2.stage>=2)return toast('#toast2','이미 아미노산까지 분해되었어요.',2000);adv=1;msg=C2.stage===0?'트립신이 단백질을 작은 조각으로 분해해요. (펩신과 함께 작용)':'트립신이 작은 단백질을 최종적으로 아미노산으로 분해해요.'}
+  else if(id==='lip'){if(C2.stage===0){sNO();toast('#toast2','먼저 쓸개즙으로 지방을 잘게 쪼개 주면 라이페이스가 더 잘 작용해요!',2800);return}if(C2.stage>=2)return toast('#toast2','이미 지방산과 모노글리세라이드로 분해되었어요.',2200);adv=1;msg='라이페이스가 지방을 지방산과 모노글리세라이드로 분해해요.'}
+  if(adv){const old=C2.P.map(p=>({x:p.x,y:p.y}));C2.stage++;build2();C2.P.forEach((p,i)=>{});C2.fx.push({e:z.e,x:C2.w/2,y:C2.h*.4,t:0,nm:z.nm});sOK();stbar2();fbx('#fb2','✂️ '+msg,'ok');
+    if(C2.stage>=2){S.d.add(n);hud();if(S.d.size>=3&&!$('#cc2').innerHTML){const c=$('#cc2');c.style.display='';c.innerHTML='🎉 <b>결론</b><br>소화효소는 특정 영양소에만 작용한다. 녹말은 아밀레이스에 의해 포도당으로, 단백질은 펩신·트립신에 의해 아미노산으로, 지방은 쓸개즙의 도움과 라이페이스에 의해 지방산과 모노글리세라이드로 최종 분해된다.'}}}}
+function draw2(cv,now,dt){const{g,w,h}=fit(cv);if(C2.w!==w||C2.h!==h){const f=C2.w?w/C2.w:1,hf=C2.w?h/C2.h:1;C2.w=w;C2.h=h;C2.P.forEach(p=>{p.x*=f;p.y*=hf});build2()}C2.t+=dt;
+  g.clearRect(0,0,w,h);const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#fff7ed');bg.addColorStop(1,'#ffedd5');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const r=clamp(w*.018,7,15);
+  for(const p of C2.P){p.x+=(p.tx-p.x)*Math.min(1,dt*4.5);p.y+=(p.ty-p.y)*Math.min(1,dt*4.5);const bx=p.x,by=p.y+Math.sin(C2.t*2+p.seed)*3;g.save();g.translate(bx,by);g.lineWidth=2;g.strokeStyle='#1e293b';
+    if(p.k==='bead'){for(let i=0;i<p.n;i++){const x=(i-(p.n-1)/2)*r*1.9,y=p.n>1?Math.sin(i*.9+C2.t*2)*r*.7:0;if(i){g.strokeStyle='#6b21a8';g.lineWidth=3;g.beginPath();g.moveTo(x-r*1.9,p.n>1?Math.sin((i-1)*.9+C2.t*2)*r*.7:0);g.lineTo(x,y);g.stroke();g.lineWidth=2;g.strokeStyle='#1e293b'}g.fillStyle=p.g?'#d8b4fe':'#a855f7';g.beginPath();g.arc(x,y,r*(p.g?.95:.85),0,6.28);g.fill();g.stroke()}}
+    else if(p.k==='prot'){const c=Math.ceil(Math.sqrt(p.n));for(let i=0;i<p.n;i++){const x=((i%c)-(c-1)/2)*r*2.3,y=(Math.floor(i/c)-(Math.ceil(p.n/c)-1)/2)*r*2.3,col=PAL[(p.seed+i)%5];g.fillStyle=col;g.beginPath();const m=(p.seed+i)%3;if(m===0)g.arc(x,y,r*.95,0,6.28);else if(m===1){g.moveTo(x,y-r);g.lineTo(x+r,y+r*.8);g.lineTo(x-r,y+r*.8);g.closePath()}else g.rect(x-r*.85,y-r*.85,r*1.7,r*1.7);g.fill();g.stroke()}}
+    else if(p.k==='fat'){const rad=r*(p.n===9?5.2:1.7);const gr=g.createRadialGradient(-rad*.3,-rad*.3,rad*.1,0,0,rad);gr.addColorStop(0,'#fde68a');gr.addColorStop(1,'#f59e0b');g.fillStyle=gr;g.strokeStyle='#92400e';g.beginPath();g.arc(0,0,rad,0,6.28);g.fill();g.stroke()}
+    else if(p.k==='fa'){g.fillStyle='#84cc16';g.strokeStyle='#365314';g.beginPath();g.rect(-r*1.7,-r*.45,r*3.4,r*.9);g.fill();g.stroke()}
+    else if(p.k==='mg'){g.fillStyle='#fb923c';g.strokeStyle='#7c2d12';g.beginPath();g.rect(-r*1.5,-r*.45,r*3,r*.9);g.fill();g.stroke();g.beginPath();g.rect(r*.9,-r*1.3,r*.8,r*.9);g.fill();g.stroke()}
+    g.restore()}
+  const nm=C2.stage===0?NU[C2.nut].st[0]:NU[C2.nut].st[C2.stage];const fs=clamp(w/24,15,26);
+  if(C2.stage===2&&C2.nut==='fat'){pill(g,'지방산',w*.3,h*.9,'#365314','#ecfccb',fs);pill(g,'모노글리세라이드',w*.68,h*.9,'#7c2d12','#ffedd5',fs)}else pill(g,NU[C2.nut].e+' '+nm,w/2,h*.9,'#7c2d12','#ffedd5',fs+2);
+  C2.fx=C2.fx.filter(f=>(f.t+=dt)<1.2);C2.fx.forEach(f=>{g.save();g.globalAlpha=1-f.t/1.2;g.font=(clamp(w/9,44,80)*(1+f.t*.3))+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(f.e,f.x+Math.sin(f.t*20)*10,f.y-f.t*30);g.restore();pill(g,f.nm,f.x,f.y+clamp(w/9,44,80)*.8,'#1e3a8a','#dbeafe',fs-2)})}
+function ctl2(){$('#selh2').textContent='🍽️ 영양소를 고르고, 알맞은 소화효소를 눌러 보세요';
+  $('#sel2').innerHTML='<div class="sel3" style="margin-bottom:8px">'+Object.entries(NU).map(([k,v])=>`<button class="btn" data-n="${k}"><span>${v.e}</span>${v.nm}</button>`).join('')+'</div><div class="eb">'+EZ.map(z=>`<button class="btn" data-z="${z.id}"><span>${z.e}</span>${z.nm}</button>`).join('')+'</div>';
+  $('#info2').innerHTML='<div class="kv2">📋 영양소별 소화 (교과서 209쪽)</div><table class="cmpa" style="margin-top:6px"><tr><th>영양소</th><th>소화효소</th><th>최종 분해 산물</th></tr><tr><td>🍞 녹말</td><td>아밀레이스(침·이자액)</td><td>포도당</td></tr><tr><td>🥩 단백질</td><td>펩신(위액), 트립신(이자액)</td><td>아미노산</td></tr><tr><td>🧈 지방</td><td>라이페이스(이자액) + 쓸개즙(도움)</td><td>지방산, 모노글리세라이드</td></tr></table>';selN('starch')}
+document.addEventListener('click',e=>{let b;
+  if(b=e.target.closest('#sel1 .btn')){step1(b.id);return}
+  if(b=e.target.closest('[data-n]')){selN(b.dataset.n);return}
+  if(b=e.target.closest('[data-z]')){enz(b.dataset.z);return}});
+function hud(){const el=$('#pbar');el.style.display='flex';el.style.gap='6px';
+  const a=S.a,d=S.d;const it=[['🌡️ 35~40℃',a.has('warm')],['아이오딘',a.has('iod')],['베네딕트',a.has('ben')],['🍞 녹말 분해',d.has('starch')],['🥩 단백질 분해',d.has('protein')],['🧈 지방 분해',d.has('fat')]];
+  el.innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${S.quiz>=QZ.length?' ok':''}">퀴즈 ${S.quiz<0?'–':S.quiz+'/'+QZ.length}</div>`}
+const QZ=[
+ {q:'시험관 (나)에서 아이오딘 용액의 색이 변하지 않은 까닭은?',o:['침 속 소화효소가 녹말을 분해했기 때문','증류수가 녹말을 분해했기 때문','녹말이 더 많아졌기 때문','시험관이 너무 차갑기 때문'],a:0,e:'(나)에는 침이 들어 있어 아밀레이스가 녹말을 엿당으로 분해했어요. 그래서 녹말이 사라져 청람색이 나타나지 않아요.'},
+ {q:'베네딕트 반응에서 (나)가 황적색으로 변했다면 어떤 물질이 생겼다는 뜻일까?',o:['엿당(당분)','녹말','단백질','지방'],a:0,e:'베네딕트 용액은 가열하면 당분(엿당·포도당)과 반응해 황적색을 나타내요.'},
+ {q:'침의 소화 작용 실험에서 시험관을 35~40℃로 유지하는 까닭은?',o:['소화효소가 체온 정도에서 잘 작용하기 때문','물이 끓게 하려고','녹말을 녹이려고','시험관을 소독하려고'],a:0,e:'소화효소는 체온(약 36.5℃)과 비슷한 온도에서 가장 활발하게 작용해요.'},
+ {q:'단백질을 분해하는 소화효소끼리 짝지어진 것은?',o:['펩신, 트립신','아밀레이스, 펩신','라이페이스, 아밀레이스','쓸개즙, 라이페이스'],a:0,e:'위액의 펩신과 이자액의 트립신이 단백질을 아미노산으로 분해하는 데 작용해요.'},
+ {q:'쓸개즙에 대한 설명으로 옳은 것은?',o:['소화효소는 없지만 지방이 소화되는 것을 도와준다','단백질을 분해한다','녹말을 포도당으로 분해한다','위에서 만들어진다'],a:0,e:'쓸개즙에는 소화효소가 없지만 지방을 작게 쪼개어 라이페이스가 잘 작용하도록 도와줘요.'},
+ {q:'소화효소의 특징으로 옳은 것은?',o:['특정 영양소에만 작용한다','모든 영양소에 작용한다','온도와 관계없이 작용한다','한 번 쓰면 사라진다'],a:0,e:'소화효소는 특정 영양소에만 작용해요. 예를 들어 아밀레이스는 녹말에만 작용해요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{S.quiz=Math.max(S.quiz,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+
+function resetAll(){S.a=new Set();S.d=new Set();S.quiz=-1;resetE();for(const k of [1,2]){const c=$('#cc'+k);c.style.display='none';c.innerHTML=''}
+  rend1();$('#tip1').innerHTML='💡 <b>침은 녹말에 어떤 작용을 할까요?</b> 시험관 (가)와 (나)를 비교하는 실험이에요. ①부터 순서대로 눌러 보세요.';fbx('#fb1','🧪 ① 5% 녹말 용액부터 넣어 보세요.');
+  ctl2();hud();setMode(1)}
+$('#btnReset').onclick=resetAll;
+let lastT=0;function loop(){try{const now=performance.now()/1000,dt=Math.min(.05,now-(lastT||now));lastT=now;if(mode===2)draw2($('#a2'),now,dt)}catch(e){console.error(e)}requestAnimationFrame(loop)}
+resetAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
