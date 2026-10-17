@@ -971,6 +971,18 @@ header.unified-game-header .game-title {
       curGrade = u.grade; renderPicker(); loadSet(s, u);
       if(sp.get('qr') === '1') document.documentElement.classList.add('qr-lock');
       break outer; } } } }
+    /* QRSTAY_1017 : ?g=학년&u=단원&s=차시번호 (생략=대단원 종합) */
+    if(!qq && sp.get('g') && sp.get('u')){
+      const un = SETS.find(x => x.grade === sp.get('g') && x.unit === sp.get('u'));
+      if(un){
+        const sn = parseInt(sp.get('s') || '', 10);
+        let st = null;
+        if(sn > 0) st = un.sets.find(x => x.t.indexOf(sn + '차시') === 0);
+        if(!st) st = un.sets.find(x => /대단원 종합/.test(x.t)) || un.sets[un.sets.length - 1];
+        curGrade = un.grade; renderPicker(); loadSet(st, un);
+        if(sp.get('qr') === '1') document.documentElement.classList.add('qr-lock');
+      }
+    }
   } catch(e){}
 
   // Toolbar & Options
@@ -1220,5 +1232,33 @@ window.__kjsKitApi={update:update,refit:refit,isPlay:isPlay,get zoom(){return z;
  .panel-card{min-width:0;max-width:100%}
 }
 </style>
+<script id="kjsStay">
+/* QRSTAY_1017 : QR(qr=1)로 들어온 학생은 이 게임 안에서만 움직일 수 있어요 (서랍·다른 게임·차시 고르기 이동 차단) */
+(function(){try{
+var p=new URLSearchParams(location.search);
+if(p.get('qr')!=='1'||!(p.has('q')||p.has('g')))return;
+var H=document.documentElement;H.classList.add('kjs-stay');
+var st=document.createElement('style');st.id='kjsStayCss';
+st.textContent='html.kjs-stay :is(.kjs-seg,.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,#kjsImmBtn,#kjsQrBtn,#kjsMenuBtn,.kjs-qr-btn,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,a[href*="서랍"],a[href*="index.html"],a[href*="go.html"],#kjsHomeLink,.hb,a.hb){display:none!important}'
+ +'html.kjs-stay .header-actions a[href]{display:none!important}'
+ +'#kjsStayBadge{position:fixed;right:10px;bottom:10px;z-index:2147480000;padding:6px 12px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font:800 12px/1.2 -apple-system,"Pretendard","Malgun Gothic",sans-serif;pointer-events:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
+(document.head||H).appendChild(st);
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;
+  var h=a.getAttribute('href')||'';
+  if(h.charAt(0)==='#'||/^javascript:/i.test(h))return;
+  e.preventDefault();e.stopImmediatePropagation();
+},true);
+try{window.open=function(){return null;};}catch(e){}
+try{history.pushState(null,'',location.href);window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});}catch(e){}
+function badge(){
+  if(document.getElementById('kjsStayBadge')||!document.body)return;
+  var b=document.createElement('div');b.id='kjsStayBadge';b.textContent='📱 학생 QR · 이 차시 게임';document.body.appendChild(b);
+  var n=0,t=setInterval(function(){var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
+    if(c&&c.title){b.textContent='📱 '+[c.unit,c.title].filter(Boolean).join(' · ');clearInterval(t);}else if(++n>20)clearInterval(t);},300);
+}
+if(document.body)badge();else document.addEventListener('DOMContentLoaded',badge);
+}catch(e){}})();
+</script>
 </body>
 </html>

@@ -580,8 +580,16 @@ header.unified-game-header .game-title {
     render(); sync();
     /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
     try {
-      var qp = new URLSearchParams(location.search).get("q");
+      var _sp = new URLSearchParams(location.search), qp = _sp.get("q");
       var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      /* QRSTAY_1017 : ?g=학년&u=단원&s=차시번호 / &m=중단원 / (생략=대단원 종합) */
+      if (!target && _sp.get("g") && _sp.get("u")) {
+        var _g = _sp.get("g"), _u = _sp.get("u"), _s = parseInt(_sp.get("s") || "", 10), _m = _sp.get("m");
+        var _in = items.filter(function(x){ return x.grade === _g && x.unit === _u; });
+        if (_s > 0) target = _in.filter(function(x){ return x.kind !== "unit" && x.kind !== "mid" && x.title && x.title.indexOf(_s + "차시") === 0; })[0];
+        if (!target && _m) target = _in.filter(function(x){ return x.kind === "mid" && x.mid === _m; })[0];
+        if (!target) target = _in.filter(function(x){ return x.kind === "unit"; })[0];
+      }
       if (target) {
         st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
         render(); sync();
@@ -647,6 +655,17 @@ KJSMenu.init({
       { grade: x.grade, unit: x.unit, lesson: x.title }); }
 });
 
+/* QRSTAY_1017 : QR 학생은 차시 고르기를 숨기고 "이 차시 다시 하기"만 */
+if (document.documentElement.classList.contains("kjs-stay") || (/[?&]qr=1/.test(location.search) && /[?&](q|g)=/.test(location.search))) {
+  (function(){
+    var st = document.createElement("style");
+    st.textContent = 'html.kjs-stay #picker > :not(#stayAgain){display:none!important}#stayAgain{display:block;margin:30px auto;padding:18px 28px;border-radius:16px;border:2px solid #38bdf8;background:#0f172a;color:#fff;font:900 22px/1.2 sans-serif;cursor:pointer}';
+    document.head.appendChild(st);
+    var b = document.createElement("button"); b.id = "stayAgain"; b.type = "button"; b.textContent = "▶ 이 차시 다시 하기";
+    b.onclick = function(){ location.reload(); };
+    $("picker").appendChild(b);
+  })();
+}
 /* ---------- 게임 상태 ---------- */
 let G = null, raf = null;
 const LIFE_MAX = 3;
@@ -1099,5 +1118,33 @@ window.__kjsKitApi={update:update,refit:refit,isPlay:isPlay,get zoom(){return z;
  .panel-card{min-width:0;max-width:100%}
 }
 </style>
+<script id="kjsStay">
+/* QRSTAY_1017 : QR(qr=1)로 들어온 학생은 이 게임 안에서만 움직일 수 있어요 (서랍·다른 게임·차시 고르기 이동 차단) */
+(function(){try{
+var p=new URLSearchParams(location.search);
+if(p.get('qr')!=='1'||!(p.has('q')||p.has('g')))return;
+var H=document.documentElement;H.classList.add('kjs-stay');
+var st=document.createElement('style');st.id='kjsStayCss';
+st.textContent='html.kjs-stay :is(.kjs-seg,.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,#kjsImmBtn,#kjsQrBtn,#kjsMenuBtn,.kjs-qr-btn,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,a[href*="서랍"],a[href*="index.html"],a[href*="go.html"],#kjsHomeLink,.hb,a.hb){display:none!important}'
+ +'html.kjs-stay .header-actions a[href]{display:none!important}'
+ +'#kjsStayBadge{position:fixed;right:10px;bottom:10px;z-index:2147480000;padding:6px 12px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font:800 12px/1.2 -apple-system,"Pretendard","Malgun Gothic",sans-serif;pointer-events:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
+(document.head||H).appendChild(st);
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;
+  var h=a.getAttribute('href')||'';
+  if(h.charAt(0)==='#'||/^javascript:/i.test(h))return;
+  e.preventDefault();e.stopImmediatePropagation();
+},true);
+try{window.open=function(){return null;};}catch(e){}
+try{history.pushState(null,'',location.href);window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});}catch(e){}
+function badge(){
+  if(document.getElementById('kjsStayBadge')||!document.body)return;
+  var b=document.createElement('div');b.id='kjsStayBadge';b.textContent='📱 학생 QR · 이 차시 게임';document.body.appendChild(b);
+  var n=0,t=setInterval(function(){var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
+    if(c&&c.title){b.textContent='📱 '+[c.unit,c.title].filter(Boolean).join(' · ');clearInterval(t);}else if(++n>20)clearInterval(t);},300);
+}
+if(document.body)badge();else document.addEventListener('DOMContentLoaded',badge);
+}catch(e){}})();
+</script>
 </body>
 </html>
