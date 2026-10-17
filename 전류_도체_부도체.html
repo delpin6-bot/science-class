@@ -914,7 +914,7 @@ function drawCircuitBase() {
   ctx.beginPath();
   ctx.moveTo(CIRCUIT.gapX + CIRCUIT.gapW / 2, CIRCUIT.gapY2);
   ctx.lineTo(CIRCUIT.gapX + CIRCUIT.gapW / 2, 480);
-  ctx.lineTo(580, 480);
+  ctx.lineTo(400 + batteryCount * 63 - 8 + 10, 480); // PACK_FIX_1017: 전지 (-)극까지 연결
   ctx.stroke();
 
   // 틈새 단자 소켓 표시 (연결부)
@@ -1035,7 +1035,7 @@ function drawBatteries(startX, centerY) {
   const cellH = 75;
 
   for (let b = 0; b < batteryCount; b++) {
-    const cx = startX + b * (cellW + 6);
+    const cx = startX + b * (cellW + 8);
     const cy = centerY - cellH / 2;
 
     // 배터리 몸체 (파란 원통)
@@ -1047,12 +1047,14 @@ function drawBatteries(startX, centerY) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // 배터리 (+) 단자 돌출부 (좌측)
-    if (b === 0) {
-      ctx.fillStyle = "#94a3b8";
-      ctx.fillRect(cx - 8, centerY - 14, 8, 28);
-      ctx.strokeRect(cx - 8, centerY - 14, 8, 28);
-    }
+    // 배터리 (+) 단자 돌출부 (좌측) — 직렬: 앞 전지의 (-)극에 다음 전지의 (+)극이 닿음
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillRect(cx - 8, centerY - 14, 8, 28);
+    ctx.strokeStyle = "#475569";
+    ctx.strokeRect(cx - 8, centerY - 14, 8, 28);
+    // (-)극 금속판 (우측)
+    ctx.fillStyle = "#64748b";
+    ctx.fillRect(cx + cellW, centerY - 26, 4, 52);
 
     // 극성 표시 (+, -)
     ctx.fillStyle = "#ffffff";
