@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>힘을 이용한 장치 설계 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two7{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cvw{position:relative;border-radius:18px;overflow:hidden;border:4px solid #94a3b8;background:#fff}
+.cvw canvas{display:block;width:100%;height:clamp(300px,46vh,500px);touch-action:none}
+.cvw.tall canvas{height:clamp(340px,54vh,560px)}
+.cvw .tg{position:absolute;left:10px;top:8px;font-weight:900;font-size:clamp(15px,1.6vw,26px);background:rgba(255,255,255,.88);border-radius:12px;padding:2px 12px;pointer-events:none}
+.cvw .nt{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:clamp(11px,1vw,15px);font-weight:800;color:#64748b;pointer-events:none}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.sv{border:3px solid #cbd5e1;border-radius:14px;padding:8px 12px;background:#fff}
+.sv b{display:block;font-size:clamp(14px,1.3vw,21px);color:#334155}
+.sv .bar{height:clamp(22px,2.2vw,30px);border-radius:10px;background:#e2e8f0;overflow:hidden;margin:4px 0}
+.sv .bar i{display:block;height:100%;width:0;background:var(--c,#2563eb);transition:width .3s}
+.sv span{font-weight:900;font-size:clamp(14px,1.4vw,22px)}
+.say{margin-top:10px;border-radius:14px;padding:10px 14px;font-weight:900;line-height:1.5;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(15px,1.55vw,25px);min-height:3.2em}
+.say.ok{background:#dcfce7;border-color:#22c55e;color:#14532d}.say.bad{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.pres{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pres .btn,.ctl .btn{flex:1 1 120px;min-height:62px;font-size:clamp(15px,1.4vw,22px);font-weight:900}
+.btn.on2{background:#dbeafe;border-color:#2563eb}
+.big{min-height:70px!important;font-size:clamp(18px,2vw,30px)!important;background:#2563eb;border-color:#1d4ed8;color:#fff;box-shadow:0 5px 0 #1e3a8a;font-weight:900}
+.big:disabled{opacity:.5}
+.sl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0}
+.sl label{font-weight:900;font-size:clamp(15px,1.5vw,24px);min-width:150px}
+input[type=range].rg{-webkit-appearance:none;appearance:none;flex:1 1 220px;height:20px;border-radius:10px;background:#cbd5e1;touch-action:none;margin:22px 0;outline:none}
+input.rg::-webkit-slider-thumb{-webkit-appearance:none;width:60px;height:60px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+input.rg::-moz-range-thumb{width:48px;height:48px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+.sl output{font-weight:900;font-size:clamp(18px,1.9vw,30px);min-width:100px;text-align:right}
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(13px,1.25vw,20px)}
+.tbl th,.tbl td{border:2px solid #cbd5e1;padding:6px 4px;line-height:1.35}.tbl th{background:#f1f5f9}
+.tw{overflow-x:auto}
+.tag{display:inline-block;border-radius:999px;padding:1px 12px;font-weight:900;font-size:clamp(13px,1.2vw,19px);color:#fff;background:#2563eb}
+.opt{min-height:60px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(15px,1.5vw,24px);padding:6px 14px;cursor:pointer}
+.opt.sel{border-color:#2563eb;background:#dbeafe}.opt.right{border-color:#22c55e;background:#dcfce7}.opt.wrong{border-color:#ef4444;background:#fee2e2}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.shake{animation:shk .45s}
+@keyframes pp{0%{transform:scale(.2)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two,body.ph .two7,body.ph .three{grid-template-columns:minmax(0,1fr)}
+body.ph .cvw canvas{height:340px}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two,.two7,.three{grid-template-columns:minmax(0,1fr)}.cvw canvas{height:340px}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}#pop{top:auto;bottom:12px;font-size:16px}}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.item{min-height:84px;border:3px solid #cbd5e1;border-radius:16px;background:#fff;font-weight:900;font-size:clamp(14px,1.4vw,22px);cursor:pointer;line-height:1.3;padding:6px}
+.item.sel{border-color:#2563eb;background:#dbeafe;transform:scale(1.04)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{border:4px dashed #94a3b8;border-radius:18px;min-height:190px;padding:8px;background:#f8fafc;cursor:pointer}
+.bin h3{margin:0 0 6px;font-size:clamp(16px,1.7vw,26px)}
+.bin .chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:12px;background:#dcfce7;border:2px solid #22c55e;font-weight:900;font-size:clamp(13px,1.2vw,20px)}
+@media (max-width:760px){.bins{grid-template-columns:minmax(0,1fr)}.bin{min-height:90px}}
+body.ph .bins{grid-template-columns:minmax(0,1fr)}
+.tbl td.hl{background:#fef9c3}
+</style></head><body>
+<header>
+  <h1>🛠️ 힘을 이용한 장치 설계</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">📋 설계 과정</button>
+    <button class="tab" id="tab2">🚗 고무줄 자동차</button>
+    <button class="tab" id="tab3">🚢 튼튼한 배 설계</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">📋 장치를 설계하는 순서대로 카드를 눌러 보세요</div>
+  <div class="items" id="it1" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))"></div>
+  <div class="say" id="s1">첫 번째 단계부터 차례로 누르세요.</div></div>
+ <div class="card"><div class="ct">✅ 내가 정한 순서</div><div id="od1" style="display:flex;flex-direction:column;gap:8px"></div>
+  <div class="hint">💡 설계 → 제작 → 시험 → 평가·개선을 반복하면 더 좋은 장치가 돼요.</div></div></div>
+
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct" id="t2">🚗 목표 거리에 멈추는 자동차를 설계하세요</div>
+  <div class="cvw"><canvas id="c2"></canvas><div class="tg" id="tg2">고무줄의 탄성력으로 달려요</div></div>
+  <div class="say" id="s2">고무줄 늘임·바퀴·짐을 정하고 [발사!]를 누르세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="sl"><label>🌀 고무줄 늘임</label><input type="range" class="rg" id="r2a" min="1" max="5" value="2"><output id="r2ao"></output></div>
+  <div class="sl"><label>📦 짐 무게</label><input type="range" class="rg" id="r2b" min="0" max="3" value="0"><output id="r2bo"></output></div>
+  <div class="pres"><button class="btn on2" data-w="0">🛞 고무 바퀴</button><button class="btn" data-w="1">⚙ 플라스틱</button><button class="btn" data-w="2">🔘 구슬 바퀴</button></div>
+  <div class="pres" style="margin-top:8px"><button class="btn big" id="go2">🚀 발사!</button></div>
+  <div class="st"><div class="sv"><b>📏 달린 거리</b><span id="d2">-</span></div><div class="sv"><b>🎯 미션</b><span id="p2">0 / 3</span></div></div>
+  <div class="hint">💡 늘임↑ → 탄성력↑ → 멀리 / 마찰력↑·짐↑ → 가까이</div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m3"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct" id="t3">🚢 더 많이 싣는 배를 설계하세요</div>
+  <div class="cvw"><canvas id="c3"></canvas><div class="tg" id="tg3">철판 20 cm로 만든 배 (길이 10 cm)</div></div>
+  <div class="say" id="s3">배 폭과 짐을 정하고 [물에 띄우기]를 누르세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="sl"><label>↔ 배 폭</label><input type="range" class="rg" id="r3a" min="2" max="16" value="6"><output id="r3ao"></output></div>
+  <div class="sl"><label>📦 짐(50 g)</label><input type="range" class="rg" id="r3b" min="0" max="8" value="0"><output id="r3bo"></output></div>
+  <div class="pres"><button class="btn big" id="go3">⬇ 물에 띄우기</button></div>
+  <div class="st"><div class="sv"><b>배 높이</b><span id="h3">7 cm</span></div><div class="sv"><b>최대 부력</b><span id="bm3">-</span></div><div class="sv"><b>🎯 미션</b><span id="p3">0 / 3</span></div></div>
+  <div class="hint">💡 철판 길이(폭+2×높이)는 20 cm로 같아요. 모양에 따라 부력이 달라져요.</div>
+ </div></div>
+
+</div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+let popT=0,QSC=-1,QZ=[];
+function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(em){em=em||['⭐','✨','🎉'];for(let i=0;i<22;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+function hud(){const it=LAB.segs();$('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// 슬라이더 연결: sl(id, fmt, cb)
+function sl(id,fmt,cb){const r=$('#'+id),o=$('#'+id+'o');const f=()=>{o.textContent=fmt(+r.value);cb&&cb(+r.value)};r.addEventListener('input',f);f();return r}
+// 캔버스 논리 좌표
+function view(cv,LW,LH){const{g,w,h}=fit(cv),sc=Math.min(w/LW,h/LH),ox=(w-LW*sc)/2,oy=(h-LH*sc)/2;g.save();g.translate(ox,oy);g.scale(sc,sc);return{g,sc,ox,oy,w,h}}
+function toL(cv,e,LW,LH){const r=cv.getBoundingClientRect(),sc=Math.min(r.width/LW,r.height/LH),ox=(r.width-LW*sc)/2,oy=(r.height-LH*sc)/2;return[(e.clientX-r.left-ox)/sc,(e.clientY-r.top-oy)/sc]}
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem(LAB.key+'-ph',on?'1':'0')}catch(e){}}LAB.onPh&&LAB.onPh()}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){LAB.reset();QSC=-1;hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');window.scrollTo(0,0);LAB.onMode&&LAB.onMode(m)};
+let _last=0;function _loop(now){const dt=Math.min(.05,(now-(_last||now))/1000);_last=now;try{LAB.frame&&LAB.frame(dt,mode)}catch(e){console.error(e)}requestAnimationFrame(_loop)}
+function boot(){QZ=LAB.quiz;LAB.init&&LAB.init();resetAll();let p=null;try{p=localStorage.getItem(LAB.key+'-ph')}catch(e){}setPh(p==='1'||(p===null&&innerWidth<=760),false);requestAnimationFrame(_loop)}
+
+const LW=800,LH=440;let TS=1;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function arrow(g,x1,y1,x2,y2,c,w,lab){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<3)return;const a=Math.atan2(dy,dx),h=Math.min(26,L*.5);w=w||8;g.strokeStyle=c;g.fillStyle=c;g.lineWidth=w;g.lineCap='round';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2-Math.cos(a)*h*.8,y2-Math.sin(a)*h*.8);g.stroke();g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-Math.cos(a-.45)*h,y2-Math.sin(a-.45)*h);g.lineTo(x2-Math.cos(a+.45)*h,y2-Math.sin(a+.45)*h);g.closePath();g.fill();
+ if(lab){g.font='900 22px sans-serif';g.textAlign='center';g.fillStyle=c;g.fillText(lab,(x1+x2)/2-Math.sin(a)*26,(y1+y2)/2+Math.cos(a)*26+6)}}
+function spring(g,x1,y1,x2,y2,n,w,c){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy,py=ux;g.strokeStyle=c||'#475569';g.lineWidth=5;g.lineJoin='round';g.beginPath();g.moveTo(x1,y1);const s=L*.1;g.lineTo(x1+ux*s,y1+uy*s);for(let i=0;i<=n*2;i++){const t=.1+.8*i/(n*2),o=(i%2?1:-1)*w;g.lineTo(x1+ux*L*t+px*o,y1+uy*L*t+py*o)}g.lineTo(x2-ux*s,y2-uy*s);g.lineTo(x2,y2);g.stroke()}
+function box(g,x,y,w,h,c,e){g.fillStyle=c||'#fbbf24';g.strokeStyle='#92400e';g.lineWidth=5;rr(g,x,y,w,h,10);g.fill();g.stroke();if(e){g.font=Math.min(w,h)*.7+'px serif';g.textAlign='center';g.fillStyle='#000';g.fillText(e,x+w/2,y+h*.72)}}
+document.querySelectorAll('.tsb').forEach(b=>b.onclick=()=>{TS=TS===1?3:1;document.querySelectorAll('.tsb').forEach(x=>{x.textContent='⏩ 빠르게 ×'+TS;x.classList.toggle('on2',TS>1)})});
+function setv(id,v){$(id).value=v;$(id).dispatchEvent(new Event('input'))}
+function mc(el,qs,onAll,sayEl){/* 객관식 진행: el=컨테이너 id */}
+
+// tab1
+const ST=['어떤 장치를 설계할지 정한다','장치에 이용할 힘의 종류와 특징을 생각한다','장치의 모양·크기·재질 등을 생각한다','장치를 만들어 시험한다','결과를 평가하고 개선한다'];let nx=0,ord1=[],sh1=[];
+function r1(){$('#it1').innerHTML='';sh1.forEach(i=>{if(ord1.includes(i))return;const b=document.createElement('button');b.className='item';b.textContent=ST[i];b.onclick=()=>{if(i===nx){ord1.push(i);nx++;sOK();$('#s1').className='say ok';$('#s1').textContent='⭕ '+nx+'단계 정답!';r1();hud();if(nx>=5){say('설계 과정 완성 🎉',3000);confetti(['🛠️','✨'])}}else{sNO();b.classList.add('shake');setTimeout(()=>b.classList.remove('shake'),500);$('#s1').className='say bad';$('#s1').textContent='❌ '+(nx+1)+'번째로 할 일을 생각해 보세요.'}};$('#it1').appendChild(b)});$('#od1').innerHTML=ord1.map((i,k)=>`<div class="sv"><b>${k+1}단계</b>${ST[i]}</div>`).join('')}
+// tab2
+const MU=[.5,.25,.1];let w2=0,A2=2,L2=0,carx=0,tgt=0,run2=false,dest=0,mdone=[0,0,0],last2=0;const TG=[100,200,300];
+const dist=()=>100*A2*A2/((1+.5*L2)*MU[w2]*10);
+function step2(dt){if(run2){const k=Math.min(1,dt*2.2);carx+=(dest-carx)*k;if(Math.abs(dest-carx)<.5){carx=dest;run2=false;fin2()}}}
+function fin2(){$('#d2').textContent=Math.round(dest)+' cm';const hit=TG.findIndex((t,i)=>!mdone[i]&&Math.abs(dest-t)<=25);if(dest>520){sNO();$('#s2').className='say bad';$('#s2').textContent='💥 너무 멀리 가서 도로 밖으로 떨어졌어요! 고무줄 늘임이나 짐을 조절하세요.';return}
+ if(hit>=0){mdone[hit]=1;sOK();$('#s2').className='say ok';$('#s2').textContent='🎯 '+TG[hit]+' cm 목표 성공! (탄성력과 마찰력의 균형)';$('#p2').textContent=mdone.filter(x=>x).length+' / 3';hud();if(mdone.every(x=>x)){say('자동차 설계 미션 완료 🎉',3000);confetti(['🚗','✨'])}}else{$('#s2').className='say';$('#s2').textContent='📏 '+Math.round(dest)+' cm. 목표('+TG.filter((t,i)=>!mdone[i]).join(', ')+' cm)와 비교해 다시 설계해 보세요.'}}
+function draw2(){const{g}=view($('#c2'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='#94a3b8';g.fillRect(40,260,720,16);g.strokeStyle='#0f172a';g.lineWidth=2;g.font='900 18px sans-serif';g.textAlign='center';g.fillStyle='#0f172a';for(let c=0;c<=500;c+=50){const x=70+c*1.3;g.beginPath();g.moveTo(x,276);g.lineTo(x,290);g.stroke();g.fillText(c,x,312)}g.fillText('cm',740,330);
+ TG.forEach((t,i)=>{const x=70+t*1.3;g.fillStyle=mdone[i]?'#16a34a':'#ef4444';g.fillRect(x-4,200,8,60);g.font='34px serif';g.fillText(mdone[i]?'✅':'🚩',x,194)});
+ const x=70+carx*1.3;g.font='70px serif';g.fillText('🚗',x,250);if(L2){g.font='30px serif';g.fillText('📦'.repeat(L2),x,200)}g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.fillText(['고무 바퀴(마찰 큼)','플라스틱 바퀴','구슬 바퀴(마찰 작음)'][w2],400,380);
+ g.strokeStyle='#ea580c';g.lineWidth=5;g.beginPath();g.moveTo(70,240);const sp=Math.max(10,A2*8);for(let i=0;i<=12;i++)g.lineTo(70-10-i*(sp/12),240+(i%2?8:-8));g.stroke();g.restore()}
+// tab3
+const MX=[150,250,290];let W3=6,C3=0,run3=false,y3=0,fl3=null,mdone3=[0,0,0],draft=0;const HUL=k=>10*(k),cap=W=>{const H=(20-W)/2;return 10*W*H-10*20};
+function upd3(){const H=(20-W3)/2;$('#h3').textContent=H.toFixed(1)+' cm';$('#bm3').textContent=(10*W3*H).toFixed(0)+' g';$('#tg3').textContent='배 폭 '+W3+' cm · 높이 '+H.toFixed(1)+' cm · 선체 무게 200 g'}
+function step3(dt){if(run3){y3+=((fl3?draft:12)-y3)*Math.min(1,dt*3);if(Math.abs((fl3?draft:12)-y3)<.05){run3=false;fin3()}}}
+function fin3(){const H=(20-W3)/2,tot=200+C3*50,max=10*W3*H;if(!fl3){sNO();$('#s3').className='say bad';$('#s3').textContent='💧 가라앉았어요! 전체 무게('+tot+' g)가 최대 부력('+max.toFixed(0)+' g)보다 커요.';return}
+ const need=C3*50,hit=MX.findIndex((t,i)=>!mdone3[i]&&need>=t-20&&need<=t+30&&need>=t-25);const ok=MX.findIndex((t,i)=>!mdone3[i]&&need>=t);
+ if(ok>=0){for(let i=0;i<3;i++)if(!mdone3[i]&&need>=MX[i])mdone3[i]=1;sOK();$('#s3').className='say ok';$('#s3').textContent='🎯 짐 '+need+' g을 싣고 떴어요! (무게 = 부력)';$('#p3').textContent=mdone3.filter(x=>x).length+' / 3';hud();if(mdone3.every(x=>x)){say('배 설계 미션 완료 🎉',3000);confetti(['🚢','✨'])}}else{$('#s3').className='say';$('#s3').textContent='✔ 떴어요! 짐 '+need+' g. 더 많이 실을 수 있게 배 폭을 바꿔 보세요(목표 '+MX.filter((t,i)=>!mdone3[i]).join(', ')+' g).'}}
+function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='rgba(56,189,248,.5)';g.fillRect(40,260,720,170);g.strokeStyle='#64748b';g.lineWidth=6;g.strokeRect(40,200,720,230);
+ const H=(20-W3)/2,pw=W3*20,ph=H*20,cx=400,top=260-ph+(run3||fl3!==null?y3*20:0)-(run3||fl3!==null?0:0);const by=(fl3===null&&!run3)?260-ph+40:260-ph+y3*20;g.fillStyle='#64748b';g.strokeStyle='#334155';g.lineWidth=5;g.beginPath();g.moveTo(cx-pw/2,by);g.lineTo(cx-pw/2,by+ph);g.lineTo(cx+pw/2,by+ph);g.lineTo(cx+pw/2,by);g.stroke();g.fillStyle='rgba(100,116,139,.35)';g.fillRect(cx-pw/2,by,pw,ph);
+ g.font='34px serif';g.textAlign='center';for(let i=0;i<C3;i++)g.fillText('📦',cx-pw/2+20+(i%Math.max(1,Math.floor(pw/36)))*36,by+ph-8-Math.floor(i/Math.max(1,Math.floor(pw/36)))*34);
+ g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.fillText('폭 '+W3+' cm',cx,by+ph+28>420?420:by+ph+28);g.restore()}
+const LAB={key:'fdesign',
+ quiz:[
+ {q:'장치 설계의 첫 단계는?',o:['어떤 장치를 설계할지 정한다','장치를 만든다','결과를 평가한다'],a:0,e:'먼저 만들 장치를 정해요.'},
+ {q:'고무줄 자동차를 더 멀리 보내려면?',o:['고무줄을 더 많이 늘인다','짐을 더 싣는다','마찰이 큰 바퀴를 쓴다'],a:0,e:'탄성력이 커지면 더 멀리 가요.'},
+ {q:'고무줄 자동차의 바퀴를 구슬로 바꾸면 거리는?',o:['멀어진다(마찰 감소)','가까워진다','같다'],a:0,e:'마찰력이 작아져 더 멀리 가요.'},
+ {q:'배가 물에 뜨려면 전체 무게와 부력의 관계는?',o:['무게 ≤ 최대 부력','무게 > 부력','관계없다'],a:0,e:'배 전체 무게가 최대 부력 이하일 때 떠요.'},
+ {q:'같은 철판으로도 큰 배가 뜨는 까닭은?',o:['잠기는 부피가 커져 부력이 크므로','철이 가벼워서','철이 물에 녹아서'],a:0,e:'모양을 넓게 하면 물에 잠기는 부피가 커져 부력이 커요.'},
+ {q:'시험 결과 문제가 나타나면?',o:['원인을 찾아 개선한다','그대로 완성한다','처음부터 포기한다'],a:0,e:'평가하고 개선하며 다시 시험해요.'},
+ {q:'이 가상실험의 거리·무게 값은?',o:['실제 측정값','이해를 위해 단순화한 모형','무작위'],a:1,e:'간단한 식으로 만든 모형이에요.'}],
+ segs:()=>[['설계 과정',nx>=5],['고무줄 자동차',mdone.every(x=>x)],['배 설계',mdone3.every(x=>x)]],
+ reset(){nx=0;ord1=[];sh1=[0,1,2,3,4].sort(()=>Math.random()-.5);r1();carx=0;run2=false;mdone=[0,0,0];$('#p2').textContent='0 / 3';$('#d2').textContent='-';w2=0;selW();y3=0;fl3=null;run3=false;mdone3=[0,0,0];$('#p3').textContent='0 / 3';upd3();['#s1','#s2','#s3'].forEach(s=>$(s).className='say');$('#s1').textContent='첫 번째 단계부터 차례로 누르세요.';$('#s2').textContent='고무줄 늘임·바퀴·짐을 정하고 [발사!]를 누르세요.';$('#s3').textContent='배 폭과 짐을 정하고 [물에 띄우기]를 누르세요.'},
+ init(){sl('r2a',v=>v+' cm',v=>A2=v);sl('r2b',v=>v+'개',v=>L2=v);document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{w2=+b.dataset.w;selW()});$('#go2').onclick=()=>{if(run2)return;carx=0;dest=dist();run2=true;sTap();$('#s2').className='say';$('#s2').textContent='🚀 출발!'};
+  sl('r3a',v=>v+' cm',v=>{W3=v;upd3();fl3=null;y3=0});sl('r3b',v=>v+'개',v=>{C3=v;fl3=null;y3=0});$('#go3').onclick=()=>{const H=(20-W3)/2,tot=200+C3*50,max=10*W3*H;fl3=tot<=max?true:false;draft=fl3?tot/(10*W3):12;if(!fl3)draft=12;y3=0;run3=true;sTap();$('#s3').className='say';$('#s3').textContent='⬇ 물에 띄우는 중...'}},
+ frame(dt){step2(dt);step3(dt);if(mode===2)draw2();else if(mode===3)draw3()},
+ auto(){sh1.forEach(()=>{});[0,1,2,3,4].forEach(i=>{const b=[...document.querySelectorAll('#it1 .item')].find(x=>x.textContent===ST[i]);b.click()});
+  [[3,0,3],[4,1,2]].forEach(a=>{});setv('#r2a',3);setv('#r2b',0);document.querySelectorAll('[data-w]')[1].click();dest=dist();fin2();
+  const tryD=(A,L,w,t)=>{setv('#r2a',A);setv('#r2b',L);w2=w;dest=dist();fin2()};for(const A of [1,2,3,4,5])for(const L of [0,1,2,3])for(const w of [0,1,2]){tryD(A,L,w)}
+  setv('#r3a',10);for(const c of [2,4,6]){setv('#r3b',c);$('#go3').click();for(let i=0;i<200&&run3;i++)step3(.05)}hud();return{nx,m:mdone,m3:mdone3,dist:dist()}}};
+function selW(){document.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on2',+b.dataset.w===w2))}
+
+boot();
+</script></body></html>

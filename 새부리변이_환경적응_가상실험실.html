@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>새 부리 변이와 환경 적응 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.two{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5;margin-bottom:8px}
+.flock{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border:4px dashed #f59e0b;background:#fffbeb;border-radius:20px;padding:10px 8px;cursor:grab;touch-action:none;user-select:none;position:relative}
+.flock .bd{position:relative}
+.flock:active{cursor:grabbing}
+.flock .tag{position:absolute;left:50%;top:-16px;transform:translateX(-50%);background:#f59e0b;color:#fff;border-radius:999px;padding:2px 14px;font-weight:900;font-size:clamp(13px,1.2vw,18px);white-space:nowrap}
+.sv{display:block;width:100%;height:auto}
+.leg{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.lg{flex:1 1 150px;display:flex;align-items:center;gap:8px;border:3px solid;border-radius:14px;padding:4px 8px;font-weight:900;font-size:clamp(14px,1.3vw,21px);line-height:1.25;background:#fff}
+.lg svg{flex:0 0 clamp(60px,6vw,90px);width:clamp(60px,6vw,90px)}
+.lg.T{border-color:#d97706;color:#92400e}.lg.L{border-color:#0284c7;color:#075985}
+.sendr{display:flex;gap:8px;flex-wrap:wrap}
+.sendr .btn{flex:1 1 160px;min-height:62px;font-size:clamp(16px,1.5vw,24px)}
+.isls{display:flex;flex-direction:column;gap:10px}
+.isl{border:4px dashed #94a3b8;border-radius:22px;background:#fff;padding:10px 12px;transition:.15s}
+.isl.hot{border-color:#f59e0b;background:#fffbeb;transform:scale(1.015)}
+.isl.has{border-style:solid;border-color:#22c55e}
+.ih{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.in{font-weight:900;font-size:clamp(20px,2.1vw,32px)}
+.ie{font-weight:800;color:#334155;font-size:clamp(14px,1.35vw,22px)}
+.fld{position:relative;border-radius:16px;overflow:hidden;margin-top:6px;min-height:clamp(150px,16vw,220px);display:flex;align-items:center;justify-content:center}
+.fld.A{background:linear-gradient(#bfe3ff 0 38%,#fde68a 38% 100%)}
+.fld.B{background:linear-gradient(#cdeccf 0 40%,#86c78a 40% 100%)}
+.deco{position:absolute;inset:0;pointer-events:none;font-size:clamp(22px,2.6vw,38px);opacity:.9}
+.deco i{position:absolute;font-style:normal;line-height:1}
+.brds{position:relative;z-index:1;display:grid;grid-template-columns:repeat(5,1fr);gap:2px 4px;width:100%;padding:8px}
+.empty{position:relative;z-index:1;font-weight:900;color:#64748b;font-size:clamp(16px,1.6vw,26px);background:rgba(255,255,255,.8);border-radius:14px;padding:10px 18px;text-align:center}
+.bd{position:relative;transition:opacity .5s,transform .5s,filter .5s}
+.bd .bg{position:absolute;right:-2px;top:-6px;font-size:clamp(18px,2vw,30px);animation:pp .4s}
+.bd.die{opacity:.15;filter:grayscale(1);transform:translateY(10px) rotate(-18deg)}
+.bd.nw{animation:pp .6s}
+@keyframes pp{0%{transform:scale(.2)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.bd.hop{animation:hop .5s}
+@keyframes hop{40%{transform:translateY(-12px)}}
+.mon{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mc{border:3px solid #cbd5e1;border-radius:22px;background:#fff;padding:10px 12px}
+.mc.A{border-color:#f59e0b}.mc.B{border-color:#22c55e}
+.gen{font-weight:900;color:#475569;font-size:clamp(15px,1.5vw,24px);margin:6px 0 2px}
+.gauge{display:flex;height:clamp(40px,4vw,56px);border-radius:14px;overflow:hidden;border:3px solid #cbd5e1;font-weight:900;color:#fff;font-size:clamp(14px,1.4vw,22px)}
+.gauge div{display:flex;align-items:center;justify-content:center;transition:width .8s;min-width:0;white-space:nowrap;overflow:hidden}
+.gT{background:#d97706}.gL{background:#0284c7}
+.chart{width:100%;height:clamp(110px,12vw,170px);margin-top:6px;background:#f8fafc;border-radius:12px;border:2px solid #e2e8f0}
+.ctl{flex-direction:row;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;padding:10px 14px}
+.big{min-height:72px;font-size:clamp(18px,2vw,30px);padding:0 28px;background:#2563eb;border-color:#1d4ed8;color:#fff;box-shadow:0 5px 0 #1e3a8a}
+.big:disabled{opacity:.5}
+.ctl .btn{min-height:62px;font-size:clamp(15px,1.4vw,22px)}
+.gn{font-weight:900;font-size:clamp(20px,2.2vw,34px);min-width:150px;text-align:center}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.ghost{position:fixed;z-index:999;pointer-events:none;width:clamp(150px,16vw,220px);transform:translate(-50%,-60%) rotate(-4deg);opacity:.95;filter:drop-shadow(0 12px 14px rgba(0,0,0,.3));display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+/* 비교 */
+.cmpg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:stretch}
+.cp{border:4px solid #cbd5e1;border-radius:22px;background:#fff;padding:10px;text-align:center}
+.cp.A{border-color:#f59e0b;background:#fffbeb}.cp.B{border-color:#22c55e;background:#f0fdf4}
+.cp.sp{animation:spk 1.2s infinite}
+@keyframes spk{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,.9)}50%{box-shadow:0 0 0 10px rgba(250,204,21,.3),0 0 24px 6px rgba(250,204,21,.7)}}
+.cp h3{font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cp .bs{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin:6px 0}
+.cp p{font-weight:800;line-height:1.45;color:#334155;font-size:clamp(14px,1.35vw,22px)}
+.msg{margin-top:10px;border-radius:18px;padding:14px 18px;background:#fef9c3;border:4px solid #facc15;font-weight:900;text-align:center;line-height:1.5;font-size:clamp(17px,1.9vw,30px)}
+.msg.dim{background:#f1f5f9;border-color:#cbd5e1;color:#64748b}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two,body.ph .mon,body.ph .cmpg{grid-template-columns:minmax(0,1fr)}
+body.ph #pop{top:auto;bottom:12px;transform:translate(-50%,16px);font-size:16px}body.ph #pop.on{transform:translate(-50%,0)}
+body.ph .ctl .btn,body.ph .ctl .big{flex:1 1 100%}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two,.mon,.cmpg{grid-template-columns:minmax(0,1fr)}.ctl .btn,.ctl .big{flex:1 1 100%}#pop{top:auto;bottom:12px;font-size:16px}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}}
+</style></head><body>
+<header>
+  <h1>🐦 새 부리 변이와 환경 적응</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 변이 확인·섬 선택</button>
+    <button class="tab" id="tab2">② 생존과 번식</button>
+    <button class="tab" id="tab3">③ 결과 비교</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap two">
+  <div class="card">
+    <div class="ct">🐦 처음 새 무리 — 한 종류</div>
+    <div class="cs">같은 종인데 <b>부리 모양이 제각각</b>이에요(변이). 무리를 섬으로 <b>끌어다 놓거나</b> 아래 버튼을 눌러 보내세요. 섬마다 같은 구성(5+5마리)의 무리가 가요.</div>
+    <div class="flock" id="flock"><span class="tag">👆 끌어서 섬으로!</span></div>
+    <div class="leg">
+      <div class="lg T" id="lgT"></div><div class="lg L" id="lgL"></div>
+    </div>
+    <div class="sendr"><button class="btn" id="sendA">🌰 섬 A로 보내기</button><button class="btn" id="sendB">🐛 섬 B로 보내기</button></div>
+  </div>
+  <div class="isls">
+    <div class="isl" data-i="A" id="islA"></div>
+    <div class="isl" data-i="B" id="islB"></div>
+  </div>
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+  <div class="card ctl">
+    <button class="btn big" id="btnGen">⏭ 시간 흐름 (다음 세대로)</button>
+    <div class="gn" id="gn">0 / 4 세대</div>
+    <button class="btn" id="btnFF">⏩ 4세대까지 한 번에</button>
+  </div>
+  <div class="mon" id="mon"></div>
+</div></section>
+<section class="mode" id="m3"><div class="wrap" id="cmp"></div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+// ---------- 새 그림 (SVG) ----------
+// k: 'T' 크고 두꺼운 부리 / 'L' 길고 뾰족한 부리, v: 부리 크기 변이(0.85~1.15)
+function bird(k,v){v=v||1;
+  const beak=k==='T'
+    ?`<g transform="translate(96 41) scale(${v}) translate(-96 -41)"><path d="M95 27 Q118 31 121 42 Q118 53 95 56 Z" fill="#f59e0b" stroke="#92400e" stroke-width="2.5" stroke-linejoin="round"/><path d="M98 41 H117" stroke="#92400e" stroke-width="2" opacity=".6"/></g>`
+    :`<g transform="translate(96 41) scale(${v}) translate(-96 -41)"><path d="M95 36 L138 41.5 L95 46 Z" fill="#38bdf8" stroke="#075985" stroke-width="2.2" stroke-linejoin="round"/></g>`;
+  return `<svg class="sv" viewBox="0 0 142 92" aria-hidden="true">
+  <path d="M22 50 L2 38 L6 56 L2 70 L26 62 Z" fill="#6b4423"/>
+  <path d="M40 74 V86 M58 74 V86 M34 86 H46 M52 86 H64" stroke="#92400e" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <ellipse cx="54" cy="52" rx="36" ry="25" fill="#9a6b3c"/>
+  <ellipse cx="62" cy="62" rx="24" ry="14" fill="#f3e2c3"/>
+  <path d="M26 46 Q48 30 70 50 Q50 66 26 46 Z" fill="#6b4423"/>
+  <circle cx="84" cy="38" r="17" fill="#a8764a"/>
+  <circle cx="89" cy="34" r="5.2" fill="#fff"/><circle cx="90.5" cy="34" r="2.6" fill="#111"/>
+  ${beak}</svg>`}
+const FLOCK=[['T',1],['L',1],['T',.9],['L',.92],['T',1.12],['L',1.1],['T',1],['L',1],['T',.95],['L',1.06]];
+// 세대별 '환경에 적합한 새' 수(10마리 유지)
+const GEN=4,FIT=[5,6,8,9,10];
+const ENV={A:{n:'섬 A',fit:'T',ic:'🌰',txt:'크고 단단한 씨앗이 많아요',need:'크고 두꺼운 부리가 유리',bad:'🌰 씨앗이 안 깨져요…',ok:'🌰 씨앗을 와작!',deco:[['🌰',8,60],['🌰',22,72],['🌰',40,64],['🌰',58,74],['🌰',74,62],['🌰',88,72],['🌴',6,6],['🌴',90,10]]},
+          B:{n:'섬 B',fit:'L',ic:'🐛',txt:'나무 속에 작은 곤충이 많아요',need:'길고 뾰족한 부리가 유리',bad:'🐛 구멍 속 곤충을 못 꺼내요…',ok:'🐛 곤충을 쏙!',deco:[['🌳',6,2],['🌳',44,0],['🌳',84,2],['🐛',14,26],['🐛',50,22],['🐛',88,26],['🪵',30,66],['🪵',68,70]]}};
+let S,busy=false,QSC=-1,CMPD=false;
+const mkBirds=()=>FLOCK.map(([k,v])=>({k,v,s:0}));
+function initS(){S={A:{sent:false,g:0,b:[],h:[[5,5]]},B:{sent:false,g:0,b:[],h:[[5,5]]}}}
+const cnt=(i)=>{const b=S[i].b;return{T:b.filter(x=>x.k==='T'&&!x.die).length,L:b.filter(x=>x.k==='L'&&!x.die).length}};
+function birdsHTML(i,cls){return S[i].b.map((x,n)=>`<div class="bd${x.die?' die':''}${x.nw?' nw':''}${x.hop?' hop':''}" data-n="${n}">${bird(x.k,x.v)}${x.bg?`<span class="bg">${x.bg}</span>`:''}</div>`).join('')}
+function fieldHTML(i,pre){const E=ENV[i],s=S[i];
+  return `<div class="fld ${i}"><div class="deco">${E.deco.map(d=>`<i style="left:${d[1]}%;top:${d[2]}%">${d[0]}</i>`).join('')}</div>`+
+   (s.sent?`<div class="brds">${birdsHTML(i)}</div>`:`<div class="empty">${pre||'아직 새가 없어요'}</div>`)+`</div>`}
+// ---------- 렌더 ----------
+function renderFlock(){$('#flock').innerHTML='<span class="tag">👆 끌어서 섬으로!</span>'+FLOCK.map(([k,v])=>`<div class="bd">${bird(k,v)}</div>`).join('');
+  $('#lgT').innerHTML=bird('T',1)+'<div>크고 두꺼운 부리<br><small>씨앗 깨기 ◎</small></div>';
+  $('#lgL').innerHTML=bird('L',1)+'<div>길고 뾰족한 부리<br><small>곤충 꺼내기 ◎</small></div>'}
+function render1(){['A','B'].forEach(i=>{const E=ENV[i],s=S[i],el=$('#isl'+i);el.classList.toggle('has',s.sent);
+  el.innerHTML=`<div class="ih"><span class="in">${E.ic} ${E.n}</span><span class="ie">${E.txt} → ${E.need}</span></div>`+fieldHTML(i,'여기로 새 무리를 끌어다 놓으세요 ⬇')})}
+function chartSVG(i){const s=S[i],W=300,H=120,pl=26,pr=8,pt=10,pb=22,X=g=>pl+(W-pl-pr)*g/GEN,Y=n=>pt+(H-pt-pb)*(1-n/10);
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  [0,5,10].forEach(n=>{o+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(n)}" y2="${Y(n)}" stroke="#e2e8f0"/><text x="${pl-4}" y="${Y(n)+4}" font-size="11" text-anchor="end" fill="#64748b">${n}</text>`});
+  for(let g=0;g<=GEN;g++)o+=`<text x="${X(g)}" y="${H-6}" font-size="11" text-anchor="middle" fill="#64748b">${g}</text>`;
+  ['T','L'].forEach((k,ki)=>{if(!s.sent)return;const pts=s.h.map((h,g)=>[X(g),Y(h[ki])]);o+=`<polyline fill="none" stroke="${k==='T'?'#d97706':'#0284c7'}" stroke-width="3.5" stroke-linejoin="round" points="${pts.map(p=>p.join(',')).join(' ')}"/>`+pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${k==='T'?'#d97706':'#0284c7'}"/>`).join('')});
+  return o+'</svg>'}
+function render2(){const el=$('#mon');el.innerHTML=['A','B'].map(i=>{const E=ENV[i],s=S[i],c=s.sent?s.h[s.h.length-1]:[0,0],tot=Math.max(1,c[0]+c[1]);
+  return `<div class="mc ${i}"><div class="ih"><span class="in">${E.ic} ${E.n}</span><span class="ie">${E.need}</span></div>`+fieldHTML(i,'1단계에서 새 무리를 보내 주세요')+
+   `<div class="gen">${s.sent?s.g+'세대':'—'} · 부리 비율</div><div class="gauge"><div class="gT" style="width:${c[0]/tot*100}%">${c[0]?'두꺼운 '+c[0]+'마리 ('+Math.round(c[0]/tot*100)+'%)':''}</div><div class="gL" style="width:${c[1]/tot*100}%">${c[1]?'긴 '+c[1]+'마리 ('+Math.round(c[1]/tot*100)+'%)':''}</div></div>`+
+   `<div class="gen" style="font-size:clamp(13px,1.2vw,19px)">📈 세대별 새 수 <span style="color:#d97706">━ 두꺼운 부리</span> <span style="color:#0284c7">━ 긴 부리</span></div>`+chartSVG(i)+`</div>`}).join('');
+  const g=Math.max(S.A.sent?S.A.g:0,S.B.sent?S.B.g:0);$('#gn').textContent=g+' / '+GEN+' 세대';
+  const done=(!S.A.sent||S.A.g>=GEN)&&(!S.B.sent||S.B.g>=GEN);$('#btnGen').disabled=busy||done&&(S.A.sent||S.B.sent);$('#btnFF').disabled=busy||done&&S.A.sent&&S.B.sent}
+function bothDone(){return S.A.sent&&S.B.sent&&S.A.g>=GEN&&S.B.g>=GEN}
+function render3(){const fin=bothDone();
+  const pan=(cls,h,bs,p)=>`<div class="cp ${cls}${fin&&cls?' sp':''}"><h3>${h}</h3><div class="bs">${bs}</div><p>${p}</p></div>`;
+  const mk=(i)=>S[i].sent?S[i].b.filter(x=>!x.die).map(x=>bird(x.k,x.v)).map(s=>`<div>${s}</div>`).join(''):'<div style="grid-column:1/-1;font-weight:900;color:#94a3b8;padding:20px 0">아직 새가 없어요</div>';
+  const c=(i)=>S[i].sent?cnt(i):{T:0,L:0};
+  $('#cmp').innerHTML=`<div class="card"><div class="ct">🔍 처음 모습 vs 오랜 시간 뒤</div><div class="cmpg">`+
+   pan('','🐦 처음 (한 종류)',FLOCK.map(([k,v])=>`<div>${bird(k,v)}</div>`).join(''),'부리 모양이 제각각인 한 종류의 새 무리')+
+   pan('A','🌰 섬 A ('+(S.A.g)+'세대)',mk('A'),'<b style="color:#d97706">크고 두꺼운 부리</b> '+c('A').T+'마리 · 긴 부리 '+c('A').L+'마리<br>씨앗을 깨 먹는 새')+
+   pan('B','🐛 섬 B ('+(S.B.g)+'세대)',mk('B'),'<b style="color:#0284c7">길고 뾰족한 부리</b> '+c('B').L+'마리 · 두꺼운 부리 '+c('B').T+'마리<br>곤충을 꺼내 먹는 새')+
+   `</div></div>`+
+   (fin?`<div class="msg">✨ 환경에 적응한 변이로 인해 생물이 다양해졌습니다.<br><span style="font-size:.7em;color:#92400e">이 과정이 오랜 시간 반복되어 생물의 종류가 다양해집니다(생물다양성 증가).</span></div>`
+      :`<div class="msg dim">아직 완성되지 않았어요. ② 탭에서 두 섬 모두 4세대까지 진행해 보세요!</div>`)+
+   `<div class="card"><div class="ct">🧠 정리</div><div class="cs" style="font-size:clamp(16px,1.6vw,26px);color:#0f172a">① 한 종류의 새 무리에도 <b>변이</b>(부리 모양 차이)가 있어요.<br>② 환경에 적합한 변이를 가진 새가 <b>더 많이 살아남아 자손을 남겨요.</b><br>③ 환경이 다르면 살아남는 새가 달라져 오랜 시간이 지나면 <b>생물의 종류가 다양해져요(생물다양성).</b></div></div>`}
+// ---------- 진행 표시 ----------
+function hud(){const it=[['① 무리 보내기',S.A.sent&&S.B.sent],['② 섬 A '+S.A.g+'/'+GEN,S.A.g>=GEN],['② 섬 B '+S.B.g+'/'+GEN,S.B.g>=GEN],['③ 비교',CMPD&&bothDone()]];
+  $('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// ---------- 효과음·말풍선 ----------
+const sTick=()=>beep(660,760,.06,.07);
+let popT=0;function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(){for(let i=0;i<26;i++){const e=document.createElement('div');e.className='cfx';e.textContent=['🐦','⭐','🌰','🐛','✨'][i%5];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// ---------- 섬으로 보내기 ----------
+function send(i){if(S[i].sent){say('이미 '+ENV[i].n+'에 새 무리가 있어요. ② 탭에서 시간을 흐르게 해 보세요!');return}
+  S[i]={sent:true,g:0,b:mkBirds(),h:[[5,5]]};sOK();render1();render2();render3();hud();
+  say(i==='A'?'🌰 섬 A에는 <em>크고 단단한 씨앗</em>이 많아요. 어떤 부리가 유리할까요?':'🐛 섬 B에는 <em>나무 속 작은 곤충</em>이 많아요. 어떤 부리가 유리할까요?',3600);
+  if(S.A.sent&&S.B.sent)setTimeout(()=>say('✅ 두 섬 모두 준비 완료! <em>② 생존과 번식</em> 탭에서 시간을 흐르게 해 보세요.',3600),3700)}
+$('#sendA').onclick=()=>send('A');$('#sendB').onclick=()=>send('B');
+// 드래그
+let drag=null;
+$('#flock').addEventListener('pointerdown',e=>{const g=document.createElement('div');g.className='ghost';g.innerHTML=FLOCK.map(([k,v])=>`<div>${bird(k,v)}</div>`).join('');document.body.appendChild(g);g.style.left=e.clientX+'px';g.style.top=e.clientY+'px';drag={g,id:e.pointerId};e.currentTarget.setPointerCapture(e.pointerId);sTap()});
+$('#flock').addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;drag.g.style.left=e.clientX+'px';drag.g.style.top=e.clientY+'px';
+  $$('.isl').forEach(x=>x.classList.remove('hot'));const t=document.elementFromPoint(e.clientX,e.clientY),z=t&&t.closest&&t.closest('.isl');if(z)z.classList.add('hot')});
+const dEnd=e=>{if(!drag||e.pointerId!==drag.id)return;const t=document.elementFromPoint(e.clientX,e.clientY),z=t&&t.closest&&t.closest('.isl');drag.g.remove();drag=null;$$('.isl').forEach(x=>x.classList.remove('hot'));if(z)send(z.dataset.i)};
+$('#flock').addEventListener('pointerup',dEnd);$('#flock').addEventListener('pointercancel',dEnd);
+// ---------- 세대 교체 ----------
+async function stepGen(i){const s=S[i],E=ENV[i];if(!s.sent||s.g>=GEN)return;
+  const nf=FIT[s.g+1],cf=FIT[s.g],die=nf-cf;
+  // 1) 먹이 찾기
+  s.b.forEach(x=>{x.bg=x.k===E.fit?'😋':'😫';x.hop=x.k===E.fit});render1();render2();
+  return {die,commit:async()=>{
+    // 2) 못 먹은 새 쓰러짐
+    const unfit=s.b.filter(x=>x.k!==E.fit&&!x.die).slice(0,die);unfit.forEach(x=>{x.die=true;x.bg='💤'});
+    s.b.forEach(x=>x.hop=false);render2();
+  },born:async()=>{
+    // 3) 적합한 새가 새끼를 낳음(빈자리를 채움)
+    const par=s.b.filter(x=>x.k===E.fit&&!x.die).slice(0,die);
+    let n=0;s.b=s.b.map(x=>{if(x.die&&n<die){const p=par[n++];return {k:E.fit,v:p.v,s:0,nw:true,bg:'🥚'}}return x});
+    s.b.forEach(x=>{if(!x.nw)x.bg=''});render2();
+  },end:()=>{s.g++;s.b.forEach(x=>{x.bg='';x.nw=false});s.h.push([cnt(i).T,cnt(i).L]);}}}
+async function oneGen(){if(busy)return false;const act=['A','B'].filter(i=>S[i].sent&&S[i].g<GEN);if(!act.length){if(!S.A.sent&&!S.B.sent){say('먼저 ① 탭에서 새 무리를 섬으로 보내세요!');setMode(1)}return false}
+  busy=true;render2();
+  const st=[];for(const i of act)st.push(await stepGen(i));
+  say('🍽️ <em>먹이 경쟁!</em> 환경에 맞는 부리의 새는 먹이를 잘 먹어요.',1700);sTick();await sleep(1500);
+  for(const x of st)await x.commit();sNO();say('💤 부리가 맞지 않아 먹이를 못 구한 새는 살아남기 어려워요.',1500);await sleep(1400);
+  for(const x of st)await x.born();sOK();say('🥚 살아남은 새가 <em>자손을 남겨요</em>.',1400);await sleep(1300);
+  act.forEach((i,k)=>st[k].end());
+  busy=false;render2();render3();hud();
+  const g=Math.max(...act.map(i=>S[i].g));
+  if(g===1)say('<em>환경에 적합한 변이를 가진 생물이 더 많이 살아남아 자손을 남깁니다.</em>',4200);
+  act.forEach(i=>{if(S[i].g>=GEN)say(i==='A'?'🌰 섬 A에는 크고 두꺼운 부리의 새만 남았어요!':'🐛 섬 B에는 길고 뾰족한 부리의 새만 남았어요!',3000)});
+  if(bothDone()){setTimeout(()=>{say('🎉 <em>환경에 적응한 변이로 인해 생물이 다양해졌습니다.</em><br>③ 탭에서 결과를 비교해 보세요!',5000);confetti();sBoom()},3100)}
+  return true}
+$('#btnGen').onclick=()=>{oneGen()};
+$('#btnFF').onclick=async()=>{if(busy)return;if(!S.A.sent)send('A');if(!S.B.sent)send('B');await sleep(300);while(!bothDone()&&await oneGen()){await sleep(150)}};
+// ---------- 퀴즈 ----------
+const QZ=[
+ {q:'한 종류의 새 무리에서 부리 모양이 서로 조금씩 다른 것을 무엇이라 할까?',o:['변이','적응','진화 끝','기관'],a:0,e:'같은 종 안에서 나타나는 개체 사이의 차이를 변이라고 해요.'},
+ {q:'크고 단단한 씨앗이 많은 섬 A에서 더 유리한 새는?',o:['크고 두꺼운 부리의 새','길고 뾰족한 부리의 새','부리가 없는 새','둘 다 똑같다'],a:0,e:'두꺼운 부리는 단단한 씨앗을 깨기에 알맞아요.'},
+ {q:'나무 속 작은 곤충이 많은 섬 B에서 더 유리한 새는?',o:['길고 뾰족한 부리의 새','크고 두꺼운 부리의 새','날개가 큰 새','둘 다 똑같다'],a:0,e:'길고 뾰족한 부리는 나무 구멍 속 곤충을 꺼내기에 알맞아요.'},
+ {q:'새들이 먹이에 맞춰 일부러 부리를 바꾼 것일까?',o:['아니다. 원래 있던 변이 중 환경에 맞는 새가 살아남은 것이다','그렇다. 노력하면 부리가 변한다','그렇다. 섬에 도착하면 바로 변한다','아니다. 아무 변화도 없다'],a:0,e:'개체가 노력해서 바뀌는 것이 아니라, 원래 있던 변이 중 환경에 적합한 것이 살아남아 자손을 남겨요.'},
+ {q:'세대가 지날수록 섬 A에서 일어나는 변화는?',o:['두꺼운 부리 새의 비율이 늘어난다','긴 부리 새의 비율이 늘어난다','두 부리 새의 비율이 같다','새가 모두 사라진다'],a:0,e:'환경에 적합한 변이를 가진 새가 더 많이 살아남아 번식해요.'},
+ {q:'한 종류의 새가 서로 다른 환경에서 오랜 시간 살면 어떻게 될까?',o:['생물의 종류가 다양해질 수 있다','모두 똑같아진다','새가 줄어든다','변이가 생기지 않는다'],a:0,e:'환경에 적응한 변이가 쌓이면서 생물다양성이 늘어나요.'},
+ {q:'생물다양성이란?',o:['지구에 사는 생물의 종류가 다양한 정도','한 종류의 생물이 많은 정도','생물의 크기 차이','생물이 사는 섬의 수'],a:0,e:'생물다양성은 생물의 종류(종 다양성), 변이(유전적 다양성), 서식 환경 다양성을 포함해요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+// ---------- 스마트폰 모드·초기화 ----------
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem('beak-ph',on?'1':'0')}catch(e){}}}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){if(busy)return;initS();QSC=-1;CMPD=false;renderFlock();render1();render2();render3();hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');if(m===3){CMPD=true;render3();hud()}window.scrollTo(0,0)};
+let phPref=null;try{phPref=localStorage.getItem('beak-ph')}catch(e){}
+initS();renderFlock();render1();render2();render3();hud();setMode(1);setPh(phPref==='1'||(phPref===null&&innerWidth<=760),false);
+</script></body></html>

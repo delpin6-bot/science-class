@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가상실험실 방탈출</title>
+<style>
+:root{--bg:#111827;--pn:#1f2937;--ln:#374151;--tx:#f9fafb;--mu:#9ca3af;--ac:#22d3ee}
+*{box-sizing:border-box}html,body{margin:0;background:radial-gradient(circle at 50% 0,#1e293b,#0b1120 70%);min-height:100vh;color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-weight:800}
+button{font-family:inherit;font-weight:900;cursor:pointer;touch-action:manipulation}
+header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#030712;border-bottom:2px solid var(--ln)}
+header h1{margin:0;font-size:clamp(20px,2.2vw,32px);flex:1 1 auto}
+.hb{min-height:52px;padding:0 16px;border-radius:14px;border:2px solid var(--ln);background:var(--pn);color:var(--tx);font-size:clamp(15px,1.4vw,20px);text-decoration:none;display:inline-flex;align-items:center}
+.scr{display:none;padding:12px;max-width:1300px;margin:0 auto}.scr.on{display:block}
+.mis{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.mc{border-radius:24px;padding:20px;border:3px solid var(--ln);background:var(--pn);text-align:left;color:var(--tx)}
+.mc .e{font-size:64px}.mc h2{margin:6px 0;font-size:clamp(24px,2.4vw,34px)}.mc p{color:#cbd5e1;font-size:clamp(16px,1.5vw,21px);line-height:1.5;margin:6px 0}
+.mc .go{margin-top:10px;min-height:64px;width:100%;border:none;border-radius:16px;background:var(--ac);color:#083344;font-size:clamp(20px,2vw,28px)}
+.best{color:#fde047}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:#030712;border:2px solid var(--ln);border-radius:18px;padding:8px 14px}
+.doors{display:flex;gap:8px}.door{width:clamp(44px,4.4vw,62px);height:clamp(54px,5.4vw,74px);border-radius:12px 12px 4px 4px;background:#374151;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.2vw,30px);border:3px solid #4b5563}
+.door.cur{border-color:var(--ac);box-shadow:0 0 18px rgba(34,211,238,.6)}.door.ok{background:#065f46;border-color:#10b981}
+.code{display:flex;gap:6px}.slot{width:clamp(44px,4vw,58px);height:clamp(56px,5vw,70px);border-radius:12px;background:#0b1120;border:3px dashed #4b5563;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,3vw,42px);color:#fde047}
+.slot.got{border-style:solid;border-color:#fde047;animation:pop .5s}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.tm{font-size:clamp(22px,2.3vw,34px)}
+.room{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:12px;margin-top:12px}
+.card{background:var(--pn);border:2px solid var(--ln);border-radius:20px;padding:14px}
+.rt{font-size:clamp(22px,2.3vw,34px);margin:0 0 4px}.story{color:#cbd5e1;font-size:clamp(16px,1.55vw,22px);line-height:1.5;margin:0 0 8px}
+.stage{position:relative;border-radius:16px;background:#f8fafc;overflow:hidden;border:4px solid #475569}
+.stage canvas{display:block;width:100%;height:clamp(280px,46vh,470px);touch-action:none}
+.ctl{display:flex;flex-direction:column;gap:10px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.b{flex:1 1 120px;min-height:64px;border-radius:16px;border:3px solid #4b5563;background:#111827;color:var(--tx);font-size:clamp(17px,1.7vw,24px);padding:4px 10px}
+.b.on{border-color:var(--ac);background:#083344}
+.b.pri{background:var(--ac);color:#083344;border-color:#0891b2;box-shadow:0 5px 0 #0e7490}
+.b.hint{background:#422006;border-color:#a16207;color:#fde68a}
+.msg{min-height:3.2em;border-radius:14px;padding:10px 14px;font-size:clamp(17px,1.7vw,24px);line-height:1.45;background:#0b1120;border:2px solid var(--ln)}
+.msg.ok{background:#064e3b;border-color:#10b981}.msg.no{background:#450a0a;border-color:#ef4444;animation:shk .4s}
+@keyframes shk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.sel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kp button{min-height:60px;border-radius:14px;border:2px solid #4b5563;background:#111827;color:#fff;font-size:clamp(22px,2.2vw,30px)}
+.disp{min-height:64px;border-radius:14px;background:#030712;border:3px solid var(--ac);font-size:clamp(28px,3vw,42px);display:flex;align-items:center;justify-content:center;letter-spacing:.1em}
+.sl{display:flex;align-items:center;gap:10px}.sl label{min-width:120px;font-size:clamp(16px,1.5vw,21px)}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:18px;border-radius:9px;background:#4b5563;touch-action:none;margin:20px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:56px;height:56px;border-radius:50%;background:var(--ac);border:6px solid #fff}
+input[type=range]::-moz-range-thumb{width:46px;height:46px;border-radius:50%;background:var(--ac);border:6px solid #fff}
+.sl output{min-width:90px;text-align:right;font-size:clamp(20px,2vw,28px)}
+.ov{position:fixed;inset:0;background:rgba(3,7,18,.86);display:none;align-items:center;justify-content:center;z-index:40;padding:12px}.ov.on{display:flex}
+.ovb{background:#f8fafc;color:#0f172a;border-radius:24px;max-width:760px;width:100%;padding:22px;text-align:center;border:6px solid #10b981}
+.ovb h2{font-size:clamp(26px,3vw,40px);margin:4px 0}.ovb .dg{font-size:clamp(70px,9vw,120px);color:#ca8a04;animation:pop .6s}
+.ovb .sum{text-align:left;background:#ecfeff;border-radius:14px;padding:10px 14px;font-size:clamp(17px,1.7vw,23px);line-height:1.5;margin:10px 0}
+.ovb button{min-height:64px;padding:0 30px;border:none;border-radius:16px;background:#0f172a;color:#fff;font-size:clamp(20px,2vw,28px)}
+.cfx{position:fixed;top:-60px;font-size:40px;z-index:99;animation:fall 3.4s linear forwards;pointer-events:none}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (max-width:860px){.room{grid-template-columns:minmax(0,1fr)}header h1{flex-basis:100%;font-size:18px}.hb{min-height:44px;font-size:14px;padding:0 10px}.stage canvas{height:300px}}
+</style></head><body>
+<header><h1>🔐 가상실험실 방탈출</h1><button class="hb" id="home" style="display:none">🚪 미션 고르기</button><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="btnFs">⛶ 전체화면</button></header>
+<section class="scr on" id="s0">
+ <p class="story" style="font-size:clamp(18px,1.8vw,26px)">연구소에 갇혔어요! 방마다 가상실험실에서 했던 실험을 다시 해서 <b style="color:#fde047">비밀번호 숫자</b>를 모으고, 마지막 문을 열어 탈출하세요. 힌트를 쓰면 30초가 더해져요.</p>
+ <div class="mis" id="mis"></div></section>
+<section class="scr" id="s1">
+ <div class="bar"><div class="doors" id="doors"></div><div class="tm" id="tm">⏱ 0:00</div><div class="code" id="code"></div></div>
+ <div class="room"><div class="card"><h2 class="rt" id="rt"></h2><p class="story" id="story"></p><div class="stage"><canvas id="cv"></canvas></div></div>
+  <div class="card ctl"><div id="ctl" class="ctl"></div><div class="msg" id="msg">조작해 보고 [확인]을 누르세요.</div>
+   <div class="btns"><button class="b hint" id="hint">💡 힌트 (+30초)</button><button class="b pri" id="chk">🔓 확인</button></div></div></div></section>
+<div class="ov" id="ov"><div class="ovb" id="ovb"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+let AC=null;function tone(f,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=v||.08;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{tone(660,.15);setTimeout(()=>tone(880,.15),110);setTimeout(()=>tone(1180,.3),220)},sNO=()=>tone(160,.4,.1),sTap=()=>tone(520,.05,.05);
+function confetti(em){for(let i=0;i<28;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4300)}}
+const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1));
+const LW=800,LH=420,cv=$('#cv');
+function view(){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;if(!r.width)return null;cv.width=r.width*d;cv.height=r.height*d;const g=cv.getContext('2d');const sc=Math.min(r.width/LW,r.height/LH);g.setTransform(d*sc,0,0,d*sc,d*(r.width-LW*sc)/2,d*(r.height-LH*sc)/2);g.clearRect(-2000,-2000,6000,6000);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);return g}
+function arrow(g,x1,y1,x2,y2,c,w,lab){const a=Math.atan2(y2-y1,x2-x1),L=Math.hypot(x2-x1,y2-y1);if(L<3)return;const h=Math.min(28,L*.5);g.strokeStyle=c;g.fillStyle=c;g.lineWidth=w||10;g.lineCap='round';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2-Math.cos(a)*h*.8,y2-Math.sin(a)*h*.8);g.stroke();g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-Math.cos(a-.45)*h,y2-Math.sin(a-.45)*h);g.lineTo(x2-Math.cos(a+.45)*h,y2-Math.sin(a+.45)*h);g.fill();if(lab){g.font='900 24px sans-serif';g.textAlign='center';g.fillText(lab,(x1+x2)/2,(y1+y2)/2-18)}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function spring(g,x,y1,y2,c){g.strokeStyle=c||'#475569';g.lineWidth=5;g.beginPath();g.moveTo(x,y1);const n=8,L=y2-y1;g.lineTo(x,y1+L*.08);for(let i=0;i<=n*2;i++)g.lineTo(x+(i%2?16:-16),y1+L*(.08+.84*i/(n*2)));g.lineTo(x,y2);g.stroke()}
+function btn(t,cls,f){const b=document.createElement('button');b.className='b '+(cls||'');b.innerHTML=t;b.onclick=()=>{sTap();f&&f(b)};return b}
+function row(...els){const d=document.createElement('div');d.className='btns';els.forEach(e=>d.appendChild(e));return d}
+function slider(lab,min,max,step,val,fmt,cb){const d=document.createElement('div');d.className='sl';d.innerHTML=`<label>${lab}</label><input type="range" min="${min}" max="${max}" step="${step}" value="${val}"><output></output>`;const r=d.querySelector('input'),o=d.querySelector('output');const f=()=>{o.textContent=fmt(+r.value);cb(+r.value)};r.oninput=f;f();return d}
+function keypad(onv){const w=document.createElement('div');let v='';const disp=document.createElement('div');disp.className='disp';disp.textContent='_';const kp=document.createElement('div');kp.className='kp';
+ ['1','2','3','4','5','6','7','8','9','⌫','0','C'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{sTap();if(k==='⌫')v=v.slice(0,-1);else if(k==='C')v='';else if(v.length<4)v+=k;disp.textContent=v||'_';onv(v)};kp.appendChild(b)});w.appendChild(disp);w.appendChild(kp);return w}
+const NM3=['고체','액체','기체'],COL=['#64748b','#3b82f6','#f97316'];
+function parts(n,box,st){const a=[];for(let i=0;i<n;i++)a.push({x:rnd(box[0]+10,box[2]-10),y:rnd(box[1]+10,box[3]-10),vx:rnd(-1,1),vy:rnd(-1,1),j:Math.random()*9,i});return a}
+function stepParts(a,box,st,t){const cols=5,sz=20,cx=(box[0]+box[2])/2;a.forEach(p=>{if(st===0){const tx=cx-40+(p.i%cols)*sz,ty=box[3]-14-Math.floor(p.i/cols)*sz;p.x+=(tx-p.x)*.2+Math.sin(t/90+p.j)*.6;p.y+=(ty-p.y)*.2+Math.cos(t/80+p.j)*.6}else{const sp=st===1?1.2:4.5,top=st===1?box[3]-70:box[1];if(Math.random()<.08){const a2=Math.random()*6.28;p.vx=Math.cos(a2);p.vy=Math.sin(a2)}p.x+=p.vx*sp;p.y+=p.vy*sp;if(p.y<top+8){p.y+=(top+8-p.y)*.3;p.vy=Math.abs(p.vy)}if(p.x<box[0]+8){p.x=box[0]+8;p.vx*=-1}if(p.x>box[2]-8){p.x=box[2]-8;p.vx*=-1}if(p.y>box[3]-8){p.y=box[3]-8;p.vy*=-1}}})}
+/* ===== 방 정의 ===== */
+const MISS=[
+{id:'state',e:'🧪',nm:'상태 변화 연구소',ds:'입자 배열 · 상태 변화 이름 · 가열 곡선 · 질량 보존',rooms:[
+ {t:'🚪 1번 방: 입자 배열 금고',st:'금고의 세 칸에 서로 다른 상태의 물질이 들어 있어요. 입자의 배열과 움직임을 보고 상태를 맞히세요.',hint:'규칙적으로 줄지어 떨기만 하면 고체, 바닥에 모여 미끄러지면 액체, 멀리 퍼져 빠르게 날아다니면 기체예요.',sum:'고체: 규칙적·제자리 진동 / 액체: 불규칙·미끄러짐 / 기체: 매우 불규칙·자유롭게 이동. 상태가 달라도 입자 자체는 같아요.',
+  make(R){const ord=[0,1,2].sort(()=>Math.random()-.5),pick=[-1,-1,-1];const B=[[40,90,260,380],[290,90,510,380],[540,90,760,380]];const P=B.map((b,k)=>parts(25,b,ord[k]));
+   const sel=document.createElement('div');sel.className='sel';const bs=[0,1,2].map(k=>btn(['A','B','C'][k]+' : ?','',b=>{pick[k]=(pick[k]+1)%3;b.innerHTML=['A','B','C'][k]+' : '+NM3[pick[k]]}));bs.forEach(b=>sel.appendChild(b));R.ctl.appendChild(sel);
+   R.ctl.appendChild(Object.assign(document.createElement('div'),{className:'story',textContent:'버튼을 누를 때마다 고체 → 액체 → 기체로 바뀌어요.'}));
+   R.draw=(g,t)=>{B.forEach((b,k)=>{stepParts(P[k],b,ord[k],t);g.fillStyle='#fff';g.fillRect(b[0],b[1],b[2]-b[0],b[3]-b[1]);g.strokeStyle='#475569';g.lineWidth=6;g.strokeRect(b[0],b[1],b[2]-b[0],b[3]-b[1]);g.fillStyle='#0f172a';g.font='900 34px sans-serif';g.textAlign='center';g.fillText(['A','B','C'][k],(b[0]+b[2])/2,70);P[k].forEach(p=>{g.fillStyle='#2563eb';g.beginPath();g.arc(p.x,p.y,8,0,6.3);g.fill()})})};
+   R.solve=()=>{ord.forEach((o,k)=>pick[k]=o)};R.check=()=>pick.every((v,k)=>v===ord[k])||'아직 맞지 않는 칸이 있어요. 입자 사이 거리와 움직임을 다시 보세요.'}},
+ {t:'🚪 2번 방: 상태 변화 회로',st:'세 상태를 잇는 화살표 여섯 개에 이름표를 붙이면 회로에 불이 들어와요.',hint:'고체→액체 융해, 액체→고체 응고, 액체→기체 기화, 기체→액체 액화, 고체↔기체 승화예요.',sum:'융해·기화·승화(고→기)는 열 흡수, 응고·액화·승화(기→고)는 열 방출!',
+  make(R){const AR=[['고체→액체',0,1],['액체→고체',1,0],['액체→기체',1,2],['기체→액체',2,1],['고체→기체',0,2],['기체→고체',2,0]],ANS=['융해','응고','기화','액화','승화','승화'],NMS=['융해','응고','기화','액화','승화'],pk=AR.map(()=>-1);
+   const sel=document.createElement('div');sel.className='sel';sel.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';AR.forEach((a,k)=>sel.appendChild(btn(a[0]+'<br>?','',b=>{pk[k]=(pk[k]+1)%5;b.innerHTML=a[0]+'<br><span style="color:#fde047">'+NMS[pk[k]]+'</span>'})));R.ctl.appendChild(sel);
+   const N=[[400,70],[160,360],[640,360]];
+   R.draw=(g,t)=>{const lit=pk.map((v,k)=>NMS[v]===ANS[k]);AR.forEach((a,k)=>{const[x1,y1]=N[a[1]],[x2,y2]=N[a[2]];const off=(k%2?-1:1)*30,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),px=-dy/L*off,py=dx/L*off;arrow(g,x1+dx*.2+px,y1+dy*.2+py,x1+dx*.8+px,y1+dy*.8+py,pk[k]<0?'#cbd5e1':'#64748b',8);if(pk[k]>=0){g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.textAlign='center';g.fillText(NMS[pk[k]],x1+dx*.5+px*2.6,y1+dy*.5+py*2.6+8)}});
+    N.forEach(([x,y],k)=>{g.fillStyle=COL[k];g.beginPath();g.arc(x,y,52,0,6.3);g.fill();g.fillStyle='#fff';g.font='900 28px sans-serif';g.textAlign='center';g.fillText(NM3[k],x,y+10)})};
+   R.solve=()=>{ANS.forEach((a,k)=>pk[k]=NMS.indexOf(a))};R.check=()=>{const bad=pk.filter((v,k)=>NMS[v]!==ANS[k]).length;return bad===0||bad+'개의 화살표 이름이 틀렸어요.'}}},
+ {t:'🚪 3번 방: 가열 곡선 온도 자물쇠',st:'얼음을 가열한 그래프예요. 온도가 변하지 않는 두 구간의 온도로 다이얼을 맞추세요.',hint:'그래프에서 수평으로 평평한 부분 두 곳의 세로축 값을 읽어요. 녹는점과 끓는점이에요.',sum:'상태가 변하는 동안은 열을 흡수해도 온도가 일정해요. 물의 녹는점 0℃, 끓는점 100℃!',
+  make(R){let d1=-20,d2=-20;R.ctl.appendChild(slider('다이얼 ①',-20,120,10,-20,v=>v+'℃',v=>d1=v));R.ctl.appendChild(slider('다이얼 ②',-20,120,10,-20,v=>v+'℃',v=>d2=v));
+   const Y=T=>380-(T+20)/140*320,X=s=>120+s*640;const seg=[[0,-20],[.08,0],[.3,0],[.5,100],[.88,100],[1,120]];
+   R.draw=(g,t)=>{g.strokeStyle='#334155';g.lineWidth=4;g.beginPath();g.moveTo(120,50);g.lineTo(120,380);g.lineTo(770,380);g.stroke();g.font='900 20px sans-serif';g.fillStyle='#0f172a';g.textAlign='right';for(let T=-20;T<=120;T+=20){g.fillText(T,110,Y(T)+7);g.strokeStyle='#e2e8f0';g.lineWidth=1;g.beginPath();g.moveTo(122,Y(T));g.lineTo(770,Y(T));g.stroke()}g.textAlign='center';g.fillText('가열 시간 →',640,410);g.fillText('온도(℃)',90,36);
+    g.strokeStyle='#ef4444';g.lineWidth=7;g.beginPath();seg.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();
+    [d1,d2].forEach((d,i)=>{g.strokeStyle=i?'#7c3aed':'#16a34a';g.setLineDash([10,8]);g.lineWidth=3;g.beginPath();g.moveTo(120,Y(d));g.lineTo(770,Y(d));g.stroke();g.setLineDash([]);g.fillStyle=g.strokeStyle;g.textAlign='left';g.fillText(['①','②'][i],775-30,Y(d)-6)})};
+   R.solve=()=>{d1=0;d2=100};R.check=()=>{const s=[d1,d2].sort((a,b)=>a-b);return(s[0]===0&&s[1]===100)||'다이얼 선이 평평한 구간과 겹치는지 확인하세요.'}}},
+ {t:'🚪 4번 방: 질량 보존 저울',st:'밀폐된 봉지 속 얼음을 녹였어요. [녹이기]를 눌러 관찰하고, 다 녹은 뒤 저울 눈금을 입력하세요.',hint:'봉지를 밀폐했으니 입자가 밖으로 나가지 않아요. 상태가 변해도 입자 수는 그대로예요.',sum:'상태가 변해도 입자의 종류와 개수가 같아서 질량은 변하지 않아요(밀폐했을 때).',
+  make(R){const m0=ri(12,19)*10;let melt=0,on=false,val='';R.ctl.appendChild(row(btn('🔥 녹이기','',()=>{on=true})));R.ctl.appendChild(keypad(v=>val=v));
+   const P=parts(30,[250,150,550,330],0);
+   R.draw=(g,t)=>{if(on)melt=Math.min(1,melt+.006);const st=melt<.5?0:1;stepParts(P,[250,150,550,330],st,t);g.fillStyle='#e0f2fe';rr(g,240,110,320,230,30);g.fill();g.strokeStyle='#0369a1';g.lineWidth=5;g.stroke();g.fillStyle='#0369a1';g.fillRect(240,104,320,14);
+    P.forEach(p=>{g.fillStyle=st?'#3b82f6':'#64748b';g.beginPath();g.arc(p.x,p.y,8,0,6.3);g.fill()});g.fillStyle='#475569';rr(g,180,350,440,60,14);g.fill();g.fillStyle='#0f172a';rr(g,320,358,160,44,8);g.fill();g.fillStyle='#4ade80';g.font='900 32px monospace';g.textAlign='center';g.fillText(melt>=1?'???':m0+' g',400,392);
+    g.fillStyle='#0f172a';g.font='900 24px sans-serif';g.fillText(melt>=1?'다 녹았어요! 눈금은?':melt>0?'녹는 중... '+Math.round(melt*100)+'%':'얼음 '+m0+' g',400,80)};
+   R.solve=()=>{melt=1;val=String(m0)};R.check=()=>melt<1?'먼저 얼음을 다 녹여 보세요.':(+val===m0||'상태가 변하면 질량이 변할까요? 다시 생각해 보세요.')}}]},
+{id:'force',e:'🏗️',nm:'힘의 작용 연구소',ds:'힘의 화살표 · 힘의 평형 · 탄성력 · 부력',rooms:[
+ {t:'🚪 1번 방: 화살표 레이저',st:'레이저 문은 정확한 힘의 화살표로만 열려요. 목표와 같은 크기·방향의 화살표를 만드세요. (1칸 = 1 N)',hint:'화살표의 길이(칸 수)가 힘의 크기, 화살표 머리가 가리키는 쪽이 방향이에요.',sum:'힘은 크기·방향·작용점(힘의 3요소)으로 나타내고 단위는 N(뉴턴)이에요.',
+  make(R){const DN=['오른쪽','위쪽','왼쪽','아래쪽'],tN=ri(2,5),tD=ri(0,3);let N=1,D=0;R.target=tN+' N, '+DN[tD]+'으로';
+   R.ctl.appendChild(Object.assign(document.createElement('div'),{className:'disp',textContent:'🎯 '+tN+' N · '+DN[tD]}));
+   R.ctl.appendChild(row(btn('➖ 작게','',()=>{N=Math.max(1,N-1)}),btn('➕ 크게','',()=>{N=Math.min(6,N+1)})));
+   R.ctl.appendChild(row(...['➡','⬆','⬅','⬇'].map((e,k)=>btn(e,'',()=>{D=k}))));
+   R.draw=(g,t)=>{g.strokeStyle='#e2e8f0';g.lineWidth=2;for(let x=0;x<=LW;x+=40){g.beginPath();g.moveTo(x,0);g.lineTo(x,LH);g.stroke()}for(let y=0;y<=LH;y+=40){g.beginPath();g.moveTo(0,y);g.lineTo(LW,y);g.stroke()}
+    const cx=400,cy=200,a=[0,-Math.PI/2,Math.PI,Math.PI/2][D];g.fillStyle='#fbbf24';rr(g,cx-30,cy-30,60,60,8);g.fill();arrow(g,cx,cy,cx+Math.cos(a)*N*40,cy+Math.sin(a)*N*40,'#ef4444',10,N+' N');g.fillStyle='#1d4ed8';g.beginPath();g.arc(cx,cy,8,0,6.3);g.fill()};
+   R.solve=()=>{N=tN;D=tD};R.check=()=>(N===tN&&D===tD)||'크기 '+N+' N, '+DN[D]+' → 목표와 달라요.'}},
+ {t:'🚪 2번 방: 줄다리기 평형 다리',st:'다리 위 깃발이 가운데에 멈춰야 다리가 내려와요. 오른쪽 팀의 힘을 조절해 합력을 0으로 만드세요.',hint:'합력이 0이려면 두 힘의 크기가 같고 방향이 반대여야 해요.',sum:'합력이 0이면 힘의 평형! 정지한 물체는 계속 정지해 있어요.',
+  make(R){const L=ri(3,7)*100;let Rv=100,fx=0;R.ctl.appendChild(slider('🔴 오른쪽 팀',100,900,100,100,v=>v+' N',v=>Rv=v));
+   R.draw=(g,t)=>{const net=Rv-L;fx+=(Math.max(-250,Math.min(250,net*.6))-fx)*.05;g.fillStyle='#bae6fd';g.fillRect(0,300,LW,120);g.strokeStyle='#92400e';g.lineWidth=10;g.beginPath();g.moveTo(40,250);g.lineTo(760,250);g.stroke();
+    g.fillStyle='#ef4444';g.fillRect(400+fx-4,200,8,50);g.beginPath();g.moveTo(404+fx,200);g.lineTo(450+fx,215);g.lineTo(404+fx,230);g.fill();g.fillStyle='#16a34a';g.fillRect(398,280,4,40);
+    arrow(g,400,120,400-L/20,120,'#2563eb',10,L+' N');arrow(g,400,160,400+Rv/20,160,'#dc2626',10,Rv+' N');g.font='60px serif';g.textAlign='center';g.fillText('🧑‍🤝‍🧑',80,240);g.fillText('🧑‍🤝‍🧑',720,240);
+    g.fillStyle='#7c3aed';g.font='900 28px sans-serif';g.fillText(net?'합력 '+Math.abs(net)+' N '+(net>0?'오른쪽':'왼쪽'):'합력 0 N ⚖',400,60)};
+   R.solve=()=>{Rv=L};R.check=()=>Rv===L||'아직 합력이 0이 아니에요. 깃발이 어느 쪽으로 움직이나요?'}},
+ {t:'🚪 3번 방: 용수철 눈금 금고',st:'추 1개(1 N)를 달면 용수철이 2 cm 늘어나요. 빨간 목표선까지 늘이고, 탄성력과 늘어난 길이의 관계를 고르세요.',hint:'추 1개에 2 cm이므로 목표 길이 ÷ 2 = 추의 개수. 2배 무게 → 2배 늘어남은 어떤 관계일까요?',sum:'탄성력은 늘어난 길이에 비례해요. 추가 정지해 있으면 탄성력 = 추의 무게.',
+  make(R){const tg=ri(2,6);let n=0,rel=-1,ex=0;R.ctl.appendChild(row(btn('➕ 추 달기','',()=>{n=Math.min(8,n+1)}),btn('➖ 빼기','',()=>{n=Math.max(0,n-1)})));
+   const rb=['비례','반비례','관계없음'].map((t,k)=>btn(t,'',b=>{rel=k;rb.forEach(x=>x.classList.remove('on'));b.classList.add('on')}));R.ctl.appendChild(row(...rb));
+   R.draw=(g,t)=>{ex+=(n*2-ex)*.15;const px=15,y0=40,L=100+ex*px;g.fillStyle='#334155';g.fillRect(200,24,200,16);spring(g,300,y0,y0+L);for(let i=0;i<n;i++){g.fillStyle='#a78bfa';rr(g,272,y0+L+4+i*20,56,18,5);g.fill()}
+    g.strokeStyle='#0f172a';g.lineWidth=3;g.beginPath();g.moveTo(520,y0+100);g.lineTo(520,y0+100+16*px);g.stroke();g.font='900 18px sans-serif';g.textAlign='left';g.fillStyle='#0f172a';for(let c=0;c<=16;c+=2){g.beginPath();g.moveTo(520,y0+100+c*px);g.lineTo(540,y0+100+c*px);g.stroke();g.fillText(c+' cm',548,y0+106+c*px)}
+    g.strokeStyle='#ef4444';g.lineWidth=4;g.setLineDash([10,6]);g.beginPath();g.moveTo(240,y0+100+tg*2*px);g.lineTo(540,y0+100+tg*2*px);g.stroke();g.setLineDash([]);g.fillStyle='#ef4444';g.fillText('목표 '+tg*2+' cm',620,y0+106+tg*2*px);
+    g.fillStyle='#0f172a';g.fillText('추 '+n+'개 = '+n+' N',40,80)};
+   R.solve=()=>{n=tg;rel=0};R.check=()=>n!==tg?'용수철 끝이 목표선과 맞지 않아요.':(rel===0||'관계를 다시 골라 보세요.')}},
+ {t:'🚪 4번 방: 달걀 탈출선',st:'① 공기 중 무게와 물속 무게로 부력을 구해 입력하고, ② 달걀이 뜨는 액체를 골라 탈출선을 띄우세요.',hint:'부력 = 공기 중 무게 − 물속 무게. 액체의 밀도가 달걀보다 커야 떠요(진한 소금물!).',sum:'부력은 위로 작용하고, 잠긴 부피와 액체의 밀도가 클수록 커요. 중력 = 부력이면 떠요.',
+  make(R){const wa=ri(5,9),ww=ri(2,wa-1),b=wa-ww;let val='',liq=-1,ey=60;R.ctl.appendChild(keypad(v=>val=v));
+   const lb=['💧 물','🧂 진한 소금물','🛢 식용유'].map((t,k)=>btn(t,'',x=>{liq=k;lb.forEach(y=>y.classList.remove('on'));x.classList.add('on')}));R.ctl.appendChild(row(...lb));
+   R.draw=(g,t)=>{g.fillStyle='#0f172a';g.font='900 24px sans-serif';g.textAlign='left';g.fillText('공기 중 무게 '+wa+' N',30,50);g.fillText('물속 무게 '+ww+' N',30,85);g.fillText('부력 = ? N',30,120);
+    g.fillStyle=['#38bdf8','#7dd3fc','#fde047'][Math.max(0,liq)];g.globalAlpha=liq<0?.2:.55;g.fillRect(380,180,360,220);g.globalAlpha=1;g.strokeStyle='#475569';g.lineWidth=6;g.strokeRect(380,140,360,260);
+    const target=liq===1?150:330;ey+=((liq<0?60:target)-ey)*.06;g.font='70px serif';g.textAlign='center';g.fillText('🥚',560,ey+60)};
+   R.solve=()=>{val=String(b);liq=1};R.check=()=>+val!==b?'부력 값을 다시 계산해 보세요.':(liq===1||'달걀이 가라앉아요. 밀도가 더 큰 액체가 필요해요.')}}]}];
+/* ===== 진행 ===== */
+let M=null,ri0=0,t0=0,pen=0,code=[],R=null,tid=0,hints=0,raf=0;
+function bestKey(id){return 'esc-best-'+id}
+function rMis(){$('#mis').innerHTML='';MISS.forEach(m=>{let b=null;try{b=localStorage.getItem(bestKey(m.id))}catch(e){}const d=document.createElement('div');d.className='mc';d.innerHTML=`<div class="e">${m.e}</div><h2>${m.nm}</h2><p>🚪 방 ${m.rooms.length}개 · ${m.ds}</p><p class="best">${b?'🏆 최고 기록 '+fmt(+b):'아직 기록 없음'}</p>`;d.appendChild(btn('🔑 입장하기','go',()=>startM(m)));d.lastChild.className='go';$('#mis').appendChild(d)})}
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+function startM(m){M=m;ri0=0;pen=0;hints=0;code=m.rooms.map(()=>ri(1,9));t0=performance.now();$('#s0').classList.remove('on');$('#s1').classList.add('on');$('#home').style.display='';clearInterval(tid);tid=setInterval(()=>{$('#tm').textContent='⏱ '+fmt(el())},500);openRoom()}
+const el=()=>(performance.now()-t0)/1000+pen;
+function rBar(){$('#doors').innerHTML=M.rooms.map((_,k)=>`<div class="door${k<ri0?' ok':k===ri0?' cur':''}">${k<ri0?'✔':k+1}</div>`).join('')+`<div class="door${ri0>=M.rooms.length?' cur':''}">🔐</div>`;
+ $('#code').innerHTML=code.map((c,k)=>`<div class="slot${k<ri0?' got':''}">${k<ri0?c:'?'}</div>`).join('')}
+function openRoom(){rBar();const rm=M.rooms[ri0];R={ctl:$('#ctl'),draw:null,check:null};$('#ctl').innerHTML='';$('#rt').textContent=rm.t;$('#story').textContent=rm.st;$('#msg').className='msg';$('#msg').textContent='조작해 보고 [확인]을 누르세요.';rm.make(R);R.hintUsed=false}
+function loop(t){if($('#s1').classList.contains('on')&&R&&R.draw){const g=view();if(g)R.draw(g,t)}raf=requestAnimationFrame(loop)}
+$('#chk').onclick=()=>{if(!R||!R.check)return;const r=R.check();if(r===true){sOK();const rm=M.rooms[ri0];ri0++;rBar();
+  ov(`<h2>🔓 문이 열렸어요!</h2><div>비밀번호 ${ri0}번째 숫자</div><div class="dg">${code[ri0-1]}</div><div class="sum">📌 복습 포인트<br>${rm.sum}</div>`,ri0<M.rooms.length?'다음 방으로 ▶':'마지막 문으로 🔐',()=>{ri0<M.rooms.length?openRoom():finalDoor()})}
+ else{sNO();$('#msg').className='msg';void $('#msg').offsetWidth;$('#msg').className='msg no';$('#msg').textContent='❌ '+r}};
+$('#hint').onclick=()=>{if(!M)return;const rm=M.rooms[ri0];if(!rm)return;if(!R.hintUsed){pen+=30;hints++;R.hintUsed=true}$('#msg').className='msg';$('#msg').textContent='💡 '+rm.hint};
+function ov(html,bt,f){$('#ovb').innerHTML=html;const b=document.createElement('button');b.textContent=bt;b.onclick=()=>{$('#ov').classList.remove('on');sTap();f&&f()};$('#ovb').appendChild(b);$('#ov').classList.add('on')}
+function finalDoor(){rBar();$('#rt').textContent='🔐 마지막 문';$('#story').textContent='모은 숫자를 방 순서대로 입력하면 연구소를 탈출해요!';$('#ctl').innerHTML='';let v='';$('#ctl').appendChild(keypad(x=>v=x));$('#msg').className='msg';$('#msg').textContent='비밀번호 '+code.length+'자리를 입력하세요.';
+ R={draw:(g,t)=>{g.fillStyle='#1f2937';g.fillRect(0,0,LW,LH);g.fillStyle='#78350f';rr(g,280,40,240,360,16);g.fill();g.fillStyle='#fde047';g.beginPath();g.arc(480,230,14,0,6.3);g.fill();g.font='80px serif';g.textAlign='center';g.fillText('🔐',400,240)},check:()=>v===code.join('')||'비밀번호가 달라요. 위쪽 숫자 칸을 확인하세요.'};
+ $('#chk').onclick=()=>{const r=R.check();if(r===true)win();else{sNO();$('#msg').className='msg no';$('#msg').textContent='❌ '+r}}}
+function win(){clearInterval(tid);const s=el();let best=null;try{best=+localStorage.getItem(bestKey(M.id))||null;if(!best||s<best)localStorage.setItem(bestKey(M.id),s)}catch(e){}const star=hints===0?'⭐⭐⭐':hints<=2?'⭐⭐':'⭐';sOK();confetti(['🎉','🔓','⭐','🧪']);
+ ov(`<h2>🎉 ${M.nm} 탈출 성공!</h2><div class="dg" style="font-size:64px">${star}</div><div style="font-size:28px">기록 ${fmt(s)} · 힌트 ${hints}회${(!best||s<best)?' · 🏆 최고 기록!':''}</div>`,'미션 고르기로',goHome)}
+function goHome(){clearInterval(tid);M=null;R=null;$('#s1').classList.remove('on');$('#s0').classList.add('on');$('#home').style.display='none';$('#chk').onclick=chkMain;rMis()}
+const chkMain=$('#chk').onclick;$('#home').onclick=goHome;
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+rMis();requestAnimationFrame(loop);
+</script></body></html>

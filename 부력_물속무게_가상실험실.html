@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>부력: 물속에서 받는 힘 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two7{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cvw{position:relative;border-radius:18px;overflow:hidden;border:4px solid #94a3b8;background:#fff}
+.cvw canvas{display:block;width:100%;height:clamp(300px,46vh,500px);touch-action:none}
+.cvw.tall canvas{height:clamp(340px,54vh,560px)}
+.cvw .tg{position:absolute;left:10px;top:8px;font-weight:900;font-size:clamp(15px,1.6vw,26px);background:rgba(255,255,255,.88);border-radius:12px;padding:2px 12px;pointer-events:none}
+.cvw .nt{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:clamp(11px,1vw,15px);font-weight:800;color:#64748b;pointer-events:none}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.sv{border:3px solid #cbd5e1;border-radius:14px;padding:8px 12px;background:#fff}
+.sv b{display:block;font-size:clamp(14px,1.3vw,21px);color:#334155}
+.sv .bar{height:clamp(22px,2.2vw,30px);border-radius:10px;background:#e2e8f0;overflow:hidden;margin:4px 0}
+.sv .bar i{display:block;height:100%;width:0;background:var(--c,#2563eb);transition:width .3s}
+.sv span{font-weight:900;font-size:clamp(14px,1.4vw,22px)}
+.say{margin-top:10px;border-radius:14px;padding:10px 14px;font-weight:900;line-height:1.5;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(15px,1.55vw,25px);min-height:3.2em}
+.say.ok{background:#dcfce7;border-color:#22c55e;color:#14532d}.say.bad{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.pres{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pres .btn,.ctl .btn{flex:1 1 120px;min-height:62px;font-size:clamp(15px,1.4vw,22px);font-weight:900}
+.btn.on2{background:#dbeafe;border-color:#2563eb}
+.big{min-height:70px!important;font-size:clamp(18px,2vw,30px)!important;background:#2563eb;border-color:#1d4ed8;color:#fff;box-shadow:0 5px 0 #1e3a8a;font-weight:900}
+.big:disabled{opacity:.5}
+.sl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0}
+.sl label{font-weight:900;font-size:clamp(15px,1.5vw,24px);min-width:150px}
+input[type=range].rg{-webkit-appearance:none;appearance:none;flex:1 1 220px;height:20px;border-radius:10px;background:#cbd5e1;touch-action:none;margin:22px 0;outline:none}
+input.rg::-webkit-slider-thumb{-webkit-appearance:none;width:60px;height:60px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+input.rg::-moz-range-thumb{width:48px;height:48px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+.sl output{font-weight:900;font-size:clamp(18px,1.9vw,30px);min-width:100px;text-align:right}
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(13px,1.25vw,20px)}
+.tbl th,.tbl td{border:2px solid #cbd5e1;padding:6px 4px;line-height:1.35}.tbl th{background:#f1f5f9}
+.tw{overflow-x:auto}
+.tag{display:inline-block;border-radius:999px;padding:1px 12px;font-weight:900;font-size:clamp(13px,1.2vw,19px);color:#fff;background:#2563eb}
+.opt{min-height:60px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(15px,1.5vw,24px);padding:6px 14px;cursor:pointer}
+.opt.sel{border-color:#2563eb;background:#dbeafe}.opt.right{border-color:#22c55e;background:#dcfce7}.opt.wrong{border-color:#ef4444;background:#fee2e2}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.shake{animation:shk .45s}
+@keyframes pp{0%{transform:scale(.2)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two,body.ph .two7,body.ph .three{grid-template-columns:minmax(0,1fr)}
+body.ph .cvw canvas{height:340px}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two,.two7,.three{grid-template-columns:minmax(0,1fr)}.cvw canvas{height:340px}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}#pop{top:auto;bottom:12px;font-size:16px}}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.item{min-height:84px;border:3px solid #cbd5e1;border-radius:16px;background:#fff;font-weight:900;font-size:clamp(14px,1.4vw,22px);cursor:pointer;line-height:1.3;padding:6px}
+.item.sel{border-color:#2563eb;background:#dbeafe;transform:scale(1.04)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{border:4px dashed #94a3b8;border-radius:18px;min-height:190px;padding:8px;background:#f8fafc;cursor:pointer}
+.bin h3{margin:0 0 6px;font-size:clamp(16px,1.7vw,26px)}
+.bin .chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:12px;background:#dcfce7;border:2px solid #22c55e;font-weight:900;font-size:clamp(13px,1.2vw,20px)}
+@media (max-width:760px){.bins{grid-template-columns:minmax(0,1fr)}.bin{min-height:90px}}
+body.ph .bins{grid-template-columns:minmax(0,1fr)}
+.tbl td.hl{background:#fef9c3}
+</style></head><body>
+<header>
+  <h1>🛟 부력: 물속에서 받는 힘</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">🛟 물속 무게 측정</button>
+    <button class="tab" id="tab2">🔬 부력의 요인</button>
+    <button class="tab" id="tab3">🥚 뜨고 가라앉기</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">🛟 물체를 물에 담그면 저울 눈금은?</div>
+  <div class="cvw tall"><canvas id="c1"></canvas><div class="tg">용수철저울에 매단 금속 추 (공기 중 4.9 N)</div></div>
+  <div class="say" id="s1">슬라이더로 추를 물속에 천천히 넣어 보세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="sl"><label>⬇ 잠기는 정도</label><input type="range" class="rg" id="r1" min="0" max="100" value="0"><output id="r1o"></output></div>
+  <div class="st"><div class="sv"><b>🌬 공기 중 무게</b><span>4.9 N</span></div><div class="sv"><b>📏 저울 눈금</b><span id="w1">4.9 N</span></div><div class="sv"><b>⬆ 부력</b><span id="b1">0.0 N</span></div><div class="sv"><b>물에 잠긴 부피</b><span id="v1">0 %</span></div></div>
+  <div class="hint">💡 부력 = 공기 중 무게 − 물속 무게. 완전히 잠긴 뒤에는 더 깊이 넣어도 같아요.</div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">🔬 부력의 크기는 무엇이 정할까?</div>
+  <div class="cvw"><canvas id="c2"></canvas></div>
+  <div class="say" id="s2">물체의 부피와 액체를 바꿔 가며 [측정]을 눌러 보세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="pres"><button class="btn on2" data-v="100">🔹 100 cm³</button><button class="btn" data-v="200">🔷 200 cm³</button><button class="btn" data-v="300">🟦 300 cm³</button></div>
+  <div class="pres" style="margin-top:8px"><button class="btn on2" data-l="0">💧 물</button><button class="btn" data-l="1">🧂 소금물</button><button class="btn" data-l="2">🛢 식용유</button></div>
+  <div class="pres" style="margin-top:8px"><button class="btn big" id="ms2">📏 측정</button></div>
+  <div class="tw" style="margin-top:8px"><table class="tbl"><thead><tr><th>부피</th><th>액체</th><th>부력</th></tr></thead><tbody id="tb2"></tbody></table></div>
+  <div class="sv" style="margin-top:8px"><b>비교한 요인</b><span id="fl2">☐ 부피 ☐ 액체</span></div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m3"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">🥚 물체는 뜰까, 가라앉을까?</div>
+  <div class="cvw tall"><canvas id="c3"></canvas><div class="tg" id="tg3">달걀 + 물</div></div>
+  <div class="say" id="s3">물체와 액체를 고르고 [넣기]를 눌러 보세요. 미션: 달걀을 뜨게 만들기!</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="pres" id="ob3"></div>
+  <div class="pres" style="margin-top:8px"><button class="btn on2" data-l="0">💧 물</button><button class="btn" data-l="1">🧂 진한 소금물</button><button class="btn" data-l="2">🛢 식용유</button></div>
+  <div class="pres" style="margin-top:8px"><button class="btn big" id="go3">⬇ 넣기</button></div>
+  <div class="st"><div class="sv"><b>⬇ 중력</b><span id="g3">-</span></div><div class="sv"><b>⬆ 부력</b><span id="u3">-</span></div><div class="sv"><b>결과</b><span id="r3">-</span></div></div>
+  <div class="hint">💡 중력 &gt; 부력이면 가라앉고, 중력 = 부력이면 떠요(물체의 밀도 &lt; 액체의 밀도).</div>
+ </div></div>
+
+</div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+let popT=0,QSC=-1,QZ=[];
+function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(em){em=em||['⭐','✨','🎉'];for(let i=0;i<22;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+function hud(){const it=LAB.segs();$('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// 슬라이더 연결: sl(id, fmt, cb)
+function sl(id,fmt,cb){const r=$('#'+id),o=$('#'+id+'o');const f=()=>{o.textContent=fmt(+r.value);cb&&cb(+r.value)};r.addEventListener('input',f);f();return r}
+// 캔버스 논리 좌표
+function view(cv,LW,LH){const{g,w,h}=fit(cv),sc=Math.min(w/LW,h/LH),ox=(w-LW*sc)/2,oy=(h-LH*sc)/2;g.save();g.translate(ox,oy);g.scale(sc,sc);return{g,sc,ox,oy,w,h}}
+function toL(cv,e,LW,LH){const r=cv.getBoundingClientRect(),sc=Math.min(r.width/LW,r.height/LH),ox=(r.width-LW*sc)/2,oy=(r.height-LH*sc)/2;return[(e.clientX-r.left-ox)/sc,(e.clientY-r.top-oy)/sc]}
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem(LAB.key+'-ph',on?'1':'0')}catch(e){}}LAB.onPh&&LAB.onPh()}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){LAB.reset();QSC=-1;hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');window.scrollTo(0,0);LAB.onMode&&LAB.onMode(m)};
+let _last=0;function _loop(now){const dt=Math.min(.05,(now-(_last||now))/1000);_last=now;try{LAB.frame&&LAB.frame(dt,mode)}catch(e){console.error(e)}requestAnimationFrame(_loop)}
+function boot(){QZ=LAB.quiz;LAB.init&&LAB.init();resetAll();let p=null;try{p=localStorage.getItem(LAB.key+'-ph')}catch(e){}setPh(p==='1'||(p===null&&innerWidth<=760),false);requestAnimationFrame(_loop)}
+
+const LW=800,LH=440;let TS=1;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function arrow(g,x1,y1,x2,y2,c,w,lab){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<3)return;const a=Math.atan2(dy,dx),h=Math.min(26,L*.5);w=w||8;g.strokeStyle=c;g.fillStyle=c;g.lineWidth=w;g.lineCap='round';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2-Math.cos(a)*h*.8,y2-Math.sin(a)*h*.8);g.stroke();g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-Math.cos(a-.45)*h,y2-Math.sin(a-.45)*h);g.lineTo(x2-Math.cos(a+.45)*h,y2-Math.sin(a+.45)*h);g.closePath();g.fill();
+ if(lab){g.font='900 22px sans-serif';g.textAlign='center';g.fillStyle=c;g.fillText(lab,(x1+x2)/2-Math.sin(a)*26,(y1+y2)/2+Math.cos(a)*26+6)}}
+function spring(g,x1,y1,x2,y2,n,w,c){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy,py=ux;g.strokeStyle=c||'#475569';g.lineWidth=5;g.lineJoin='round';g.beginPath();g.moveTo(x1,y1);const s=L*.1;g.lineTo(x1+ux*s,y1+uy*s);for(let i=0;i<=n*2;i++){const t=.1+.8*i/(n*2),o=(i%2?1:-1)*w;g.lineTo(x1+ux*L*t+px*o,y1+uy*L*t+py*o)}g.lineTo(x2-ux*s,y2-uy*s);g.lineTo(x2,y2);g.stroke()}
+function box(g,x,y,w,h,c,e){g.fillStyle=c||'#fbbf24';g.strokeStyle='#92400e';g.lineWidth=5;rr(g,x,y,w,h,10);g.fill();g.stroke();if(e){g.font=Math.min(w,h)*.7+'px serif';g.textAlign='center';g.fillStyle='#000';g.fillText(e,x+w/2,y+h*.72)}}
+document.querySelectorAll('.tsb').forEach(b=>b.onclick=()=>{TS=TS===1?3:1;document.querySelectorAll('.tsb').forEach(x=>{x.textContent='⏩ 빠르게 ×'+TS;x.classList.toggle('on2',TS>1)})});
+function setv(id,v){$(id).value=v;$(id).dispatchEvent(new Event('input'))}
+function mc(el,qs,onAll,sayEl){/* 객관식 진행: el=컨테이너 id */}
+
+const WA=4.9,BF=1.96;let d1=0,fr1=0,maxF=0,sawPart=false,sawDeep=false;
+function frac(d){const bottom=250+d*1.7;return Math.max(0,Math.min(1,(bottom-300)/80))}
+function step1(dt){fr1+=(frac(d1)-fr1)*Math.min(1,10*dt);const b=BF*fr1;$('#w1').textContent=(WA-b).toFixed(2)+' N';$('#b1').textContent=b.toFixed(2)+' N';$('#v1').textContent=Math.round(fr1*100)+' %';
+ if(fr1>.1&&fr1<.9)sawPart=true;if(fr1>.98&&d1>=78)sawDeep=true;if(sawPart&&sawDeep&&!LAB._c1){LAB._c1=1;sOK();$('#s1').className='say ok';$('#s1').textContent='✅ 잠긴 부피가 늘수록 저울 눈금은 줄고(부력↑), 완전히 잠긴 뒤에는 깊이와 상관없이 부력이 일정해요.';say('물속 무게 측정 완료 🎉',3200);confetti(['🛟','💧']);hud()}}
+function draw1(){const{g}=view($('#c1'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='#334155';g.fillRect(120,10,200,12);const bottom=250+d1*1.7,top=bottom-80;const wval=WA-BF*fr1;
+ spring(g,220,22,220,Math.max(60,top-30),9,14,'#475569');g.fillStyle='#fff';g.strokeStyle='#334155';g.lineWidth=3;rr(g,160,Math.max(60,top-30),120,34,8);g.fill();g.stroke();g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.textAlign='center';g.fillText(wval.toFixed(2)+' N',220,Math.max(60,top-30)+25);
+ g.fillStyle='#334155';g.fillRect(218,Math.max(60,top-30)+34,4,Math.max(0,top-(Math.max(60,top-30)+34)));g.fillStyle='#64748b';g.strokeStyle='#334155';g.lineWidth=4;rr(g,185,top,70,80,6);g.fill();g.stroke();
+ g.fillStyle='rgba(56,189,248,.45)';g.fillRect(70,300,300,120);g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(70,250);g.lineTo(70,420);g.lineTo(370,420);g.lineTo(370,250);g.stroke();g.fillStyle='rgba(56,189,248,.3)';g.fillRect(185,Math.max(top,300),70,Math.max(0,bottom-Math.max(top,300)));
+ arrow(g,310,top+40,310,top-10,'#16a34a',8,'');g.fillStyle='#16a34a';g.font='900 20px sans-serif';g.textAlign='left';g.fillText('부력 '+(BF*fr1).toFixed(2)+' N',400,top+20);arrow(g,310,top+40,310,top+40+60,'#dc2626',8,'');g.fillStyle='#dc2626';g.fillText('중력 4.9 N',400,top+68);g.restore()}
+// tab2
+const LQ=[['물',1.0,'#38bdf8'],['소금물',1.2,'#7dd3fc'],['식용유',.9,'#fde047']];let v2=100,l2=0,rows2=[],sv=new Set(),sl2=new Set(),meas2=0,anim=0;
+const B2=()=>LQ[l2][1]*v2*.0098;
+function draw2(){const{g}=view($('#c2'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);const t=Math.min(1,anim);g.fillStyle=LQ[l2][2];g.globalAlpha=.5;g.fillRect(200,220,400,190);g.globalAlpha=1;g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(200,170);g.lineTo(200,410);g.lineTo(600,410);g.lineTo(600,170);g.stroke();
+ const s=40+Math.cbrt(v2)*10,y=90+t*(250-90);g.fillStyle='#64748b';g.strokeStyle='#334155';g.lineWidth=4;rr(g,400-s/2,y,s,s,6);g.fill();g.stroke();g.strokeStyle='#334155';g.lineWidth=4;g.beginPath();g.moveTo(400,20);g.lineTo(400,y);g.stroke();
+ g.fillStyle='#0f172a';g.font='900 28px sans-serif';g.textAlign='center';g.fillText(LQ[l2][0]+' · '+v2+' cm³',400,435);g.textAlign='left';g.fillText('부력: '+(t>=1?B2().toFixed(2)+' N':'측정 전'),620,150);if(t>=1)arrow(g,520,y+s/2,520,y+s/2-B2()*45,'#16a34a',10,'');g.restore()}
+function step2(dt){if(anim>0&&anim<1){anim+=dt/1.2;if(anim>=1){anim=1;rec2()}}}
+function rec2(){rows2.push([v2,l2,B2()]);sv.add(v2);sl2.add(l2);meas2++;$('#tb2').innerHTML=rows2.slice(-6).map(r=>`<tr><td>${r[0]} cm³</td><td>${LQ[r[1]][0]}</td><td>${r[2].toFixed(2)} N</td></tr>`).join('');
+ const a=sv.size>=2,b=sl2.size>=2;$('#fl2').textContent=(a?'✔':'☐')+' 부피 '+(b?'✔':'☐')+' 액체';sOK();hud();const p=rows2[rows2.length-2];if(p){const l=rows2[rows2.length-1];if(l[1]===p[1]&&l[0]!==p[0]){$('#s2').className='say ok';$('#s2').textContent='👀 부피가 클수록 부력이 커요.'}else if(l[0]===p[0]&&l[1]!==p[1]){$('#s2').className='say ok';$('#s2').textContent='👀 액체의 밀도가 클수록(소금물) 부력이 커요.'}}
+ if(a&&b&&!LAB._c2){LAB._c2=1;say('부력의 요인 탐구 완료 🎉',3200);confetti(['🔬','✨'])}}
+// tab3
+const OB=[['🥚 달걀',1.08,'#fef3c7'],['🪵 나무',.6,'#d6a56b'],['🔩 쇠못',7.8,'#94a3b8'],['🧊 얼음',.92,'#e0f2fe'],['🏐 플라스틱 공',.3,'#f87171']];let o3=0,l3=0,y3=40,vy3=0,state3=0,seen3=new Set(),eggFloat=false;const LD=[1.0,1.25,.9];
+function res3(){const o=OB[o3],l=LD[l3];return{G:o[1],B:Math.min(o[1],l),float:o[1]<l,sink:o[1]>l}}
+function tgt(){const o=OB[o3],l=LD[l3];const h=80,top=160;if(o[1]<l){return top-(1-o[1]/l)*h}return 410-h}
+function step3(dt){if(!state3)return;const t=tgt();if(OB[o3][1]<LD[l3]){const a=(t-y3)*40-vy3*5;vy3+=a*dt;y3+=vy3*dt}else{vy3+=500*dt;y3=Math.min(t,y3+vy3*dt);if(y3>=t){vy3=0}}
+ if(state3===1&&Math.abs(y3-t)<2&&Math.abs(vy3)<5){state3=2;fin3()}}
+function fin3(){const r=res3(),o=OB[o3];seen3.add(o3+'_'+l3);$('#g3').textContent=(r.G*.98).toFixed(2)+' (상대값)';$('#u3').textContent=(r.B*.98).toFixed(2)+' (상대값)';$('#r3').textContent=r.float?'🟢 떠요':(r.sink?'🔴 가라앉아요':'⚪ 정지');
+ $('#s3').className='say '+(r.float?'ok':'');$('#s3').innerHTML=r.float?'✅ '+o[0]+'의 밀도('+o[1]+')가 액체('+LD[l3]+')보다 작아서 떠요. 중력 = 부력!':'⬇ '+o[0]+'의 밀도('+o[1]+')가 액체('+LD[l3]+')보다 커서 가라앉아요. 중력 &gt; 부력!';r.float?sOK():sNO();
+ if(o3===0&&r.float)eggFloat=true;hud();if(eggFloat&&seen3.size>=5&&!LAB._c3){LAB._c3=1;say('미션 성공! 달걀이 떴어요 🎉',3200);confetti(['🥚','🧂'])}}
+function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle=['#38bdf8','#7dd3fc','#fde047'][l3];g.globalAlpha=.5;g.fillRect(200,160,400,250);g.globalAlpha=1;g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(200,100);g.lineTo(200,410);g.lineTo(600,410);g.lineTo(600,100);g.stroke();
+ const o=OB[o3],y=state3?y3:40;g.font='80px serif';g.textAlign='center';g.fillText(o[0].split(' ')[0],400,y+68);const r=res3();
+ if(state3===2){arrow(g,520,y+40,520,y+40-Math.min(150,Math.max(24,r.B*70)),'#16a34a',10,'부력');arrow(g,300,y+40,300,y+40+Math.min(150,Math.max(24,r.G*70)),'#dc2626',10,'중력')}g.restore()}
+function selO(){$('#ob3').innerHTML='';OB.forEach((o,i)=>{const b=document.createElement('button');b.className='btn'+(i===o3?' on2':'');b.textContent=o[0];b.onclick=()=>{o3=i;state3=0;y3=40;vy3=0;selO();tg3();sTap()};$('#ob3').appendChild(b)})}
+function tg3(){$('#tg3').textContent=OB[o3][0]+' + '+['물','진한 소금물','식용유'][l3]}
+const LAB={key:'fbuoy',
+ quiz:[
+ {q:'부력의 방향은?',o:['위쪽','아래쪽','옆쪽'],a:0,e:'부력은 물체를 위로 밀어 올리는 힘이에요.'},
+ {q:'공기 중 무게가 5 N인 물체를 물속에서 재니 3 N이다. 부력은?',o:['2 N','3 N','8 N'],a:0,e:'부력 = 공기 중 무게 − 물속 무게 = 2 N.'},
+ {q:'물체가 완전히 잠긴 뒤 더 깊이 넣으면 부력은?',o:['커진다','작아진다','변하지 않는다'],a:2,e:'부력은 잠긴 부피에 관계하고 깊이와는 관계없어요.'},
+ {q:'같은 액체에서 물체의 부피가 클수록 부력은?',o:['커진다','작아진다','같다'],a:0,e:'잠긴 부피가 클수록 부력이 커요.'},
+ {q:'소금물에서 달걀이 뜨는 까닭은?',o:['소금물의 밀도가 달걀보다 커서','달걀이 가벼워져서','달걀 속 공기가 빠져서'],a:0,e:'액체의 밀도가 물체보다 크면 떠요(부력이 커져요).'},
+ {q:'물에 떠 있는 물체에서 중력과 부력의 크기는?',o:['같다','중력이 더 크다','부력이 더 크다'],a:0,e:'힘의 평형이라서 크기가 같아요.'},
+ {q:'물체가 가라앉을 때는?',o:['중력 > 부력','중력 < 부력','중력 = 부력'],a:0,e:'중력이 부력보다 크면 가라앉아요.'}],
+ segs:()=>[['물속 무게',!!LAB._c1],['부력 요인',!!LAB._c2],['뜨고 가라앉기',!!LAB._c3]],
+ reset(){LAB._c1=LAB._c2=LAB._c3=0;d1=0;fr1=0;sawPart=sawDeep=false;$('#r1').value=0;$('#r1').dispatchEvent(new Event('input'));rows2=[];sv.clear();sl2.clear();$('#tb2').innerHTML='';$('#fl2').textContent='☐ 부피 ☐ 액체';anim=0;v2=100;l2=0;selV();o3=0;l3=0;state3=0;y3=40;seen3=new Set();eggFloat=false;selO();selL();tg3();['#g3','#u3','#r3'].forEach(s=>$(s).textContent='-');['#s1','#s2','#s3'].forEach(s=>$(s).className='say');$('#s1').textContent='슬라이더로 추를 물속에 천천히 넣어 보세요.';$('#s2').textContent='물체의 부피와 액체를 바꿔 가며 [측정]을 눌러 보세요.';$('#s3').textContent='물체와 액체를 고르고 [넣기]를 눌러 보세요. 미션: 달걀을 뜨게 만들기!'},
+ init(){sl('r1',v=>v+'%',v=>d1=v);document.querySelectorAll('#m2 [data-v]').forEach(b=>b.onclick=()=>{v2=+b.dataset.v;anim=0;selV()});document.querySelectorAll('#m2 [data-l]').forEach(b=>b.onclick=()=>{l2=+b.dataset.l;anim=0;selV()});$('#ms2').onclick=()=>{anim=.001;sTap()};
+  document.querySelectorAll('#m3 [data-l]').forEach(b=>b.onclick=()=>{l3=+b.dataset.l;state3=0;y3=40;selL();tg3();sTap()});$('#go3').onclick=()=>{state3=1;y3=40;vy3=0;sTap();$('#s3').className='say';$('#s3').textContent='⬇ 넣는 중...'}},
+ frame(dt){dt*=1;step1(dt);step2(dt);step3(dt);if(mode===1)draw1();else if(mode===2)draw2();else if(mode===3)draw3()},
+ auto(){setv('#r1',50);for(let i=0;i<30;i++)step1(.05);setv('#r1',90);for(let i=0;i<30;i++)step1(.05);
+  [[100,0],[200,0],[200,1]].forEach(a=>{v2=a[0];l2=a[1];anim=.999;step2(.1)});
+  [[0,0],[0,1],[1,0],[2,0],[3,0],[4,1]].forEach(a=>{o3=a[0];l3=a[1];state3=1;y3=40;vy3=0;for(let i=0;i<400&&state3!==2;i++)step3(.02)});hud();return{c1:LAB._c1,c2:LAB._c2,c3:LAB._c3,egg:eggFloat,seen:seen3.size}}};
+function selV(){document.querySelectorAll('#m2 [data-v]').forEach(b=>b.classList.toggle('on2',+b.dataset.v===v2));document.querySelectorAll('#m2 [data-l]').forEach(b=>b.classList.toggle('on2',+b.dataset.l===l2))}
+function selL(){document.querySelectorAll('#m3 [data-l]').forEach(b=>b.classList.toggle('on2',+b.dataset.l===l3))}
+
+boot();
+</script></body></html>

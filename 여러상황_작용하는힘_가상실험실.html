@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>여러 가지 상황에서 작용하는 힘 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two7{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cvw{position:relative;border-radius:18px;overflow:hidden;border:4px solid #94a3b8;background:#fff}
+.cvw canvas{display:block;width:100%;height:clamp(300px,46vh,500px);touch-action:none}
+.cvw.tall canvas{height:clamp(340px,54vh,560px)}
+.cvw .tg{position:absolute;left:10px;top:8px;font-weight:900;font-size:clamp(15px,1.6vw,26px);background:rgba(255,255,255,.88);border-radius:12px;padding:2px 12px;pointer-events:none}
+.cvw .nt{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:clamp(11px,1vw,15px);font-weight:800;color:#64748b;pointer-events:none}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.sv{border:3px solid #cbd5e1;border-radius:14px;padding:8px 12px;background:#fff}
+.sv b{display:block;font-size:clamp(14px,1.3vw,21px);color:#334155}
+.sv .bar{height:clamp(22px,2.2vw,30px);border-radius:10px;background:#e2e8f0;overflow:hidden;margin:4px 0}
+.sv .bar i{display:block;height:100%;width:0;background:var(--c,#2563eb);transition:width .3s}
+.sv span{font-weight:900;font-size:clamp(14px,1.4vw,22px)}
+.say{margin-top:10px;border-radius:14px;padding:10px 14px;font-weight:900;line-height:1.5;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(15px,1.55vw,25px);min-height:3.2em}
+.say.ok{background:#dcfce7;border-color:#22c55e;color:#14532d}.say.bad{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.pres{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pres .btn,.ctl .btn{flex:1 1 120px;min-height:62px;font-size:clamp(15px,1.4vw,22px);font-weight:900}
+.btn.on2{background:#dbeafe;border-color:#2563eb}
+.big{min-height:70px!important;font-size:clamp(18px,2vw,30px)!important;background:#2563eb;border-color:#1d4ed8;color:#fff;box-shadow:0 5px 0 #1e3a8a;font-weight:900}
+.big:disabled{opacity:.5}
+.sl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0}
+.sl label{font-weight:900;font-size:clamp(15px,1.5vw,24px);min-width:150px}
+input[type=range].rg{-webkit-appearance:none;appearance:none;flex:1 1 220px;height:20px;border-radius:10px;background:#cbd5e1;touch-action:none;margin:22px 0;outline:none}
+input.rg::-webkit-slider-thumb{-webkit-appearance:none;width:60px;height:60px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+input.rg::-moz-range-thumb{width:48px;height:48px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+.sl output{font-weight:900;font-size:clamp(18px,1.9vw,30px);min-width:100px;text-align:right}
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(13px,1.25vw,20px)}
+.tbl th,.tbl td{border:2px solid #cbd5e1;padding:6px 4px;line-height:1.35}.tbl th{background:#f1f5f9}
+.tw{overflow-x:auto}
+.tag{display:inline-block;border-radius:999px;padding:1px 12px;font-weight:900;font-size:clamp(13px,1.2vw,19px);color:#fff;background:#2563eb}
+.opt{min-height:60px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(15px,1.5vw,24px);padding:6px 14px;cursor:pointer}
+.opt.sel{border-color:#2563eb;background:#dbeafe}.opt.right{border-color:#22c55e;background:#dcfce7}.opt.wrong{border-color:#ef4444;background:#fee2e2}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.shake{animation:shk .45s}
+@keyframes pp{0%{transform:scale(.2)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two,body.ph .two7,body.ph .three{grid-template-columns:minmax(0,1fr)}
+body.ph .cvw canvas{height:340px}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two,.two7,.three{grid-template-columns:minmax(0,1fr)}.cvw canvas{height:340px}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}#pop{top:auto;bottom:12px;font-size:16px}}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.item{min-height:84px;border:3px solid #cbd5e1;border-radius:16px;background:#fff;font-weight:900;font-size:clamp(14px,1.4vw,22px);cursor:pointer;line-height:1.3;padding:6px}
+.item.sel{border-color:#2563eb;background:#dbeafe;transform:scale(1.04)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{border:4px dashed #94a3b8;border-radius:18px;min-height:190px;padding:8px;background:#f8fafc;cursor:pointer}
+.bin h3{margin:0 0 6px;font-size:clamp(16px,1.7vw,26px)}
+.bin .chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:12px;background:#dcfce7;border:2px solid #22c55e;font-weight:900;font-size:clamp(13px,1.2vw,20px)}
+@media (max-width:760px){.bins{grid-template-columns:minmax(0,1fr)}.bin{min-height:90px}}
+body.ph .bins{grid-template-columns:minmax(0,1fr)}
+.pres[style*="column"]>.btn,.pres[style*="column"]>.opt{flex:0 0 auto}
+.tbl td.hl{background:#fef9c3}
+</style></head><body>
+<header>
+  <h1>🎢 여러 가지 상황에서 작용하는 힘</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">📖 정지한 물체의 힘</button>
+    <button class="tab" id="tab2">🏃 운동하는 물체의 힘</button>
+    <button class="tab" id="tab3">🪂 번지점프의 힘</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct" id="t1">📖 이 물체에 작용하는 힘을 모두 찾아 보세요</div>
+  <div class="cvw tall"><canvas id="c1"></canvas><div class="tg" id="tg1">-</div></div>
+  <div class="say" id="s1">힘 이름을 눌러 화살표를 그리고 [확인]을 누르세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="pres" id="sc1"></div>
+  <div class="pres" id="fb1" style="margin-top:8px"></div>
+  <div class="pres" style="margin-top:8px"><button class="btn big" id="ck1">✔ 확인</button><button class="btn" id="cl1">🧹 지우기</button></div>
+  <div class="sv" style="margin-top:8px"><b>성공한 장면</b><span id="p1">0 / 3</span></div>
+  <div class="hint">💡 정지해 있으면 힘의 평형! 위로 향하는 힘의 합 = 아래로 향하는 힘의 합</div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct" id="t2">🏃 운동 중인 물체에 작용하는 힘은?</div>
+  <div class="cvw tall"><canvas id="c2"></canvas><div class="tg" id="tg2">-</div></div>
+  <div class="say" id="s2">힘 이름을 눌러 화살표를 그리고 [확인]을 누르세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="pres" id="sc2"></div>
+  <div class="pres" id="fb2" style="margin-top:8px"></div>
+  <div class="pres" style="margin-top:8px"><button class="btn big" id="ck2">✔ 확인</button><button class="btn" id="cl2">🧹 지우기</button></div>
+  <div class="sv" style="margin-top:8px"><b>성공한 장면</b><span id="p2">0 / 5</span></div>
+  <div class="hint">💡 운동 중에도 중력은 항상 작용해요. 접촉하고 있으면 탄성력·마찰력을 생각해요.</div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m3"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">🪂 번지점프하는 동안 힘은 어떻게 변할까?</div>
+  <div class="cvw tall"><canvas id="c3"></canvas><div class="tg" id="tg3">0.0 초</div></div>
+  <div class="say" id="s3">시간 슬라이더를 움직이거나 [재생]을 눌러 보세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="sl"><label>⏱ 시간</label><input type="range" class="rg" id="r3" min="0" max="80" value="0"><output id="r3o"></output></div>
+  <div class="pres"><button class="btn big" id="pl3">▶ 재생</button><button class="btn" id="mx3">⬇ 가장 낮은 곳으로</button></div>
+  <div class="sv" style="margin-top:8px"><b id="q3q">-</b></div><div class="pres" id="q3o" style="flex-direction:column;align-items:stretch;margin-top:8px"></div>
+  <div class="sv" style="margin-top:8px"><b>진행</b><span id="p3">0 / 3</span></div>
+ </div></div>
+
+</div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+let popT=0,QSC=-1,QZ=[];
+function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(em){em=em||['⭐','✨','🎉'];for(let i=0;i<22;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+function hud(){const it=LAB.segs();$('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// 슬라이더 연결: sl(id, fmt, cb)
+function sl(id,fmt,cb){const r=$('#'+id),o=$('#'+id+'o');const f=()=>{o.textContent=fmt(+r.value);cb&&cb(+r.value)};r.addEventListener('input',f);f();return r}
+// 캔버스 논리 좌표
+function view(cv,LW,LH){const{g,w,h}=fit(cv),sc=Math.min(w/LW,h/LH),ox=(w-LW*sc)/2,oy=(h-LH*sc)/2;g.save();g.translate(ox,oy);g.scale(sc,sc);return{g,sc,ox,oy,w,h}}
+function toL(cv,e,LW,LH){const r=cv.getBoundingClientRect(),sc=Math.min(r.width/LW,r.height/LH),ox=(r.width-LW*sc)/2,oy=(r.height-LH*sc)/2;return[(e.clientX-r.left-ox)/sc,(e.clientY-r.top-oy)/sc]}
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem(LAB.key+'-ph',on?'1':'0')}catch(e){}}LAB.onPh&&LAB.onPh()}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){LAB.reset();QSC=-1;hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');window.scrollTo(0,0);LAB.onMode&&LAB.onMode(m)};
+let _last=0;function _loop(now){const dt=Math.min(.05,(now-(_last||now))/1000);_last=now;try{LAB.frame&&LAB.frame(dt,mode)}catch(e){console.error(e)}requestAnimationFrame(_loop)}
+function boot(){QZ=LAB.quiz;LAB.init&&LAB.init();resetAll();let p=null;try{p=localStorage.getItem(LAB.key+'-ph')}catch(e){}setPh(p==='1'||(p===null&&innerWidth<=760),false);requestAnimationFrame(_loop)}
+
+const LW=800,LH=440;let TS=1;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function arrow(g,x1,y1,x2,y2,c,w,lab){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<3)return;const a=Math.atan2(dy,dx),h=Math.min(26,L*.5);w=w||8;g.strokeStyle=c;g.fillStyle=c;g.lineWidth=w;g.lineCap='round';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2-Math.cos(a)*h*.8,y2-Math.sin(a)*h*.8);g.stroke();g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-Math.cos(a-.45)*h,y2-Math.sin(a-.45)*h);g.lineTo(x2-Math.cos(a+.45)*h,y2-Math.sin(a+.45)*h);g.closePath();g.fill();
+ if(lab){g.font='900 22px sans-serif';g.textAlign='center';g.fillStyle=c;g.fillText(lab,(x1+x2)/2-Math.sin(a)*26,(y1+y2)/2+Math.cos(a)*26+6)}}
+function spring(g,x1,y1,x2,y2,n,w,c){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy,py=ux;g.strokeStyle=c||'#475569';g.lineWidth=5;g.lineJoin='round';g.beginPath();g.moveTo(x1,y1);const s=L*.1;g.lineTo(x1+ux*s,y1+uy*s);for(let i=0;i<=n*2;i++){const t=.1+.8*i/(n*2),o=(i%2?1:-1)*w;g.lineTo(x1+ux*L*t+px*o,y1+uy*L*t+py*o)}g.lineTo(x2-ux*s,y2-uy*s);g.lineTo(x2,y2);g.stroke()}
+function box(g,x,y,w,h,c,e){g.fillStyle=c||'#fbbf24';g.strokeStyle='#92400e';g.lineWidth=5;rr(g,x,y,w,h,10);g.fill();g.stroke();if(e){g.font=Math.min(w,h)*.7+'px serif';g.textAlign='center';g.fillStyle='#000';g.fillText(e,x+w/2,y+h*.72)}}
+document.querySelectorAll('.tsb').forEach(b=>b.onclick=()=>{TS=TS===1?3:1;document.querySelectorAll('.tsb').forEach(x=>{x.textContent='⏩ 빠르게 ×'+TS;x.classList.toggle('on2',TS>1)})});
+function setv(id,v){$(id).value=v;$(id).dispatchEvent(new Event('input'))}
+function mc(el,qs,onAll,sayEl){/* 객관식 진행: el=컨테이너 id */}
+
+const FN=[['중력','🔴','#dc2626'],['탄성력','🟢','#16a34a'],['마찰력','🟠','#ea580c'],['부력','🔵','#2563eb']];
+function drawPartial(g,kind,cx,cy,sel,vec){g.textAlign='center'}
+// 장면 정의: [제목, 필요한 힘 배열, 힘별 방향벡터, 그리기함수키, 설명]
+const S1=[['📖 책상 위에 놓인 책',[0,1],{0:[0,1],1:[0,-1]},'book','중력은 아래로, 책상이 책을 떠받치는 힘(탄성력)은 위로 → 두 힘이 평형이에요.'],['🔔 줄에 매달린 추',[0,1],{0:[0,1],1:[0,-1]},'hang','중력은 아래로, 줄이 당기는 힘(탄성력)은 위로 → 평형이에요.'],['⚽ 물에 떠 있는 공',[0,3],{0:[0,1],3:[0,-1]},'float','중력은 아래로, 부력은 위로 → 평형이라서 떠 있어요.']];
+const S2=[['🏐 위로 던져 올라가는 공',[0],{0:[0,1]},'ball','공이 손을 떠난 뒤에는 중력만 작용해요(공기 저항은 무시).'],['📦 비탈면을 미끄러지는 상자',[0,1,2],{0:[0,1],1:[-.5,-.87],2:[-.87,.5]},'ramp','중력, 면이 미는 힘(탄성력), 운동을 방해하는 마찰력이 작용해요.'],['🪂 줄이 팽팽한 번지점프',[0,1],{0:[0,1],1:[0,-1]},'bungee','중력과 늘어난 줄의 탄성력이 작용해요.'],['🪨 물속에서 가라앉는 돌',[0,3],{0:[0,1],3:[0,-1]},'stone','중력이 부력보다 커서 가라앉아요.'],['🚲 브레이크로 멈추는 자전거',[0,1,2],{0:[0,1],1:[0,-1],2:[-1,0]},'bike','중력, 땅이 떠받치는 힘(탄성력), 브레이크로 인한 마찰력이 작용해요.']];
+function sceneDraw(g,k){g.textAlign='center';g.font='100px serif';
+ if(k==='book'){g.fillStyle='#d6a56b';g.fillRect(200,310,400,30);g.fillStyle='#92400e';g.fillRect(240,340,20,70);g.fillRect(540,340,20,70);g.fillText('📖',400,300)}
+ if(k==='hang'){g.fillStyle='#64748b';g.fillRect(250,40,300,14);g.strokeStyle='#92400e';g.lineWidth=6;g.beginPath();g.moveTo(400,54);g.lineTo(400,200);g.stroke();g.fillText('🔔',400,300)}
+ if(k==='float'){g.fillStyle='rgba(56,189,248,.45)';g.fillRect(150,270,500,150);g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(150,200);g.lineTo(150,420);g.lineTo(650,420);g.lineTo(650,200);g.stroke();g.fillText('⚽',400,300)}
+ if(k==='ball'){g.fillText('🏐',400,200);g.font='50px serif';g.fillText('⬆ 올라가는 중',400,380)}
+ if(k==='ramp'){g.fillStyle='#d6a56b';g.beginPath();g.moveTo(150,400);g.lineTo(650,400);g.lineTo(650,150);g.closePath();g.fill();g.save();g.translate(400,280);g.rotate(-Math.atan(250/500)*-1+0);g.restore();g.font='90px serif';g.fillText('📦',400,250);g.font='40px serif';g.fillText('↙ 미끄러지는 중',250,150)}
+ if(k==='bungee'){g.fillStyle='#64748b';g.fillRect(250,30,300,14);g.strokeStyle='#ea580c';g.lineWidth=6;g.beginPath();g.moveTo(400,44);g.lineTo(400,230);g.stroke();g.fillText('🪂',400,330)}
+ if(k==='stone'){g.fillStyle='rgba(56,189,248,.45)';g.fillRect(150,170,500,250);g.strokeStyle='#64748b';g.lineWidth=7;g.beginPath();g.moveTo(150,120);g.lineTo(150,420);g.lineTo(650,420);g.lineTo(650,120);g.stroke();g.fillText('🪨',400,300);g.font='40px serif';g.fillText('⬇ 가라앉는 중',400,150)}
+ if(k==='bike'){g.fillStyle='#94a3b8';g.fillRect(100,350,600,20);g.fillText('🚲',400,340);g.font='40px serif';g.fillText('➡ 달리다 멈추는 중',400,200)}}
+function Panel(S,n,cvId,fbId,scId,ckId,clId,tId,pId,sId,tgId){const st={i:0,sel:new Set(),done:S.map(()=>0)};const cv=$('#'+cvId);
+ function rsc(){$('#'+scId).innerHTML='';S.forEach((s,i)=>{const b=document.createElement('button');b.className='btn'+(i===st.i?' on2':'');b.textContent=s[0].split(' ')[0]+(st.done[i]?'✔':'');b.onclick=()=>{st.i=i;st.sel.clear();rsc();rfb();ttl();sTap()};$('#'+scId).appendChild(b)})}
+ function rfb(){$('#'+fbId).innerHTML='';FN.forEach((f,k)=>{const b=document.createElement('button');b.className='btn'+(st.sel.has(k)?' on2':'');b.textContent=f[1]+' '+f[0];b.onclick=()=>{if(st.sel.has(k))st.sel.delete(k);else st.sel.add(k);rfb();sTap()};$('#'+fbId).appendChild(b)})}
+ function ttl(){$('#'+tgId).textContent=S[st.i][0];$('#'+sId).className='say';$('#'+sId).textContent='힘 이름을 눌러 화살표를 그리고 [확인]을 누르세요.'}
+ st.draw=function(){const{g}=view(cv,LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);const s=S[st.i];sceneDraw(g,s[3]);const cx=400,cy=s[3]==='ramp'?215:s[3]==='ball'?170:260;[...st.sel].forEach(k=>{const v=s[2][k]||[0,-1];const L=100;const f=FN[k];arrow(g,cx,cy,cx+v[0]*L,cy+v[1]*L,f[2],10,f[0])});g.restore()};
+ $('#'+ckId).onclick=()=>{const s=S[st.i],need=new Set(s[1]),ok=need.size===st.sel.size&&[...need].every(k=>st.sel.has(k));if(ok){st.done[st.i]=1;sOK();$('#'+sId).className='say ok';$('#'+sId).textContent='⭕ 정답! '+s[4];$('#'+pId).textContent=st.done.filter(x=>x).length+' / '+n;rsc();hud();if(st.done.every(x=>x)){say('모든 장면 성공 🎉',3000);confetti(['🎢','✨'])}}else{sNO();const extra=[...st.sel].filter(k=>!need.has(k)).map(k=>FN[k][0]),miss=[...need].filter(k=>!st.sel.has(k)).map(k=>FN[k][0]);$('#'+sId).className='say bad';$('#'+sId).textContent='❌ '+(extra.length?extra.join(', ')+'은(는) 이 장면에 작용하지 않아요. ':'')+(miss.length?'빠진 힘이 있어요. ':'')+'다시 생각해 보세요.'}};
+ $('#'+clId).onclick=()=>{st.sel.clear();rfb();sTap()};st.reset=function(){st.i=0;st.sel.clear();st.done=S.map(()=>0);$('#'+pId).textContent='0 / '+n;rsc();rfb();ttl();$('#'+tId)&&0};st.rsc=rsc;return st}
+let P1,P2;
+// tab3 번지점프 궤적
+const TR=[];(function(){let y=0,v=0,t=0;const L=10,k=8,g=9.8,c=.12;for(let i=0;i<=800;i++){TR.push({y,v,T:y>L?k*(y-L):0});const a=g-(y>L?k*(y-L):0)-c*v;v+=a*.01;y+=v*.01}})();
+let t3=0,pl3=false,seeFree=false,seeLow=false,q3=0;
+const Q3=[['줄이 늘어나기 전(자유 낙하)에 작용하는 힘은?',['중력만','중력과 탄성력','탄성력만'],0,'줄이 느슨할 때는 중력만 작용해요.'],['가장 낮은 곳에서 탄성력과 중력의 크기는?',['탄성력이 더 크다','같다','중력이 더 크다'],0,'줄이 가장 많이 늘어나 탄성력이 중력보다 커서 위로 올라가요.'],['탄성력의 크기는 무엇에 따라 달라질까?',['줄이 늘어난 길이','사람의 이름','줄의 색'],0,'탄성력은 늘어난 길이에 비례해요.']];
+function showQ3(){if(q3>=3){$('#q3q').textContent='🎉 모두 맞혔어요!';$('#q3o').innerHTML='';return}const q=Q3[q3];$('#q3q').textContent=(q3+1)+'. '+q[0];$('#q3o').innerHTML='';(function(){const od=q[1].map((_,i)=>i);for(let k=od.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[od[k],od[j]]=[od[j],od[k]]}return od})().forEach(i=>{const t=q[1][i];const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>{if(i===q[2]){sOK();q3++;$('#p3').textContent=q3+' / 3';$('#s3').className='say ok';$('#s3').textContent='⭕ '+q[3];hud();if(q3>=3){say('번지점프 힘 이해 🎉',3000);confetti(['🪂','✨'])}showQ3()}else{sNO();b.classList.add('wrong','shake')}};$('#q3o').appendChild(b)})}
+function step3(dt){if(pl3){t3=Math.min(80,t3+dt*30);$('#r3').value=t3;$('#r3').dispatchEvent(new Event('input'));if(t3>=80)pl3=false;$('#pl3').textContent=pl3?'⏸ 멈춤':'▶ 재생'}}
+function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#e0f2fe';g.fillRect(0,0,LW,LH);const d=TR[Math.round(t3*10)]||TR[0];const sc=15,y0=60,py=y0+d.y*sc;g.fillStyle='#64748b';g.fillRect(150,40,200,16);g.fillStyle='#bbf7d0';g.fillRect(0,420,LW,20);
+ g.strokeStyle='#ea580c';g.lineWidth=5;g.beginPath();g.moveTo(250,56);if(d.y>10){g.lineTo(250,py)}else{const slack=(10-d.y)*sc;g.bezierCurveTo(250,56+slack*.2,210,56+slack*.7,250,py)}g.stroke();g.font='54px serif';g.textAlign='center';g.fillText('🧍',250,py+40);
+ const G=9.8,gl=G*4;arrow(g,330,py+20,330,py+20+gl,'#dc2626',9,'중력 9.8 N');if(d.T>0){const L=Math.min(200,d.T*4);arrow(g,170,py+20,170,py+20-L,'#16a34a',9,'탄성력 '+d.T.toFixed(0)+' N')}
+ const GX=470,GY=380;g.strokeStyle='#334155';g.lineWidth=4;g.beginPath();g.moveTo(GX,70);g.lineTo(GX,GY);g.lineTo(GX+300,GY);g.stroke();g.font='900 16px sans-serif';g.fillStyle='#0f172a';g.textAlign='left';g.fillText('힘(N)',GX+6,84);g.fillText('시간 →',GX+240,GY-6);
+ [[null,'#dc2626',()=>9.8],[null,'#16a34a',i=>TR[i].T]].forEach(([_,c,f])=>{g.strokeStyle=c;g.lineWidth=4;g.beginPath();for(let i=0;i<=800;i+=4){const x=GX+i/800*300,y=GY-Math.min(55,f(i))/55*280;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()});
+ g.strokeStyle='#7c3aed';g.lineWidth=2;g.beginPath();g.moveTo(GX+t3/80*300,70);g.lineTo(GX+t3/80*300,GY);g.stroke();
+ const i=Math.round(t3*10);if(d.y<10&&t3>5)seeFree=true;if(!seeLow&&i>=200&&d.T>35)seeLow=true;
+ $('#tg3').textContent=(t3/10).toFixed(1)+' 초 · '+(d.y<10?'줄이 느슨(중력만)':'줄이 늘어남(탄성력 작용)');g.restore()}
+const LAB={key:'fmany',
+ quiz:[
+ {q:'책상 위에 가만히 놓인 책에 작용하는 힘은?',o:['중력과 책상이 떠받치는 힘','중력만','마찰력만'],a:0,e:'위·아래 두 힘이 평형을 이뤄요.'},
+ {q:'위로 던져 올라가는 공(공기 저항 무시)에 작용하는 힘은?',o:['중력만','중력과 던진 힘','던진 힘만'],a:0,e:'손을 떠난 뒤에는 중력만 작용해요.'},
+ {q:'물에 떠 있는 물체에서 중력과 부력은?',o:['크기가 같다','중력이 더 크다','부력이 더 크다'],a:0,e:'힘의 평형이라서 크기가 같아요.'},
+ {q:'비탈면을 미끄러지는 상자의 마찰력 방향은?',o:['운동 방향의 반대(비탈 위쪽)','운동 방향과 같다','아래쪽'],a:0,e:'마찰력은 운동을 방해하는 방향이에요.'},
+ {q:'번지점프에서 줄이 늘어나기 시작하면 작용하는 힘이 추가로?',o:['탄성력','부력','마찰력'],a:0,e:'줄의 탄성력이 위쪽으로 작용해요.'},
+ {q:'가장 낮은 곳에서 사람이 다시 올라가는 까닭은?',o:['탄성력 > 중력','탄성력 < 중력','탄성력 = 0'],a:0,e:'위로 향하는 탄성력이 더 커서 합력이 위쪽이에요.'},
+ {q:'운동하는 물체에도 항상 작용하는 힘은?',o:['중력','마찰력','부력'],a:0,e:'지구 위에서는 중력이 항상 작용해요.'}],
+ segs:()=>[['정지한 물체',P1.done.every(x=>x)],['운동하는 물체',P2.done.every(x=>x)],['번지점프',q3>=3]],
+ reset(){P1.reset();P2.reset();t3=0;pl3=false;seeFree=seeLow=false;q3=0;$('#r3').value=0;$('#r3').dispatchEvent(new Event('input'));$('#p3').textContent='0 / 3';showQ3();['#s1','#s2','#s3'].forEach(s=>$(s).className='say');$('#s3').textContent='시간 슬라이더를 움직이거나 [재생]을 눌러 보세요.'},
+ init(){P1=Panel(S1,3,'c1','fb1','sc1','ck1','cl1','t1','p1','s1','tg1');P2=Panel(S2,5,'c2','fb2','sc2','ck2','cl2','t2','p2','s2','tg2');sl('r3',v=>(v/10).toFixed(1)+' 초',v=>{t3=v});$('#pl3').onclick=()=>{if(t3>=80)t3=0;pl3=!pl3;$('#pl3').textContent=pl3?'⏸ 멈춤':'▶ 재생';sTap()};$('#mx3').onclick=()=>{pl3=false;let m=0,im=0;TR.forEach((d,i)=>{if(i<400&&d.y>m){m=d.y;im=i}});$('#r3').value=im/10;$('#r3').dispatchEvent(new Event('input'));sTap()}},
+ frame(dt){step3(dt);if(mode===1)P1.draw();else if(mode===2)P2.draw();else if(mode===3)draw3()},
+ auto(){[P1,P2].forEach((P,pi)=>{const S=pi?S2:S1;S.forEach((s,i)=>{P.i=i;document.querySelectorAll((pi?'#sc2':'#sc1')+' .btn')[i].click();s[1].forEach(k=>document.querySelectorAll((pi?'#fb2':'#fb1')+' .btn')[k].click());$(pi?'#ck2':'#ck1').click()})});
+  setv('#r3',10);setv('#r3',70);showQ3();Q3.forEach(q=>[...$('#q3o').children].find(b=>b.textContent===q[1][q[2]]).click());hud();return{a:P1.done,b:P2.done,q3}}};
+
+boot();
+</script></body></html>

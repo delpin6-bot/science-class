@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>물질의 세 가지 상태와 입자 모형 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two7{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cvw{position:relative;border-radius:18px;overflow:hidden;border:4px solid #94a3b8;background:#fff}
+.cvw canvas{display:block;width:100%;height:clamp(300px,46vh,500px);touch-action:none}
+.cvw.tall canvas{height:clamp(340px,54vh,560px)}
+.cvw .tg{position:absolute;left:10px;top:8px;font-weight:900;font-size:clamp(15px,1.6vw,26px);background:rgba(255,255,255,.88);border-radius:12px;padding:2px 12px;pointer-events:none}
+.cvw .nt{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:clamp(11px,1vw,15px);font-weight:800;color:#64748b;pointer-events:none}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.sv{border:3px solid #cbd5e1;border-radius:14px;padding:8px 12px;background:#fff}
+.sv b{display:block;font-size:clamp(14px,1.3vw,21px);color:#334155}
+.sv .bar{height:clamp(22px,2.2vw,30px);border-radius:10px;background:#e2e8f0;overflow:hidden;margin:4px 0}
+.sv .bar i{display:block;height:100%;width:0;background:var(--c,#2563eb);transition:width .3s}
+.sv span{font-weight:900;font-size:clamp(14px,1.4vw,22px)}
+.say{margin-top:10px;border-radius:14px;padding:10px 14px;font-weight:900;line-height:1.5;background:#eff6ff;border:3px solid #93c5fd;color:#1e3a8a;font-size:clamp(15px,1.55vw,25px);min-height:3.2em}
+.say.ok{background:#dcfce7;border-color:#22c55e;color:#14532d}.say.bad{background:#fee2e2;border-color:#ef4444;color:#7f1d1d}
+.pres{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pres .btn,.ctl .btn{flex:1 1 120px;min-height:62px;font-size:clamp(15px,1.4vw,22px);font-weight:900}
+.btn.on2{background:#dbeafe;border-color:#2563eb}
+.big{min-height:70px!important;font-size:clamp(18px,2vw,30px)!important;background:#2563eb;border-color:#1d4ed8;color:#fff;box-shadow:0 5px 0 #1e3a8a;font-weight:900}
+.big:disabled{opacity:.5}
+.sl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0}
+.sl label{font-weight:900;font-size:clamp(15px,1.5vw,24px);min-width:150px}
+input[type=range].rg{-webkit-appearance:none;appearance:none;flex:1 1 220px;height:20px;border-radius:10px;background:#cbd5e1;touch-action:none;margin:22px 0;outline:none}
+input.rg::-webkit-slider-thumb{-webkit-appearance:none;width:60px;height:60px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+input.rg::-moz-range-thumb{width:48px;height:48px;border-radius:50%;background:#2563eb;border:6px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);cursor:grab}
+.sl output{font-weight:900;font-size:clamp(18px,1.9vw,30px);min-width:100px;text-align:right}
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(13px,1.25vw,20px)}
+.tbl th,.tbl td{border:2px solid #cbd5e1;padding:6px 4px;line-height:1.35}.tbl th{background:#f1f5f9}
+.tw{overflow-x:auto}
+.tag{display:inline-block;border-radius:999px;padding:1px 12px;font-weight:900;font-size:clamp(13px,1.2vw,19px);color:#fff;background:#2563eb}
+.opt{min-height:60px;border:3px solid #cbd5e1;border-radius:14px;background:#fff;font-weight:900;font-size:clamp(15px,1.5vw,24px);padding:6px 14px;cursor:pointer}
+.opt.sel{border-color:#2563eb;background:#dbeafe}.opt.right{border-color:#22c55e;background:#dcfce7}.opt.wrong{border-color:#ef4444;background:#fee2e2}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.shake{animation:shk .45s}
+@keyframes pp{0%{transform:scale(.2)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two,body.ph .two7,body.ph .three{grid-template-columns:minmax(0,1fr)}
+body.ph .cvw canvas{height:340px}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two,.two7,.three{grid-template-columns:minmax(0,1fr)}.cvw canvas{height:340px}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}#pop{top:auto;bottom:12px;font-size:16px}}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.item{min-height:84px;border:3px solid #cbd5e1;border-radius:16px;background:#fff;font-weight:900;font-size:clamp(14px,1.4vw,22px);cursor:pointer;line-height:1.3;padding:6px}
+.item.sel{border-color:#2563eb;background:#dbeafe;transform:scale(1.04)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{border:4px dashed #94a3b8;border-radius:18px;min-height:190px;padding:8px;background:#f8fafc;cursor:pointer}
+.bin h3{margin:0 0 6px;font-size:clamp(16px,1.7vw,26px)}
+.bin .chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:12px;background:#dcfce7;border:2px solid #22c55e;font-weight:900;font-size:clamp(13px,1.2vw,20px)}
+@media (max-width:760px){.bins{grid-template-columns:minmax(0,1fr)}.bin{min-height:90px}}
+body.ph .bins{grid-template-columns:minmax(0,1fr)}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.item{min-height:84px;border:3px solid #cbd5e1;border-radius:16px;background:#fff;font-weight:900;font-size:clamp(14px,1.4vw,22px);cursor:pointer;line-height:1.3}
+.item.sel{border-color:#2563eb;background:#dbeafe;transform:scale(1.06)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{border:4px dashed #94a3b8;border-radius:18px;min-height:210px;padding:8px;background:#f8fafc;cursor:pointer}
+.bin h3{margin:0 0 6px;font-size:clamp(17px,1.8vw,28px)}
+.bin .chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:12px;background:#dcfce7;border:2px solid #22c55e;font-weight:900;font-size:clamp(14px,1.3vw,21px)}
+.bin.hot{border-color:#2563eb;background:#eff6ff}
+</style></head><body>
+<header>
+  <h1>🧊 물질의 세 가지 상태와 입자 모형</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">🧊 상태별 입자 배열</button>
+    <button class="tab" id="tab2">🧩 상태 분류하기</button>
+    <button class="tab" id="tab3">💉 주사기 누르기</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">🧊 같은 물질, 상태에 따라 입자는 어떻게 다를까?</div>
+  <div class="cvw"><canvas id="c1"></canvas><div class="tg" id="tg1">고체</div><div class="nt">같은 개수(30개)의 입자를 서로 다른 모양의 용기에 담았어요</div></div>
+  <div class="say" id="s1">상태 버튼을 눌러 입자가 어떻게 달라지는지 관찰하세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="pres"><button class="btn on2" data-s="0">🧊 고체</button><button class="btn" data-s="1">💧 액체</button><button class="btn" data-s="2">🌫 기체</button></div>
+  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th></th><th>고체</th><th>액체</th><th>기체</th></tr></thead><tbody>
+  <tr><td>모양</td><td id="x00">일정</td><td id="x01">용기에 따라</td><td id="x02">용기에 따라</td></tr>
+  <tr><td>부피</td><td id="x10">일정</td><td id="x11">일정</td><td id="x12">용기 가득</td></tr>
+  <tr><td>입자 배열</td><td id="x20">규칙적</td><td id="x21">불규칙</td><td id="x22">매우 불규칙</td></tr>
+  <tr><td>입자 사이</td><td id="x30">매우 가까움</td><td id="x31">가까움</td><td id="x32">매우 멈</td></tr>
+  <tr><td>입자 운동</td><td id="x40">제자리 진동</td><td id="x41">미끄러지듯</td><td id="x42">자유롭게</td></tr></tbody></table></div>
+  <div class="hint">💡 입자의 색·크기는 구분을 위한 모형일 뿐, 실제 입자의 모습이 아니에요.</div>
+ </div></div>
+
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+<div class="card"><div class="ct">🧩 물질을 눌러 고르고, 알맞은 상태 상자를 눌러 분류하세요</div>
+ <div class="items" id="it2"></div>
+ <div class="bins" style="margin-top:10px"><div class="bin" data-b="0"><h3>🧊 고체</h3><div id="bn0"></div></div><div class="bin" data-b="1"><h3>💧 액체</h3><div id="bn1"></div></div><div class="bin" data-b="2"><h3>🌫 기체</h3><div id="bn2"></div></div></div>
+ <div class="say" id="s2">물질을 먼저 누르세요.</div></div>
+
+</div></section>
+<section class="mode" id="m3"><div class="wrap">
+<div class="two7">
+ <div class="card"><div class="ct">💉 피스톤을 누르면 부피가 변할까?</div>
+  <div class="cvw"><canvas id="c3"></canvas></div>
+  <div class="say" id="s3">슬라이더로 피스톤을 눌러 보세요.</div></div>
+ <div class="card"><div class="ct">🎛 조작 패널</div>
+  <div class="sl"><label>👇 누르는 정도</label><input type="range" class="rg" id="r3" min="0" max="100" value="0"><output id="r3o"></output></div>
+  <div class="pres"><button class="btn" id="z3">↺ 놓기</button><button class="btn big" id="m3b">💪 끝까지 누르기</button></div>
+  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th></th><th>🫧 공기</th><th>💧 물</th><th>🧊 고체</th></tr></thead><tbody><tr><td>부피</td><td id="v30">100%</td><td id="v31">100%</td><td id="v32">100%</td></tr><tr><td>입자 사이</td><td id="w30">-</td><td id="w31">-</td><td id="w32">-</td></tr></tbody></table></div>
+  <div class="hint">💡 기체는 입자 사이가 멀어 줄어들고, 액체·고체는 입자 사이가 가까워 거의 줄지 않아요.</div>
+ </div></div>
+
+</div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const sTick=()=>beep(660,760,.06,.07);
+let popT=0,QSC=-1,QZ=[];
+function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(em){em=em||['⭐','✨','🎉'];for(let i=0;i<22;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+function hud(){const it=LAB.segs();$('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// 슬라이더 연결: sl(id, fmt, cb)
+function sl(id,fmt,cb){const r=$('#'+id),o=$('#'+id+'o');const f=()=>{o.textContent=fmt(+r.value);cb&&cb(+r.value)};r.addEventListener('input',f);f();return r}
+// 캔버스 논리 좌표
+function view(cv,LW,LH){const{g,w,h}=fit(cv),sc=Math.min(w/LW,h/LH),ox=(w-LW*sc)/2,oy=(h-LH*sc)/2;g.save();g.translate(ox,oy);g.scale(sc,sc);return{g,sc,ox,oy,w,h}}
+function toL(cv,e,LW,LH){const r=cv.getBoundingClientRect(),sc=Math.min(r.width/LW,r.height/LH),ox=(r.width-LW*sc)/2,oy=(r.height-LH*sc)/2;return[(e.clientX-r.left-ox)/sc,(e.clientY-r.top-oy)/sc]}
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem(LAB.key+'-ph',on?'1':'0')}catch(e){}}LAB.onPh&&LAB.onPh()}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){LAB.reset();QSC=-1;hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');window.scrollTo(0,0);LAB.onMode&&LAB.onMode(m)};
+let _last=0;function _loop(now){const dt=Math.min(.05,(now-(_last||now))/1000);_last=now;try{LAB.frame&&LAB.frame(dt,mode)}catch(e){console.error(e)}requestAnimationFrame(_loop)}
+function boot(){QZ=LAB.quiz;LAB.init&&LAB.init();resetAll();let p=null;try{p=localStorage.getItem(LAB.key+'-ph')}catch(e){}setPh(p==='1'||(p===null&&innerWidth<=760),false);requestAnimationFrame(_loop)}
+
+const LW=800,LH=440;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function P(x,y,r,c){return{x,y,r,c,vx:0,vy:0,t:0,j:Math.random()*9}}
+function walk(p,sp,dt,b){p.t-=dt;if(p.t<=0){const a=Math.random()*6.2832;p.vx=Math.cos(a);p.vy=Math.sin(a);p.t=rnd(.12,.32)}
+ p.x+=p.vx*sp*dt;p.y+=p.vy*sp*dt;if(p.x<b[0]+p.r){p.x=b[0]+p.r;p.vx=Math.abs(p.vx)}if(p.x>b[2]-p.r){p.x=b[2]-p.r;p.vx=-Math.abs(p.vx)}if(p.y<b[1]+p.r){p.y=b[1]+p.r;p.vy=Math.abs(p.vy)}if(p.y>b[3]-p.r){p.y=b[3]-p.r;p.vy=-Math.abs(p.vy)}}
+function dots(g,a,al){g.globalAlpha=al||1;a.forEach(p=>{g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,p.r,0,6.2832);g.fill()});g.globalAlpha=1}
+const COL=['#64748b','#3b82f6','#f97316'],NM=['고체','액체','기체'];
+// ---- tab1
+const cv1=$('#c1'),CT=[{x0:120,x1:320,y0:100,y1:400,h:72},{x0:430,x1:730,y0:200,y1:400,h:48}];let st1=0,seen1=[1,0,0],ps1=[[],[]];
+function init1(){ps1=CT.map(c=>{const a=[];for(let i=0;i<30;i++)a.push(P(rnd(c.x0+10,c.x1-10),rnd(c.y1-80,c.y1-10),8,COL[0]));return a});st1=0;seen1=[1,0,0];setS(0)}
+function setS(s){st1=s;seen1[s]=1;document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on2',+b.dataset.s===s));$('#tg1').textContent=NM[s];
+ for(let r=0;r<5;r++)for(let c=0;c<3;c++){const e=$('#x'+r+c);e.style.background=c===s?'#fef9c3':'';e.style.fontWeight=c===s?'900':'700'}
+ ps1.forEach(a=>a.forEach(p=>p.c=COL[s]));
+ $('#s1').className='say';$('#s1').innerHTML=['🧊 고체: 입자가 규칙적으로 배열되어 제자리에서 진동해요. 용기가 달라져도 모양과 부피가 그대로예요.','💧 액체: 입자가 불규칙하게 미끄러지듯 움직여요. 용기 모양에 맞게 변하지만 부피는 같아요.','🌫 기체: 입자가 멀리 떨어져 자유롭게 움직여요. 용기를 가득 채워요.'][s];
+ if(seen1.every(x=>x)&&!LAB._c1){LAB._c1=1;sOK();say('세 가지 상태 관찰 완료 🎉',3000);confetti(['🧊','💧']);hud()}else sTap()}
+function step1(dt){CT.forEach((c,ci)=>{const a=ps1[ci],cx=(c.x0+c.x1)/2;a.forEach((p,i)=>{
+  if(st1===0){const tx=cx-44+(i%5)*22,ty=c.y1-12-Math.floor(i/5)*22;const k=Math.min(1,7*dt);p.x+=(tx-p.x)*k+Math.sin(performance.now()/90+p.j)*.25;p.y+=(ty-p.y)*k+Math.cos(performance.now()/80+p.j)*.25}
+  else{const top=st1===1?c.y1-c.h:c.y0;if(p.y<top){p.y+=(top-p.y)*Math.min(1,5*dt)+1}walk(p,st1===1?60:230,dt,[c.x0,st1===1?c.y1-c.h:c.y0,c.x1,c.y1])}});
+  if(st1===1)for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){const dx=a[j].x-a[i].x,dy=a[j].y-a[i].y,d=Math.hypot(dx,dy)||.1;if(d<16){const m=(16-d)/2/d;a[i].x-=dx*m;a[i].y-=dy*m;a[j].x+=dx*m;a[j].y+=dy*m}}})}
+function draw1(){const{g}=view(cv1,LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.font='900 28px sans-serif';g.textAlign='center';
+ CT.forEach((c,i)=>{g.fillStyle='#fff';g.fillRect(c.x0,c.y0,c.x1-c.x0,c.y1-c.y0);if(st1===1){g.fillStyle='rgba(96,165,250,.3)';g.fillRect(c.x0,c.y1-c.h,c.x1-c.x0,c.h)}
+  g.strokeStyle='#64748b';g.lineWidth=7;g.lineJoin='round';g.beginPath();g.moveTo(c.x0,c.y0);g.lineTo(c.x0,c.y1);g.lineTo(c.x1,c.y1);g.lineTo(c.x1,c.y0);g.stroke();g.fillStyle='#0f172a';g.fillText('용기 '+'AB'[i],(c.x0+c.x1)/2,c.y0-18)});
+ CT.forEach((c,i)=>dots(g,ps1[i],.95));g.restore()}
+// ---- tab2
+const IT=[['🪨','돌',0],['💧','물',1],['🎈','헬륨',2],['🧂','소금 가루',0,'가루도 작은 알갱이 하나하나가 고체예요.'],['🥛','우유',1],['♨️','수증기',2,'수증기는 눈에 보이지 않는 기체예요(하얀 김은 작은 물방울).'],['🧊','얼음',0],['🍯','꿀',1,'끈적여도 흘러서 용기에 따라 모양이 변하므로 액체예요.'],['🫧','공기',2],['🪙','동전',0],['🛢️','식용유',1],['🏖️','모래',0,'모래는 알갱이 하나하나가 고체예요.']];
+let sel2=-1,ok2=[];
+function init2(){ok2=IT.map(()=>0);sel2=-1;r2()}
+function r2(){$('#it2').innerHTML='';IT.forEach((x,i)=>{if(ok2[i])return;const b=document.createElement('button');b.className='item'+(sel2===i?' sel':'');b.innerHTML=x[0]+'<br>'+x[1];b.onclick=()=>{sel2=i;sTap();r2();$('#s2').className='say';$('#s2').textContent='👉 이제 '+x[1]+'의 상태 상자를 누르세요.'};$('#it2').appendChild(b)});
+ for(let k=0;k<3;k++)$('#bn'+k).innerHTML=IT.map((x,i)=>ok2[i]&&x[2]===k?`<span class="chip">${x[0]} ${x[1]}</span>`:'').join('')}
+document.querySelectorAll('.bin').forEach(b=>b.onclick=()=>{if(sel2<0){say('먼저 물질을 눌러요',1500);return}const k=+b.dataset.b,it=IT[sel2];
+ if(it[2]===k){ok2[sel2]=1;sOK();$('#s2').className='say ok';$('#s2').textContent='⭕ '+it[1]+'은(는) '+NM[k]+'! '+(it[3]||'');sel2=-1;r2();hud();if(ok2.every(x=>x)){say('모두 분류 완료 🎉',3000);confetti(['🧊','💧','🌫'])}}
+ else{sNO();b.classList.add('shake');setTimeout(()=>b.classList.remove('shake'),500);$('#s2').className='say bad';$('#s2').textContent='❌ '+it[1]+'은(는) '+NM[k]+'가 아니에요. 모양과 부피가 일정한지 생각해 보세요.'}});
+// ---- tab3
+const cv3=$('#c3'),SX=[160,400,640],H0=240,YB=380;let ps3=[[],[],[]],push=0,cur3=0,maxP=0;
+function init3(){ps3=[0,1,2].map(k=>{const a=[],n=k===0?16:30;for(let i=0;i<n;i++)a.push(P(rnd(SX[k]-45,SX[k]+45),k===2?rnd(YB-H0+10,YB-10):rnd(10,H0-10),k===0?8:7,COL[k===0?2:k]));return a});push=0;maxP=0;cur3=0;$('#r3').value=0;$('#r3o').textContent='0%'}
+const vol3=k=>[1-.72*cur3/100,1-.03*cur3/100,1][k];
+function step3(dt){cur3+=(push-cur3)*Math.min(1,6*dt);if(Math.abs(push-cur3)<.05)cur3=push;
+ ps3.forEach((a,k)=>{a.forEach((p,i)=>{if(k===2){const tx=SX[k]-40+(i%5)*20+10,ty=YB-12-Math.floor(i/5)*20*(vol3(2));p.x+=(tx-p.x)*Math.min(1,7*dt)+Math.sin(performance.now()/90+p.j)*.2;p.y=ty}else
+   if(k<2)walk(p,k===0?230:55,dt,[SX[k]-52,0,SX[k]+52,H0])})});
+ const v=[0,1,2].map(vol3);v.forEach((x,k)=>{$('#v3'+k).textContent=Math.round(x*100)+'%';$('#w3'+k).textContent=cur3<5?'-':['많이 가까워짐','거의 그대로','그대로'][k]});
+ if(cur3>=90&&!maxP){maxP=1;sOK();$('#s3').className='say ok';$('#s3').textContent='✅ 공기는 부피가 크게 줄고, 물과 고체는 거의 그대로예요. 기체는 입자 사이가 멀기 때문이에요.';say('기체만 압축돼요 🎉',3200);confetti(['💉','✨']);hud()}}
+function draw3(){const{g}=view(cv3,LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.font='900 26px sans-serif';g.textAlign='center';
+ SX.forEach((x,k)=>{const v=vol3(k),yP=YB-H0*v;g.fillStyle='#fff';g.fillRect(x-60,YB-H0,120,H0);if(k===1){g.fillStyle='rgba(96,165,250,.3)';g.fillRect(x-60,yP,120,YB-yP)}
+  if(k===2){g.fillStyle='#e2e8f0';g.fillRect(x-60,yP,120,YB-yP)}
+  g.strokeStyle='#64748b';g.lineWidth=7;g.lineJoin='round';g.beginPath();g.moveTo(x-60,YB-H0-10);g.lineTo(x-60,YB);g.lineTo(x+60,YB);g.lineTo(x+60,YB-H0-10);g.stroke();
+  g.fillStyle='#ef4444';g.fillRect(x-58,yP-14,116,14);g.fillRect(x-6,yP-80,12,66);g.fillStyle='#b91c1c';rr(g,x-34,yP-98,68,20,8);g.fill();
+  g.fillStyle='#0f172a';g.fillText(['🫧 공기','💧 물','🧊 고체'][k],x,YB+32);
+  ps3[k].forEach(p=>{g.fillStyle=p.c;g.beginPath();const py=k===2?p.y:yP+(p.y/H0)*(YB-yP);g.arc(p.x,py,p.r,0,6.2832);g.fill()})});g.restore()}
+// positions offset fix: particles in tab3 for k<2 were created near x 110-190; shift on draw handled below
+const LAB={key:'3state',
+ quiz:[
+ {q:'고체의 성질로 옳은 것은?',o:['담는 용기에 따라 모양이 변한다','모양과 부피가 일정하다','부피가 변한다'],a:1,e:'고체는 입자가 규칙적으로 배열되어 모양과 부피가 일정해요.'},
+ {q:'액체를 다른 모양의 그릇에 옮겨 담으면?',o:['모양은 변하고 부피는 일정','모양과 부피 모두 일정','부피만 변한다'],a:0,e:'액체는 용기에 따라 모양은 변하지만 부피는 일정해요.'},
+ {q:'기체를 용기에 넣으면?',o:['바닥에만 고인다','용기를 가득 채운다','모양이 일정하다'],a:1,e:'기체 입자는 자유롭게 움직여 용기를 가득 채워요.'},
+ {q:'소금 가루나 모래는 어떤 상태일까?',o:['액체','고체','기체'],a:1,e:'가루도 알갱이 하나하나가 고체예요. 가루가 흘러도 액체는 아니에요.'},
+ {q:'주사기에 공기를 넣고 누르면 부피가 줄어드는 까닭은?',o:['입자가 작아져서','입자 사이 거리가 가까워져서','입자가 사라져서'],a:1,e:'기체는 입자 사이가 매우 멀어 누르면 입자 사이 거리가 줄어들어요.'},
+ {q:'입자 모형에서 입자를 색칠한 것은 무엇을 의미할까?',o:['실제 입자의 색','구분하기 위한 표현','입자의 온도'],a:1,e:'입자 모형은 이해를 위한 모형이에요. 실제 색·크기가 아니에요.'},
+ {q:'기체 입자의 운동에 대한 설명은?',o:['제자리에서 진동한다','자유롭게 움직인다','움직이지 않는다'],a:1,e:'기체 입자는 서로 멀리 떨어져 자유롭게 움직여요.'}],
+ segs:()=>[['상태 관찰',seen1.every(x=>x)],['상태 분류',ok2.every(x=>x)],['주사기',!!maxP]],
+ reset(){LAB._c1=0;init1();init2();init3();['#s1','#s2','#s3'].forEach(s=>$(s).className='say');$('#s2').textContent='물질을 먼저 누르세요.'},
+ init(){document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>setS(+b.dataset.s));sl('r3',v=>v+'%',v=>{push=v});
+  $('#z3').onclick=()=>{$('#r3').value=0;$('#r3').dispatchEvent(new Event('input'))};$('#m3b').onclick=()=>{$('#r3').value=100;$('#r3').dispatchEvent(new Event('input'));sTap()}},
+ frame(dt){step1(dt);step3(dt);if(mode===1)draw1();else if(mode===3)draw3()},
+ auto(){for(const s of [1,2,0])setS(s);const it=IT;IT.forEach((x,i)=>{sel2=i;document.querySelectorAll('.bin')[x[2]].click()});$('#m3b').click();for(let i=0;i<200;i++)step3(.05);hud();return{ok2:ok2.every(x=>x),maxP,seen1}}};
+
+boot();
+</script></body></html>

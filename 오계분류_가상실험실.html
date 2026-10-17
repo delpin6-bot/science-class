@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>나는 어느 계에 속할까 가상실험실</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#cbd5e1;--ink:#0f172a;--mut:#475569;--blue:#2563eb;--fs:clamp(15px,1.25vw,20px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs);user-select:none;-webkit-user-select:none;touch-action:manipulation;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+header{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#0f172a;color:#fff;flex-wrap:wrap}
+header h1{font-size:clamp(16px,1.6vw,24px);font-weight:900;white-space:nowrap}
+header h1 small{font-size:.6em;font-weight:600;opacity:.7;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:900;font-size:clamp(14px,1.2vw,19px)}
+.tab.on{background:#fde68a;border-color:#fde68a;color:#1f2937}
+.sp{flex:1}
+.hb{min-height:48px;min-width:48px;padding:0 14px;border-radius:12px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:clamp(13px,1.1vw,17px);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.hb.quiz{background:#7c3aed;border-color:#7c3aed;color:#fff}.hb.life{background:#0d9488;border-color:#0d9488;color:#fff}
+main{flex:1;min-height:0;overflow:auto;padding:10px 12px 14px}
+.mode{display:none;height:100%}
+.mode.on{display:grid;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px}
+.stagewrap{flex:1;min-height:250px;position:relative;padding:0;overflow:hidden;background:linear-gradient(#f8fafc,#e2e8f0)}
+.graphwrap{flex:1;min-height:240px;position:relative;padding:0;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:92%}
+.toast.show{opacity:1}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab{font-weight:900;color:var(--mut);min-width:4.2em}
+.btn{min-height:52px;min-width:52px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f8fafc;color:var(--ink);font-weight:900;font-size:clamp(14px,1.25vw,20px)}
+.btn:active{transform:scale(.95)}
+.btn.on{background:#dbeafe;border-color:var(--blue);color:#1d4ed8}
+.btn.go{background:#16a34a;border-color:#16a34a;color:#fff}.btn.go.pause{background:#f59e0b;border-color:#f59e0b}
+.btn.dng{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.btn.pre{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.hold{background:#e0f2fe;border-color:#38bdf8;color:#075985}
+input[type=range]{flex:1;min-width:140px;height:44px;accent-color:#2563eb}
+.tval{font-weight:900;font-size:clamp(18px,1.8vw,28px);min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
+.hudtop{display:flex;gap:8px;flex-wrap:wrap}
+.hc{flex:1;min-width:110px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 8px;text-align:center}
+.hc span{display:block;font-size:.78em;font-weight:800;color:var(--mut)}
+.hc b{display:block;font-size:clamp(19px,1.9vw,30px);font-weight:900;font-variant-numeric:tabular-nums}
+.runs{display:flex;flex-direction:column;gap:6px}
+.rr{display:flex;align-items:center;gap:8px;background:#f8fafc;border:2px solid var(--line);border-radius:12px;padding:5px 10px;font-weight:800;flex-wrap:wrap}
+.rr i{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.rr .n{min-width:6.4em;font-weight:900}.rr .t{min-width:3.9em;font-weight:900;font-size:1.15em;font-variant-numeric:tabular-nums}
+.rr .s{color:var(--mut);min-width:6.4em}.rr .a{flex:1;min-width:8em;font-size:.92em}
+.rr.hit{border-color:#f59e0b;background:#fffbeb}
+.sum{background:#eff6ff;border:2px solid #93c5fd;border-radius:14px;padding:8px 12px;font-weight:800;font-size:clamp(14px,1.25vw,20px);line-height:1.5;min-height:3.2em}
+.sum.idle{background:#f8fafc;border-color:var(--line);color:var(--mut);font-weight:700}
+.sum.key{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.legend{position:absolute;right:10px;top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;font-weight:800;font-size:clamp(12px,1vw,16px);background:rgba(255,255,255,.9);border-radius:10px;padding:4px 8px;max-width:70%}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.qbox{background:#fff;border-radius:22px;width:min(860px,100%);max-height:94vh;overflow:auto;padding:18px 20px}
+.qbox h2{font-size:clamp(18px,1.8vw,28px);margin-bottom:6px}
+.qprog{color:var(--mut);font-weight:800;margin-bottom:8px}
+.qq{font-size:clamp(18px,1.9vw,30px);font-weight:900;line-height:1.45;margin:6px 0 12px}
+.qopts{display:flex;flex-direction:column;gap:10px}
+.qopt{min-height:60px;text-align:left;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#f8fafc;font-weight:800;font-size:clamp(16px,1.5vw,24px)}
+.qopt.right{background:#dcfce7;border-color:#22c55e}.qopt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:12px;padding:12px 14px;border-radius:14px;background:#eff6ff;border:2px solid #93c5fd;font-weight:800;font-size:clamp(15px,1.4vw,22px);line-height:1.5;display:none}
+.qexp.on{display:block}
+.qfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.lc{border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8fafc}
+.lc .big{font-size:clamp(22px,2.4vw,34px);font-weight:900;color:#0f766e}
+.lc b{display:block;font-size:1.1em;margin:2px 0}
+.lc small{display:block;color:var(--mut);font-weight:700;line-height:1.4}
+@media (max-width:980px){body{overflow:auto}main{overflow:visible}.mode.on{display:flex;flex-direction:column;height:auto}.stagewrap{min-height:300px}.graphwrap{min-height:280px}}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0;flex-wrap:wrap}
+#pbar{flex:1;min-width:260px;display:flex;gap:6px}
+.pseg{flex:1;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 8px;text-align:center;line-height:1.2}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.badge{min-height:42px;padding:0 12px;border-radius:12px;border:2px dashed #94a3b8;background:#f8fafc;color:#94a3b8;font-weight:900;font-size:clamp(12px,1.05vw,16px);display:inline-flex;align-items:center}
+.badge.on{border-style:solid;color:#fff}
+.badge.b1.on{background:#2563eb;border-color:#1d4ed8}.badge.b2.on{background:#dc2626;border-color:#b91c1c}.badge.b3.on{background:#7c3aed;border-color:#6d28d9}
+.mode.on.g2{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.pcards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pc2{border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 12px;font-weight:800;cursor:pointer;min-height:96px;line-height:1.5;font-size:clamp(13px,1.15vw,18px)}
+.pc2 h3{font-size:1.25em}.pc2 .hid{color:#94a3b8}.pc2.open{border-color:#f59e0b;background:#fffbeb}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{min-height:clamp(84px,12vh,120px);border:4px dashed #94a3b8;border-radius:16px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:800;padding:4px;font-size:clamp(12px,1.1vw,17px);line-height:1.3}
+.slot b{font-size:1.6em;color:#94a3b8}.slot.hot{border-style:solid;border-color:#f59e0b;background:#fffbeb}.slot.ok{border-style:solid;border-color:#22c55e;background:#f0fdf4}
+.blk{min-height:64px;border:3px solid var(--line);border-radius:14px;background:#fff;padding:6px 12px;font-weight:900;display:flex;align-items:center;gap:8px;touch-action:none;cursor:grab;box-shadow:0 3px 0 #cbd5e1;font-size:clamp(14px,1.25vw,20px);line-height:1.3}
+.blk.sel{border-color:#f59e0b;background:#fffbeb;box-shadow:0 0 0 4px #fde68a}
+.blk.drag{position:fixed;z-index:60;pointer-events:none;transform:scale(1.06) rotate(-3deg);box-shadow:0 14px 26px rgba(0,0,0,.3)}
+.blk.shake{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.blk.placed{box-shadow:none;cursor:default;background:#f0fdf4;border-color:#22c55e;font-size:.95em;min-height:0}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fb{border-radius:14px;padding:10px 14px;font-weight:800;line-height:1.5;border:3px solid #fcd34d;background:#fffbeb;font-size:clamp(14px,1.25vw,20px);min-height:3.4em}
+.fb.bad{border-color:#f87171;background:#fef2f2;color:#991b1b}.fb.good{border-color:#4ade80;background:#f0fdf4;color:#166534}
+.chk2{display:flex;gap:6px;flex-wrap:wrap}
+.btn.chip.on{background:#fde68a;border-color:#f59e0b;color:#78350f}.btn.chip.done{background:#dcfce7;border-color:#22c55e}.btn.chip:disabled{opacity:.45}
+.btn.next{animation:pls2 1s infinite}
+@keyframes pls2{50%{box-shadow:0 0 0 7px rgba(250,204,21,.6)}}
+.lgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.mode.on{display:block}
+main{padding:10px 12px 18px}
+#top{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:6px 12px;background:#e2e8f0}
+#pbar{display:flex;gap:6px;flex:1 1 0;min-width:0;overflow-x:auto}
+.pseg{flex:0 0 auto;white-space:nowrap;min-height:42px;border:2px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(12px,1.05vw,16px);padding:2px 10px}
+.pseg.ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.card{padding:12px 14px}
+.ct{font-weight:900;font-size:clamp(18px,1.9vw,30px);margin-bottom:4px}
+.cs{font-weight:800;color:#475569;font-size:clamp(14px,1.35vw,22px);line-height:1.5}
+.two{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:10px}
+.stage{text-align:center;padding:14px}
+.big-e{font-size:clamp(90px,12vw,170px);line-height:1.05;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.on1{font-weight:900;font-size:clamp(24px,2.8vw,42px)}
+.q{margin-top:10px;font-weight:900;font-size:clamp(20px,2.3vw,36px);background:#eff6ff;border:4px solid #93c5fd;border-radius:20px;padding:12px 16px;line-height:1.4}
+.qh{font-weight:800;color:#475569;font-size:clamp(14px,1.3vw,21px);margin-top:4px;min-height:1.5em}
+.yn{display:flex;gap:14px;justify-content:center;margin-top:12px}
+.yn .btn{flex:1 1 0;max-width:340px;min-height:84px;font-size:clamp(22px,2.4vw,38px);font-weight:900}
+.yn .y{background:#dcfce7;border-color:#22c55e;color:#166534}.yn .n{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+.yn .btn.shake{animation:shk .45s}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.trail{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.tr{border-radius:999px;background:#f1f5f9;border:2px solid #cbd5e1;padding:2px 12px;font-weight:800;font-size:clamp(13px,1.2vw,19px)}
+.tr.y{background:#dcfce7;border-color:#22c55e}.tr.n{background:#fee2e2;border-color:#ef4444}
+.res{margin-top:12px}
+.flip{perspective:900px;display:inline-block;width:min(100%,520px)}
+.fi{position:relative;transition:transform .7s;transform-style:preserve-3d;min-height:clamp(170px,18vw,250px)}
+.flip.on .fi{transform:rotateY(180deg)}
+.ff,.fb{position:absolute;inset:0;backface-visibility:hidden;border-radius:22px;border:5px solid var(--kc);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;font-weight:900}
+.ff{background:var(--kb);font-size:clamp(26px,3vw,46px);color:var(--kc)}
+.fb{background:#fff;transform:rotateY(180deg);font-size:clamp(15px,1.5vw,24px);line-height:1.5;text-align:left;color:#0f172a;justify-content:center}
+.fb b{color:var(--kc);font-size:1.15em}
+.kn{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.kn .btn{min-height:56px;font-size:clamp(15px,1.4vw,22px)}
+.kc{--kc:#2563eb;--kb:#dbeafe}
+.side{display:flex;flex-direction:column;gap:8px}
+.kd{display:flex;align-items:center;gap:8px;border:4px solid var(--kc);background:var(--kb);border-radius:16px;padding:6px 12px;font-weight:900;font-size:clamp(15px,1.5vw,24px);opacity:.45;transition:.3s}
+.kd.got{opacity:1}.kd i{font-style:normal;font-size:1.6em}
+.kd small{display:block;font-size:.7em;color:#475569;font-weight:800}
+/* 바구니 */
+.bks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.bk{--kc:#2563eb;--kb:#dbeafe;border:5px dashed var(--kc);border-radius:22px;background:var(--kb);min-height:clamp(130px,15vw,200px);padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;position:relative;transition:.15s}
+.bk.hot{transform:scale(1.05);background:#fffbeb;border-color:#f59e0b}
+.bk.hop{animation:hop .6s}
+@keyframes hop{30%{transform:translateY(-14px) scale(1.05)}60%{transform:translateY(0) scale(.97)}}
+.bk .bn{font-weight:900;color:var(--kc);font-size:clamp(17px,1.9vw,30px)}
+.bk .bf{font-weight:800;color:#475569;font-size:clamp(12px,1.05vw,16px);line-height:1.3}
+.bk .bi{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;font-size:clamp(24px,2.6vw,38px);line-height:1.1}
+.bk .bc{position:absolute;right:-6px;top:-10px;background:var(--kc);color:#fff;border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-size:16px;font-weight:900}
+.pool{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:100px}
+.oc{width:clamp(96px,10vw,140px);min-height:clamp(96px,9vw,120px);border:4px solid #cbd5e1;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:900;touch-action:none;user-select:none;cursor:grab;box-shadow:0 5px 0 #cbd5e1;font-size:clamp(14px,1.3vw,20px);padding:4px;transition:transform .2s}
+.oc span{font-size:clamp(38px,4.2vw,60px);line-height:1.1;pointer-events:none}
+.oc.sel{border-color:#f59e0b;background:#fffbeb;transform:translateY(-4px)}
+.oc.back{animation:shk .45s;border-color:#ef4444;background:#fee2e2}
+.ghost{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-60%) rotate(-4deg);opacity:.95;filter:drop-shadow(0 12px 14px rgba(0,0,0,.3));width:clamp(96px,10vw,140px)}
+/* 특징 표 */
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-weight:800;font-size:clamp(12px,1.15vw,19px)}
+.tbl th,.tbl td{border:2px solid #cbd5e1;padding:6px 4px;line-height:1.35}.tbl th{background:#f1f5f9}
+.tbl td.k{font-weight:900;color:var(--kc);background:var(--kb)}
+.tw{overflow-x:auto}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+#btnPh.on{background:#0d9488;border-color:#0d9488;color:#fff}
+body.ph header h1{display:none}body.ph header .sp{display:none}body.ph .tabs{flex:1 1 100%}body.ph .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}body.ph .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}
+body.ph .two{grid-template-columns:minmax(0,1fr)}body.ph .bks{grid-template-columns:repeat(2,minmax(0,1fr))}body.ph .bk{min-height:120px}
+body.ph .yn .btn{min-height:76px}
+@media (max-width:760px){body{overflow:auto}header{padding:6px 8px}.two{grid-template-columns:minmax(0,1fr)}.bks{grid-template-columns:repeat(2,minmax(0,1fr))}header h1{display:none}header .tabs{flex:1 1 100%}header .tab{flex:1;padding:0 4px;min-height:46px;font-size:15px}header .hb{flex:1 1 auto;justify-content:center;min-height:42px!important;font-size:14px;padding:0 8px}#pop{top:auto;bottom:12px;font-size:16px}}
+#pop{position:fixed;left:50%;top:74px;transform:translate(-50%,-16px);z-index:80;background:#0f172a;color:#fff;border-radius:18px;padding:12px 22px;max-width:min(92vw,900px);font-weight:800;line-height:1.5;font-size:clamp(15px,1.6vw,26px);opacity:0;pointer-events:none;transition:.25s;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pop.on{opacity:1;transform:translate(-50%,0)}#pop em{color:#fde047;font-style:normal}
+.cfx{position:fixed;top:-40px;z-index:90;font-size:32px;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style></head><body>
+<header>
+  <h1>🔬 나는 어느 계에 속할까?</h1>
+  <div class="tabs">
+    <button class="tab on" id="tab1">① 분류 스무고개</button>
+    <button class="tab" id="tab2">② 5계 분류 바구니</button>
+    <button class="tab" id="tab3">③ 5계 특징 카드</button>
+  </div>
+  <div class="sp"></div>
+  <button class="hb" id="btnPh">📱 스마트폰 모드</button>
+  <button class="hb quiz" id="btnQuiz">❓ 오개념 퀴즈</button>
+  <a class="hb" href="./가상실험실_서랍.html">🔬 서랍</a>
+  <a class="hb" href="./index.html">🏠 처음</a>
+  <button class="hb" id="btnFs">⛶ 전체화면</button>
+</header>
+<div id="top"><div id="pbar"></div><button class="btn dng" id="btnReset" style="min-height:42px;font-size:clamp(12px,1.05vw,16px);flex:0 0 auto">↺ 처음부터</button></div>
+<main>
+<section class="mode on" id="m1"><div class="wrap two">
+  <div class="card stage" id="stg"></div>
+  <div class="card"><div class="ct">🏷️ 찾은 계 (5가지 중)</div><div class="side" id="kd"></div></div>
+</div></section>
+<section class="mode" id="m2"><div class="wrap">
+  <div class="card"><div class="ct">🧺 알맞은 계의 바구니에 넣어요 <span id="sc" style="color:#16a34a"></span></div><div class="bks" id="bks"></div></div>
+  <div class="card"><div class="cs" style="margin-bottom:6px">👇 카드를 끌어다 놓거나, 카드를 누른 뒤 바구니를 누르세요.</div><div class="pool" id="pool"></div></div>
+</div></section>
+<section class="mode" id="m3"><div class="wrap">
+  <div class="card" style="text-align:center"><div class="ct">🃏 카드를 눌러 뒤집어 보세요</div><div class="kn" id="kn"></div><div id="kf" style="margin-top:10px"></div></div>
+  <div class="card"><div class="ct">📋 5계 한눈에 비교</div><div class="tw" id="tw"></div></div>
+</div></section>
+</main>
+<div id="pop"></div>
+<div class="modal" id="modal"><div class="qbox">
+  <h2>❓ 오개념 교정 퀴즈</h2><div class="qprog" id="qprog"></div>
+  <div class="qq" id="qq"></div><div class="qopts" id="qopts"></div><div class="qexp" id="qexp"></div>
+  <div class="qfoot"><button class="btn" id="qclose">닫기 ✕</button><button class="btn on" id="qnext" style="display:none">다음 ▶</button></div>
+</div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180,R2D=180/Math.PI;
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*d||cv.height!==h*d){cv.width=w*d;cv.height=h*d}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h,d}}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function toast(id,msg,ms){const el=$(id);el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800)}
+$('#btnFs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let AC=null;
+function beep(f1,f2,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),gn=AC.createGain();o.type='sine';o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.linearRampToValueAtTime(f2,AC.currentTime+d);gn.gain.setValueAtTime(v||.12,AC.currentTime);gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(gn);gn.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sOK=()=>{beep(520,880,.22);setTimeout(()=>beep(880,1180,.22),120)},sNO=()=>beep(300,160,.3),sTap=()=>beep(500,700,.08,.08),sBoom=()=>{beep(90,40,.6,.25);setTimeout(()=>beep(70,35,.8,.2),150)};
+let mode=1;
+function setMode(m){mode=m;[1,2,3].forEach(i=>{$('#m'+i).classList.toggle('on',i===m);$('#tab'+i).classList.toggle('on',i===m)});dirty1=dirty2=dirty3=true}
+let dirty1=true,dirty2=true,dirty3=true;
+[1,2,3].forEach(i=>$('#tab'+i).onclick=()=>setMode(i));
+
+const KD={
+ P:{n:'원핵생물계',e:'🦠',c:'#dc2626',b:'#fee2e2',cell:'단세포',nuc:'없음',wall:'있음(대부분)',food:'종류에 따라 다름 (스스로 만들거나 분해·흡수)',ex:'대장균·젖산균·남세균',f:'핵막이 없어 유전물질이 세포질에 퍼져 있어요. 대부분 단세포예요.'},
+ G:{n:'원생생물계',e:'🔬',c:'#0891b2',b:'#cffafe',cell:'단세포·다세포',nuc:'있음',wall:'종류에 따라 다름',food:'광합성 또는 먹이 섭취',ex:'짚신벌레·아메바·해캄·다시마',f:'핵막이 있지만 식물·동물·균이 아닌 생물이에요. 뿌리·줄기·잎 같은 기관이 발달하지 않았어요.'},
+ F:{n:'균계',e:'🍄',c:'#a16207',b:'#fef3c7',cell:'다세포(균사)·단세포',nuc:'있음',wall:'있음',food:'광합성 못 함 · 죽은 생물 등을 분해하여 흡수',ex:'버섯·곰팡이·효모',f:'핵막과 세포벽이 있고 광합성을 못 해요. 몸 밖의 양분을 분해해 흡수해요.'},
+ L:{n:'식물계',e:'🌻',c:'#16a34a',b:'#dcfce7',cell:'다세포',nuc:'있음',wall:'있음',food:'엽록체로 광합성 (스스로 양분 생성)',ex:'해바라기·소나무·고사리',f:'세포벽과 엽록체가 있어 광합성을 해요. 뿌리·줄기·잎 같은 기관이 발달했어요.'},
+ N:{n:'동물계',e:'🐋',c:'#7c3aed',b:'#ede9fe',cell:'다세포',nuc:'있음',wall:'없음',food:'먹이를 섭취',ex:'고래·오징어·붕어·해파리',f:'세포벽이 없고 먹이를 섭취해 양분을 얻어요. 몸을 움직여 먹이를 찾아요.'}};
+const KO=['P','G','F','L','N'];
+// nuc 핵막, ph 광합성, mu 다세포, og 기관 발달, wl 세포벽
+const OR=[
+ {n:'대장균',e:'🦠',k:'P',nuc:0,ph:0,mu:0,hint:'핵막이 없는 단세포 세균이에요.'},
+ {n:'젖산균',e:'🧫',k:'P',nuc:0,ph:0,mu:0,hint:'김치·요구르트를 만드는 세균이에요.'},
+ {n:'남세균',e:'🔵',k:'P',nuc:0,ph:1,mu:0,hint:'광합성은 하지만 핵막이 없어요!'},
+ {n:'짚신벌레',e:'🔬',k:'G',nuc:1,ph:0,mu:0,wl:0,hint:'핵막이 있는 단세포 생물이에요.'},
+ {n:'아메바',e:'🫧',k:'G',nuc:1,ph:0,mu:0,wl:0,hint:'핵막이 있는 단세포, 세포벽이 없어요.'},
+ {n:'해캄',e:'🌿',k:'G',nuc:1,ph:1,mu:1,og:0,hint:'광합성을 하지만 뿌리·줄기·잎이 없어요.'},
+ {n:'다시마',e:'🌊',k:'G',nuc:1,ph:1,mu:1,og:0,hint:'광합성을 하지만 뿌리·줄기·잎이 없어요.'},
+ {n:'표고버섯',e:'🍄',k:'F',nuc:1,ph:0,mu:1,wl:1,hint:'광합성을 못 하고 세포벽이 있어요.'},
+ {n:'푸른곰팡이',e:'🍞',k:'F',nuc:1,ph:0,mu:1,wl:1,hint:'빵에 피는 곰팡이, 광합성을 못 해요.'},
+ {n:'효모',e:'🍺',k:'F',nuc:1,ph:0,mu:0,wl:1,hint:'빵·술을 만드는 단세포 균이에요.'},
+ {n:'해바라기',e:'🌻',k:'L',nuc:1,ph:1,mu:1,og:1,hint:'뿌리·줄기·잎이 있고 광합성을 해요.'},
+ {n:'소나무',e:'🌲',k:'L',nuc:1,ph:1,mu:1,og:1,hint:'뿌리·줄기·잎이 있고 광합성을 해요.'},
+ {n:'고사리',e:'🌱',k:'L',nuc:1,ph:1,mu:1,og:1,hint:'뿌리·줄기·잎이 있고 광합성을 해요.'},
+ {n:'고래',e:'🐋',k:'N',nuc:1,ph:0,mu:1,wl:0,hint:'세포벽이 없고 먹이를 먹어요.'},
+ {n:'오징어',e:'🐙',k:'N',nuc:1,ph:0,mu:1,wl:0,hint:'세포벽이 없고 먹이를 먹어요.'},
+ {n:'붕어',e:'🐟',k:'N',nuc:1,ph:0,mu:1,wl:0,hint:'세포벽이 없고 먹이를 먹어요.'},
+ {n:'해파리',e:'🪼',k:'N',nuc:1,ph:0,mu:1,wl:0,hint:'세포벽이 없고 먹이를 먹어요.'}];
+// 스무고개 질문 흐름
+function steps(o){const s=[{id:'nuc',q:'유전물질을 둘러싼 핵막이 있나요?',h:'핵막이 없으면 원핵생물이에요.',a:!!o.nuc}];
+  if(!o.nuc)return{s,k:'P'};
+  s.push({id:'ph',q:'광합성을 하여 스스로 양분을 만드나요?',h:'엽록체(또는 광합성 색소)로 빛을 이용해요.',a:!!o.ph});
+  s.push({id:'mu',q:'몸이 여러 개의 세포로 이루어져 있나요?',h:'세포가 하나면 단세포, 여러 개면 다세포예요.',a:!!o.mu});
+  if(o.ph&&o.mu){s.push({id:'og',q:'뿌리·줄기·잎 같은 기관이 발달해 있나요?',h:'식물은 조직과 기관이 발달해요.',a:!!o.og});return{s,k:o.og?'L':'G'}}
+  if(o.ph)return{s,k:'G'};
+  s.push({id:'wl',q:'세포벽이 있나요?',h:'식물·균은 세포벽이 있고 동물은 없어요.',a:!!o.wl});
+  return{s,k:o.mu?(o.wl?'F':'N'):(o.wl?'F':'G')}}
+let S,busy=false,QSC=-1,popT=0;
+const sTick=()=>beep(660,760,.06,.07);
+function say(h,ms){const p=$('#pop');p.innerHTML=h;p.classList.add('on');clearTimeout(popT);popT=setTimeout(()=>p.classList.remove('on'),ms||3200)}
+function confetti(em){for(let i=0;i<22;i++){const e=document.createElement('div');e.className='cfx';e.textContent=em[i%em.length];e.style.left=Math.random()*100+'vw';e.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}}
+function sty(k){return `--kc:${KD[k].c};--kb:${KD[k].b}`}
+function initS(){S={cur:-1,step:0,trail:[],done:new Set(),found:new Set(),res:false,placed:{},sel:null,order:OR.map((_,i)=>i).sort(()=>Math.random()-.5),m2done:false,flip:'P',viewed:new Set(['P'])}}
+function nextOrg(){const left=OR.map((_,i)=>i).filter(i=>!S.done.has(i));if(!left.length){S.done=new Set()}
+  const pool=OR.map((_,i)=>i).filter(i=>!S.done.has(i)&&i!==S.cur);
+  // 아직 못 찾은 계의 생물을 우선
+  const pri=pool.filter(i=>!S.found.has(OR[i].k));const c=(pri.length?pri:pool);S.cur=c[Math.floor(Math.random()*c.length)];S.step=0;S.trail=[];S.res=false}
+// ---------- 모드 1 ----------
+function render1(){const el=$('#stg');if(S.cur<0)nextOrg();const o=OR[S.cur],f=steps(o);
+  let h=`<div class="big-e">${o.e}</div><div class="on1">${o.n}</div><div class="cs">이 생물은 어느 계에 속할까요? 질문에 답해 보세요!</div>`;
+  h+=`<div class="trail">${S.trail.map(t=>`<span class="tr ${t[1]?'y':'n'}">${t[0]} ${t[1]?'예':'아니오'}</span>`).join('')}</div>`;
+  if(!S.res){const st=f.s[S.step];h+=`<div class="q">Q${S.step+1}. ${st.q}</div><div class="qh" id="qh">💡 ${st.h}</div><div class="yn"><button class="btn y" id="by">⭕ 예</button><button class="btn n" id="bn">❌ 아니오</button></div>`}
+  else{const K=KD[f.k];h+=`<div class="res"><div class="flip on" style="${sty(f.k)}"><div class="fi"><div class="ff">${K.e} ${K.n}</div><div class="fb"><b>${K.e} ${K.n}</b><br>${K.f}<br><small>예) ${K.ex}</small></div></div></div></div><div class="cs" style="margin-top:8px;font-size:clamp(16px,1.8vw,28px);color:#0f172a">👉 <b>${o.n}</b>은(는) <b style="color:${K.c}">${K.n}</b>이에요!</div><div style="margin-top:10px"><button class="btn on" id="bnx" style="min-height:70px;font-size:clamp(18px,2vw,30px)">다음 생물 ▶</button></div>`}
+  el.innerHTML=h;
+  if(!S.res){$('#by').onclick=()=>ans(true);$('#bn').onclick=()=>ans(false)}else $('#bnx').onclick=()=>{nextOrg();render1()};
+  renderKd()}
+function ans(v){if(busy)return;const o=OR[S.cur],f=steps(o),st=f.s[S.step];
+  if(v!==st.a){sNO();const b=$(v?'#by':'#bn');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');$('#qh').innerHTML='🤔 다시 생각해 봐요! '+o.hint;return}
+  sTick();S.trail.push([labelOf(st.id),v]);S.step++;
+  if(S.step>=f.s.length){S.res=true;S.done.add(S.cur);S.found.add(f.k);sOK();render1();hud();renderKd();confetti([KD[f.k].e,'⭐','✨']);say(`${KD[f.k].e} <em>${KD[f.k].n}</em> — ${KD[f.k].f}`,4200);if(S.found.size===5)setTimeout(()=>say('🎉 5개의 계를 모두 찾았어요! ② 탭에서 바구니 게임에 도전해 보세요.',4200),4300)}
+  else render1()}
+function labelOf(id){return{nuc:'핵막',ph:'광합성',mu:'다세포',og:'기관 발달',wl:'세포벽'}[id]}
+function renderKd(){$('#kd').innerHTML=KO.map(k=>`<div class="kd kc${S.found.has(k)?' got':''}" style="${sty(k)}"><i>${KD[k].e}</i><div>${S.found.has(k)?KD[k].n:'❓ 아직 못 찾았어요'}<small>${S.found.has(k)?KD[k].ex:''}</small></div></div>`).join('')}
+// ---------- 모드 2 ----------
+function render2(){$('#bks').innerHTML=KO.map(k=>{const L=Object.entries(S.placed).filter(([i,kk])=>kk===k).map(([i])=>OR[i].e);
+  return `<div class="bk" data-k="${k}" style="${sty(k)}"><span class="bc">${L.length}</span><div class="bn">${KD[k].e} ${KD[k].n}</div><div class="bf">${KD[k].f.split('. ')[0].split('요. ')[0]}</div><div class="bi">${L.join('')}</div></div>`}).join('');
+  const left=S.order.filter(i=>!(i in S.placed));
+  $('#pool').innerHTML=left.length?left.map(i=>`<div class="oc${S.sel===i?' sel':''}" data-i="${i}"><span>${OR[i].e}</span>${OR[i].n}</div>`).join(''):`<div class="cs" style="font-size:clamp(18px,2vw,30px);color:#16a34a">🎉 모든 생물을 알맞은 계에 넣었어요!</div>`;
+  $('#sc').textContent=`(${Object.keys(S.placed).length}/${OR.length})`;
+  $$('.oc').forEach(c=>c.addEventListener('pointerdown',pd));
+  $$('.bk').forEach(b=>b.addEventListener('click',()=>{if(S.sel!=null&&!dg){place(S.sel,b.dataset.k)}}))}
+let dg=null,dmv=false;
+function pd(e){const c=e.currentTarget,i=+c.dataset.i;dmv=false;const g=c.cloneNode(true);g.className='oc ghost';g.style.display='none';document.body.appendChild(g);dg={i,g,x:e.clientX,y:e.clientY,id:e.pointerId,el:c};c.setPointerCapture(e.pointerId);
+  c.addEventListener('pointermove',pm);c.addEventListener('pointerup',pu);c.addEventListener('pointercancel',pu)}
+function pm(e){if(!dg||e.pointerId!==dg.id)return;if(!dmv&&Math.hypot(e.clientX-dg.x,e.clientY-dg.y)>8){dmv=true;dg.g.style.display='flex';dg.el.style.opacity='.35'}
+  if(dmv){dg.g.style.left=e.clientX+'px';dg.g.style.top=e.clientY+'px';$$('.bk').forEach(b=>b.classList.remove('hot'));const t=document.elementFromPoint(e.clientX,e.clientY),b=t&&t.closest&&t.closest('.bk');if(b)b.classList.add('hot')}}
+function pu(e){if(!dg||e.pointerId!==dg.id)return;const d=dg;dg=null;d.g.remove();d.el.removeEventListener('pointermove',pm);d.el.removeEventListener('pointerup',pu);d.el.removeEventListener('pointercancel',pu);$$('.bk').forEach(b=>b.classList.remove('hot'));d.el.style.opacity='';
+  if(dmv){const t=document.elementFromPoint(e.clientX,e.clientY),b=t&&t.closest&&t.closest('.bk');if(b)place(d.i,b.dataset.k);else sNO();dmv=false;setTimeout(()=>{},0)}
+  else{S.sel=S.sel===d.i?null:d.i;sTap();render2()}}
+function place(i,k){const o=OR[i];S.sel=null;
+  if(o.k===k){S.placed[i]=k;sOK();render2();const b=$(`.bk[data-k="${k}"]`);b.classList.add('hop');hud();
+    say(`${o.e} ${o.n} → <em>${KD[k].n}</em><br><span style="font-size:.8em;font-weight:700">${KD[k].f}</span>`,3400);
+    if(Object.keys(S.placed).length===OR.length){S.m2done=true;hud();setTimeout(()=>{say('🎉 5계 분류 완성! 모든 생물을 알맞은 계에 넣었어요.',4000);confetti(['🦠','🔬','🍄','🌻','🐋'])},3500)}}
+  else{sNO();render2();const c=$(`.oc[data-i="${i}"]`);if(c){c.classList.add('back')}say(`❌ ${o.e} ${o.n}은(는) ${KD[k].n}이 아니에요.<br><span style="font-size:.8em;font-weight:700">💡 ${o.hint}</span>`,3400)}}
+// ---------- 모드 3 ----------
+function render3(){$('#kn').innerHTML=KO.map(k=>`<button class="btn${S.flip===k?' on':''}" data-k="${k}">${KD[k].e} ${KD[k].n}</button>`).join('');
+  const K=KD[S.flip];$('#kf').innerHTML=`<div class="flip" id="fl" style="${sty(S.flip)};cursor:pointer"><div class="fi"><div class="ff">${K.e}<br>${K.n}<small style="font-size:.45em;margin-top:6px">👆 눌러서 뒤집기</small></div><div class="fb"><b>${K.e} ${K.n}</b>
+   <div>• 세포 수: <b style="font-size:1em">${K.cell}</b></div><div>• 핵막: <b style="font-size:1em">${K.nuc}</b> · 세포벽: <b style="font-size:1em">${K.wall}</b></div><div>• 양분 얻는 법: ${K.food}</div><div>• 예: ${K.ex}</div></div></div></div>`;
+  $('#fl').onclick=()=>{$('#fl').classList.toggle('on');sTap();S.viewed.add(S.flip);hud()};
+  $$('#kn .btn').forEach(b=>b.onclick=()=>{S.flip=b.dataset.k;S.viewed.add(S.flip);render3();hud()});
+  $('#tw').innerHTML=`<table class="tbl"><tr><th>계</th><th>세포 수</th><th>핵막</th><th>세포벽</th><th>양분 얻는 법</th><th>예</th></tr>`+KO.map(k=>`<tr><td class="k" style="${sty(k)}">${KD[k].e} ${KD[k].n}</td><td>${KD[k].cell}</td><td>${KD[k].nuc}</td><td>${KD[k].wall}</td><td>${KD[k].food}</td><td>${KD[k].ex}</td></tr>`).join('')+'</table>'}
+// ---------- 진행 ----------
+function hud(){const it=[['① 찾은 계 '+S.found.size+'/5',S.found.size===5],['② 바구니 '+Object.keys(S.placed).length+'/'+OR.length,S.m2done],['③ 카드 '+S.viewed.size+'/5',S.viewed.size===5]];
+  $('#pbar').innerHTML=it.map(x=>`<div class="pseg${x[1]?' ok':''}">${x[0]}${x[1]?' ✔':''}</div>`).join('')+`<div class="pseg${QSC>=QZ.length?' ok':''}">퀴즈 ${QSC<0?'–':QSC+'/'+QZ.length}</div>`}
+// ---------- 퀴즈 ----------
+const QZ=[
+ {q:'핵막이 없고 유전물질이 세포질에 퍼져 있는 생물은 어느 계일까?',o:['원핵생물계','원생생물계','균계','식물계'],a:0,e:'핵막이 없는 생물은 원핵생물계예요(대장균·젖산균 등).'},
+ {q:'버섯과 곰팡이가 속한 계는?',o:['균계','식물계','원생생물계','동물계'],a:0,e:'버섯·곰팡이·효모는 균계예요. 광합성을 못 하고 세포벽이 있어요.'},
+ {q:'버섯은 식물일까?',o:['아니다. 광합성을 못 하는 균계이다','그렇다. 땅에서 자라니까','그렇다. 세포벽이 있으니까','아니다. 동물계이다'],a:0,e:'땅에서 자란다고 식물은 아니에요. 버섯은 광합성을 못 하는 균계예요.'},
+ {q:'다시마·미역은 광합성을 하는데 왜 식물계가 아닐까?',o:['뿌리·줄기·잎 같은 기관이 발달하지 않아서','바다에 살아서','크기가 작아서','세포벽이 없어서'],a:0,e:'다시마는 광합성을 하지만 기관이 발달하지 않아 원생생물계예요.'},
+ {q:'효모는 단세포 생물인데 어느 계일까?',o:['균계','원핵생물계','원생생물계','동물계'],a:0,e:'효모는 핵막과 세포벽이 있고 광합성을 못 하는 단세포 균이에요.'},
+ {q:'동물계의 특징으로 옳은 것은?',o:['세포벽이 없고 먹이를 섭취한다','세포벽이 있고 광합성을 한다','핵막이 없다','균사로 이루어져 있다'],a:0,e:'동물은 세포벽이 없고 먹이를 먹어 양분을 얻어요.'},
+ {q:'남세균은 광합성을 하는데 어느 계일까?',o:['원핵생물계','식물계','원생생물계','균계'],a:0,e:'남세균은 광합성을 하지만 핵막이 없는 원핵생물이에요.'}];
+let qi=0,qdone=false,qscore=0,qmap=[];
+function showQ(){const Q=QZ[qi];qdone=false;$('#qprog').textContent='문제 '+(qi+1)+' / '+QZ.length+' · 점수 '+qscore;$('#qq').textContent=Q.q;$('#qexp').className='qexp';$('#qnext').style.display='none';$('#qopts').innerHTML='';
+  qmap=Q.o.map((_,i)=>i);for(let i=qmap.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qmap[i],qmap[j]]=[qmap[j],qmap[i]]}
+  qmap.forEach(oi=>{const b=document.createElement('button');b.className='qopt';b.textContent=Q.o[oi];b.dataset.o=oi;b.onclick=()=>{if(qdone)return;qdone=true;const ok=oi===Q.a;if(ok)qscore++;
+    [...$('#qopts').children].forEach(x=>{if(+x.dataset.o===Q.a)x.classList.add('right');else if(x===b)x.classList.add('wrong')});
+    $('#qexp').textContent=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+Q.e;$('#qexp').className='qexp on';ok?sOK():sNO();
+    const nx=$('#qnext');nx.style.display='';nx.textContent=qi<QZ.length-1?'다음 ▶':'결과 보기 ✔'};$('#qopts').appendChild(b)})}
+$('#btnQuiz').onclick=()=>{qi=0;qscore=0;$('#modal').classList.add('on');showQ()};
+$('#qclose').onclick=()=>$('#modal').classList.remove('on');
+$('#qnext').onclick=()=>{if(qi<QZ.length-1){qi++;showQ()}else{QSC=Math.max(QSC,qscore);hud();$('#qprog').textContent='결과';$('#qq').textContent='🎉 '+qscore+' / '+QZ.length+' 정답!';$('#qopts').innerHTML='';$('#qexp').className='qexp';$('#qnext').style.display='none'}};
+// ---------- 스마트폰 모드·초기화 ----------
+function setPh(on,save){document.body.classList.toggle('ph',!!on);$('#btnPh').classList.toggle('on',!!on);$('#btnPh').textContent=on?'📱 스마트폰 모드 ON':'📱 스마트폰 모드';if(save){try{localStorage.setItem('kingdom-ph',on?'1':'0')}catch(e){}}}
+$('#btnPh').onclick=()=>setPh(!document.body.classList.contains('ph'),true);
+function resetAll(){initS();QSC=-1;render1();render2();render3();hud();setMode(1);$('#pop').classList.remove('on')}
+$('#btnReset').onclick=resetAll;
+const _sm=setMode;setMode=function(m){_sm(m);$('#pop').classList.remove('on');window.scrollTo(0,0)};
+let phPref=null;try{phPref=localStorage.getItem('kingdom-ph')}catch(e){}
+resetAll();setPh(phPref==='1'||(phPref===null&&innerWidth<=760),false);
+</script></body></html>
