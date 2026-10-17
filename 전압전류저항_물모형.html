@@ -2515,7 +2515,7 @@ var qrcode = function() {
 'use strict';
 const $=id=>document.getElementById(id);
 const FONT="'Pretendard','Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif";
-const BASE=600,H=190,WR=28,LW=1600,LH=720,I0=0.5;
+const BASE=600,H=232,WR=34,LW=1600,LH=720,I0=0.5;
 
 /* ---------- 연결 방식 정의 ---------- */
 const MODES=[
@@ -2525,7 +2525,7 @@ const MODES=[
  {n:'④ 전구 직렬',bat:'single',bulb:'series',cap:'🤔 물레방아 2개를 계단처럼 아래위로?  ↔  전구 2개를 직렬로'},
  {n:'⑤ 전구 병렬',bat:'single',bulb:'parallel',cap:'🤔 물길을 두 갈래로 나누면?  ↔  전구 2개를 병렬로'}
 ];
-const state={mode:0,open:true,slow:false,speed:1,deep:false,t:0,ang:[0,0]};
+const state={mode:0,open:true,slow:false,speed:1,deep:false,t:0,ang:[0,0],pang:[0,0]};
 
 function phys(m,open){
   const M=MODES[m];
@@ -2649,17 +2649,104 @@ const fv=v=>(v%1===0?v.toFixed(1):(+v.toFixed(2)).toString());
 const fx=v=>{const r=Math.round(v*100)/100;return r%1===0?String(r):(+r.toFixed(2)).toString();};
 const fa=v=>v.toFixed(2);
 
+/* ---------- GFX_1018 : 물 모형·회로 그래픽 업그레이드 (입체 파이프·펌프+모터·물레방아·원통 전지·유리 전구) ---------- */
+const lum=c=>{const m=/#([0-9a-f]{6})/i.exec(c||'');if(!m)return 1;const n=parseInt(m[1],16);return((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
+const isDark=()=>lum(T.panel)<0.4;
+function lg(x0,y0,x1,y1,stops){const g=ctx.createLinearGradient(x0,y0,x1,y1);stops.forEach(s=>g.addColorStop(s[0],s[1]));return g;}
+function PAL(){
+  return isDark()?{
+    wTop:'rgba(56,189,248,.50)',wDeep:'rgba(14,116,200,.80)',wLine:'#7dd3fc',
+    pipeOut:'#0b3558',pipeBody:'#3b9be0',pipeHi:'rgba(255,255,255,.38)',tankOut:'#cbd5e1',tankIn:'#64748b',
+    wireOut:'#431407',wireBody:'#fb923c',
+    pumpHi:'#8fcdf7',pumpBody:'#2563a8',pumpOut:'#0b2a4a',pumpIn:'#123a66',imp:'#e6f3ff',hub:'#0b2a4a',
+    motorL:'#94a3b8',motorD:'#475569',belt:'#0f172a',
+    brassL:'#fde68a',brassD:'#b7791f',
+    wheelOut:'#f3c98b',padL:'#f0a35a',padD:'#b4621f',hubC:'#fde7c7',
+    cellL:'#8be0ee',cellM:'#4fb6c8',cellD:'#2a7f93',band:'#f4a7d2',metal:'#e2e8f0',metalD:'#64748b',
+    glass:['#4b5d7a','#2b3a54','#162036']
+  }:{
+    wTop:'rgba(125,205,255,.60)',wDeep:'rgba(37,140,220,.78)',wLine:'#1d6fb8',
+    pipeOut:'#1e5a96',pipeBody:'#62b3ee',pipeHi:'rgba(255,255,255,.55)',tankOut:'#475569',tankIn:'#cbd5e1',
+    wireOut:'#7c2d12',wireBody:'#e8590c',
+    pumpHi:'#9ed2f7',pumpBody:'#2f7cc4',pumpOut:'#16406b',pumpIn:'#1c4f85',imp:'#e6f3ff',hub:'#16406b',
+    motorL:'#cbd5e1',motorD:'#64748b',belt:'#1f2937',
+    brassL:'#fcd34d',brassD:'#b7791f',
+    wheelOut:'#6b3410',padL:'#e08a3c',padD:'#8a4513',hubC:'#5a2d0c',
+    cellL:'#8be0ee',cellM:'#4fb6c8',cellD:'#2a7f93',band:'#f4a7d2',metal:'#d1d5db',metalD:'#6b7280',
+    glass:['#ffffff','#e3ebf3','#b3c2d3']
+  };
+}
+function metalRR(x,y,w,h,r,P){rr(x,y,w,h,r);ctx.fillStyle=lg(x,y,x,y+h,[[0,P.metal],[.5,'#ffffff'],[1,P.metalD]]);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.ink;ctx.stroke();}
+/* 펌프: 소용돌이 하우징 + 회전 날개 + (옆에) 전동기·벨트·받침판 */
+function motorBelt(pm,P,withMotor){
+  const s=pm.r/26,ms=0.72*s,mx=pm.x+pm.r+34*s,my=pm.y+10*s,pr=7*ms*1.2,px=mx-24*ms;
+  // 받침판
+  rr(mx-30*ms,my+22*ms,60*ms,8*ms,2);ctx.fillStyle=P.motorD;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.ink;ctx.stroke();
+  // 벨트 (펌프 하우징 ↔ 전동기 도르래)
+  ctx.lineWidth=3;ctx.strokeStyle=P.belt;
+  ctx.beginPath();ctx.moveTo(pm.x+pm.r*0.2,pm.y-pm.r*0.98);ctx.lineTo(px,my-pr);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pm.x+pm.r*0.2,pm.y+pm.r*0.98);ctx.lineTo(px,my+pr);ctx.stroke();
+  // 전동기 몸통
+  rr(mx-22*ms,my-17*ms,44*ms,36*ms,6);ctx.fillStyle=lg(0,my-17*ms,0,my+19*ms,[[0,P.motorL],[.55,P.motorD],[1,P.motorD]]);ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=T.ink;ctx.stroke();
+  for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(mx-6*ms+i*8*ms,my-12*ms);ctx.lineTo(mx-6*ms+i*8*ms,my+12*ms);ctx.lineWidth=1.5;ctx.strokeStyle='rgba(0,0,0,.35)';ctx.stroke();}
+  // 도르래(회전)
+  ctx.save();ctx.translate(px,my);ctx.rotate(state.pang[0]*1.6);
+  ctx.beginPath();ctx.arc(0,0,pr,0,7);ctx.fillStyle=P.metal;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.ink;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-pr*0.8,0);ctx.lineTo(pr*0.8,0);ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+}
+function pumpBody(pm,idx,P){
+  const x=pm.x,y=pm.y,r=pm.r;
+  ctx.beginPath();ctx.arc(x,y,r+4,0,7);
+  const g=ctx.createRadialGradient(x-r*0.35,y-r*0.4,r*0.1,x,y,r*1.2);g.addColorStop(0,P.pumpHi);g.addColorStop(1,P.pumpBody);
+  ctx.fillStyle=g;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=P.pumpOut;ctx.stroke();
+  ctx.beginPath();ctx.arc(x,y,r*0.76,0,7);ctx.fillStyle=P.pumpIn;ctx.fill();
+  ctx.save();ctx.translate(x,y);ctx.rotate(state.pang[idx%2]);
+  for(let i=0;i<5;i++){
+    ctx.rotate(Math.PI*2/5);ctx.beginPath();ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(r*0.56,-r*0.12,r*0.64,r*0.4);ctx.quadraticCurveTo(r*0.26,r*0.3,0,r*0.12);
+    ctx.fillStyle=P.imp;ctx.fill();
+  }
+  ctx.beginPath();ctx.arc(0,0,r*0.17,0,7);ctx.fillStyle=P.hub;ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=P.imp;ctx.stroke();
+  ctx.restore();
+  // 하이라이트
+  ctx.beginPath();ctx.arc(x,y,r+1,Math.PI*1.1,Math.PI*1.55);ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.55)';ctx.stroke();
+  if(pm.t){ctx.beginPath();ctx.arc(x-r*0.95,y-r*0.95,9,0,7);ctx.fillStyle=T.panel;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=P.pumpOut;ctx.stroke();tx(pm.t,x-r*0.95,y-r*0.95+1,13,T.ink,'center',900);}
+}
+/* 물레방아에 떨어지는 물줄기 + 튀는 물방울 */
+function jetBack(L,P){
+  const a=Math.min(1,cur.tot/0.25);if(a<0.03)return;
+  const x=L.x,y0=L.cy-WR,y1=L.cy+WR;
+  ctx.globalAlpha=a;
+  ctx.fillStyle=lg(x-6,0,x+6,0,[[0,P.pipeOut],[.4,P.pipeBody],[1,P.pipeOut]]);ctx.fillRect(x-6,y0,12,y1-y0);
+  ctx.globalAlpha=1;
+}
+function jetFront(L,P){
+  const a=Math.min(1,cur.tot/0.25);if(a<0.03)return;
+  const x=L.x,cy=L.cy;
+  for(let i=0;i<8;i++){
+    const p=((state.t*1.6+i/8)%1),side=i%2?1:-1;
+    const dx=side*(10+p*20),dy=cy-WR*0.2+p*WR*1.15-Math.sin(p*Math.PI)*12;
+    ctx.globalAlpha=a*(1-p*0.8);ctx.beginPath();ctx.arc(x+dx,dy,3.6*(1-p*0.4),0,7);ctx.fillStyle=P.pipeBody;ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=P.pipeOut;ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
 function panelBg(title){
   rr(4,56,792,640,18);ctx.fillStyle=T.panel;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=T.pipe;ctx.stroke();
   tx(title,24,34,30,T.ink,'left',900);
 }
 function pipes(segs,kind){
-  ctx.lineJoin='round';ctx.lineCap='butt';
+  const P=PAL();ctx.lineJoin='round';ctx.lineCap='butt';
   for(const sg of segs){
     if(kind==='water'){
-      path(sg.pts);ctx.strokeStyle=T.pipe;ctx.lineWidth=18;ctx.stroke();
-      path(sg.pts);ctx.strokeStyle=T.waterfill;ctx.lineWidth=11;ctx.stroke();
-    }else{path(sg.pts);ctx.strokeStyle=T.wire;ctx.lineWidth=6;ctx.stroke();}
+      path(sg.pts);ctx.strokeStyle=P.pipeOut;ctx.lineWidth=24;ctx.stroke();
+      path(sg.pts);ctx.strokeStyle=P.pipeBody;ctx.lineWidth=17;ctx.stroke();
+      ctx.save();ctx.translate(-3,-3);path(sg.pts);ctx.strokeStyle=P.pipeHi;ctx.lineWidth=4;ctx.stroke();ctx.restore();
+    }else{
+      path(sg.pts);ctx.strokeStyle=P.wireOut;ctx.lineWidth=10;ctx.stroke();
+      path(sg.pts);ctx.strokeStyle=P.wireBody;ctx.lineWidth=5;ctx.stroke();
+    }
   }
 }
 function dots(segs,kind){
@@ -2669,7 +2756,7 @@ function dots(segs,kind){
     for(let s=sg.ph;s<sg.L;s+=26){
       const [x,y]=at(s,sg);
       ctx.beginPath();
-      if(kind==='water'){ctx.arc(x,y,5.5,0,7);ctx.fillStyle=T.waterdot;ctx.fill();}
+      if(kind==='water'){ctx.arc(x,y,5,0,7);ctx.fillStyle='rgba(255,255,255,.88)';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle=PAL().pipeOut;ctx.stroke();}
       else{
         ctx.arc(x,y,7,0,7);ctx.fillStyle=T.charge;ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=T.chargeline;ctx.stroke();
         ctx.beginPath();ctx.moveTo(x-3,y);ctx.lineTo(x+3,y);ctx.moveTo(x,y-3);ctx.lineTo(x,y+3);ctx.lineWidth=1.8;ctx.strokeStyle=T.chargeline;ctx.stroke();
@@ -2679,25 +2766,41 @@ function dots(segs,kind){
   }
 }
 function wheel(x,cy,ang){
+  const P=PAL(),R0=WR-9;
   ctx.save();ctx.translate(x,cy);ctx.rotate(ang);
-  ctx.beginPath();ctx.arc(0,0,WR,0,7);ctx.fillStyle=T.panel;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=T.tank;ctx.stroke();
-  ctx.fillStyle=T.blade;
-  for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.fillRect(-5,-WR+2,10,WR-9);}
-  ctx.beginPath();ctx.arc(0,0,6,0,7);ctx.fillStyle=T.ink;ctx.fill();
+  ctx.beginPath();ctx.arc(0,0,R0,0,7);ctx.lineWidth=3;ctx.strokeStyle=P.wheelOut;ctx.stroke();
+  for(let i=0;i<8;i++){
+    ctx.save();ctx.rotate(i*Math.PI/4);
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-R0);ctx.lineWidth=3.5;ctx.strokeStyle=P.wheelOut;ctx.stroke();
+    ctx.fillStyle=lg(-7,0,7,0,[[0,P.padD],[.5,P.padL],[1,P.padD]]);ctx.fillRect(-7,-(WR+3),14,WR+3-R0+2);
+    ctx.lineWidth=1.5;ctx.strokeStyle=P.wheelOut;ctx.strokeRect(-7,-(WR+3),14,WR+3-R0+2);
+    ctx.restore();
+  }
+  const g=ctx.createRadialGradient(-2,-2,1,0,0,8);g.addColorStop(0,'#fff');g.addColorStop(1,P.hubC);
+  ctx.beginPath();ctx.arc(0,0,7.5,0,7);ctx.fillStyle=g;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=P.wheelOut;ctx.stroke();
   ctx.restore();
+  // 받침 기둥
+  ctx.fillStyle=P.wheelOut;ctx.fillRect(x-3,cy+8,6,WR-4);
 }
 function bulb(x,cy,b){
-  const a=b>0.01?Math.min(1,0.12+0.44*b):0;
+  const P=PAL(),a=b>0.01?Math.min(1,0.12+0.44*b):0,a2=Math.min(1,a*1.7);
   if(a>0){
-    const R=WR+22+b*16,g=ctx.createRadialGradient(x,cy,4,x,cy,R);
-    g.addColorStop(0,`rgba(253,224,71,${a})`);g.addColorStop(1,'rgba(253,224,71,0)');
+    const R=WR+34+b*26,g=ctx.createRadialGradient(x,cy,4,x,cy,R);
+    g.addColorStop(0,`rgba(255,226,80,${Math.min(.95,a+0.2)})`);g.addColorStop(.55,`rgba(255,214,64,${a*0.45})`);g.addColorStop(1,'rgba(253,224,71,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,cy,R,0,7);ctx.fill();
   }
-  ctx.beginPath();ctx.arc(x,cy,WR,0,7);
-  ctx.fillStyle=a>0?`rgba(254,240,138,${0.4+0.6*Math.min(1,a*1.5)})`:T.glassOff||T.glassoff;ctx.fill();
-  ctx.lineWidth=4;ctx.strokeStyle=T.ink;ctx.stroke();
+  // 위·아래 금속 접점(도선이 연결되는 곳)
+  metalRR(x-10,cy-WR-5,20,10,3,P);metalRR(x-10,cy+WR-5,20,10,3,P);
+  // 유리 구
+  const g=ctx.createRadialGradient(x-9,cy-11,2,x,cy,WR);
+  if(a>0){g.addColorStop(0,'#ffffff');g.addColorStop(.45,`rgba(255,244,160,${0.55+0.45*a2})`);g.addColorStop(1,`rgba(255,196,60,${0.45+0.55*a2})`);}
+  else{g.addColorStop(0,P.glass[0]);g.addColorStop(.55,P.glass[1]);g.addColorStop(1,P.glass[2]);}
+  ctx.beginPath();ctx.arc(x,cy,WR,0,7);ctx.fillStyle=g;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=T.ink;ctx.stroke();
+  // 필라멘트
   ctx.beginPath();ctx.moveTo(x-12,cy+14);ctx.lineTo(x-8,cy-4);ctx.lineTo(x-3,cy+6);ctx.lineTo(x+3,cy-6);ctx.lineTo(x+8,cy+4);ctx.lineTo(x+12,cy+14);
   ctx.lineWidth=3;ctx.strokeStyle=a>0?'#b45309':T.sub;ctx.stroke();
+  // 유리 반사광
+  ctx.beginPath();ctx.ellipse(x-10,cy-12,7,4.5,-0.7,0,7);ctx.fillStyle='rgba(255,255,255,.62)';ctx.fill();
 }
 function bracket(x,top,bot,l1,l2,col){
   ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=3;
@@ -2710,57 +2813,85 @@ function bracket(x,top,bot,l1,l2,col){
 
 /* ---------- 물 모형 ---------- */
 function drawWater(){
-  const yT=BW.yT,yP=BW.yP,open=state.open;
+  const P=PAL(),yT=BW.yT,yP=BW.yP,open=state.open,t=state.t;
   panelBg('💧 물의 흐름 모형');
-  // 수조 바닥(기준면)
-  ctx.fillStyle=T.waterfill;ctx.fillRect(6,BASE,788,82);
-  ctx.strokeStyle=T.water;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(6,BASE);ctx.lineTo(794,BASE);ctx.stroke();
+  // 바닥 수조 : 깊이 그라데이션 + 물결
+  ctx.fillStyle=lg(0,BASE,0,BASE+82,[[0,P.wTop],[1,P.wDeep]]);
+  ctx.beginPath();ctx.moveTo(6,BASE);
+  for(let x=6;x<=794;x+=8)ctx.lineTo(x,BASE+Math.sin(x*0.05+t*1.6)*2.2);
+  ctx.lineTo(794,BASE+82);ctx.lineTo(6,BASE+82);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=P.wLine;ctx.lineWidth=3;ctx.beginPath();
+  for(let x=6;x<=794;x+=8){const y=BASE+Math.sin(x*0.05+t*1.6)*2.2;x===6?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;
+  for(let k=0;k<6;k++){const bx=60+k*125+Math.sin(t*0.9+k)*10,by=BASE+22+(k%3)*18;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+26,by);ctx.stroke();}
   tx('수조 바닥 = 기준면 0V',786,646,22,T.sub,'right');
-  // 저수조
-  ctx.fillStyle=T.waterfill;ctx.beginPath();ctx.moveTo(143,BASE);ctx.lineTo(143,yT);
-  for(let x=143;x<=257;x+=6)ctx.lineTo(x,yT+Math.sin(x*0.08+state.t*2)*2);
-  ctx.lineTo(257,BASE);ctx.closePath();ctx.fill();
-  ctx.strokeStyle=T.tank;ctx.lineWidth=6;ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(140,yT-40);ctx.lineTo(140,BASE);ctx.lineTo(260,BASE);ctx.lineTo(260,yT-40);ctx.stroke();
+  // 저수조(높이차를 만드는 물탱크)
+  const tl=140,tr=260,tt=yT-46;
+  ctx.fillStyle=lg(0,yT,0,BASE,[[0,P.wTop],[1,P.wDeep]]);ctx.beginPath();ctx.moveTo(tl+3,BASE);ctx.lineTo(tl+3,yT);
+  for(let x=tl+3;x<=tr-3;x+=6)ctx.lineTo(x,yT+Math.sin(x*0.08+t*2)*2.2);
+  ctx.lineTo(tr-3,BASE);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;ctx.beginPath();
+  for(let x=tl+8;x<=tr-8;x+=6){const y=yT+3+Math.sin(x*0.08+t*2)*1.6;x===tl+8?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+  ctx.fillStyle=isDark()?'rgba(148,197,255,.10)':'rgba(120,180,240,.12)';ctx.fillRect(tl+3,tt,tr-tl-6,yT-tt);
+  // 탱크 벽 (금속/유리 느낌 2겹) + 윗 테두리
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(tl,tt);ctx.lineTo(tl,BASE);ctx.lineTo(tr,BASE);ctx.lineTo(tr,tt);ctx.strokeStyle=P.tankOut;ctx.lineWidth=10;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tl,tt);ctx.lineTo(tl,BASE);ctx.lineTo(tr,BASE);ctx.lineTo(tr,tt);ctx.strokeStyle=P.tankIn;ctx.lineWidth=4;ctx.stroke();
+  ctx.lineWidth=7;ctx.strokeStyle=P.tankOut;ctx.beginPath();ctx.moveTo(tl-9,tt);ctx.lineTo(tl+5,tt);ctx.moveTo(tr-5,tt);ctx.lineTo(tr+9,tt);ctx.stroke();
+  ctx.lineCap='butt';
   if(PH.V>1.6){ // h 눈금
     const yh=BASE-H;ctx.setLineDash([8,6]);ctx.lineWidth=2;ctx.strokeStyle=T.ink;
     ctx.beginPath();ctx.moveTo(143,yh);ctx.lineTo(257,yh);ctx.stroke();ctx.setLineDash([]);
     tx('h',232,yh-14,24,T.ink,'center',900);
   }
-  // 높이차 화살표
   bracketMini(158,yT,BASE);
   pill2('높이차',fv(PH.V)+'V',214,(yT+BASE)/2);
-  // 일부 구조 (중간 수조: 전구 직렬)
+  // 중간 수조 (전구 직렬)
   if(BW.mid){
-    const m=BW.mid;ctx.fillStyle=T.waterfill;ctx.fillRect(m.xa-45,m.ym,90,52);
-    ctx.strokeStyle=T.tank;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(m.xa-45,m.ym-6);ctx.lineTo(m.xa-45,m.ym+52);ctx.lineTo(m.xa+45,m.ym+52);ctx.lineTo(m.xa+45,m.ym-6);ctx.stroke();
+    const m=BW.mid;
+    ctx.fillStyle=lg(0,m.ym,0,m.ym+52,[[0,P.wTop],[1,P.wDeep]]);ctx.fillRect(m.xa-45,m.ym,90,52);
+    ctx.strokeStyle=P.tankOut;ctx.lineWidth=8;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(m.xa-45,m.ym-6);ctx.lineTo(m.xa-45,m.ym+52);ctx.lineTo(m.xa+45,m.ym+52);ctx.lineTo(m.xa+45,m.ym-6);ctx.stroke();
+    ctx.strokeStyle=P.tankIn;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(m.xa-45,m.ym-6);ctx.lineTo(m.xa-45,m.ym+52);ctx.lineTo(m.xa+45,m.ym+52);ctx.lineTo(m.xa+45,m.ym-6);ctx.stroke();
   }
+  // 펌프 옆 전동기·벨트 (펌프 뒤쪽)
+  const pms=BW.pumps;
+  if(MODES[state.mode].bat==='parallel'){motorBelt(pms[1],P,true);}
+  else pms.forEach(pm=>motorBelt(pm,P,true));
   pipes(BW.segs,'water');
-  if(BW.mid){ // 트레이 위에 파이프 가려지지 않도록 다시 표면선
-    ctx.strokeStyle=T.water;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(BW.mid.xa-45,BW.mid.ym);ctx.lineTo(BW.mid.xa+45,BW.mid.ym);ctx.stroke();
+  if(BW.mid){
+    ctx.strokeStyle=P.wLine;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(BW.mid.xa-45,BW.mid.ym);ctx.lineTo(BW.mid.xa+45,BW.mid.ym);ctx.stroke();
   }
+  // 물레방아 쪽 물줄기 (바퀴 뒤)
+  BW.loads.forEach(L=>jetBack(L,P));
   dots(BW.segs,'water');
+  // 파이프 이음 플랜지(물레방아 입·출구)
+  BW.loads.forEach(L=>{
+    metalRR(L.x-15,L.cy-WR-6,30,9,3,P);metalRR(L.x-15,L.cy+WR-3,30,9,3,P);
+  });
   // 펌프
-  for(const pm of BW.pumps){
-    ctx.beginPath();ctx.arc(pm.x,pm.y,pm.r,0,7);ctx.fillStyle=T.cell;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=T.ink;ctx.stroke();
-    ctx.beginPath();ctx.moveTo(pm.x,pm.y-pm.r*0.55);ctx.lineTo(pm.x-pm.r*0.45,pm.y+pm.r*0.1);ctx.lineTo(pm.x+pm.r*0.45,pm.y+pm.r*0.1);ctx.closePath();ctx.fillStyle='#fff';ctx.fill();
-    if(pm.t)tx(pm.t,pm.x,pm.y+pm.r*0.5,pm.r*0.7,'#fff','center',900);
+  if(MODES[state.mode].bat==='parallel'&&pms.length===2){ // 두 펌프가 한 축으로 연결된 모양
+    ctx.lineWidth=6;ctx.strokeStyle=P.metalD;ctx.beginPath();ctx.moveTo(pms[0].x,pms[0].y);ctx.lineTo(pms[1].x,pms[1].y);ctx.stroke();
   }
+  pms.forEach((pm,i)=>pumpBody(pm,i,P));
   const bat=MODES[state.mode].bat;
   tx(bat==='single'?'펌프 1개':bat==='series'?'펌프 2개 · 2단 직렬':'펌프 2개 · 나란히 병렬',8,676,22,T.sub,'left');
-  // 밸브
+  // 밸브 (게이트 밸브 + 손잡이 바퀴)
   const vx=310;
-  rr(vx-18,yP-24,36,48,8);ctx.fillStyle=T.cell;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=T.ink;ctx.stroke();
-  if(open){rr(vx-14,yP-6,28,12,4);ctx.fillStyle=T.waterfill;ctx.fill();ctx.strokeStyle=T.water;ctx.lineWidth=2;ctx.stroke();}
+  ctx.fillStyle=P.brassD;ctx.fillRect(vx-26,yP-17,7,34);ctx.fillRect(vx+19,yP-17,7,34);
+  ctx.lineWidth=2;ctx.strokeStyle=T.ink;ctx.strokeRect(vx-26,yP-17,7,34);ctx.strokeRect(vx+19,yP-17,7,34);
+  rr(vx-19,yP-24,38,48,8);ctx.fillStyle=lg(vx-19,0,vx+19,0,[[0,P.brassD],[.45,P.brassL],[1,P.brassD]]);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=T.ink;ctx.stroke();
+  ctx.lineWidth=5;ctx.strokeStyle=T.ink;ctx.beginPath();ctx.moveTo(vx,yP-24);ctx.lineTo(vx,yP-38);ctx.stroke();
+  ctx.beginPath();ctx.ellipse(vx,yP-41,22,6.5,0,0,7);ctx.fillStyle=open?'#16a34a':T.warn;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=T.ink;ctx.stroke();
+  if(open){rr(vx-13,yP-6,26,12,4);ctx.fillStyle=P.pipeBody;ctx.fill();ctx.strokeStyle=P.pipeOut;ctx.lineWidth=2;ctx.stroke();}
   else{ctx.fillStyle=T.warn;ctx.fillRect(vx-7,yP-22,14,44);}
   tx(open?'밸브 열림':'밸브 닫힘',vx,yP+44,24,open?T.accent:T.warn,'center',900);
   if(!open)tx('높이차가 모두 밸브에',vx,yP+70,20,T.warn,'center',800);
-  // 유량계
   pill(`유량 ① ${fa(PH.I)}`,420,yP-36,22,T.water);
   pill(`유량 ② ${fa(PH.I)}`,390,655,22,T.water);
   // 물레방아
   BW.loads.forEach((L,i)=>{
     wheel(L.x,L.cy,state.ang[i]);
+    jetFront(L,P);
     tx(`회전 ${PH.bright>0.001?'×'+PH.bright.toFixed(1):'정지'}`,L.x+WR+8,L.cy,22,T.sub,'left');
     tx(PH.nb>1?`물레방아${'①②'[i]}`:'물레방아',L.x,674,24,T.ink,'center',900);
     bracket(L.x-44,L.top,L.bot,'낙차',open?fv(PH.Vb)+'V':'0V',T.water);
@@ -2780,30 +2911,47 @@ function pill2(a,b,x,y){
 
 /* ---------- 전기 회로 ---------- */
 function drawCircuit(){
-  const yT=BC.yT,open=state.open;
+  const P=PAL(),yT=BC.yT,open=state.open;
   panelBg('⚡ 전기 회로');
   pipes(BC.segs,'circuit');
-  // 스위치
+  // 스위치 (받침판 + 칼날 + 손잡이)
   const sx=310;
-  if(!open){ctx.fillStyle=T.panel;ctx.fillRect(sx-22,yT-8,44,16);}
-  ctx.beginPath();ctx.arc(sx-20,yT,6,0,7);ctx.arc(sx+20,yT,6,0,7);ctx.fillStyle=T.ink;ctx.fill();
-  ctx.lineWidth=7;ctx.strokeStyle=T.ink;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-20,yT);
-  if(open)ctx.lineTo(sx+14,yT-26);else ctx.lineTo(sx+20,yT);ctx.stroke();ctx.lineCap='butt';
+  if(!open){ctx.fillStyle=T.panel;ctx.fillRect(sx-24,yT-9,48,18);}
+  rr(sx-34,yT+9,68,10,3);ctx.fillStyle=lg(0,yT+9,0,yT+19,[[0,P.motorL],[1,P.motorD]]);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.ink;ctx.stroke();
+  [-20,20].forEach(dx=>{ctx.beginPath();ctx.arc(sx+dx,yT,7,0,7);ctx.fillStyle=P.metal;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=T.ink;ctx.stroke();});
+  ctx.lineCap='round';ctx.lineWidth=8;ctx.strokeStyle=T.ink;ctx.beginPath();ctx.moveTo(sx-20,yT);
+  const ex=open?sx+20:sx+14,ey=open?yT:yT-26;ctx.lineTo(ex,ey);ctx.stroke();
+  ctx.lineWidth=4;ctx.strokeStyle=P.metal;ctx.beginPath();ctx.moveTo(sx-20,yT);ctx.lineTo(ex,ey);ctx.stroke();ctx.lineCap='butt';
+  ctx.beginPath();ctx.arc(ex,ey,8,0,7);ctx.fillStyle=open?'#16a34a':T.warn;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=T.ink;ctx.stroke();
   tx(open?'스위치 닫힘 (ON)':'스위치 열림 (OFF)',sx,yT+44,24,open?T.accent:T.warn,'center',900);
   if(!open)tx('전압이 모두 스위치에',sx,yT+70,20,T.warn,'center',800);
   dots(BC.segs,'circuit');
-  // 전지
-  BC.cells.forEach((c,i)=>{
-    const x=c.x-c.w/2,h=c.y1-c.y0;
-    rr(x,c.y0,c.w,h,8);ctx.fillStyle=T.cell;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=T.ink;ctx.stroke();
-    if(c.y0===yT){ctx.fillStyle=T.charge;ctx.fillRect(c.x-9,c.y0-10,18,10);}
-    tx('+',c.x,c.y0+22,26,'#fff','center',900);tx('−',c.x,c.y1-18,28,'#fff','center',900);
-    tx('1.5V',c.x,(c.y0+c.y1)/2,c.w>52?24:20,'#fff','center',900);
+  // 전지 (원통 그라데이션 + 은색 + 캡, 아래쪽 분홍 띠)
+  BC.cells.forEach(c=>{
+    const x=c.x-c.w/2,w=c.w,y0=c.y0,y1=c.y1,h=y1-y0;
+    rr(x,y0+4,w,h-4,11);ctx.fillStyle=lg(x,0,x+w,0,[[0,P.cellD],[.25,P.cellL],[.58,P.cellM],[1,P.cellD]]);ctx.fill();
+    ctx.save();rr(x,y0+4,w,h-4,11);ctx.clip();ctx.fillStyle=lg(x,0,x+w,0,[[0,'#c0689f'],[.3,P.band],[.6,'#e58bbd'],[1,'#b45a93']]);ctx.fillRect(x,y1-30,w,30);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(x+w*0.14,y0+10,5,h-24);ctx.restore();
+    rr(x,y0+4,w,h-4,11);ctx.lineWidth=4;ctx.strokeStyle=T.ink;ctx.stroke();
+    ctx.lineWidth=4;ctx.strokeStyle='rgba(8,51,68,.55)';ctx.beginPath();ctx.moveTo(x+3,y1-30);ctx.lineTo(x+w-3,y1-30);ctx.stroke();
+    ctx.lineJoin='round';ctx.lineWidth=3.5;ctx.strokeStyle='#083344';ctx.fillStyle='#fff';
+    const fs=c.w>52?19:15;ctx.font=`900 ${fs}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeText('1.5V',c.x,(y0+y1)/2-8);ctx.fillText('1.5V',c.x,(y0+y1)/2-8);
+    tx('+',c.x,y0+26,26,'#083344','center',900);tx('−',c.x,y1-14,30,'#fff','center',900);
   });
+  BC.cells.forEach(c=>{metalRR(c.x-c.w*0.2,c.y0-6,c.w*0.4,12,3,P);}); // + 단자 캡(직렬 연결 접점)
   const bat=MODES[state.mode].bat;
   tx(bat==='single'?'전지 1개':bat==='series'?'전지 2개 · 직렬':'전지 2개 · 병렬',8,676,22,T.sub,'left');
   tx('+'+fv(PH.V)+'V',150,yT-16,24,T.charge,'left',900);
   tx('0V (기준)',150,626,22,T.sub,'left');
+  // 전류 화살표 (굵기·크기 ∝ 전류의 세기)
+  if(open&&PH.I>0.001){
+    const k=PH.I/0.5,lw=3+4*k,hs=7+5*k,ax=236,ay=yT-24,al=54;
+    ctx.strokeStyle='#ef4444';ctx.fillStyle='#ef4444';ctx.lineWidth=lw;ctx.lineCap='butt';
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+al-hs,ay);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax+al,ay);ctx.lineTo(ax+al-hs*1.6,ay-hs);ctx.lineTo(ax+al-hs*1.6,ay+hs);ctx.closePath();ctx.fill();
+    tx('전류',ax+al/2,ay-28,21,'#ef4444','center',900);
+  }
   pill(`전류계 ① ${fa(PH.I)} A`,420,yT-36,22,T.charge);
   pill(`전류계 ② ${fa(PH.I)} A`,390,634,22,T.charge);
   BC.loads.forEach((L,i)=>{
@@ -2824,7 +2972,7 @@ function update(dt){
   const fac=state.speed*(state.slow?0.25:1);
   state.t+=dt*fac;
   for(const B of [BW,BC])for(const sg of B.segs)sg.ph=(sg.ph+cur[sg.k]/I0*110*fac*dt)%26;
-  for(let i=0;i<2;i++)state.ang[i]+=cur.bulb/I0*6*fac*dt;
+  for(let i=0;i<2;i++){state.ang[i]+=cur.bulb/I0*6*fac*dt;state.pang[i]+=cur.tot/I0*5*fac*dt;}
 }
 let last=performance.now(),hudT=0;
 function frame(now){
