@@ -979,6 +979,17 @@ $("edDelete").onclick=()=>{
 
 /* ===================== 시작 ===================== */
 renderHome();
+/* DEEPLINK_1017 : 마인드맵.html?g=중2&u=전기와 자기&s=2차시 (차시) / g,u 만 (대단원 지도) → 그 마인드맵으로 바로 시작 */
+(function(){try{
+  var p=new URLSearchParams(location.search), g=p.get("g"), u=p.get("u"); if(!g||!u||p.has("q")) return;
+  var un=DATA.units.find(function(x){return x.grade===g&&x.unit===u;}); if(!un) return;
+  var s=p.get("s"), L=null;
+  if(s){ var n=parseInt(s,10); L=un.lessons.find(function(l){return l.no===s||l.id===s||(n>0&&l.no===n+"차시");})||null; }
+  curGrade=g; curUnit=DATA.units.filter(function(x){return x.grade===g;}).indexOf(un); if(curUnit<0) curUnit=0;
+  try{ saveNav(); }catch(e){}
+  renderHome();
+  startGame(L||buildUnitMap(un));
+}catch(e){}})();
 </script>
 
 

@@ -760,7 +760,7 @@ document.addEventListener("keydown",function(e){
 <script id="kjs-menu-adapter">
 (function(){
 
-var items = [];
+var items = [];window.__kjsItems = items;
 DATA.units.forEach(function(u){ u.sets.forEach(function(s){
   items.push({ id: u.g + "|" + u.u + "|" + (s.label || s.id), grade: u.g, unit: u.u, title: s.label || (s.id + "차시 · " + s.title),
     short: s.label ? s.label.split(" · ")[0] : s.id + "차시", sub: "문제 " + s.qs.length + "개", mid: s.mid, kind: s.kind,
@@ -770,6 +770,22 @@ KJSMenu.init({ key: "goldenbell", items: items, mount: document.getElementById("
   mode: "start", onPick: function(x){ start(x.ref[0], x.ref[1]); } });
 
 })();
+</script>
+
+<script id="deeplink-gb">
+/* DEEPLINK_1017 : 골든벨.html?g=중2&u=전기와 자기&s=c2 (차시) / &m=① 전기 (중단원) / g,u 만 (대단원) → 그 세트로 바로 시작 */
+(function(){try{
+  var p=new URLSearchParams(location.search), g=p.get("g"), u=p.get("u"); if(!g||!u||p.has("q")) return;
+  var un=DATA.units.filter(function(x){return x.g===g&&x.u===u;})[0]; if(!un) return;
+  var s=p.get("s"), m=p.get("m"), set=null;
+  if(s) set=un.sets.filter(function(x){return String(x.id)===s&&x.kind!=="unit"&&x.kind!=="mid";})[0];
+  if(!set&&m) set=un.sets.filter(function(x){return x.kind==="mid"&&x.mid===m;})[0];
+  if(!set) set=un.sets.filter(function(x){return x.kind==="unit";})[0];
+  if(!set) return;
+  try{ var it=(window.__kjsItems||[]).filter(function(x){return x.ref&&x.ref[0]===set;})[0];
+       if(it&&window.KJSMenu) KJSMenu._current={q:it.q,grade:it.grade,unit:it.unit||"",title:it.title}; }catch(e){}
+  start(set,un);
+}catch(e){}})();
 </script>
 <script>
 document.getElementById('kjsHome').addEventListener('click', function(){

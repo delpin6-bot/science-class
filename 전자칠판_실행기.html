@@ -2429,7 +2429,7 @@ $('#sTitle').textContent=T;document.title='전자칠판 · '+T;
 /* 안전: 같은 폴더(또는 바로 아래 한 단계 폴더)의 html 파일만 허용 */
 const okFile=/^(?:[^\/\\:?#.][^\/\\:?#]*\/)?[^\/\\:?#]+\.html?$/i.test(F);
 if(!okFile){$('#sTitle').textContent='실행할 실험을 찾지 못했어요';$('#goFs').style.display='none';$('#goNo').style.display='none';}
-else{ const FQ=(()=>{const p=new URLSearchParams(qs.get('fq')||'');return ['g','u','teams'].filter(k=>p.has(k)).map(k=>k+'='+encodeURIComponent(p.get(k).slice(0,40))).join('&');})(); $('#frame').src='./'+encodeURI(F)+(IMM?'?imm=1'+(FQ?'&'+FQ:''):''); }
+else{ const FQ=(()=>{const p=new URLSearchParams(qs.get('fq')||'');return ['g','u','s','m','go','teams'].filter(k=>p.has(k)).map(k=>k+'='+encodeURIComponent(p.get(k).slice(0,60))).join('&'); /* DEEPLINK_1017: 차시(s)·중단원(m) 전달 */})(); $('#frame').src='./'+encodeURI(F)+(IMM?'?imm=1'+(FQ?'&'+FQ:''):''); }
 if(IMM){zoom=autoFit();}
 try{const z=parseFloat(localStorage.getItem(ZKEY));if(z>=.6&&z<=ZMAX)zoom=z;}catch(e){}
 if(IMM){$('#bHome').href='./시작하기_수업게임서랍.html';$('#bHome').textContent='🎮 게임 서랍';$('#goBack').href='./시작하기_수업게임서랍.html';$('#goBack').textContent='🎮 게임 서랍으로 돌아가기';document.querySelector('#start .tag').textContent='🖥 몰입 모드 · 게임 화면 확대';}
@@ -2450,6 +2450,8 @@ $('#bFold').onclick=()=>{document.body.classList.add('folded');};$('#fold').oncl
 let idleT=0;function wake(){$('#dock').classList.remove('dim');clearTimeout(idleT);idleT=setTimeout(()=>$('#dock').classList.add('dim'),5000);}
 ['pointermove','pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,wake,{passive:true}));
 /* 홈 링크 : 같은 폴더의 서랍 */
+/* EMBED_1017 : 통합 서랍 안에서 열렸으면 서랍으로 돌아가는 버튼으로 바꾸고 시작 화면은 건너뜀 */
+if(window.parent!==window){['#bHome','#goBack'].forEach(function(s){var el=$(s);if(!el)return;el.textContent='↩ 통합 서랍';el.setAttribute('href','#');el.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();try{parent.postMessage({kjsViewerBack:1},'*');}catch(e){}},true);});$('#start').classList.add('hide');}
 $('#bHome').addEventListener('click',()=>{if(isFs()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}}});
 /* QR */
 const LSK='labQrBase';

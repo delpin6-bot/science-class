@@ -196,6 +196,10 @@
   .picker .sbtn{ text-align:left; border:1.5px solid var(--paper-line); background:var(--paper); color:var(--ink);
     border-radius:6px; padding:10px 12px; font:inherit; cursor:pointer; }
   .picker .sbtn:hover{ border-color:var(--membrane); }
+  .picker .sbtn{ position:relative; padding-right:74px; }
+  .picker .sbtn .sbqr{ position:absolute; top:8px; right:8px; min-height:30px; display:inline-flex; align-items:center; padding:0 9px; border-radius:9px; border:1.5px solid #38bdf8; background:#f0f9ff; color:#0369a1; font-size:12.5px; font-weight:800; cursor:pointer }
+  #pickbar .sbqr{ display:inline-flex; align-items:center; min-height:34px; padding:0 12px; border-radius:9px; border:1.5px solid #38bdf8; background:#f0f9ff; color:#0369a1; font-size:13px; font-weight:800; cursor:pointer; margin-left:6px }
+  html.qr-lock .picker #gchips, html.qr-lock .picker #picklist, html.qr-lock #pickbar .gchip, html.qr-lock #pickbar .sbqr, html.qr-lock #editorPanel, html.qr-lock .header-actions a, html.qr-lock #kjsQrBtn { display:none !important; }
   .picker .sbtn b{ display:block; font-size:14px; }
   .picker .sbtn span{ font-size:12px; color:var(--ink-soft); }
   #pickbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:14px; }
@@ -896,6 +900,7 @@ header.unified-game-header .game-title {
   const GRADES = []; SETS.forEach(u => { if(GRADES.indexOf(u.grade) < 0) GRADES.push(u.grade); });
   let curGrade = GRADES[1] || GRADES[0];
 
+  function hc(str){ let h = 2166136261; for(let i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
   function loadSet(set, unit){
     questions = set.q.map(p => [p[0], p[1]]);
     pool = [];
@@ -912,7 +917,9 @@ header.unified-game-header .game-title {
       ' (개념 ' + set.q.length + '개)</span>';
     const ch = document.createElement('button');
     ch.className = 'gchip'; ch.textContent = '다른 차시 고르기';
+    window.__kjsCurrent = { q: hc(unit.grade + '|' + unit.unit + '|' + set.t), title: set.t, grade: unit.grade, unit: unit.unit }; /* QRFIX_1017 */
     ch.onclick = () => {
+      window.__kjsCurrent = null;
       bar.classList.add('hidden');
       document.getElementById('gchips').classList.remove('hidden');
       document.getElementById('picklist').classList.remove('hidden');
@@ -921,6 +928,9 @@ header.unified-game-header .game-title {
       document.querySelector('.picker').scrollIntoView({behavior:'smooth', block:'start'});
     };
     bar.appendChild(ch);
+    { const qb = document.createElement('span'); qb.className = 'sbqr'; qb.textContent = '📱 이 차시 QR'; qb.setAttribute('role','button');
+      qb.onclick = () => { if (window.kjsLessonQr) window.kjsLessonQr({ q: window.__kjsCurrent.q, title: set.t, sub: unit.grade + ' · ' + unit.unit }); };
+      bar.appendChild(qb); }
     showLevelSelect();
     document.getElementById('board').scrollIntoView({behavior:'smooth', block:'center'});
   }
@@ -945,12 +955,23 @@ header.unified-game-header .game-title {
         b.className = 'sbtn';
         b.innerHTML = '<b>' + s.t + '</b><span>개념 ' + s.q.length + '개</span>';
         b.onclick = () => loadSet(s, u);
+        { const qb = document.createElement('span'); qb.className = 'sbqr'; qb.textContent = '📱 QR'; qb.setAttribute('role','button'); qb.title = '이 차시 학생용 QR (스캔하면 바로 시작)';
+          qb.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); if (window.kjsLessonQr) window.kjsLessonQr({ q: hc(u.grade + '|' + u.unit + '|' + s.t), title: s.t, sub: u.grade + ' · ' + u.unit }); };
+          b.appendChild(qb); }
         grid.appendChild(b);
       });
       box.appendChild(grid);
     });
   }
   renderPicker();
+  /* QR 딥링크: ?q=차시코드 → 그 차시를 바로 열어 레벨 선택(시작 버튼 한 번) */
+  try {
+    const sp = new URLSearchParams(location.search), qq = sp.get('q');
+    if(qq){ outer: for(const u of SETS){ for(const s of u.sets){ if(hc(u.grade + '|' + u.unit + '|' + s.t) === qq){
+      curGrade = u.grade; renderPicker(); loadSet(s, u);
+      if(sp.get('qr') === '1') document.documentElement.classList.add('qr-lock');
+      break outer; } } } }
+  } catch(e){}
 
   // Toolbar & Options
   document.querySelectorAll('[data-speed]').forEach(btn => {
@@ -1060,7 +1081,7 @@ document.getElementById('kjsHome').addEventListener('click', function(){
 (function(){
 'use strict';
 if(window.__kjsKit)return;window.__kjsKit=1;
-var CFG={"name": "개념 격추 · 스피디", "play": "!V('#startScreen')&&!V('#overScreen')&&!V('#clearScreen')&&!V('#pauseScreen')", "hide": [".title-block .badge", ".title-block p", ".header-actions", "#picker", "#editorPanel", ".kjs-seg", "#kjsImmBtn"], "qrHost": [".header-actions"]};
+var CFG={"lessonQr": true, "name": "개념 격추 · 스피디", "play": "!V('#startScreen')&&!V('#overScreen')&&!V('#clearScreen')&&!V('#pauseScreen')", "hide": [".title-block .badge", ".title-block p", ".header-actions", "#picker", "#editorPanel", ".kjs-seg", "#kjsImmBtn"], "qrHost": [".header-actions"]};
 var D=document,H=D.documentElement,MIN=CFG.min||.6;
 var FILE='';try{FILE=decodeURIComponent((location.pathname.split('/').pop()||'').replace(/\+/g,' '));}catch(e){FILE=location.pathname.split('/').pop()||'';}
 var DEF_HIDE=['a[href*="서랍"]','.kjs-seg','.dh-seg','.dh-menu','#dhTools','#dhToolsBtn','#kjsImmBtn','.btn-hub-main','.btn-hub-sim','.btn-hub-game','.btn-hub-mod'];
@@ -1109,7 +1130,7 @@ var pend=0;function schedule(ms){clearTimeout(pend);pend=setTimeout(update,ms||2
 function update(){
   var p=isPlay();H.classList.toggle('kjs-playing',p);if(D.body)D.body.classList.toggle('kjs-playing',p);
   if(!p&&H.classList.contains('kjs-menu'))H.classList.remove('kjs-menu');
-  ensureMenuBtn();if(menuBtn)menuBtn.classList.toggle('on',p&&(hasHidden()||CFG.collapse));
+  ensureMenuBtn();refreshQr();if(menuBtn)menuBtn.classList.toggle('on',p&&(hasHidden()||CFG.collapse));
   lastPlay=p;
   if(p)refit();else setZ(1);
   lastProbe=Date.now();
@@ -1133,11 +1154,11 @@ function normUrl(u){try{var x=new URL(String(u).trim());return /^https?:$/.test(
 function targetUrl(){
   if(/^https?:$/.test(location.protocol)){var u=location.href.split('#')[0].split('?')[0];return u;}
   var b=lsGet(LSK);if(!b)return '';try{return new URL('./'+encodeURI(FILE),b).href;}catch(e){return '';}}
-var qrLesson=null;
+var qrLesson=null;var qrBtn=null;function refreshQr(){if(qrBtn){if(curLesson())qrBtn.style.removeProperty('display');else qrBtn.style.setProperty('display','none','important');}} /* QRFIX_1017 */
 function fnv(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h.toString(36);}
 function baseUrl(){return /^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(LSK);}
 function lessonUrl(x){var b=baseUrl();if(!b||!x||!x.q)return '';try{return new URL('./go.html?f='+fnv(FILE)+'&q='+x.q+'&qr=1',b).href;}catch(e){return '';}}
-function curLesson(){if(!CFG.lessonQr)return null;var m=window.KJSMenu;return (m&&m._current&&m._current.q)?m._current:null;}
+function curLesson(){if(!CFG.lessonQr)return null;var m=window.KJSMenu;if(m&&m._current&&m._current.q)return m._current;var c=window.__kjsCurrent;return (c&&c.q)?c:null;}
 var ov=null;
 function paint(url){
   var c=ov.querySelector('canvas'),q=c.getContext('2d');ov.querySelector('.er').textContent='';
@@ -1164,7 +1185,7 @@ window.kjsOpenQr=function(){openQr(curLesson());};window.kjsLessonQr=function(x)
 function mountQr(){
   if(CFG.noqr||D.getElementById('kjsQrBtn')||!D.body)return;
   var host=null;(CFG.qrHost||['.header-actions','.unified-nav-actions']).some(function(s){host=D.querySelector(s);return !!host;});
-  var b=D.createElement('button');b.id='kjsQrBtn';b.type='button';b.textContent='📱 QR';b.title='학생 접속 QR코드 (이 게임)';
+  var b=D.createElement('button');b.id='kjsQrBtn';b.type='button';b.textContent='📱 이 차시 QR';b.title='지금 고른 차시로 바로 시작하는 학생용 QR';qrBtn=b;b.style.setProperty('display','none','important');
   if(host){var sib=host.querySelector('button');b.className=(sib?sib.className:'')+' kjs-in';host.insertBefore(b,host.firstChild);b.style.cssText+=';min-height:44px;cursor:pointer';}
   else{b.className='kjs-float';D.body.appendChild(b);}
   b.onclick=function(){openQr(curLesson());};
