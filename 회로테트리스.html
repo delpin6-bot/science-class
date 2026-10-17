@@ -225,6 +225,50 @@ header.unified-game-header .game-title {
   color: #0f172a !important;
 }
 </style>
+<style id="ctBig">
+/* CTBIG_1017 : 큰 화면(아이패드·노트북·전자칠판)용 크기·배치 */
+.wrap{ max-width:min(1500px,100%); }
+.gamearea{ justify-content:center; gap:calc(var(--u,24px)*.6); }
+.sidebar{ width:max(84px,calc(var(--u,24px)*var(--sf,4.4))); gap:calc(var(--u,24px)*.35); }
+.nextbox{ padding:calc(var(--u,24px)*.3); }
+.nextbox .lab{ font-size:max(11px,calc(var(--u,24px)*.4)); }
+.legendbox{ font-size:max(11px,calc(var(--u,24px)*.38)); line-height:1.85; padding:calc(var(--u,24px)*.3); }
+.legendbox i{ width:max(10px,calc(var(--u,24px)*.34))!important; height:max(10px,calc(var(--u,24px)*.34))!important; }
+.msg{ font-size:max(14px,calc(var(--u,24px)*.5)); padding:calc(var(--u,24px)*.3) calc(var(--u,24px)*.6); }
+.start-screen h2,.over-screen h2,.pause-screen h2{ font-size:max(21px,calc(var(--u,24px)*.8)); }
+.start-screen p{ font-size:max(12px,calc(var(--u,24px)*.42)); max-width:none; }
+.start-screen button,.pause-screen button{ font-size:max(14px,calc(var(--u,24px)*.5)); padding:.6em 1.4em; }
+.over-screen .final{ font-size:max(34px,calc(var(--u,24px)*1.4)); }
+.over-screen .stats b{ font-size:max(17px,calc(var(--u,24px)*.6)); }
+.over-screen .stats span{ font-size:max(10.5px,calc(var(--u,24px)*.36)); }
+.over-screen .rowbtn button{ font-size:max(13.5px,calc(var(--u,24px)*.45)); padding:.7em 1.2em; }
+#scoreBoxCT{ width:min(94%,max(260px,calc(var(--u,24px)*9)))!important; }
+.ctrlbar button{ padding:calc(var(--u,24px)*.5) 0; font-size:max(19px,calc(var(--u,24px)*.7)); }
+.hint{ font-size:max(12px,calc(var(--u,24px)*.4)); }
+.backbtn{ font-size:max(13px,calc(var(--u,24px)*.42)); }
+#diffLabel{ font-size:max(12.5px,calc(var(--u,24px)*.42))!important; }
+/* 플레이 중에는 머리글을 작게 해서 보드에 공간을 줘요 */
+body.ct-play header{ padding-bottom:8px; margin-bottom:8px; }
+body.ct-play header p{ display:none; }
+body.ct-play h1{ font-size:clamp(18px,2.4vw,24px); margin:0; }
+body.ct-play .wrap{ padding-top:10px; padding-bottom:14px; }
+/* 노트북·가로 화면: 조작 버튼을 오른쪽 옆줄로 */
+body.ct-wide .sidebar .ctrlbar{ grid-template-columns:repeat(3,1fr); margin-top:calc(var(--u,24px)*.2); gap:calc(var(--u,24px)*.2); }
+body.ct-wide .sidebar .ctrlbar button{ padding:calc(var(--u,24px)*.45) 0; }
+body.ct-wide .hint{ margin-top:6px; }
+/* 시작 화면(난이도 고르기)도 큰 화면에서 읽기 편하게 */
+@media (min-width:900px){
+  .picker{ max-width:1000px; margin:0 auto; padding:28px 34px; }
+  .picker h2{ font-size:28px; }
+  .picker .badge{ font-size:15px; padding:4px 14px; }
+  .howto{ font-size:17px; line-height:1.85; padding:18px 22px; }
+  .legend span{ font-size:16px; } .legend i{ width:26px; height:26px; line-height:26px; font-size:14px; }
+  .diff button{ padding:18px 10px; } .diff button b{ font-size:21px; } .diff button span{ font-size:15px; }
+  .startbtn{ font-size:22px; padding:20px; }
+  h1{ font-size:clamp(26px,3vw,36px); } header p{ font-size:15px; }
+  .hud b{ font-size:22px; } .hud span{ font-size:12px; } .hud div{ min-width:76px; }
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -299,7 +343,7 @@ header.unified-game-header .game-title {
         </div>
       </div>
     </div>
-    <div class="ctrlbar">
+    <div class="ctrlbar" id="ctrlbar">
       <button id="btnLeft" aria-label="왼쪽">◀</button>
       <button id="btnRotate" aria-label="회전">⟳</button>
       <button id="btnRight" aria-label="오른쪽">▶</button>
@@ -409,14 +453,42 @@ function startMission(diffKey){
   }, 700);
 }
 
-function sizeBoard(){
-  const avail = Math.min(340, window.innerWidth - (window.innerWidth < 560 ? 130 : 190));
-  cellPx = Math.max(18, Math.min(28, Math.floor(avail / COLS)));
+/* CTBIG_1017 : 화면(스마트폰·아이패드·노트북·전자칠판)에 맞춰 보드를 크게 — 가로폭과 세로 높이에 맞는 가장 큰 칸 크기를 찾는다 */
+function applyPx(px){
+  cellPx = px;
+  document.documentElement.style.setProperty("--u", px + "px");
+  document.documentElement.style.setProperty("--sf", window.innerWidth < 700 ? "3.3" : "4.4");
   const w = $("boardWrap");
-  w.style.width = (cellPx * COLS) + "px";
-  w.style.height = (cellPx * ROWS) + "px";
+  w.style.width = (px * COLS) + "px";
+  w.style.height = (px * ROWS) + "px";
 }
-window.addEventListener("resize", () => { if(CT && !CT.over){ sizeBoard(); renderBoard(); } });
+function sizeBoard(){
+  const W = window.innerWidth, Hh = window.innerHeight;
+  const wide = W >= 900 && W > Hh * 1.05;           /* 노트북·가로 아이패드·전자칠판 */
+  const ctrl = $("ctrlbar"), side = document.querySelector(".sidebar"), stage = $("stage");
+  if(wide){ if(ctrl.parentNode !== side) side.appendChild(ctrl); }
+  else if(ctrl.parentNode === side){ stage.insertBefore(ctrl, document.querySelector(".hint")); }
+  document.body.classList.toggle("ct-wide", wide);
+  const usableW = Math.min(W, 1500) - (W < 560 ? 28 : 64);
+  let px = Math.floor((usableW - 24) / (COLS + (W < 700 ? 3.3 : 4.4)));
+  px = Math.max(18, Math.min(px, W < 700 ? 30 : 72));
+  if(W >= 700){                                      /* 태블릿·노트북: 한 화면에 다 들어오도록 높이도 맞춤 */
+    const wrap = document.querySelector(".wrap");
+    for(; px > 20; px -= 1){ applyPx(px); if(wrap.getBoundingClientRect().bottom <= Hh - 4) break; }
+  }
+  applyPx(px);
+}
+let _refitT = null;
+function refit(){
+  if(!CT) return;
+  clearTimeout(_refitT);
+  _refitT = setTimeout(() => { const old = cellPx; sizeBoard(); if(cellPx !== old){ buildCells(); renderBoard(); renderNext(); } }, 60);
+}
+window.addEventListener("resize", refit);
+window.addEventListener("orientationchange", refit);
+new MutationObserver(refit).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });  /* 게임 공통 도구가 머리글을 숨기면 다시 맞춤 */
+new MutationObserver(() => document.body.classList.toggle("ct-play", !$("stage").classList.contains("hidden")))
+  .observe($("stage"), { attributes: true, attributeFilter: ["class"] });
 
 let cellEls = [];
 function buildCells(){
@@ -430,7 +502,7 @@ function buildCells(){
       el.className = "cell empty";
       el.style.width = cellPx + "px"; el.style.height = cellPx + "px";
       el.style.left = (c * cellPx) + "px"; el.style.top = (r * cellPx) + "px";
-      el.style.fontSize = Math.round(cellPx * 0.55) + "px";
+      el.style.fontSize = Math.round(cellPx * 0.58) + "px";
       el.dataset.r = r; el.dataset.c = c;
       el.addEventListener("click", () => onCellClick(r, c));
       w.appendChild(el);
@@ -458,13 +530,14 @@ function renderNext(){
   box.innerHTML = "";
   const p = CT.next, cells = SHAPES[p.key][0];
   const minR = Math.min(...cells.map(x => x[0])), minC = Math.min(...cells.map(x => x[1]));
-  const sz = 20;
+  const sz = Math.max(20, Math.round(cellPx * 0.8));
+  box.style.width = (sz * 4 + 12) + "px"; box.style.height = (sz * 2 + 12) + "px";
   cells.forEach(([r, c], i) => {
     const el = document.createElement("div");
     el.className = "cell " + p.types[i];
     el.style.position = "absolute"; el.style.width = sz + "px"; el.style.height = sz + "px";
     el.style.left = ((c - minC) * sz + 6) + "px"; el.style.top = ((r - minR) * sz + 6) + "px";
-    el.style.fontSize = "11px";
+    el.style.fontSize = Math.round(sz * 0.55) + "px";
     el.textContent = glyph(p.types[i]);
     box.appendChild(el);
   });
