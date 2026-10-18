@@ -311,20 +311,95 @@ function sorterHTML(id,title,bins){return `<div class="card" id="${id}"><div cla
 let T0=25,Td0=17,h=0,run1=false,base=0,rows=[];
 const pT=z=>{const b=(T0-Td0)/8;return z<=b?T0-10*z:T0-10*b-5*(z-b)},dT=z=>{const b=(T0-Td0)/8;return z<=b?Td0-2*z:pT(z)};
 function step1(dt){if(run1){h=Math.min(4,h+dt*.5);base=(T0-Td0)/8;if(h>=4){run1=false;rows.push([T0,Td0,base]);$('#tb1').innerHTML=rows.slice(-5).map(r=>`<tr><td>${r[0]} ℃</td><td>${r[1]} ℃</td><td class="hl">약 ${(r[2]*1000).toFixed(0)} m</td></tr>`).join('');sOK();$('#s1').className='say ok';$('#s1').textContent='✅ 약 '+(base*1000).toFixed(0)+' m에서 기온이 이슬점에 도달해 구름이 생겼어요! 기온과 이슬점의 차이가 클수록 구름이 높은 곳에서 생겨요.';hud();if(rows.length>=2&&!LAB._c1){LAB._c1=1;say('구름 생성 원리 이해 🎉',3000);confetti(['☁️','🎈'])}}}}
-function draw1(){const{g}=view($('#c1'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='#e0f2fe';g.fillRect(0,0,400,LH);g.fillStyle='#86efac';g.fillRect(0,400,400,40);const Y=z=>400-z/4*360,b=(T0-Td0)/8;
- if(h>b){g.fillStyle='rgba(255,255,255,.9)';for(let i=0;i<5;i++){g.beginPath();g.arc(120+i*40,Y(b)-10-Math.sin(i)*8,28,0,6.3);g.fill()}}g.strokeStyle='#94a3b8';g.setLineDash([6,6]);g.lineWidth=2;g.beginPath();g.moveTo(0,Y(b));g.lineTo(400,Y(b));g.stroke();g.setLineDash([]);g.fillStyle='#475569';g.font='900 16px sans-serif';g.textAlign='left';g.fillText('구름 밑면(응결 고도) ≈ '+(b*1000).toFixed(0)+' m',10,Y(b)-6);
- const r=26+h*8;g.fillStyle=h>b?'rgba(255,255,255,.95)':'rgba(251,146,60,.55)';g.strokeStyle='#334155';g.lineWidth=2;g.beginPath();g.arc(200,Y(h)-r/2,r,0,6.3);g.fill();g.stroke();g.fillStyle='#0f172a';g.font='900 16px sans-serif';g.textAlign='center';g.fillText(pT(h).toFixed(1)+'℃',200,Y(h)-r/2+5);
- const X0=460,W=310,X=T=>X0+(T+15)/50*W;g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.moveTo(X0,30);g.lineTo(X0,400);g.lineTo(X0+W,400);g.stroke();g.font='900 14px sans-serif';g.fillStyle='#0f172a';g.textAlign='right';[0,1,2,3,4].forEach(z=>g.fillText(z+'km',X0-4,Y(z)+5));g.textAlign='center';[-10,0,10,20,30].forEach(T=>g.fillText(T,X(T),418));
- [[pT,'#dc2626','기온'],[dT,'#2563eb','이슬점']].forEach(([f,c,n])=>{g.strokeStyle=c;g.lineWidth=4;g.beginPath();for(let z=0;z<=h+1e-9;z+=.05){const x=X(f(z)),y=Y(z);z?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();g.fillStyle=c;g.textAlign='left';g.fillText(n,X(f(Math.min(h,b)))+6,Y(Math.min(h,b))+(c==='#2563eb'?16:-6))});$('#tg1').textContent='높이 '+(h*1000).toFixed(0)+' m · 공기 '+pT(h).toFixed(1)+' ℃';g.restore()}
 // tab2
 let smoke=false,PR=0,T2=20,cloud=0,f2={s:0,n:0},opened=false;
 function step2(dt){if(opened){cloud=Math.max(0,cloud-dt*.15)}T2+=(20-T2)*dt*.08;$('#t2').textContent=T2.toFixed(1)+' ℃';bar("bp",PR*10)}
-function draw2(){const{g}=view($('#c2'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='rgba(191,219,254,.35)';rr(g,300,90,200,310,40);g.fill();g.strokeStyle='#64748b';g.lineWidth=5;g.stroke();g.fillStyle='#93c5fd';g.fillRect(310,370,180,24);
- if(smoke){g.fillStyle='rgba(148,163,184,.35)';for(let i=0;i<20;i++){g.beginPath();g.arc(320+(i*37)%160,150+(i*53)%200,6,0,6.3);g.fill()}}
- if(cloud>0){g.fillStyle=`rgba(255,255,255,${cloud})`;rr(g,305,95,190,280,36);g.fill();g.fillStyle=`rgba(203,213,225,${cloud*.7})`;for(let i=0;i<12;i++){g.beginPath();g.arc(330+(i*29)%150,140+(i*47)%200,22,0,6.3);g.fill()}}
- if(!opened){g.fillStyle='#ef4444';g.fillRect(370,60,60,34)}else{g.fillStyle='#ef4444';g.save();g.translate(470,40);g.rotate(.6);g.fillRect(0,0,60,34);g.restore()}
- g.fillStyle='#475569';g.fillRect(560,200,24,180);g.fillRect(540,190,64,14);g.strokeStyle='#475569';g.lineWidth=4;g.beginPath();g.moveTo(560,330);g.quadraticCurveTo(520,300,430,80);g.stroke();
- g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.textAlign='center';g.fillText(cloud>.3?'☁️ 뿌옇게 흐려졌어요!':opened?'투명해요':'',400,430);$('#tg2').textContent=smoke?'물 + 향 연기(응결핵)':'물만 조금';g.restore()}
+/* GFX_CL1018 */
+/* ---------- GFX_CL1018 : 구름의 생성 그래픽 리뉴얼 (상승 공기 덩어리의 팽창·냉각, 분자 확대, 페트병 구름) ---------- */
+function cBig(g,x1,y1,x2,y2,w,c1,c2,ol){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<8)return;const ux=dx/L,uy=dy/L,nx=-uy,ny=ux,hh=Math.min(L*.45,w*1.6),hw=w*1.15,sx=x2-ux*hh,sy=y2-uy*hh;g.save();g.beginPath();g.moveTo(x1+nx*w/2,y1+ny*w/2);g.lineTo(sx+nx*w/2,sy+ny*w/2);g.lineTo(sx+nx*hw,sy+ny*hw);g.lineTo(x2,y2);g.lineTo(sx-nx*hw,sy-ny*hw);g.lineTo(sx-nx*w/2,sy-ny*w/2);g.lineTo(x1-nx*w/2,y1-ny*w/2);g.closePath();const gr=g.createLinearGradient(x1,y1,x2,y2);gr.addColorStop(0,c1);gr.addColorStop(1,c2);g.fillStyle=gr;g.fill();g.strokeStyle=ol||'rgba(255,255,255,.75)';g.lineWidth=2.4;g.lineJoin='round';g.stroke();g.restore()}
+function cPill(g,txt,x,y,bg,fg,fs,al){g.save();g.font='900 '+(fs||15)+'px sans-serif';const w=g.measureText(txt).width+18;const px=al==='l'?x:al==='r'?x-w:x-w/2;rr(g,px,y-13,w,26,13);g.fillStyle=bg;g.fill();g.fillStyle=fg||'#fff';g.textAlign='left';g.textBaseline='middle';g.fillText(txt,px+9,y+1);g.restore();return w}
+function cSph(g,x,y,r,c0,c1,a){g.save();g.globalAlpha=a==null?1:a;const gr=g.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);gr.addColorStop(0,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,6.3);g.fill();g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=Math.max(.7,r*.14);g.stroke();g.restore()}
+function cPuff(g,x,y,r,a,dark){const gr=g.createRadialGradient(x-r*.25,y-r*.35,1,x,y,r);gr.addColorStop(0,'rgba(255,255,255,'+a+')');gr.addColorStop(.62,dark?'rgba(205,214,228,'+a*.92+')':'rgba(236,242,250,'+a*.92+')');gr.addColorStop(1,'rgba(205,214,228,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,6.3);g.fill()}
+function cSky(g,t,b){const s=g.createLinearGradient(0,0,0,LH);s.addColorStop(0,t);s.addColorStop(1,b);g.fillStyle=s;g.fillRect(0,0,LW,LH)}
+function cGround(g,x0,x1){const gr=g.createLinearGradient(0,396,0,LH);gr.addColorStop(0,'#86efac');gr.addColorStop(.3,'#4ade80');gr.addColorStop(1,'#15803d');g.fillStyle=gr;g.beginPath();g.moveTo(x0,408);g.quadraticCurveTo((x0+x1)/2*.5+x0*.5,392,(x0+x1)/2,402);g.quadraticCurveTo((x0+x1)*.75,414,x1,398);g.lineTo(x1,LH);g.lineTo(x0,LH);g.closePath();g.fill();
+ g.fillStyle='#15803d';g.fillRect(x0+40,386,5,16);g.beginPath();g.arc(x0+42,380,13,0,6.3);g.fill();g.fillStyle='#fde68a';g.fillRect(x1-86,384,34,22);g.fillStyle='#dc2626';g.beginPath();g.moveTo(x1-92,385);g.lineTo(x1-69,368);g.lineTo(x1-46,385);g.closePath();g.fill()}
+function cMolecules(g,cx,cy,R,sp,t){// 확대 원 안의 분자 운동
+ g.save();g.beginPath();g.arc(cx,cy,R,0,6.3);g.clip();const gr=g.createRadialGradient(cx,cy,5,cx,cy,R);gr.addColorStop(0,'#e7f6c9');gr.addColorStop(1,'#b7de7a');g.fillStyle=gr;g.fillRect(cx-R,cy-R,2*R,2*R);
+ for(let i=0;i<7;i++){const a=i*1.7,b=i*2.3,w=1.1+(i%3)*.4;const f=k=>[cx+(R-12)*.9*Math.sin(a+w*(t-k*.05)*sp),cy+(R-12)*.9*Math.cos(b+(w+.3)*(t-k*.05)*sp)];for(let k=3;k>=1;k--){const q=f(k);g.fillStyle='rgba(168,85,247,'+(.12*(4-k)).toFixed(2)+')';g.beginPath();g.arc(q[0],q[1],4+k*.4,0,6.3);g.fill()}const p=f(0);cSph(g,p[0],p[1],5.5,'#e9d5ff','#7e22ce')}
+ g.restore();g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(cx,cy,R,0,6.3);g.stroke();g.strokeStyle='#4d7c0f';g.lineWidth=1.5;g.beginPath();g.arc(cx,cy,R+2,0,6.3);g.stroke()}
+function draw1(){const{g}=view($('#c1'),LW,LH);const t=performance.now()/1000;cSky(g,'#7cc4f2','#e6f4fd');
+ const Y=z=>400-z/4*360,b=(T0-Td0)/8,PX=262;
+ cGround(g,0,400);
+ // 높이별 층(따뜻함→차가움) 타원
+ [0.35,1.5,2.7].forEach((z,i)=>{const tc=[['251,146,60',.28],['167,139,250',.2],['96,165,250',.26]][i];g.fillStyle='rgba('+tc[0]+','+tc[1]+')';g.beginPath();g.ellipse(PX,Y(z),130,13,0,0,6.3);g.fill()});
+ // 구름 밑면 기준선
+ g.setLineDash([7,6]);g.strokeStyle='rgba(51,65,85,.7)';g.lineWidth=2;g.beginPath();g.moveTo(0,Y(b));g.lineTo(400,Y(b));g.stroke();g.setLineDash([]);
+ cPill(g,'구름 밑면(응결 고도) ≈ '+(b*1000).toFixed(0)+' m',394,Y(b)+14,'rgba(51,65,85,.88)','#fff',13,'r');
+ const r=24+h*5.5,cy=Y(h)-r*(1-h/4);
+ // 상승 기류 화살표
+ if(h<4)cBig(g,PX,Math.min(396,cy+r+60),PX,cy+r+6,26,'rgba(254,202,202,.1)',h>b?'rgba(147,197,253,.75)':'rgba(251,113,133,.8)');
+ // 구름(응결 후)
+ if(h>b){const top=Y(h)-r,bot=Y(b);const n=Math.round(10+(h-b)*8);for(let i=0;i<n;i++){const u=i/(n-1),yy=lerp(bot-14,top+10,((i*7)%n)/(n-1)),xx=PX+Math.sin(i*2.1)*(70+30*u)+Math.cos(i*1.3)*20,rr_=26+((i*5)%13)+(1-Math.abs(u-.5))*10;cPuff(g,xx,yy,rr_,.95,yy>bot-40)}}
+ // 공기 덩어리
+ const warm=h<=b;g.save();const pg=g.createRadialGradient(PX-r*.3,cy-r*.35,3,PX,cy,r);pg.addColorStop(0,warm?'rgba(255,237,213,.95)':'rgba(255,255,255,.98)');pg.addColorStop(1,warm?'rgba(251,146,60,.62)':'rgba(203,213,225,.85)');g.fillStyle=pg;g.beginPath();g.arc(PX,cy,r,0,6.3);g.fill();g.strokeStyle='#334155';g.lineWidth=2.5;g.stroke();g.restore();
+ // 덩어리 속 입자: 수증기(점) → 응결 후 물방울(구슬)
+ for(let i=0;i<14;i++){const a=i*2.4+t*.3,rad=r*.68*Math.sqrt(((i*37)%100)/100);const x=PX+Math.cos(a+i)*rad,y=cy+Math.sin(a*1.3+i)*rad;if(warm){g.fillStyle='rgba(56,189,248,.9)';g.beginPath();g.arc(x,y,2.2,0,6.3);g.fill()}else cSph(g,x,y,3.4,'#e0f2fe','#0284c7')}
+ g.font='900 15px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=4;g.strokeStyle='rgba(255,255,255,.9)';g.strokeText(pT(h).toFixed(1)+'℃',PX,cy+r+14);g.fillStyle='#0f172a';g.fillText(pT(h).toFixed(1)+'℃',PX,cy+r+14);
+ // 분자 확대
+ const sp=Math.sqrt((pT(h)+273)/298);g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=2;g.setLineDash([4,4]);g.beginPath();g.moveTo(PX-r*.72,cy-r*.72);g.lineTo(104,112);g.stroke();g.setLineDash([]);cMolecules(g,66,80,42,sp*1.6,t);cPill(g,'분자 운동 '+(sp>.97?'활발':'둔해짐'),66,134,'rgba(88,28,135,.9)','#fff',12);
+ // 단계 표지
+ [[0,'① 상승 시작',350],[.45,'② 기압↓ 팽창',312],[1.1,'③ 기온↓',274],[b,'④ 응결 → 구름',236]].forEach((st,i)=>{const on=h>=st[0]&&(i<3||h>b);cPill(g,st[1],10,st[2],on?(i===3?'rgba(2,132,199,.95)':'rgba(190,24,93,.92)'):'rgba(100,116,139,.55)','#fff',13,'l')});
+ // ---- 그래프 ----
+ const X0=470,W=300,X=T=>X0+(T+15)/50*W;g.save();rr(g,X0-52,14,W+68,414,14);g.fillStyle='rgba(255,255,255,.93)';g.fill();g.restore();
+ g.strokeStyle='rgba(51,65,85,.14)';g.lineWidth=1;[-10,0,10,20,30].forEach(T=>{g.beginPath();g.moveTo(X(T),30);g.lineTo(X(T),400);g.stroke()});[0,1,2,3,4].forEach(z=>{g.beginPath();g.moveTo(X0,Y(z));g.lineTo(X0+W,Y(z));g.stroke()});
+ g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.moveTo(X0,30);g.lineTo(X0,400);g.lineTo(X0+W,400);g.stroke();g.font='900 14px sans-serif';g.fillStyle='#0f172a';g.textAlign='right';[0,1,2,3,4].forEach(z=>g.fillText(z+'km',X0-4,Y(z)+5));g.textAlign='center';[-10,0,10,20,30].forEach(T=>g.fillText(T+'℃',X(T),418));
+ // 기온-이슬점 차이 영역
+ g.beginPath();for(let z=0;z<=Math.min(h,b)+1e-9;z+=.05){const x=X(pT(z)),y=Y(z);z?g.lineTo(x,y):g.moveTo(x,y)}for(let z=Math.min(h,b);z>=0;z-=.05)g.lineTo(X(dT(z)),Y(z));g.closePath();g.fillStyle='rgba(251,146,60,.2)';g.fill();
+ [[pT,'#dc2626','기온'],[dT,'#2563eb','이슬점']].forEach(([f,c,n])=>{g.strokeStyle='#fff';g.lineWidth=8;g.lineCap='round';g.beginPath();for(let z=0;z<=h+1e-9;z+=.05){const x=X(f(z)),y=Y(z);z?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();g.strokeStyle=c;g.lineWidth=4.5;g.stroke();g.fillStyle=c;g.font='900 14px sans-serif';g.textAlign='left';g.fillText(n,X(f(Math.min(h,b)))+8,Y(Math.min(h,b))+(c==='#2563eb'?16:-8))});
+ g.fillStyle='#be185d';g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(X(pT(h)),Y(h),7,0,6.3);g.fill();g.stroke();
+ if(h>b){g.fillStyle='#0284c7';g.beginPath();g.arc(X(pT(b)),Y(b),8,0,6.3);g.fill();g.strokeStyle='#fff';g.stroke();cPill(g,'응결! (구름 생성)',X(pT(b))-6,Y(b)-26,'rgba(2,132,199,.95)','#fff',12.5)}
+ $('#tg1').textContent='높이 '+(h*1000).toFixed(0)+' m · 공기 '+pT(h).toFixed(1)+' ℃';g.restore()}
+// tab2: 페트병 구름
+let _pr0=0,_pumpT=-9,_openT=0,_op0=false;
+function bottlePath(g){g.beginPath();g.moveTo(300,190);g.bezierCurveTo(300,150,366,140,368,112);g.lineTo(368,70);g.lineTo(432,70);g.lineTo(432,112);g.bezierCurveTo(434,140,500,150,500,190);g.lineTo(500,372);g.quadraticCurveTo(500,396,476,396);g.lineTo(324,396);g.quadraticCurveTo(300,396,300,372);g.closePath()}
+function draw2(){const{g}=view($('#c2'),LW,LH);const t=performance.now()/1000;cSky(g,'#cfe6f7','#f1f7fb');
+ if(PR>_pr0)_pumpT=t;_pr0=PR;if(opened&&!_op0)_openT=t;_op0=opened;
+ // 탁자
+ g.fillStyle='#a16207';g.fillRect(0,398,LW,42);g.fillStyle='#ca8a04';g.fillRect(0,398,LW,6);
+ // 펌프(오른쪽)
+ const press=Math.max(0,1-(t-_pumpT)*3),hy=186+press*46;g.fillStyle='#64748b';g.fillRect(556,230,28,150);g.fillStyle='#94a3b8';g.fillRect(560,230,8,150);g.fillStyle='#475569';g.fillRect(546,376,48,12);g.fillStyle='#334155';g.fillRect(566,hy,8,60);g.fillRect(540,hy-8,60,10);
+ // 호스
+ g.lineCap='round';g.strokeStyle='#1e293b';g.lineWidth=10;g.beginPath();g.moveTo(570,330);g.quadraticCurveTo(520,300,440,92);g.stroke();g.strokeStyle='#64748b';g.lineWidth=5;g.stroke();
+ // 병 몸체
+ g.save();bottlePath(g);const bg=g.createLinearGradient(300,0,500,0);bg.addColorStop(0,'rgba(186,230,253,.55)');bg.addColorStop(.35,'rgba(240,249,255,.32)');bg.addColorStop(1,'rgba(147,197,253,.5)');g.fillStyle=bg;g.fill();g.clip();
+ // 물
+ const wg=g.createLinearGradient(0,350,0,396);wg.addColorStop(0,'rgba(56,189,248,.75)');wg.addColorStop(1,'rgba(2,132,199,.9)');g.fillStyle=wg;g.fillRect(300,352,200,46);g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2;g.beginPath();for(let x=300;x<=500;x+=6){const y=352+Math.sin(x/12+t*2)*1.6;x>300?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+ // 공기 분자(압력↑ 이면 촘촘·빠름·붉게)
+ const n=22+PR*6,sp=1+PR*.15;for(let i=0;i<n;i++){const x=312+((i*53.7)%176)+Math.sin(t*2.2*sp+i)*5,y=170+((i*37.3)%170)+Math.cos(t*1.9*sp+i*1.3)*5;g.fillStyle=PR>0?'rgba(190,24,93,.55)':'rgba(37,99,235,.5)';g.beginPath();g.arc(x,y,2.6,0,6.3);g.fill()}
+ // 향 연기(응결핵)
+ if(smoke){for(let i=0;i<26;i++){const x=316+((i*41)%170)+Math.sin(t*.8+i)*8,y=140+((i*29)%200)+Math.cos(t*.6+i)*8;g.fillStyle='rgba(71,85,105,.5)';g.beginPath();g.arc(x,y,2.4,0,6.3);g.fill()}}
+ // 구름(응결)
+ if(cloud>0){for(let i=0;i<34;i++){const x=330+((i*47)%140)+Math.sin(t*.7+i)*10,y=150+((i*31)%200)+Math.cos(t*.5+i*1.7)*10;cPuff(g,x,y,30+(i%4)*5,cloud*.85)}for(let i=0;i<40;i++){const x=312+((i*53.7)%176),y=170+((i*37.3)%170);cSph(g,x+Math.sin(t+i)*3,y,2.4,'#fff','#bae6fd',cloud*.9)}}
+ g.restore();
+ // 병 윤곽, 하이라이트, 주름
+ g.save();bottlePath(g);g.strokeStyle='#475569';g.lineWidth=4;g.stroke();g.clip();g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=7;g.beginPath();g.moveTo(318,200);g.lineTo(318,360);g.stroke();g.strokeStyle='rgba(100,116,139,.35)';g.lineWidth=2;[230,262,294,326].forEach(y=>{g.beginPath();g.moveTo(300,y);g.quadraticCurveTo(400,y+8,500,y);g.stroke()});g.restore();
+ // 마개
+ if(!opened){const gr=g.createLinearGradient(368,0,432,0);gr.addColorStop(0,'#fca5a5');gr.addColorStop(1,'#b91c1c');g.fillStyle=gr;rr(g,364,50,72,30,6);g.fill();g.strokeStyle='#7f1d1d';g.lineWidth=2;g.stroke()}
+ else{const ft=Math.min(1,(t-(_openT||t))*1.1);g.save();g.translate(470+ft*0,30-ft*10);g.rotate(.7+ft*2);const gr=g.createLinearGradient(0,0,60,0);gr.addColorStop(0,'#fca5a5');gr.addColorStop(1,'#b91c1c');g.fillStyle=gr;g.fillRect(0,0,64,28);g.restore();
+  // 팽창 화살표(병 입구에서 위로)
+  cBig(g,400,96,400,26,24,'rgba(254,202,202,.15)','rgba(244,63,94,.8)')}
+ // 압력계(다이얼)
+ const dx=660,dy=110;g.fillStyle='#fff';g.strokeStyle='#334155';g.lineWidth=4;g.beginPath();g.arc(dx,dy,44,0,6.3);g.fill();g.stroke();for(let i=0;i<=10;i++){const a=Math.PI*(.8+1.4*i/10);g.lineWidth=i%5?1.5:3;g.beginPath();g.moveTo(dx+Math.cos(a)*38,dy+Math.sin(a)*38);g.lineTo(dx+Math.cos(a)*(i%5?33:30),dy+Math.sin(a)*(i%5?33:30));g.stroke()}
+ const ang=Math.PI*(.8+1.4*PR/10);g.strokeStyle='#dc2626';g.lineWidth=4;g.beginPath();g.moveTo(dx,dy);g.lineTo(dx+Math.cos(ang)*32,dy+Math.sin(ang)*32);g.stroke();g.fillStyle='#334155';g.beginPath();g.arc(dx,dy,5,0,6.3);g.fill();g.font='900 13px sans-serif';g.textAlign='center';g.fillText('압력',dx,dy+28);
+ g.strokeStyle='#64748b';g.lineWidth=3;g.beginPath();g.moveTo(dx-22,dy+44);g.quadraticCurveTo(620,250,586,330);g.stroke();
+ // 온도계(왼쪽)
+ const tx=170,tt=clamp((T2-8)/24,0,1);rr(g,tx-9,90,18,250,9);g.fillStyle='#fff';g.fill();g.strokeStyle='#334155';g.lineWidth=3;g.stroke();const th=g.createLinearGradient(0,340,0,90);th.addColorStop(0,'#2563eb');th.addColorStop(1,'#ef4444');g.fillStyle=th;rr(g,tx-5,340-tt*236,10,tt*236,5);g.fill();g.beginPath();g.arc(tx,352,17,0,6.3);g.fillStyle=tt>.5?'#ef4444':'#2563eb';g.fill();g.strokeStyle='#334155';g.stroke();g.fillStyle='#0f172a';g.font='900 17px sans-serif';g.textAlign='center';g.fillText(T2.toFixed(1)+' ℃',tx,386);cPill(g,'병 속 온도',tx,70,'rgba(30,64,175,.9)','#fff',13);
+ // 표지/설명
+ if(smoke)cPill(g,'응결핵(연기 입자)',250,170,'rgba(51,65,85,.9)','#fff',13);else cPill(g,'응결핵이 거의 없음',250,170,'rgba(100,116,139,.8)','#fff',13);
+ cPill(g,'수증기 포함 공기',250,206,'rgba(2,132,199,.88)','#fff',13);
+ g.fillStyle='#fff';g.font='900 22px sans-serif';g.textAlign='center';g.fillText(cloud>.3?'☁️ 뿌옇게 흐려졌어요!':opened?'투명해요':'',400,426);
+ $('#tg2').textContent=smoke?'물 + 향 연기(응결핵)':'물만 조금';g.restore()}
+
 const S3=[['☀️ 햇볕에 지표가 가열될 때',0,'데워진 공기가 상승해요'],['⛰ 바람이 산을 타고 올라갈 때',0,'경사면을 따라 상승해요'],['🌀 저기압 중심',0,'공기가 모여 상승해요'],['🌡 찬 공기 위로 따뜻한 공기가 올라갈 때(전선)',0,'따뜻한 공기가 상승해요'],['⬇ 고기압 중심',1,'공기가 하강하며 단열 압축돼요'],['🏔 산을 넘어 내려오는 바람',1,'하강하며 기온이 올라 맑아요']];let SR3;
 const LAB={key:'cloud',
  quiz:[
