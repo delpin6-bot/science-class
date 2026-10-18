@@ -550,100 +550,57 @@ header.unified-game-header .game-title {
     canvas.height = height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    geom();
     initParticles();
   }
   window.addEventListener('resize', resizeCanvas);
 
-  // --- 지표면 능선/산악 지형 지오메트리 ---
-  function getGroundHeight(x, w, h) {
-    const seaLevelY = h - 28;
-    // x가 0 ~ w 사이일 때 완만한 능선 + 오른쪽 산봉우리
-    const normX = x / w;
-
-    // 능선 곡선 (첨부 이미지 지형 형상)
-    const wave1 = Math.sin(normX * Math.PI * 3.2 - 0.5) * 12;
-    const wave2 = Math.sin(normX * Math.PI * 1.8) * 8;
-
-    // 오른쪽 산봉우리 (에베레스트 형태)
-    const peakCenter = 0.72;
-    const peakDist = Math.abs(normX - peakCenter);
-    const mountainPeak = Math.max(0, 1 - (peakDist / 0.12));
-    const mountainH = Math.pow(mountainPeak, 2) * 55;
-
-    return seaLevelY - Math.max(0, wave1 + wave2 + mountainH);
+  // [GFX_DN1018] 첨부 화면 스타일: 분자 필드 + 산 단면(주전자 끓는점) + 밀도 띠 + 분자 수/누적 분포 그래프 + 기구
+  let colL = 20, colR = 400, seaY = 452, topY = 24, colH = 428, barX = 410, barW = 36, gx0 = 520, gx1 = 760, mx0 = 200, mx1 = 396;
+  const Hm = 178, NB = 28;
+  let avgBins = new Array(NB).fill(0), rawBins = new Array(NB).fill(0), balloonT = 0;
+  const SIG = 110;
+  function geom() {
+    seaY = height - 28; topY = 24; colH = seaY - topY;
+    colL = 20; colR = Math.max(240, width * 0.58);
+    barW = Math.max(24, Math.min(44, width * 0.034)); barX = colR + 10;
+    gx0 = barX + barW + (width < 700 ? 40 : 86); gx1 = width - 12;
+    mx0 = colL + (colR - colL) * 0.5; mx1 = colR - 4;
   }
+  const mtn = x => { if (x <= mx0) return 0; const u = Math.min(1, (x - mx0) / (mx1 - mx0)); const s = u * u * (3 - 2 * u); return Hm * Math.pow(s, 1.15); };
+  function getGroundHeight(x, w, h) { return (h - 28) - mtn(x); }
+  const HkmNow = () => gravity > 0.05 ? baseScaleHeight * (9.8 / gravity) : Infinity;
+  const pxPerKm = () => colH / 40;
 
-  // --- 공기 분자 입자 클래스 ---
   class AirMolecule {
-    constructor() {
-      this.r = 2.4;
-      this.reset(true);
-    }
-
+    constructor() { this.r = 2.3; this.reset(true); }
     reset(initial = false) {
-      this.x = 80 + Math.random() * (width - 320); // 대기 기둥 내부
+      this.x = colL + 6 + Math.random() * (colR - colL - 12);
       const groundY = getGroundHeight(this.x, width, height);
-
+      const Hpx = gravity > 0.05 ? (SIG * SIG) / (gravity * 14.0) : 1e9;
       if (initial) {
-        // 볼츠만 분포 초기 높이 샘플링
-        const u = Math.random();
-        const effectiveH = gravity > 0.1 ? (height * 0.28) / (gravity / 9.8) : height * 0.8;
-        const altitudeY = -Math.log(Math.max(0.0001, 1 - u * 0.98)) * effectiveH;
-        this.y = Math.max(20, groundY - altitudeY);
-      } else {
-        this.y = groundY - 4;
-      }
-
-      // 열운동 속도 (Maxwell-Boltzmann 유사)
-      const spd = 50 + Math.random() * 60;
-      const ang = Math.random() * Math.PI * 2;
-      this.vx = Math.cos(ang) * spd;
-      this.vy = Math.sin(ang) * spd;
+        const alt = Hpx > colH * 3 ? Math.random() * colH : Math.min(colH, -Math.log(Math.max(1e-4, 1 - Math.random() * 0.995)) * Hpx);
+        this.y = Math.max(topY, groundY - alt);
+      } else this.y = groundY - 4;
+      const gs = () => (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 1.73;
+      this.vx = gs() * SIG; this.vy = gs() * SIG;
     }
-
     update(dt) {
-      // 중력 가속도 반영 (v_y += g * dt)
-      // 픽셀 스케일 가속도
-      const accelPx = gravity * 14.0;
-      this.vy += accelPx * dt;
-
-      this.x += this.vx * dt;
-      this.y += this.vy * dt;
-
-      const columnLeft = 85;
-      const columnRight = width - 300;
-
-      // 좌우 경계: 자연스러운 반사 또는 회귀
-      if (this.x < columnLeft) {
-        this.x = columnLeft;
-        this.vx = Math.abs(this.vx);
-      } else if (this.x > columnRight) {
-        this.x = columnRight;
-        this.vx = -Math.abs(this.vx);
-      }
-
-      // 상단 경계 (성층권/우주 경계)
-      if (this.y < 15) {
-        this.y = 15;
-        this.vy = Math.abs(this.vy) * 0.8;
-      }
-
-      // 지표면 지형 충돌
-      const groundY = getGroundHeight(this.x, width, height);
-      if (this.y >= groundY - this.r) {
-        this.y = groundY - this.r;
-        // 지표면과 충돌 시 운동 에너지 보존 탄성 반사 + 상향 튀김
-        this.vy = -Math.abs(this.vy) * (0.92 + Math.random() * 0.16);
-        this.vx += (Math.random() - 0.5) * 20;
+      this.vy += gravity * 14.0 * dt;
+      this.x += this.vx * dt; this.y += this.vy * dt;
+      if (this.x < colL) { this.x = colL; this.vx = Math.abs(this.vx); }
+      else if (this.x > colR) { this.x = colR; this.vx = -Math.abs(this.vx); }
+      if (this.y < topY) { this.y = topY; this.vy = Math.abs(this.vy); }
+      const gy = getGroundHeight(this.x, width, height);
+      if (this.y >= gy - this.r) {
+        this.y = gy - this.r;
+        const sy = (getGroundHeight(this.x + 1, width, height) - getGroundHeight(this.x - 1, width, height)) / 2;
+        const nl = Math.hypot(sy, 1), nx = sy / nl, ny = -1 / nl;
+        const vn = this.vx * nx + this.vy * ny;
+        if (vn < 0) { this.vx -= 2 * vn * nx; this.vy -= 2 * vn * ny; }
       }
     }
-
-    draw(ctx) {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = '#4f6ef7';
-      ctx.fill();
-    }
+    draw(ctx) { ctx.fillStyle = '#1f3cff'; ctx.fillRect(this.x - 1.6, this.y - 1.6, 3.2, 3.2); }
   }
 
   function initParticles() {
@@ -682,133 +639,127 @@ header.unified-game-header .game-title {
     dispPlanetName.textContent = planetName;
   }
 
-  // ==========================================
-  // [핵심] 첨부 이미지 그래픽 100% 일치 렌더링
-  // ==========================================
+  function kettle(ctx, x, y, temp, t, phase) {
+    ctx.save(); ctx.translate(x, y);
+    // 증기
+    if (temp > 5) for (let k = 0; k < 3; k++) { const f = ((t * .6 + phase + k / 3) % 1); ctx.fillStyle = 'rgba(255,255,255,' + (.7 * (1 - f)).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(-14 + Math.sin(f * 6 + k) * 4, -22 - f * 22, 3 + f * 5, 0, 6.3); ctx.fill(); }
+    // 주둥이
+    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(-22, -16); ctx.lineTo(-20, -11); ctx.lineTo(-9, -2); ctx.closePath(); ctx.fill();
+    // 몸통
+    const g = ctx.createLinearGradient(-13, -18, 13, 0); g.addColorStop(0, '#fde68a'); g.addColorStop(.5, '#d6a21b'); g.addColorStop(1, '#8a5a0b');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -8, 14, 10, 0, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#5b3a06'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.fillStyle = '#92400e'; ctx.beginPath(); ctx.ellipse(0, -17, 8, 3, 0, 0, 6.3); ctx.fill(); ctx.beginPath(); ctx.arc(0, -21, 2.4, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = '#5b3a06'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(2, -14, 11, Math.PI * 1.15, Math.PI * 1.9); ctx.stroke();
+    ctx.restore();
+  }
+  function outlineText(ctx, txt, x, y, fill, stroke, w) { ctx.lineWidth = w || 4; ctx.strokeStyle = stroke; ctx.strokeText(txt, x, y); ctx.fillStyle = fill; ctx.fillText(txt, x, y); }
+  function boilT(altKm) { const H = HkmNow(); if (!isFinite(H)) return 100; const p = Math.exp(-altKm / H); return 1 / (1 / 373.15 - (8.314 / 40700) * Math.log(p)) - 273.15; }
+  function balloon(ctx, x, y, t) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t * 1.2) * .04);
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-8, 14); ctx.lineTo(-4, 30); ctx.moveTo(8, 14); ctx.lineTo(4, 30); ctx.moveTo(0, 17); ctx.lineTo(0, 30); ctx.stroke();
+    ctx.fillStyle = '#7c4a1d'; ctx.fillRect(-6, 30, 12, 8); ctx.strokeStyle = '#3b2410'; ctx.strokeRect(-6, 30, 12, 8);
+    const g = ctx.createRadialGradient(-7, -8, 3, 0, 0, 22); g.addColorStop(0, '#ff8a8a'); g.addColorStop(1, '#c70000');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 21, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#7f0000'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.restore();
+  }
   function renderScene(ctx) {
+    geom();
     ctx.clearRect(0, 0, width, height);
+    const t = performance.now() / 1000;
+    const Hkm = HkmNow(), ppk = pxPerKm();
 
-    const seaLevelY = height - 28;
-    const topAltitudeY = 40; // 40km 높이 Y
-    const colH = seaLevelY - topAltitudeY; // 약 412 px
+    // 통계(분자 수/높이)
+    rawBins.fill(0);
+    particles.forEach(p => { if (p.x > mx0 - 6) return; const alt = seaY - p.y; const i = Math.min(NB - 1, Math.max(0, Math.floor(alt / colH * NB))); rawBins[i]++; });
+    for (let i = 0; i < NB; i++) avgBins[i] += (rawBins[i] - avgBins[i]) * (isRunning ? 0.02 : 0);
+    const maxAvg = Math.max(1e-6, Math.max.apply(null, avgBins));
 
-    // ----------------------------------------------------
-    // 1. 좌측 밀도 그라데이션 수직 바 (이미지와 완전 동일)
-    // ----------------------------------------------------
-    const barW = 70;
-    const barX = 14;
-
-    ctx.save();
-    // 중력에 따라 압축되는 파란색 그라데이션
-    const grad = ctx.createLinearGradient(0, seaLevelY, 0, topAltitudeY);
-    // 진한 파란색(#0000ff)에서 상단 투명으로
-    const gRatio = Math.max(0.01, gravity / 9.8);
-    const midStop = Math.min(0.9, 0.35 / gRatio);
-
-    grad.addColorStop(0, '#0000ff');
-    grad.addColorStop(Math.min(0.4, 0.15 / gRatio), 'rgba(0, 0, 255, 0.85)');
-    grad.addColorStop(midStop, 'rgba(0, 50, 255, 0.4)');
-    grad.addColorStop(Math.min(1.0, midStop * 2), 'rgba(150, 180, 255, 0.15)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-    ctx.fillStyle = grad;
-    ctx.fillRect(barX, topAltitudeY, barW, colH);
-
-    // 하단 지표면 경계선
-    ctx.fillStyle = '#0000ff';
-    ctx.fillRect(barX, seaLevelY, barW, 4);
-    ctx.restore();
-
-    // ----------------------------------------------------
-    // 2. 하단 녹색 산악/능선 지형 (이미지의 녹색 산 형상)
-    // ----------------------------------------------------
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(80, seaLevelY);
-
-    for (let x = 80; x <= width - 290; x += 4) {
-      const gy = getGroundHeight(x, width, height);
-      ctx.lineTo(x, gy);
-    }
-    ctx.lineTo(width - 290, seaLevelY);
-    ctx.closePath();
-
-    // 지형 녹색 그라데이션 채우기 (이미지와 동일한 올리브그린 톤)
-    const groundGrad = ctx.createLinearGradient(0, seaLevelY - 60, 0, seaLevelY);
-    groundGrad.addColorStop(0, '#658043');
-    groundGrad.addColorStop(0.5, '#4a6b2f');
-    groundGrad.addColorStop(1, '#2c471c');
-    ctx.fillStyle = groundGrad;
-    ctx.fill();
-
-    // 지형 외곽선
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-    ctx.restore();
-
-    // ----------------------------------------------------
-    // 3. 공기 분자 입자들 렌더링
-    // ----------------------------------------------------
+    // ---- 1) 분자 필드 ----
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(colL - 6, topY - 10, colR - colL + 12, seaY - topY + 12);
+    ctx.fillStyle = '#334155'; ctx.fillRect(colL - 6, seaY, colR - colL + 12, 2);
+    // 고도 눈금(좌측 점선 가이드)
+    ctx.strokeStyle = 'rgba(100,116,139,.25)'; ctx.setLineDash([3, 5]); ctx.lineWidth = 1;
+    [10, 20, 30, 40].forEach(a => { const y = seaY - a * ppk; ctx.beginPath(); ctx.moveTo(colL, y); ctx.lineTo(colR, y); ctx.stroke(); });
+    ctx.setLineDash([]);
     particles.forEach(p => p.draw(ctx));
 
-    // ----------------------------------------------------
-    // 4. 우측 텍스트 라벨 & 화살표 (첨부 이미지 텍스트 일치)
-    // ----------------------------------------------------
-    const labelX = width - 280;
+    // ---- 2) 산 단면 + 바다 + 주전자 ----
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(mx0 - 70, seaY + 2);
+    ctx.lineTo(mx0 - 70, seaY - 2);
+    for (let x = mx0; x <= mx1; x += 3) ctx.lineTo(x, getGroundHeight(x, width, height));
+    ctx.lineTo(mx1, seaY + 2); ctx.closePath();
+    const mg = ctx.createLinearGradient(0, seaY - Hm, 0, seaY); mg.addColorStop(0, '#e5eadf'); mg.addColorStop(.18, '#9bb088'); mg.addColorStop(.55, '#4f7d36'); mg.addColorStop(1, '#2c4a1f');
+    ctx.fillStyle = mg; ctx.fill(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.6; ctx.stroke();
+    // 바다
+    const sg = ctx.createLinearGradient(0, seaY - 14, 0, seaY + 2); sg.addColorStop(0, '#38bdf8'); sg.addColorStop(1, '#0369a1');
+    ctx.fillStyle = sg; ctx.fillRect(mx0 - 70, seaY - 12, 70, 14);
+    ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1.6; ctx.beginPath(); for (let x = mx0 - 70; x <= mx0; x += 4) { const y = seaY - 10 + Math.sin(x / 7 + t * 2.4) * 1.6; x > mx0 - 70 ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    // 작은 배
+    const bx = mx0 - 40, by = seaY - 12 + Math.sin(t * 1.6) * 1.5;
+    ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(bx - 14, by - 5); ctx.lineTo(bx + 14, by - 5); ctx.lineTo(bx + 9, by + 2); ctx.lineTo(bx - 9, by + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(bx - 1, by - 16, 2, 11); ctx.beginPath(); ctx.moveTo(bx + 2, by - 16); ctx.lineTo(bx + 11, by - 7); ctx.lineTo(bx + 2, by - 7); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // 해발 0m 기준선
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(mx0 - 70, seaY - 3); ctx.lineTo(mx1, seaY - 3); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '700 13px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#0f172a'; ctx.fillText('인천 해발 0 m', (mx0 + mx1) / 2 + 40, seaY + 16);
+    // 주전자들 (고도별 끓는점)
+    const KS = [{ a: 0, n: '인천', lab: '0 m' }, { a: 1565, n: '오대산', lab: '1,565 m' }, { a: 4807, n: '스위스 몽블랑', lab: '4,807 m' }, { a: 8848, n: '네팔 에베레스트 산', lab: '8,848 m' }];
+    KS.forEach((k, i) => {
+      const f = k.a / 8848; let lo = mx0, hi = mx1; for (let n = 0; n < 24; n++) { const m = (lo + hi) / 2; (mtn(m) < f * Hm) ? lo = m : hi = m; }
+      const kx = i === 0 ? mx0 + 24 : lo - 8, ky = i === 0 ? seaY - 4 : getGroundHeight(lo, width, height) + 2;
+      kettle(ctx, kx, ky, boilT(k.a / 1000), t, i * .27);
+      ctx.textAlign = 'center'; ctx.font = '900 14px sans-serif'; outlineText(ctx, boilT(k.a / 1000).toFixed(0) + ' ℃', kx - 8, ky - 42, '#fff7ed', '#7c2d12', 4);
+      if (i > 0) { ctx.font = '800 12px sans-serif'; ctx.textAlign = 'right'; outlineText(ctx, k.lab + ' ' + k.n, kx - 26, ky - 4, '#0f172a', 'rgba(255,255,255,.95)', 3.5); }
+    });
 
-    // 헤더 타이틀
-    ctx.fillStyle = '#475569';
-    ctx.font = '22px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('해면기준 상대 공기 밀도', labelX, 58);
-    ctx.fillText('(대략적인 값)', labelX, 88);
+    // ---- 3) 기구 ----
+    const alt = 17 + 9 * Math.sin(t * 0.35); const bxx = colL + (colR - colL) * 0.28, byy = seaY - alt * ppk;
+    balloon(ctx, bxx, byy, t);
+    const dens = gravity <= 0.05 ? 100 : 100 * Math.exp(-alt / Hkm);
+    ctx.font = '900 12px sans-serif'; ctx.textAlign = 'center'; const lbl = '고도 ' + alt.toFixed(0) + ' km · 밀도 ' + dens.toFixed(1) + '%';
+    const lw = ctx.measureText(lbl).width + 14; ctx.fillStyle = 'rgba(15,23,42,.85)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bxx - lw / 2, byy - 46, lw, 20, 10) : ctx.rect(bxx - lw / 2, byy - 46, lw, 20); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(lbl, bxx, byy - 32);
 
-    // 고도별 Y 좌표 (0km ~ 40km 선형 매핑)
-    const y40 = seaLevelY - colH * (40 / 40); // 40km (top)
-    const y30 = seaLevelY - colH * (30 / 40); // 30km
-    const y20 = seaLevelY - colH * (20 / 40); // 20km
-    const y10 = seaLevelY - colH * (10 / 40); // 10km
-    const y0  = seaLevelY;                   // 0km (Sea level)
+    // ---- 4) 밀도 띠(파랑 → 흰색) ----
+    ctx.fillStyle = '#fff'; ctx.fillRect(barX, topY, barW, colH);
+    const bh = colH / NB;
+    for (let i = 0; i < NB; i++) { const a = Math.min(1, avgBins[i] / maxAvg); ctx.fillStyle = 'rgba(20,40,255,' + (a * 0.95).toFixed(3) + ')'; ctx.fillRect(barX, seaY - (i + 1) * bh, barW, bh + .5); }
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.strokeRect(barX, topY, barW, colH);
+    // 눈금 + 밀도 %
+    ctx.font = '700 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#0f172a';
+    [0, 10, 20, 30, 40].forEach(a => {
+      const y = seaY - a * ppk; ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(barX + barW, y); ctx.lineTo(barX + barW + 6, y); ctx.stroke();
+      const pct = gravity <= 0.05 ? 100 : Math.min(100, 100 * Math.exp(-a / Hkm));
+      if (width >= 700) ctx.fillText((a + 'km ') + pct.toFixed(a === 0 ? 0 : 1) + '%', barX + barW + 9, Math.min(seaY - 2, Math.max(topY + 10, y + 4)));
+    });
+    ctx.font = '800 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#475569'; ctx.fillText('공기 밀도', barX + barW / 2, topY - 8);
 
-    // 중력에 따른 동적 밀도 비율 (%)
-    function getDensityPct(altKm) {
-      if (gravity <= 0.05) return 100.0;
-      // 볼츠만 공식: rho(z) = rho0 * exp(-z / H)
-      const H = baseScaleHeight * (9.8 / gravity);
-      return Math.min(100, 100.0 * Math.exp(-altKm / H));
-    }
+    // ---- 5) 그래프(분자 수 / 누적 분포) ----
+    const gw = gx1 - gx0 - 6;
+    ctx.save(); ctx.fillStyle = '#ffffff'; ctx.fillRect(gx0 - 4, topY - 10, gx1 - gx0 + 4, seaY - topY + 12);
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx0, topY - 10); ctx.lineTo(gx0, seaY); ctx.lineTo(gx1, seaY); ctx.stroke();
+    ctx.strokeStyle = 'rgba(100,116,139,.2)'; ctx.lineWidth = 1; for (let i = 1; i <= 4; i++) { const x = gx0 + gw * i / 4; ctx.beginPath(); ctx.moveTo(x, topY - 10); ctx.lineTo(x, seaY); ctx.stroke(); }
+    // 이론 곡선(점선)
+    ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const a = i / 40 * 40; const v = gravity <= 0.05 ? 1 : Math.exp(-a / Hkm); const x = gx0 + v * gw, y = seaY - a * ppk; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); ctx.setLineDash([]);
+    // 검정: 현재 분자 수
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.beginPath();
+    for (let i = 0; i < NB; i++) { const v = Math.min(1.1, rawBins[i] / maxAvg); const x = gx0 + v * gw, y = seaY - (i + .5) * bh; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    // 빨강: 누적(평균) 분포
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.6; ctx.beginPath();
+    for (let i = 0; i < NB; i++) { const v = avgBins[i] / maxAvg; const x = gx0 + v * gw, y = seaY - (i + .5) * bh; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    // 범례
+    ctx.textAlign = 'left'; ctx.font = '700 13px sans-serif';
+    const lx = gx0 + gw * 0.38, ly = topY + 14;
+    ctx.fillStyle = '#111'; ctx.fillRect(lx, ly - 3, 14, 2.5); ctx.fillText('높이에 따른 기체 분자 수', lx + 20, ly);
+    ctx.fillStyle = '#dc2626'; ctx.fillRect(lx, ly + 20, 14, 3); ctx.fillText('누적 분포(밀도 분포)', lx + 20, ly + 24);
+    ctx.fillStyle = '#64748b'; ctx.fillText('- - 이론값 e^(−z/H)', lx + 20, ly + 48);
+    ctx.restore();
 
-    const pct40 = getDensityPct(40);
-    const pct30 = getDensityPct(30);
-    const pct20 = getDensityPct(20);
-    const pct10 = getDensityPct(10);
-
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '26px sans-serif';
-
-    // 40km 라벨
-    ctx.fillText(`← ${pct40.toFixed(2)}% (40km)`, labelX, y40 + 20);
-
-    // 30km 라벨
-    ctx.fillText(`← ${pct30.toFixed(2)}% (30km)`, labelX, y30 + 16);
-
-    // 20km 라벨
-    ctx.fillText(`← ${pct20.toFixed(2)}% (20km)`, labelX, y20 + 10);
-
-    // 10km 라벨
-    ctx.fillText(`← ${pct10.toFixed(2)}% (10km)`, labelX, y10 + 6);
-
-    // 해수면 (Sea level)
-    ctx.fillText('↙ 100% (Sea level)', labelX, y0 - 4);
-
-    // ----------------------------------------------------
-    // 5. 하단 중앙 텍스트: "중력가속도 = 9.8 m/s²" (이미지 하단)
-    // ----------------------------------------------------
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`중력가속도 = ${gravity.toFixed(1)} m/s²`, width / 2 - 60, height - 8);
+    // ---- 6) 하단 텍스트 ----
+    ctx.fillStyle = '#0f172a'; ctx.font = '700 15px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('중력가속도 = ' + gravity.toFixed(1) + ' m/s²', (colL + colR) / 2 - 20, height - 6);
+    ctx.fillText('높이 →', gx0 + gw / 2, height - 6);
   }
 
   // --- 메인 애니메이션 루프 ---

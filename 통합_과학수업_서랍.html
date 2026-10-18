@@ -631,6 +631,27 @@ a { text-decoration: none; color: inherit; }
 @media (max-width:680px){.unit-map .um-lab{flex-basis:100%}}
 .unit-map .um-chip.mg-h{display:none}
 </style>
+<style id="flowEditCss">/* FLOWEDIT_1018 */
+.fl-wrap{position:relative;display:flex;min-width:0}
+.fl-wrap>a{flex:1;min-width:0}
+.fl-x{display:none;position:absolute;top:-7px;right:-5px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:#ef4444;color:#fff;font:900 12px/1 inherit;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.3);z-index:2}
+.fl-editing .fl-x{display:flex}
+.fl-editing .fl-wrap>a{outline:2px dashed #94a3b8;outline-offset:1px}
+.fl-edit{margin-left:auto;border:1.5px solid #cbd5e1;background:#fff;color:#334155;border-radius:999px;padding:3px 10px;font:800 11.5px/1.2 inherit;cursor:pointer;white-space:nowrap}
+.fl-edit.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.fl-panel{margin-top:8px;padding:8px;border:1.5px dashed #94a3b8;border-radius:10px;background:#f8fafc;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fl-panel .fl-hint{flex:1 1 100%;font-size:11.5px;font-weight:700;color:#475569}
+.fl-panel select{flex:1 1 130px;min-width:0;max-width:100%;min-height:34px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;font:700 12px/1.2 inherit;padding:0 6px;color:#0f172a}
+.fl-panel .fl-reset{min-height:34px;border:1.5px solid #fecaca;background:#fff1f2;color:#be123c;border-radius:8px;padding:0 10px;font:800 12px/1 inherit;cursor:pointer}
+@media (hover:none){.fl-x{width:28px;height:28px;font-size:14px}}
+</style>
+<style id="qrRowCss">/* QRROW_1018 : 학생 QR 줄을 항상 한 줄로 */
+.kv-qrrow{flex-wrap:nowrap!important;gap:4px!important;padding:5px 6px!important;min-width:0}
+.kv-qrlab{flex:0 0 auto;white-space:nowrap;font-size:0!important}
+.kv-qrlab::before{content:"📱 QR";font-size:11.5px;font-weight:900}
+.kv-qrchip{flex:1 1 0;min-width:0;padding:0 2px!important;letter-spacing:-.4px;min-height:32px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(9.5px,2.9vw,12px)!important}
+@media (pointer:coarse){.kv-qrchip{min-height:38px!important}}
+</style>
 </head>
 <body>
 
@@ -3894,6 +3915,118 @@ function renderUnitChips() {
 }
 
 /* 메인 렌더링 엔진 */
+/* FLOWEDIT_1018 : 수업흐름 카드의 도입 / 가상실험 / 과학게임 추가·제거 */
+const LS_FLOW = "scihub_flow_v1";
+let flowState = {}; try { flowState = JSON.parse(localStorage.getItem(LS_FLOW) || "{}") || {}; } catch (e) { flowState = {}; }
+const flowEditing = {}, flowShown = {};
+function flowSave() { try { localStorage.setItem(LS_FLOW, JSON.stringify(flowState)); } catch (e) {} }
+function flowEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+function flowGameHref(file, nm, m) {
+  const fq = "g=" + encodeURIComponent(m.grade) + "&u=" + encodeURIComponent(m.unit);
+  return boardMode
+    ? "./전자칠판_실행기.html?f=" + encodeURIComponent(file) + "&imm=1&fq=" + encodeURIComponent(fq) + "&t=" + encodeURIComponent(nm)
+    : "./" + file + "?" + fq;
+}
+function flowCatalog() {
+  if (flowCatalog._c) return flowCatalog._c;
+  const sim = new Map(), game = new Map(), intro = new Map();
+  LESSON_MODULES.forEach(x => {
+    const t = x.tools || {};
+    [t.sim, t.sim2].concat(Array.isArray(t.more) ? t.more : []).forEach(s => { if (s && s.url && !sim.has(s.nm)) sim.set(s.nm, { k: "sim|" + s.nm, c: "sim", nm: s.nm, url: s.url }); });
+    if (t.game && t.game.url && !game.has(t.game.nm)) game.set(t.game.nm, { k: "game|" + t.game.nm, c: "game", nm: t.game.nm, url: t.game.url, ic: "🔔" });
+    if (!intro.has(x.unit)) intro.set(x.unit, { k: "intro|" + x.unit, c: "intro", nm: x.grade + " " + x.unit, g: x.grade, u: x.unit });
+  });
+  [["올인원_뱀주사위놀이.html", "뱀주사위", "🐍"], ["개념격추.html", "개념 격추", "🎯"], ["개념수비대.html", "개념수비대", "🛡️"], ["과학_퍼즐_개념격추.html", "스피디", "⚡"]]
+    .forEach(a => { game.set(a[1], { k: "game|" + a[1], c: "game", nm: a[1], file: a[0], ic: a[2] }); });
+  return (flowCatalog._c = { sim: [...sim.values()], game: [...game.values()], intro: [...intro.values()] });
+}
+function flowItemHtml(e, m) {
+  let href, cls, stp, label, tt;
+  if (e.c === "intro") { href = introHref(e.g, e.u); cls = "btn-intro"; stp = "①"; label = "🚀 도입 3분 (" + e.u + ")"; tt = "수업 시작 3분 동기유발 (" + e.u + ")"; }
+  else if (e.c === "sim") { href = simHref(e.url, e.nm); cls = "btn-sim"; stp = "②"; label = "🔬 " + e.nm; tt = "추가한 가상실험"; }
+  else { href = e.file ? flowGameHref(e.file, e.nm, m) : gameUrl(e.url, m); cls = "btn-game"; stp = "⑤"; label = (e.ic || "🎮") + " " + e.nm; tt = "추가한 과학게임"; }
+  return '<a href="' + flowEsc(href) + '" class="btn-action ' + cls + '" title="' + flowEsc(tt) + '"><span><i class="stp">' + stp + '</i>' + flowEsc(label) + '</span></a>';
+}
+function flowApply(m, html) {
+  const st = flowState[m.id] || {}, hid = st.h || [], ext = st.x || [];
+  const tmp = document.createElement("div"); tmp.innerHTML = html;
+  const items = [], shown = new Set();
+  Array.prototype.slice.call(tmp.children).forEach(el => {
+    if (el.tagName === "A" && el.classList.contains("btn-action")) {
+      let c = "", k = "";
+      const txt = (el.querySelector("span") ? el.querySelector("span").textContent : "").replace(/^[①-⑩]\s*/, "").trim();
+      const nm = txt.replace(/^\S+\s+/, "");
+      if (el.classList.contains("btn-intro")) { c = "intro"; k = "intro|" + m.unit; }
+      else if (el.classList.contains("btn-sim")) { c = "sim"; k = "sim|" + nm; }
+      else if (el.classList.contains("btn-snake")) { c = "game"; k = "game|뱀주사위"; }
+      else if (el.classList.contains("btn-shoot")) { c = "game"; k = "game|개념 격추"; }
+      else if (el.classList.contains("btn-game")) { c = "game"; k = "game|" + nm; }
+      if (c) {
+        if (hid.indexOf(k) >= 0) return;
+        shown.add(k);
+        items.push({ c: c, k: k, h: '<span class="fl-wrap">' + el.outerHTML + '<button type="button" class="fl-x" data-fk="' + flowEsc(k) + '" title="이 수업 흐름 버튼 빼기" aria-label="빼기">✕</button></span>' });
+        return;
+      }
+    }
+    items.push({ c: "", k: "", h: el.outerHTML });
+  });
+  ext.forEach(e => {
+    if (shown.has(e.k)) return;
+    shown.add(e.k);
+    const it = { c: e.c, k: e.k, h: '<span class="fl-wrap">' + flowItemHtml(e, m) + '<button type="button" class="fl-x" data-fk="' + flowEsc(e.k) + '" title="이 수업 흐름 버튼 빼기" aria-label="빼기">✕</button></span>' };
+    let at;
+    if (e.c === "intro") at = 0;
+    else if (e.c === "sim") { at = 0; items.forEach((x, i) => { if (x.c === "intro" || x.c === "sim") at = i + 1; }); }
+    else { at = items.length; items.forEach((x, i) => { if (x.c === "game") at = i + 1; }); }
+    items.splice(at, 0, it);
+  });
+  flowShown[m.id] = shown;
+  return items.map(x => x.h).join("");
+}
+function flowPanel(m) {
+  if (!flowEditing[m.id]) return "";
+  const cat = flowCatalog(), shown = flowShown[m.id] || new Set();
+  const sel = (c, ttl, list) => {
+    const op = list.filter(e => !shown.has(e.k)).map(e => '<option value="' + flowEsc(e.k) + '">' + flowEsc(e.nm) + '</option>').join("");
+    return '<select class="fl-sel" data-id="' + m.id + '" data-c="' + c + '" aria-label="' + ttl + '"><option value="">＋ ' + ttl + '</option>' + op + '</select>';
+  };
+  return '<div class="fl-panel"><div class="fl-hint">버튼 모서리의 ✕로 빼고, 아래에서 골라 넣을 수 있어요. 이 브라우저에 저장됩니다.</div>'
+    + sel("intro", "도입 추가", cat.intro) + sel("sim", "가상실험 추가", cat.sim) + sel("game", "과학게임 추가", cat.game)
+    + '<button type="button" class="fl-reset" data-id="' + m.id + '">↺ 기본으로</button></div>';
+}
+function flowRerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+(function () {
+  const g = document.getElementById("lessonGrid"); if (!g) return;
+  g.addEventListener("click", e => {
+    const x = e.target.closest(".fl-x"), ed = e.target.closest(".fl-edit"), rs = e.target.closest(".fl-reset");
+    if (!x && !ed && !rs) return;
+    e.preventDefault(); e.stopPropagation();
+    const card = e.target.closest(".lesson-card"); const id = card && card.dataset.id; if (!id) return;
+    if (ed) { flowEditing[id] = !flowEditing[id]; }
+    else if (rs) { delete flowState[id]; flowSave(); }
+    else {
+      const k = x.dataset.fk, st = flowState[id] = flowState[id] || {};
+      const wasX = (st.x || []).some(v => v.k === k);
+      st.x = (st.x || []).filter(v => v.k !== k);
+      if (!wasX) { st.h = st.h || []; if (st.h.indexOf(k) < 0) st.h.push(k); }
+      st.h = st.h || [];
+      if (!st.h.length) delete st.h; if (!st.x.length) delete st.x; if (!st.h && !st.x) delete flowState[id];
+      flowSave();
+    }
+    flowRerender();
+  }, true);
+  g.addEventListener("change", e => {
+    const s = e.target.closest("select.fl-sel"); if (!s || !s.value) return;
+    const id = s.dataset.id, k = s.value, c = s.dataset.c;
+    const e0 = flowCatalog()[c].filter(v => v.k === k)[0]; if (!e0) return;
+    const st = flowState[id] = flowState[id] || {};
+    if (st.h && st.h.indexOf(k) >= 0) { st.h = st.h.filter(v => v !== k); if (!st.h.length) delete st.h; }
+    else { st.x = (st.x || []).filter(v => v.k !== k); st.x.push(e0); }
+    if (!st.h && !st.x) delete flowState[id];
+    flowSave(); flowRerender();
+  });
+})();
+
 function render() {
   const grid = document.getElementById("lessonGrid");
   const emptyState = document.getElementById("emptyState");
@@ -4086,6 +4219,7 @@ function render() {
       }
     }
 
+    toolsHtml = flowApply(m, toolsHtml);
     const _fl = flowOf(m.grade, m.unit), _ix = _fl.findIndex(x => x.id === m.id);
     const _pv = _ix > 0 ? _fl[_ix - 1] : null, _nx = _ix >= 0 && _ix < _fl.length - 1 ? _fl[_ix + 1] : null;
     const navHtml = `<div class="lesson-nav">
@@ -4122,10 +4256,12 @@ function render() {
       <div class="card-tools-matrix">
         <div class="matrix-label">
           <span>⚡ 수업 흐름 ① 도입 → ② 탐구 → ③ 활동 → ④ 정리 → ⑤ 평가</span>
+          <button type="button" class="fl-edit ${flowEditing[m.id] ? 'on' : ''}" title="도입·가상실험·과학게임 버튼 추가/제거">${flowEditing[m.id] ? '✔ 완료' : '✏️ 편집'}</button>
         </div>
-        <div class="action-btn-row">
+        <div class="action-btn-row${flowEditing[m.id] ? ' fl-editing' : ''}">
           ${toolsHtml}
         </div>
+        ${flowPanel(m)}
         ${navHtml}
       </div>
     `;
