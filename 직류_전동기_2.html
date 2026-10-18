@@ -384,9 +384,9 @@ canvas {
 }
 
 /* 라벨 색상 지정 (스크린샷 오리지널) */
-.lbl-field { color: #16a34a; }     /* 자기장: 초록 */
-.lbl-current { color: #0f172a; }   /* 전류: 검정 */
-.lbl-force { color: #ef4444; }     /* 힘: 빨강 */
+.lbl-field { color: #475569; }     /* 자기장: 회색 점선 */
+.lbl-current { color: #3b46d6; }   /* 전류: 파랑 */
+.lbl-force { color: #4a9a1c; }     /* 힘: 초록 */
 .lbl-torque { color: #d946ef; }    /* 토크: 자홍 */
 .lbl-run { color: #1e293b; }       /* Run */
 
@@ -640,7 +640,7 @@ header.unified-game-header .game-title {
       <h3>🔄 짝힘과 돌림힘(토크)</h3>
       <p>
         코일의 왼쪽 도선(전류 유입)은 <strong>아래쪽 힘</strong>을, 오른쪽 도선(전류 유출)은 <strong>위쪽 힘</strong>을 받습니다.
-        이 반대 방향의 두 힘이 <strong>돌림힘(토크)</strong>을 발생시켜 코일이 시계 방향으로 회전합니다.
+        이 반대 방향의 두 힘이 <strong>돌림힘(토크)</strong>을 발생시켜 코일이 (정류자 쪽에서 볼 때) 반시계 방향으로 회전합니다.
       </p>
     </div>
     <div class="theory-card">
@@ -690,18 +690,18 @@ header.unified-game-header .game-title {
       </div>
       <div class="hud-row">
         <span class="hud-label">자기장 방향</span>
-        <span class="hud-value" style="color: #16a34a;" id="hudMagDir">왼쪽(N) → 오른쪽(S)</span>
+        <span class="hud-value" style="color: #475569;" id="hudMagDir">왼쪽(N) → 오른쪽(S)</span>
       </div>
       <div class="hud-row">
         <span class="hud-label">전자기력 (F)</span>
-        <span class="hud-value" style="color: #ef4444;" id="hudForceDir">좌: 아래(↓) / 우: 위(↑)</span>
+        <span class="hud-value" style="color: #4a9a1c;" id="hudForceDir">좌: 아래(↓) / 우: 위(↑)</span>
       </div>
       <div class="hud-row">
         <span class="hud-label">돌림힘 토크 (τ)</span>
         <span class="hud-value" style="color: #d946ef;" id="hudTorqueVal">최대 대비 86%</span>
       </div>
       <div class="hud-desc" id="hudDesc">
-        정류자에 의해 왼쪽 도선은 항상 아래로, 오른쪽 도선은 항상 위로 힘을 받아 <strong>시계 방향 회전력</strong>을 유지합니다.
+        정류자에 의해 왼쪽 도선은 항상 아래로, 오른쪽 도선은 항상 위로 힘을 받아 <strong>한 방향(반시계) 회전력</strong>을 유지합니다.
       </div>
     </div>
   </div>
@@ -731,6 +731,11 @@ header.unified-game-header .game-title {
       <label class="chk-item lbl-torque">
         <input type="checkbox" id="chkTorque" checked onchange="STATE.showTorque = this.checked">
         <span>돌림힘, 토크 (Torque)</span>
+      </label>
+
+      <label class="chk-item">
+        <input type="checkbox" id="chkLabel" checked onchange="STATE.showLabels = this.checked">
+        <span>이름표</span>
       </label>
 
       <!-- 5. Run 체크박스 -->
@@ -769,6 +774,7 @@ const STATE = {
   showCurrent: true,
   showForce: true,
   showTorque: true,
+  showLabels: true,
   isRunning: false,
   
   // 자석 극성 (left: N안쪽/S바깥, right: S안쪽/N바깥)
@@ -783,16 +789,16 @@ const STATE = {
   
   // 3D 카메라 궤도 (스크린샷 오리지널 시점 기준)
   camera: {
-    yaw: -0.28,     // 약간 우측에서 비스듬히 바라봄
-    pitch: 0.38,    // 앙각
-    targetYaw: -0.28,
-    targetPitch: 0.38,
-    distance: 690,
-    targetDist: 690,
-    fov: 690,
-    defaultYaw: -0.28,
-    defaultPitch: 0.38,
-    defaultDist: 690
+    yaw: 0.52,      // 교과서 삽화처럼 왼쪽 앞에서 비스듬히 바라봄
+    pitch: 0.44,    // 위에서 내려다보는 각
+    targetYaw: 0.52,
+    targetPitch: 0.44,
+    distance: 1100,
+    targetDist: 1100,
+    fov: 1400,
+    defaultYaw: 0.52,
+    defaultPitch: 0.44,
+    defaultDist: 1100
   },
   
   isDragging: false,
@@ -805,27 +811,15 @@ const STATE = {
    ========================================================================== */
 function project3D(x, y, z, cx, cy) {
   const cam = STATE.camera;
-  
-  // 1. Yaw 회전
-  const cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
-  const x1 = x * cosY - z * sinY;
-  const z1 = x * sinY + z * cosY;
-  
-  // 2. Pitch 회전
-  const cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
-  const y2 = y * cosP - z1 * sinP;
-  const z2 = y * sinP + z1 * cosP;
-  
-  // 3. 투영
-  const depth = cam.distance + z2;
+  const cY = Math.cos(cam.yaw), sY = Math.sin(cam.yaw);
+  const x1 = x * cY + z * sY;
+  const z1 = -x * sY + z * cY;
+  const cP = Math.cos(cam.pitch), sP = Math.sin(cam.pitch);
+  const y2 = y * cP - z1 * sP;
+  const z2 = y * sP + z1 * cP;           // 클수록 보는 사람에 가까움
+  const depth = cam.distance - z2;
   const scale = cam.fov / Math.max(10, depth);
-  
-  return {
-    x: cx + x1 * scale,
-    y: cy - y2 * scale, // 화면 Y 반전
-    depth: z2,
-    scale: scale
-  };
+  return { x: cx + x1 * scale, y: cy - y2 * scale, depth: z2, scale: scale };
 }
 
 /* ==========================================================================
@@ -905,6 +899,8 @@ function render() {
   cam.pitch += (cam.targetPitch - cam.pitch) * 0.12;
   cam.distance += (cam.targetDist - cam.distance) * 0.12;
   
+  cam.fov = 1400 * Math.max(0.55, Math.min(w / 1180, h / 640));
+
   // Run 실행 시 코일 회전
   if (STATE.isRunning) {
     const bDir = getBaseBDir();
@@ -920,478 +916,302 @@ function render() {
   }
   
   // 배경 클리어
-  ctx.fillStyle = "#edf2f7";
+  const bgG = ctx.createLinearGradient(0, 0, 0, h);
+  bgG.addColorStop(0, "#f8fafc"); bgG.addColorStop(1, "#e2e8f0");
+  ctx.fillStyle = bgG;
   ctx.fillRect(0, 0, w, h);
   
   // ------------------------------------------------------------------------
   // 3D 렌더링 (Z-Depth Painter's Algorithm)
   // ------------------------------------------------------------------------
   
-  // 1. 하단 배터리 및 브러시 전선 회로 그리기
-  drawCircuitAndBattery(cx, cy);
-  
-  // 2. 좌우 곡면 영구자석 블록 그리기
-  drawMagnets(cx, cy);
-  
-  // 3. 자기력선 왜곡 다발 그리기 (체크박스 켜짐 시)
-  if (STATE.showField) {
-    drawMagneticFieldLines(cx, cy);
-  }
-  
-  // 4. 회전 코일 루프 및 반원형 정류자 그리기
-  drawArmatureAndCommutator(cx, cy);
-  
-  // 5. 물리 벡터 화살표 그리기 (전류, 전자기력, 토크)
-  drawVectorArrows(cx, cy);
+  // 입체 전동기 장면 (자석·자기장·축·코일·정류자·브러시·건전지·벡터)
+  drawMotorScene(cx, cy);
   
   updateHUD();
   
   requestAnimationFrame(render);
 }
 
-// --------------------------------------------------------------------------
-// 6. 하단 배터리 & L자형 브러시 지지대 회로 렌더링
-// --------------------------------------------------------------------------
-function drawCircuitAndBattery(cx, cy) {
-  ctx.save();
-  
-  // L자형 금속 브러시 지지대 (회색 금속판)
-  // 왼쪽 브러시 (x: -28), 오른쪽 브러시 (x: +28) at z: COMMUTATOR_Z
-  const brushL_contact = project3D(-16, 0, COMMUTATOR_Z, cx, cy);
-  const brushL_base1   = project3D(-42, -50, COMMUTATOR_Z, cx, cy);
-  const brushL_base2   = project3D(-75, -50, COMMUTATOR_Z + 30, cx, cy);
-  
-  const brushR_contact = project3D(16, 0, COMMUTATOR_Z, cx, cy);
-  const brushR_base1   = project3D(42, -50, COMMUTATOR_Z, cx, cy);
-  const brushR_base2   = project3D(75, -50, COMMUTATOR_Z + 30, cx, cy);
-  
-  // 브러시 금속 브래킷 드로잉
-  function drawLBrush(contact, b1, b2) {
-    ctx.beginPath();
-    ctx.moveTo(contact.x, contact.y);
-    ctx.lineTo(b1.x, b1.y);
-    ctx.lineTo(b2.x, b2.y);
-    ctx.lineTo(b2.x - 15, b2.y);
-    ctx.lineTo(b1.x - 15, b1.y);
-    ctx.lineTo(contact.x - 4, contact.y);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(203, 213, 225, 0.9)";
-    ctx.fill();
-    ctx.strokeStyle = "#64748b";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+/* ---------- GFX_DM1018 : 전동기 원리 그래픽 리뉴얼 (교과서 삽화형 입체 모델) ---------- */
+// 월드 좌표: x=오른쪽, y=위, z=보는 사람 쪽(정류자 쪽). 회전축 = z축.
+const MOT = {
+  R: 56,                       // 코일 반폭
+  ZB: -88, ZF: 44,             // 코일 뒤/앞 끝
+  AX0: -140, AX1: 206, AXR: 4.6, // 축 범위/반지름
+  ZC: 150, CL: 17, RC: 25, RH: 8, // 정류자 중심 z, 반길이, 반지름, 구멍
+  MAGIN: 132, MAGW: 112, MAGH: 96, MAGZ0: -96, MAGZ1: 40,
+  BATY: -98
+};
+const MOT_LIGHT = (() => { const v = [0.15, 0.8, 0.58], n = Math.hypot(...v); return v.map(a => a / n); })();
+
+function motCamZ(nx, ny, nz) {   // 법선의 카메라 쪽 성분 (>0 이면 보이는 면)
+  const c = STATE.camera, cY = Math.cos(c.yaw), sY = Math.sin(c.yaw), cP = Math.cos(c.pitch), sP = Math.sin(c.pitch);
+  const z1 = -nx * sY + nz * cY;
+  return ny * sP + z1 * cP;
+}
+function motShade(base, n, amb) {
+  const d = Math.max(0, n[0] * MOT_LIGHT[0] + n[1] * MOT_LIGHT[1] + n[2] * MOT_LIGHT[2]);
+  const k = (amb === undefined ? 0.45 : amb) + (1 - (amb === undefined ? 0.45 : amb)) * d * 1.05;
+  return "rgb(" + base.map(v => Math.max(0, Math.min(255, Math.round(v * k)))).join(",") + ")";
+}
+function motPoly(items, P, pts, fill, stroke, lw) {
+  const q = pts.map(p => P(p[0], p[1], p[2]));
+  const d = q.reduce((s, p) => s + p.depth, 0) / q.length;
+  items.push({ d, f: () => {
+    ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y);
+    for (let i = 1; i < q.length; i++) ctx.lineTo(q[i].x, q[i].y);
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.lineJoin = "round"; ctx.stroke(); }
+  }});
+}
+function motLine(items, P, a, b, widths, colors, bias) {   // 굵기/색을 겹쳐 그리는 입체 선(막대·전선)
+  const pa = P(a[0], a[1], a[2]), pb = P(b[0], b[1], b[2]);
+  const d = (pa.depth + pb.depth) / 2 + (bias || 0), s = (pa.scale + pb.scale) / 2;
+  items.push({ d, f: () => {
+    ctx.lineCap = "round";
+    for (let i = 0; i < widths.length; i++) {
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+      ctx.strokeStyle = colors[i]; ctx.lineWidth = widths[i] * s; ctx.stroke();
+    }
+  }});
+}
+function motBox(items, P, c, sz, base, lineCol) {
+  const [cx0, cy0, cz0] = c, hx = sz[0] / 2, hy = sz[1] / 2, hz = sz[2] / 2;
+  const v = (sx, sy, sz2) => [cx0 + sx * hx, cy0 + sy * hy, cz0 + sz2 * hz];
+  const faces = [
+    { n: [0, 0, 1], p: [v(-1, -1, 1), v(1, -1, 1), v(1, 1, 1), v(-1, 1, 1)] },
+    { n: [0, 0, -1], p: [v(1, -1, -1), v(-1, -1, -1), v(-1, 1, -1), v(1, 1, -1)] },
+    { n: [1, 0, 0], p: [v(1, -1, 1), v(1, -1, -1), v(1, 1, -1), v(1, 1, 1)] },
+    { n: [-1, 0, 0], p: [v(-1, -1, -1), v(-1, -1, 1), v(-1, 1, 1), v(-1, 1, -1)] },
+    { n: [0, 1, 0], p: [v(-1, 1, 1), v(1, 1, 1), v(1, 1, -1), v(-1, 1, -1)] },
+    { n: [0, -1, 0], p: [v(-1, -1, -1), v(1, -1, -1), v(1, -1, 1), v(-1, -1, 1)] }
+  ];
+  const out = {};
+  faces.forEach(fc => {
+    if (motCamZ(fc.n[0], fc.n[1], fc.n[2]) <= 0.001) return;
+    motPoly(items, P, fc.p, motShade(base, fc.n), lineCol || "rgba(15,23,42,.55)", 1.2);
+    out[fc.n.join(",")] = fc.p;
+  });
+  return out;
+}
+// 임의 축 원기둥(옆면 띠 + 원판 뚜껑)
+function motCyl(items, P, a, b, r, n, base, opt) {
+  opt = opt || {};
+  const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...u); u[0] /= L; u[1] /= L; u[2] /= L;
+  const t = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  let e1 = [u[1] * t[2] - u[2] * t[1], u[2] * t[0] - u[0] * t[2], u[0] * t[1] - u[1] * t[0]];
+  const l1 = Math.hypot(...e1); e1 = e1.map(x => x / l1);
+  const e2 = [u[1] * e1[2] - u[2] * e1[1], u[2] * e1[0] - u[0] * e1[2], u[0] * e1[1] - u[1] * e1[0]];
+  const ring = (c, ang, rr) => [c[0] + rr * (Math.cos(ang) * e1[0] + Math.sin(ang) * e2[0]), c[1] + rr * (Math.cos(ang) * e1[1] + Math.sin(ang) * e2[1]), c[2] + rr * (Math.cos(ang) * e1[2] + Math.sin(ang) * e2[2])];
+  for (let i = 0; i < n; i++) {
+    const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2, am = (a0 + a1) / 2;
+    const nn = [Math.cos(am) * e1[0] + Math.sin(am) * e2[0], Math.cos(am) * e1[1] + Math.sin(am) * e2[1], Math.cos(am) * e1[2] + Math.sin(am) * e2[2]];
+    if (motCamZ(nn[0], nn[1], nn[2]) <= -0.05) continue;
+    motPoly(items, P, [ring(a, a0, r), ring(a, a1, r), ring(b, a1, r), ring(b, a0, r)], motShade(base, nn, 0.5), opt.stroke || null, 0.6);
   }
-  drawLBrush(brushL_contact, brushL_base1, brushL_base2);
-  drawLBrush(brushR_contact, brushR_base1, brushR_base2);
-  
-  // 배터리 위치 (하단 바닥)
-  const battPos = project3D(0, -90, COMMUTATOR_Z + 75, cx, cy);
-  const bW = 68 * battPos.scale;
-  const bH = 30 * battPos.scale;
-  
-  // 배터리 원통 몸체
-  const bGrad = ctx.createLinearGradient(0, battPos.y - bH/2, 0, battPos.y + bH/2);
-  bGrad.addColorStop(0, "#334155");
-  bGrad.addColorStop(0.3, "#0f172a");
-  bGrad.addColorStop(0.8, "#1e293b");
-  bGrad.addColorStop(1, "#020617");
-  
-  ctx.fillStyle = bGrad;
-  ctx.fillRect(battPos.x - bW/2, battPos.y - bH/2, bW, bH);
-  
-  // +극 황금색 단자 (왼쪽)
-  ctx.fillStyle = "#f59e0b";
-  ctx.fillRect(battPos.x - bW/2 - 7, battPos.y - bH * 0.25, 7, bH * 0.5);
-  ctx.fillRect(battPos.x - bW/2, battPos.y - bH/2, 16, bH);
-  
-  // -극 은색 단자 (오른쪽)
-  ctx.fillStyle = "#cbd5e1";
-  ctx.fillRect(battPos.x + bW/2 - 12, battPos.y - bH/2, 12, bH);
-  
-  // + 라벨
-  ctx.font = "bold 15px sans-serif";
-  ctx.fillStyle = "#0f172a";
-  ctx.fillText("+", battPos.x - bW/2 + 5, battPos.y + 5);
-  
-  // 연결 도선 (빨간색 +, 파란색 -)
-  ctx.lineWidth = 4.2;
-  ctx.lineCap = "round";
-  
-  // 빨간색 도선 (+극 -> 왼쪽 브러시)
+  [[a, [-u[0], -u[1], -u[2]], opt.capA], [b, u, opt.capB]].forEach(cp => {
+    if (cp[2] === false) return;
+    if (motCamZ(cp[1][0], cp[1][1], cp[1][2]) <= 0.001) return;
+    const pts = []; for (let i = 0; i < n; i++) pts.push(ring(cp[0], i / n * Math.PI * 2, r));
+    motPoly(items, P, pts, motShade(cp[2] || base, cp[1], 0.55), opt.stroke || "rgba(15,23,42,.35)", 1);
+  });
+}
+function motLabel(txt, x, y, ox, oy, s) {
+  ctx.save();
+  const lx = x + ox, ly = y + oy;
+  ctx.strokeStyle = "#64748b"; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke();
+  ctx.font = "800 15px Pretendard, 'Malgun Gothic', sans-serif";
+  ctx.textBaseline = "middle"; ctx.textAlign = ox < 0 ? "right" : "left";
+  ctx.lineJoin = "round"; ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 4.5;
+  const tx = lx + (ox < 0 ? -5 : 5);
+  ctx.strokeText(txt, tx, ly); ctx.fillStyle = "#1e293b"; ctx.fillText(txt, tx, ly);
+  ctx.restore();
+}
+// 납작한 교과서식 화살표
+function motArrow(p0, p1, color, w, outline) {
+  const dx = p1.x - p0.x, dy = p1.y - p0.y, len = Math.hypot(dx, dy);
+  if (len < 6) return;
+  const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+  const hl = Math.min(len * 0.55, w * 2.5), hw = w * 1.35, sx = p1.x - ux * hl, sy = p1.y - uy * hl;
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(battPos.x - bW/2 - 6, battPos.y);
-  ctx.lineTo(brushL_base2.x - 70, battPos.y);
-  ctx.lineTo(brushL_base2.x, brushL_base2.y);
-  ctx.strokeStyle = "#ef4444";
-  ctx.stroke();
-  
-  // 파란색 도선 (-극 -> 오른쪽 브러시)
-  ctx.beginPath();
-  ctx.moveTo(battPos.x + bW/2, battPos.y);
-  ctx.lineTo(brushR_base2.x + 70, battPos.y);
-  ctx.lineTo(brushR_base2.x, brushR_base2.y);
-  ctx.strokeStyle = "#3b82f6";
-  ctx.stroke();
-  
+  ctx.moveTo(p0.x + nx * w / 2, p0.y + ny * w / 2); ctx.lineTo(sx + nx * w / 2, sy + ny * w / 2);
+  ctx.lineTo(sx + nx * hw, sy + ny * hw); ctx.lineTo(p1.x, p1.y);
+  ctx.lineTo(sx - nx * hw, sy - ny * hw); ctx.lineTo(sx - nx * w / 2, sy - ny * w / 2);
+  ctx.lineTo(p0.x - nx * w / 2, p0.y - ny * w / 2); ctx.closePath();
+  const g = ctx.createLinearGradient(p0.x + nx * hw, p0.y + ny * hw, p0.x - nx * hw, p0.y - ny * hw);
+  g.addColorStop(0, color[0]); g.addColorStop(1, color[1]);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = outline; ctx.lineWidth = 1.4; ctx.lineJoin = "round"; ctx.stroke();
   ctx.restore();
 }
 
-// --------------------------------------------------------------------------
-// 7. 좌우 곡면 영구자석 블록 렌더링
-// --------------------------------------------------------------------------
-function drawMagnets(cx, cy) {
-  // 왼쪽 자석 (x: MAG_X_LEFT)
-  drawSingleMagnetBlock(MAG_X_LEFT, STATE.leftPoleIn, true, cx, cy);
-  // 오른쪽 자석 (x: MAG_X_RIGHT)
-  drawSingleMagnetBlock(MAG_X_RIGHT, STATE.rightPoleIn, false, cx, cy);
-}
+function drawMotorScene(cx, cy) {
+  const M = MOT, th = STATE.theta, cT = Math.cos(th), sT = Math.sin(th);
+  const comm = getCommutatorState(th), bDir = getBaseBDir();
+  const P = (x, y, z) => project3D(x, y, z, cx, cy);
+  const items = [];
+  const sc = P(0, 0, 0).scale;
 
-function drawSingleMagnetBlock(centerX, poleIn, isLeft, cx, cy) {
-  const w = MAG_W;
-  const h = MAG_H;
-  const d = MAG_D;
-  const hw = w / 2;
-  const hh = h / 2;
-  const hd = d / 2;
-  
-  ctx.save();
-  
-  // 안쪽 극 색상 & 바깥쪽 극 색상
-  // poleIn === 1: 안쪽이 N(빨강), 바깥쪽이 S(파랑)
-  // poleIn === -1: 안쪽이 S(파랑), 바깥쪽이 N(빨강)
-  const colorIn = (poleIn === 1) ? "#dc2626" : "#2563eb";
-  const colorOut = (poleIn === 1) ? "#2563eb" : "#dc2626";
-  const labelIn = (poleIn === 1) ? "N" : "S";
-  const labelOut = (poleIn === 1) ? "S" : "N";
-  
-  // 3D 큐브 면 꼭짓점 투영
-  const corners = [
-    { x: centerX - hw, y: hh,  z: -hd },
-    { x: centerX + hw, y: hh,  z: -hd },
-    { x: centerX + hw, y: hh,  z:  hd },
-    { x: centerX - hw, y: hh,  z:  hd },
-    { x: centerX - hw, y: -hh, z: -hd },
-    { x: centerX + hw, y: -hh, z: -hd },
-    { x: centerX + hw, y: -hh, z:  hd },
-    { x: centerX - hw, y: -hh, z:  hd }
-  ].map(p => project3D(p.x, p.y, p.z, cx, cy));
-  
-  // 앞면 (Z = +hd)
-  ctx.beginPath();
-  ctx.moveTo(corners[3].x, corners[3].y);
-  ctx.lineTo(corners[2].x, corners[2].y);
-  ctx.lineTo(corners[6].x, corners[6].y);
-  ctx.lineTo(corners[7].x, corners[7].y);
-  ctx.closePath();
-  
-  // 반반 색상 채우기
-  const gradFront = ctx.createLinearGradient(corners[3].x, 0, corners[2].x, 0);
-  if (isLeft) {
-    gradFront.addColorStop(0, colorOut);
-    gradFront.addColorStop(0.5, colorOut);
-    gradFront.addColorStop(0.51, colorIn);
-    gradFront.addColorStop(1, colorIn);
-  } else {
-    gradFront.addColorStop(0, colorIn);
-    gradFront.addColorStop(0.5, colorIn);
-    gradFront.addColorStop(0.51, colorOut);
-    gradFront.addColorStop(1, colorOut);
-  }
-  ctx.fillStyle = gradFront;
-  ctx.fill();
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = "#0f172a";
-  ctx.stroke();
-  
-  // 윗면 (Y = +hh)
-  ctx.beginPath();
-  ctx.moveTo(corners[0].x, corners[0].y);
-  ctx.lineTo(corners[1].x, corners[1].y);
-  ctx.lineTo(corners[2].x, corners[2].y);
-  ctx.lineTo(corners[3].x, corners[3].y);
-  ctx.closePath();
-  ctx.fillStyle = isLeft ? colorIn : colorOut;
-  ctx.globalAlpha = 0.85;
-  ctx.fill();
-  ctx.globalAlpha = 1.0;
-  ctx.stroke();
-  
-  // 안쪽 곡면 기둥 (오목한 형태의 자극면 시각화)
-  const innerFaceX = isLeft ? corners[2].x : corners[3].x;
-  const innerFaceY = (corners[2].y + corners[6].y) / 2;
-  
-  // 전면 자극 텍스트 (S / N)
-  ctx.font = "900 28px 'Pretendard', sans-serif";
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  
-  if (isLeft) {
-    // 바깥쪽 S, 안쪽 N
-    ctx.fillText(labelOut, (corners[3].x + corners[7].x) / 2 + 18, (corners[3].y + corners[7].y) / 2);
-    ctx.fillText(labelIn,  (corners[2].x + corners[6].x) / 2 - 18, (corners[2].y + corners[6].y) / 2);
-  } else {
-    // 안쪽 S, 바깥쪽 N
-    ctx.fillText(labelIn,  (corners[3].x + corners[7].x) / 2 + 18, (corners[3].y + corners[7].y) / 2);
-    ctx.fillText(labelOut, (corners[2].x + corners[6].x) / 2 - 18, (corners[2].y + corners[6].y) / 2);
-  }
-  
-  ctx.restore();
-}
+  // 1) 영구자석 2개 (왼쪽 = 안쪽 극이 N이면 빨강, S이면 파랑)
+  [-1, 1].forEach(side => {
+    const poleIn = side < 0 ? STATE.leftPoleIn : STATE.rightPoleIn;
+    const inN = poleIn === 1;
+    const base = inN ? [226, 38, 32] : [34, 54, 178];
+    const cxm = side * (M.MAGIN + M.MAGW / 2), czm = (M.MAGZ0 + M.MAGZ1) / 2;
+    const faces = motBox(items, P, [cxm, 0, czm], [M.MAGW, M.MAGH, M.MAGZ1 - M.MAGZ0], base);
+    const front = faces["0,0,1"];
+    if (front) {      // 앞면에 극 글자 (면과 같은 기울기로)
+      const zf = M.MAGZ1 + 0.5, lx = side * (M.MAGIN + 34);
+      const o = P(lx, -22, zf), ex = P(lx + 10, -22, zf), ey = P(lx, -12, zf);
+      const o2 = P(side * (M.MAGIN + M.MAGW - 30), -14, zf);
+      const d = Math.max(...front.map(p => P(p[0], p[1], p[2]).depth)) + 0.5;
+      items.push({ d, f: () => {
+        ctx.save();
+        ctx.transform((ex.x - o.x) / 10, (ex.y - o.y) / 10, -(ey.x - o.x) / 10, -(ey.y - o.y) / 10, o.x, o.y);
+        ctx.font = "900 78px Pretendard, 'Malgun Gothic', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fillText(inN ? "N" : "S", 0, 0);
+        ctx.restore();
+        ctx.save();
+        const o3 = o2, e3 = P(side * (M.MAGIN + M.MAGW - 30) + 10, -14, zf), f3 = P(side * (M.MAGIN + M.MAGW - 30), -4, zf);
+        ctx.transform((e3.x - o3.x) / 10, (e3.y - o3.y) / 10, -(f3.x - o3.x) / 10, -(f3.y - o3.y) / 10, o3.x, o3.y);
+        ctx.font = "800 34px Pretendard, 'Malgun Gothic', sans-serif"; ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.fillText(inN ? "S" : "N", 0, 0);
+        ctx.restore();
+      }});
+    }
+  });
 
-// --------------------------------------------------------------------------
-// 8. 녹색 자기력선 왜곡 렌더링 (도선 주변 합성 왜곡 시각화)
-// --------------------------------------------------------------------------
-function drawMagneticFieldLines(cx, cy) {
-  const bDir = getBaseBDir();
-  if (Math.abs(bDir) < 0.1) return; // 자극이 일치하지 않을 때
-  
-  const th = STATE.theta;
-  const comm = getCommutatorState(th);
-  
-  // 코일의 좌우 도선 위치
-  const w1 = { x: -COIL_R * Math.cos(th), y: -COIL_R * Math.sin(th) };
-  const w2 = { x:  COIL_R * Math.cos(th), y:  COIL_R * Math.sin(th) };
-  
-  ctx.save();
-  ctx.lineWidth = 1.8;
-  ctx.strokeStyle = "rgba(22, 163, 74, 0.88)"; // 선명한 초록색
-  
-  // 7가닥의 높이별 자기력선
-  const yLevels = [-45, -30, -15, 0, 15, 30, 45];
-  const zLevels = [-50, -10, 30]; // 3D 깊이감
-  
-  zLevels.forEach(z0 => {
-    yLevels.forEach(y0 => {
-      ctx.beginPath();
-      let first = true;
-      const xStart = MAG_X_LEFT + MAG_W * 0.5;
-      const xEnd = MAG_X_RIGHT - MAG_W * 0.5;
-      const numPts = 32;
-      
-      for (let i = 0; i <= numPts; i++) {
-        const xCur = xStart + (xEnd - xStart) * (i / numPts);
-        
-        // 도선에 흐르는 전류에 의한 자기력선 국소 수직 왜곡
-        let dyWarp = 0;
-        if (!comm.isDeadPoint) {
-          // 도선 1 주변
-          const d1 = Math.hypot(xCur - w1.x, y0 - w1.y);
-          const warp1 = (comm.currentSign * 550) / (d1 * d1 + 250);
-          dyWarp += warp1 * (xCur - w1.x);
-          
-          // 도선 2 주변
-          const d2 = Math.hypot(xCur - w2.x, y0 - w2.y);
-          const warp2 = (-comm.currentSign * 550) / (d2 * d2 + 250);
-          dyWarp += warp2 * (xCur - w2.x);
-        }
-        
-        const yCur = y0 + dyWarp * 0.15;
-        const p2D = project3D(xCur, yCur, z0, cx, cy);
-        
-        if (first) { ctx.moveTo(p2D.x, p2D.y); first = false; }
-        else ctx.lineTo(p2D.x, p2D.y);
-      }
-      ctx.stroke();
+  // 2) 자기장 (N → S 방향 화살표 선)
+  if (STATE.showField && Math.abs(bDir) > 0.1) {
+    [-46, -15, 16, 47].forEach(y0 => [-66, -12, 42].forEach(z0 => {
+      const a = P(-M.MAGIN + 3, y0, z0), b = P(M.MAGIN - 3, y0, z0), m = P(0, y0, z0);
+      items.push({ d: m.depth - 400, f: () => {
+        ctx.save(); ctx.strokeStyle = "rgba(71,85,105,.55)"; ctx.lineWidth = 1.7; ctx.setLineDash([9, 6]);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+        const sg = bDir > 0 ? 1 : -1, ux = (b.x - a.x), uy = (b.y - a.y), L = Math.hypot(ux, uy), vx = ux / L * sg, vy = uy / L * sg, h = 9 * Math.max(0.8, sc);
+        ctx.fillStyle = "rgba(71,85,105,.8)"; ctx.beginPath();
+        ctx.moveTo(m.x + vx * h, m.y + vy * h); ctx.lineTo(m.x - vx * h - vy * h * 0.6, m.y - vy * h + vx * h * 0.6); ctx.lineTo(m.x - vx * h + vy * h * 0.6, m.y - vy * h - vx * h * 0.6); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }});
+    }));
+  }
+
+  // 3) 회전축 (구리 막대) — 코일 뒤 / 앞 / 정류자 앞
+  const CU = ["#7a3b0c", "#d9782f", "#ffd3a1"], CUW = [M.AXR * 2.5, M.AXR * 2, M.AXR * 0.7];
+  motLine(items, P, [0, 0, M.AX0], [0, 0, M.ZB + 6], CUW, CU, 0);
+  motLine(items, P, [0, 0, M.ZB + 6], [0, 0, M.ZC - M.CL - 1], CUW, CU, 0);
+  motLine(items, P, [0, 0, M.ZC + M.CL + 1], [0, 0, M.AX1], CUW, CU, 30);
+
+  // 4) 코일 (직사각 고리) + 정류자로 가는 도선
+  const w1 = [-M.R * cT, -M.R * sT], w2 = [M.R * cT, M.R * sT];
+  const WC = ["#8a3d0a", "#e8893a", "#ffd9ae"], WW = [7.2, 5.2, 1.5];
+  const seg = (a, b) => motLine(items, P, a, b, WW, WC, 6);
+  seg([w1[0], w1[1], M.ZF], [w1[0], w1[1], M.ZB]);
+  seg([w1[0], w1[1], M.ZB], [w2[0], w2[1], M.ZB]);
+  seg([w2[0], w2[1], M.ZB], [w2[0], w2[1], M.ZF]);
+  const rl = 17;                                    // 정류자 연결선 반지름
+  const l1 = [-rl * cT, -rl * sT], l2 = [rl * cT, rl * sT];
+  seg([w1[0], w1[1], M.ZF], [l1[0], l1[1], M.ZF]);
+  seg([w2[0], w2[1], M.ZF], [l2[0], l2[1], M.ZF]);
+  seg([l1[0], l1[1], M.ZF], [l1[0], l1[1], M.ZC - M.CL + 1]);
+  seg([l2[0], l2[1], M.ZF], [l2[0], l2[1], M.ZC - M.CL + 1]);
+
+  // 5) 정류자 (반원통 2개, 틈은 코일면과 수직) + 브러시
+  const gap = 0.13;
+  [[th + Math.PI / 2 + gap, th + Math.PI * 1.5 - gap, [186, 192, 202]], [th - Math.PI / 2 + gap, th + Math.PI / 2 - gap, [168, 175, 187]]].forEach(h => {
+    const a0 = h[0], a1 = h[1], N = 14, z0 = M.ZC - M.CL, z1 = M.ZC + M.CL;
+    const pt = (a, z, r) => [r * Math.cos(a), r * Math.sin(a), z];
+    for (let i = 0; i < N; i++) {
+      const s0 = a0 + (a1 - a0) * i / N, s1 = a0 + (a1 - a0) * (i + 1) / N, sm = (s0 + s1) / 2;
+      const no = [Math.cos(sm), Math.sin(sm), 0];
+      if (motCamZ(no[0], no[1], no[2]) > -0.05) motPoly(items, P, [pt(s0, z0, M.RC), pt(s1, z0, M.RC), pt(s1, z1, M.RC), pt(s0, z1, M.RC)], motShade(h[2], no, 0.5), "rgba(30,41,59,.25)", 0.6);
+      const ni = [-Math.cos(sm), -Math.sin(sm), 0];
+      if (motCamZ(ni[0], ni[1], ni[2]) > 0.001) motPoly(items, P, [pt(s0, z0, M.RH), pt(s1, z0, M.RH), pt(s1, z1, M.RH), pt(s0, z1, M.RH)], motShade([96, 104, 118], ni, 0.5), null);
+    }
+    if (motCamZ(0, 0, 1) > 0) {   // 앞쪽 원판(반고리)
+      const pts = []; for (let i = 0; i <= N; i++) pts.push(pt(a0 + (a1 - a0) * i / N, z1, M.RC));
+      for (let i = N; i >= 0; i--) pts.push(pt(a0 + (a1 - a0) * i / N, z1, M.RH));
+      motPoly(items, P, pts, motShade(h[2].map(v => Math.min(255, v + 25)), [0, 0, 1], 0.6), "rgba(30,41,59,.45)", 1);
+    }
+    [a0, a1].forEach((ae, k) => {   // 틈 쪽 단면
+      const nt = k === 0 ? [Math.sin(ae), -Math.cos(ae), 0] : [-Math.sin(ae), Math.cos(ae), 0];
+      if (motCamZ(nt[0], nt[1], nt[2]) > 0.001) motPoly(items, P, [pt(ae, z0, M.RH), pt(ae, z0, M.RC), pt(ae, z1, M.RC), pt(ae, z1, M.RH)], motShade(h[2], nt, 0.5), "rgba(30,41,59,.4)", 0.8);
     });
   });
-  
-  ctx.restore();
-}
+  const BR = [74, 80, 90], bw = 46;
+  [-1, 1].forEach(sd => motBox(items, P, [sd * (M.RC + bw / 2 - 1), 0, M.ZC], [bw, 17, 28], BR));
 
-// --------------------------------------------------------------------------
-// 9. 회전 코일 루프 및 반원형 정류자(Split-Ring) 렌더링
-// --------------------------------------------------------------------------
-function drawArmatureAndCommutator(cx, cy) {
-  const th = STATE.theta;
-  const cosT = Math.cos(th);
-  const sinT = Math.sin(th);
-  
-  // 코일 직사각형 4개 꼭짓점
-  // 도선 1 (왼쪽): x = -COIL_R * cosT, y = -COIL_R * sinT
-  // 도선 2 (오른쪽): x = +COIL_R * cosT, y = +COIL_R * sinT
-  const p1_front = project3D(-COIL_R * cosT, -COIL_R * sinT, COIL_Z_FRONT, cx, cy);
-  const p1_back  = project3D(-COIL_R * cosT, -COIL_R * sinT, COIL_Z_BACK, cx, cy);
-  const p2_back  = project3D( COIL_R * cosT,  COIL_R * sinT, COIL_Z_BACK, cx, cy);
-  const p2_front = project3D( COIL_R * cosT,  COIL_R * sinT, COIL_Z_FRONT, cx, cy);
-  
-  // 정류자 연결 리드선 (코일 앞면 -> 중심 축 -> 정류자)
-  const lead1_hub = project3D(-14 * cosT, -14 * sinT, COMMUTATOR_Z - 18, cx, cy);
-  const lead2_hub = project3D( 14 * cosT,  14 * sinT, COMMUTATOR_Z - 18, cx, cy);
-  
-  ctx.save();
-  ctx.lineWidth = 3.6;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "#b45309"; // 구리 도선 색상
-  
-  // 코일 루프 그리기
-  ctx.beginPath();
-  ctx.moveTo(lead1_hub.x, lead1_hub.y);
-  ctx.lineTo(p1_front.x, p1_front.y);
-  ctx.lineTo(p1_back.x, p1_back.y);
-  ctx.lineTo(p2_back.x, p2_back.y);
-  ctx.lineTo(p2_front.x, p2_front.y);
-  ctx.lineTo(lead2_hub.x, lead2_hub.y);
-  ctx.stroke();
-  
-  // 반원형 정류자 (Split-Ring Commutator) 2개 링 렌더링
-  const commRadius = 15;
-  const numRingPts = 20;
-  
-  // 반원 링 1 (리드선 1에 연결)
-  ctx.beginPath();
-  for (let i = 0; i <= numRingPts; i++) {
-    const a = (th - Math.PI * 0.45) + (i / numRingPts) * (Math.PI * 0.9);
-    const rx = commRadius * Math.cos(a);
-    const ry = commRadius * Math.sin(a);
-    const p = project3D(rx, ry, COMMUTATOR_Z, cx, cy);
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
-  }
-  ctx.lineWidth = 5.2;
-  ctx.strokeStyle = "#d97706"; // 황동색 정류자 링
-  ctx.stroke();
-  
-  // 반원 링 2 (리드선 2에 연결, 반대편 반원)
-  ctx.beginPath();
-  for (let i = 0; i <= numRingPts; i++) {
-    const a = (th + Math.PI * 0.55) + (i / numRingPts) * (Math.PI * 0.9);
-    const rx = commRadius * Math.cos(a);
-    const ry = commRadius * Math.sin(a);
-    const p = project3D(rx, ry, COMMUTATOR_Z, cx, cy);
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
-  }
-  ctx.lineWidth = 5.2;
-  ctx.strokeStyle = "#b45309";
-  ctx.stroke();
-  
-  // 중앙 회전축 샤프트
-  const shaftBack = project3D(0, 0, COIL_Z_BACK - 25, cx, cy);
-  const shaftFront = project3D(0, 0, COMMUTATOR_Z + 20, cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(shaftBack.x, shaftBack.y);
-  ctx.lineTo(shaftFront.x, shaftFront.y);
-  ctx.lineWidth = 2.0;
-  ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
-  ctx.stroke();
-  
-  ctx.restore();
-}
+  // 6) 건전지와 전선
+  const bx0 = -38, bx1 = 38, byy = M.BATY, bzz = M.ZC + 6;
+  const WCOL = ["#1f2937", "#475569"];
+  [-1, 1].forEach(sd => {
+    const ox = sd * (M.RC + bw - 1);
+    motLine(items, P, [ox, -2, M.ZC], [ox, byy, bzz], [3.4, 1.8], WCOL, -8);
+    motLine(items, P, [ox, byy, bzz], [sd * bx1, byy, bzz], [3.4, 1.8], WCOL, -8);
+  });
+  motCyl(items, P, [bx0, byy, bzz], [bx1, byy, bzz], 15, 18, [205, 210, 218], { capA: [90, 98, 112], capB: [225, 228, 235], stroke: null });
+  motCyl(items, P, [bx0 - 9, byy, bzz], [bx0, byy, bzz], 7, 12, [232, 168, 40], { capA: [232, 168, 40], capB: false });
+  motCyl(items, P, [bx0 + 6, byy, bzz], [bx0 + 12, byy, bzz], 15.6, 18, [40, 48, 62], {});
 
-// --------------------------------------------------------------------------
-// 10. 물리 벡터 화살표 렌더링 (전류, 전자기력, 토크)
-// --------------------------------------------------------------------------
-function drawVectorArrows(cx, cy) {
-  const th = STATE.theta;
-  const cosT = Math.cos(th);
-  const sinT = Math.sin(th);
-  const comm = getCommutatorState(th);
-  const bDir = getBaseBDir();
-  
-  // 도선 1 (왼쪽) 및 도선 2 (오른쪽)의 중심점
-  const midZ = (COIL_Z_FRONT + COIL_Z_BACK) * 0.5;
-  const w1_3D = { x: -COIL_R * cosT, y: -COIL_R * sinT, z: midZ };
-  const w2_3D = { x:  COIL_R * cosT, y:  COIL_R * sinT, z: midZ };
-  
-  const p1 = project3D(w1_3D.x, w1_3D.y, w1_3D.z, cx, cy);
-  const p2 = project3D(w2_3D.x, w2_3D.y, w2_3D.z, cx, cy);
-  
-  ctx.save();
-  
-  // ------------------------------------------------------------------------
-  // A. 전류 벡터 화살표 (검은색 화살표)
-  // ------------------------------------------------------------------------
+  items.sort((a, b) => a.d - b.d);
+  ctx.save(); ctx.lineJoin = "round"; ctx.lineCap = "round";
+  items.forEach(it => it.f());
+  ctx.restore();
+
+  // 7) 벡터 표시 (맨 위)
+  const mid = (M.ZB + M.ZF) / 2, ws = [w1, w2];
+  const ARC_CUR = ["#7f8cff", "#4a55e0"], OUT_CUR = "#2d36a8", ARC_F = ["#9be052", "#5aae22"], OUT_F = "#3d7a14";
   if (STATE.showCurrent && !comm.isDeadPoint) {
-    const curDir = comm.currentSign; // 1: 도선1 안쪽(-Z), 도선2 바깥(+Z)
-    
-    // 도선 1 전류 화살표
-    const c1_start = project3D(w1_3D.x, w1_3D.y, midZ + 25 * curDir, cx, cy);
-    const c1_end   = project3D(w1_3D.x, w1_3D.y, midZ - 25 * curDir, cx, cy);
-    drawArrow(c1_start.x, c1_start.y, c1_end.x, c1_end.y, "#0f172a", 3.8, 8);
-    
-    // 도선 2 전류 화살표
-    const c2_start = project3D(w2_3D.x, w2_3D.y, midZ - 25 * curDir, cx, cy);
-    const c2_end   = project3D(w2_3D.x, w2_3D.y, midZ + 25 * curDir, cx, cy);
-    drawArrow(c2_start.x, c2_start.y, c2_end.x, c2_end.y, "#0f172a", 3.8, 8);
+    const cs = comm.currentSign;
+    ws.forEach((w, i) => {
+      const dz = (i === 0 ? -1 : 1) * cs, rad = (i === 0 ? -1 : 1), ox = rad * 17 * cT, oy = rad * 17 * sT;
+      const a = P(w[0] + ox, w[1] + oy, mid - 36 * dz), b = P(w[0] + ox, w[1] + oy, mid + 36 * dz);
+      motArrow(a, b, ARC_CUR, 9 * a.scale, OUT_CUR);
+    });
+    const tp = P(ws[1][0] + 17 * cT, ws[1][1] + 17 * sT, mid + 36 * cs);
+    if (STATE.showLabels) motLabel("전류", tp.x, tp.y, 58, -16, sc);
   }
-  
-  // ------------------------------------------------------------------------
-  // B. 힘, 전자기력 벡터 (빨간색 수직 화살표)
-  // ------------------------------------------------------------------------
   if (STATE.showForce && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
-    // F = I L x B
-    // bDir=1(+X), curDir=1(-Z for wire1): F1 = -Z x +X = -Y (아래쪽)
-    // F2 = +Z x +X = +Y (위쪽)
-    const forceSign = comm.currentSign * bDir;
-    const forceLen = 50;
-    
-    // 도선 1 전자기력 (수직)
-    const f1_tip = project3D(w1_3D.x, w1_3D.y - forceLen * forceSign, w1_3D.z, cx, cy);
-    drawArrow(p1.x, p1.y, f1_tip.x, f1_tip.y, "#ef4444", 4.2, 10);
-    
-    // 도선 2 전자기력 (수직)
-    const f2_tip = project3D(w2_3D.x, w2_3D.y + forceLen * forceSign, w2_3D.z, cx, cy);
-    drawArrow(p2.x, p2.y, f2_tip.x, f2_tip.y, "#ef4444", 4.2, 10);
+    const fs = comm.currentSign * bDir, len = 70;
+    ws.forEach((w, i) => {
+      const dy = (i === 0 ? -1 : 1) * fs * len;
+      const a = P(w[0], w[1], mid), b = P(w[0], w[1] + dy, mid);
+      motArrow(a, b, ARC_F, 11 * a.scale, OUT_F);
+      if (dy > 0 && STATE.showLabels) motLabel("도선이 받는 힘", b.x, b.y, 28, -22, sc);
+    });
   }
-  
-  // ------------------------------------------------------------------------
-  // C. 돌림힘, 토크 벡터 (자홍색 회전 접선 화살표)
-  // ------------------------------------------------------------------------
   if (STATE.showTorque && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
-    // 토크의 유효 크기 tau ~ |cos(theta)|
-    // 접선 방향 단위 벡터: (-sinT, cosT)
-    const torqueMag = 52 * Math.abs(cosT);
-    const rotSign = comm.currentSign * bDir;
-    
-    if (torqueMag > 4) {
-      // 도선 1 접선 화살표
-      const t1_tip = project3D(
-        w1_3D.x - torqueMag * (-sinT) * rotSign,
-        w1_3D.y - torqueMag * ( cosT) * rotSign,
-        w1_3D.z, cx, cy
-      );
-      drawArrow(p1.x, p1.y, t1_tip.x, t1_tip.y, "#d946ef", 4.2, 10);
-      
-      // 도선 2 접선 화살표
-      const t2_tip = project3D(
-        w2_3D.x + torqueMag * (-sinT) * rotSign,
-        w2_3D.y + torqueMag * ( cosT) * rotSign,
-        w2_3D.z, cx, cy
-      );
-      drawArrow(p2.x, p2.y, t2_tip.x, t2_tip.y, "#d946ef", 4.2, 10);
-    }
+    const rs = comm.currentSign * bDir, mag = Math.abs(cT), z0 = M.AX0 + 28, ar = 52;
+    const a0 = rs > 0 ? 0.35 : Math.PI - 0.35, a1 = rs > 0 ? Math.PI + 0.45 : -0.45, N = 28;
+    const pts = []; for (let i = 0; i <= N; i++) { const a = a0 + (a1 - a0) * i / N; pts.push(P(ar * Math.cos(a), ar * Math.sin(a), z0)); }
+    ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+    [["#6b1d5f", 9.5], ["#c04bb0", 6.6]].forEach(s => {
+      ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length - 3; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.strokeStyle = s[0]; ctx.lineWidth = s[1] * sc * (0.55 + 0.45 * mag); ctx.stroke();
+    });
+    const e = pts[pts.length - 1], q = pts[pts.length - 4], dx = e.x - q.x, dy = e.y - q.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, hw = 14 * sc, hl = 24 * sc;
+    ctx.beginPath(); ctx.moveTo(e.x + ux * hl * 0.4, e.y + uy * hl * 0.4); ctx.lineTo(q.x - uy * hw, q.y + ux * hw); ctx.lineTo(q.x + uy * hw, q.y - ux * hw); ctx.closePath();
+    ctx.fillStyle = "#c04bb0"; ctx.fill(); ctx.strokeStyle = "#6b1d5f"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore();
+    if (STATE.showLabels) { const t = pts[Math.floor(N / 2)]; motLabel("돌림힘", t.x, t.y, -6, -44, sc); }
   }
-  
-  ctx.restore();
+
+  // 8) 이름표
+  if (STATE.showLabels) {
+    const ax = P(0, 0, M.AX0 + 10); motLabel("코일의 축", ax.x, ax.y, -44, 34, sc);
+    const wp = P(w1[0], w1[1], M.ZF); motLabel("코일(전선)", wp.x, wp.y, 10, 66, sc);
+    const cm = P(M.RC * 0.6, M.RC * 0.9, M.ZC + M.CL); motLabel("정류자", cm.x, cm.y, 30, -62, sc);
+    const br = P(M.RC + 40, 8, M.ZC + 6); motLabel("브러시", br.x, br.y, 62, -10, sc);
+    const bt = P(0, M.BATY - 14, M.ZC + 6); motLabel("건전지", bt.x, bt.y, 26, 34, sc);
+    const bp = P(bx0 - 14, byy + 2, bzz), bm = P(bx1, byy, bzz);
+    ctx.save(); ctx.font = "900 17px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#b45309"; ctx.fillText("+", bp.x - 4, bp.y - 20 * sc); ctx.fillStyle = "#475569"; ctx.fillText("−", bm.x + 6, bm.y - 20 * sc); ctx.restore();
+  }
 }
 
-// 2D 화살표 그리기 헬퍼
-function drawArrow(x1, y1, x2, y2, color, width = 3, headLen = 8) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const len = Math.hypot(dx, dy);
-  if (len < 3) return;
-  
-  const angle = Math.atan2(dy, dx);
-  
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.lineWidth = width;
-  ctx.strokeStyle = color;
-  ctx.stroke();
-  
-  // 화살표 머리 (삼각형)
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
-  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-}
 
 /* ==========================================================================
    11. 마우스 및 터치 인터랙션 (Orbit Controls)
@@ -1423,7 +1243,7 @@ window.addEventListener("mouseup", () => { STATE.isDragging = false; });
 container.addEventListener("wheel", (e) => {
   e.preventDefault();
   STATE.camera.targetDist += e.deltaY * 0.5;
-  STATE.camera.targetDist = Math.max(400, Math.min(1150, STATE.camera.targetDist));
+  STATE.camera.targetDist = Math.max(700, Math.min(1800, STATE.camera.targetDist));
 }, { passive: false });
 
 // 모바일 터치
@@ -1547,10 +1367,10 @@ function updateHUD() {
     const fSign = comm.currentSign * bDir;
     if (fSign > 0) {
       forceDir.textContent = "좌: 아래(↓) / 우: 위(↑)";
-      desc.innerHTML = "왼쪽 도선은 아래로, 오른쪽 도선은 위로 힘을 받아 <strong>시계 방향 토크</strong>가 발생합니다.";
+      desc.innerHTML = "왼쪽 도선은 아래로, 오른쪽 도선은 위로 힘을 받아 <strong>반시계 방향 토크</strong>(정류자 쪽에서 볼 때)가 발생합니다.";
     } else {
       forceDir.textContent = "좌: 위(↑) / 우: 아래(↓)";
-      desc.innerHTML = "자기장 또는 전류 방향이 반전되어 <strong>반시계 방향 토크</strong>가 발생합니다.";
+      desc.innerHTML = "자기장 또는 전류 방향이 반전되어 <strong>시계 방향 토크</strong>가 발생합니다.";
     }
   }
 }

@@ -312,18 +312,93 @@ let PA=1020,PB=1000,pp=[],f1=[0,0,0];
 function init1(){pp=[];for(let i=0;i<60;i++)pp.push({x:rnd(60,740),y:rnd(110,360)})}
 function step1(dt){const d=PA-PB,v=d*6;pp.forEach(p=>{p.x+=v*dt+(Math.random()-.5)*20*dt;p.y+=(Math.random()-.5)*20*dt;if(p.x>740)p.x=60;if(p.x<60)p.x=740});$('#d1').textContent=d>0?'A → B':d<0?'B → A':'바람 없음';bar('w1',Math.abs(d)*2.5);$('#tg1').textContent='A '+PA+' hPa · B '+PB+' hPa';
  const k=d>0?0:d<0?1:2;if(!f1[k]){f1[k]=1;sTick();$('#f1').textContent=['A→B','B→A','바람 없음'].map((t,i)=>(f1[i]?'✔ ':'☐ ')+t).join(' ');$('#s1').className='say';$('#s1').textContent=k===2?'⚖ 기압이 같으면 공기가 이동하지 않아 바람이 불지 않아요.':'💨 바람은 기압이 높은 곳에서 낮은 곳으로 불어요. 기압 차가 클수록 강해요.';if(f1.every(x=>x)&&!LAB._c1){LAB._c1=1;sOK();say('바람의 원리 발견 🎉',3000);confetti(['💨','✨']);hud()}}}
-function draw1(){const{g}=view($('#c1'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);const col=p=>p>1010?'rgba(239,68,68,.18)':p<1010?'rgba(59,130,246,.18)':'rgba(148,163,184,.15)';g.fillStyle=col(PA);g.fillRect(40,90,360,290);g.fillStyle=col(PB);g.fillRect(400,90,360,290);
- g.fillStyle='#0f172a';g.font='900 30px sans-serif';g.textAlign='center';g.fillText('A '+(PA>PB?'고기압':PA<PB?'저기압':''),220,70);g.fillText('B '+(PB>PA?'고기압':PB<PA?'저기압':''),580,70);g.font='900 22px sans-serif';g.fillText(PA+' hPa',220,410);g.fillText(PB+' hPa',580,410);
- g.fillStyle='#0ea5e9';pp.forEach(p=>{g.beginPath();g.arc(p.x,p.y,5,0,6.3);g.fill()});const d=PA-PB;if(d)arrow(g,400-d*4,235,400+d*4,235,'#0369a1',12,'');g.restore()}
 const SC2=[{n:'☀️ 맑은 날 낮(해안)',a:0,e:'낮에는 비열이 작은 육지가 빨리 데워져 저기압 → 바다에서 육지로 해풍이 불어요.',land:'저',sea:'고',map:0},{n:'🌙 맑은 날 밤(해안)',a:1,e:'밤에는 육지가 빨리 식어 고기압 → 육지에서 바다로 육풍이 불어요.',land:'고',sea:'저',map:0},{n:'🌞 여름(우리나라)',a:0,e:'여름에는 대륙이 더 뜨거워 저기압 → 해양에서 대륙으로 남동 계절풍이 불어요.',land:'저',sea:'고',map:1},{n:'⛄ 겨울(우리나라)',a:1,e:'겨울에는 대륙이 더 차가워 고기압 → 대륙에서 해양으로 북서 계절풍이 불어요.',land:'고',sea:'저',map:1}];
 let s2=0,w2=-1,ok2=[],rev=false;
 function rsc(){$('#sc2').innerHTML='';SC2.forEach((x,i)=>{const b=document.createElement('button');b.className='btn'+(i===s2?' on2':'');b.textContent=x.n.split(' ')[0]+' '+x.n.split(' ').slice(1).join(' ')+(ok2[i]?' ✔':'');b.onclick=()=>{s2=i;w2=-1;rev=false;rsc();rw();sTap();$('#s2').className='say';$('#s2').textContent='바람 방향을 예측해 보세요.'};$('#sc2').appendChild(b)});$('#tg2').textContent=SC2[s2].n}
 function rw(){document.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on2',+b.dataset.w===w2))}
-function draw2(){const{g}=view($('#c2'),LW,LH);const x=SC2[s2],night=s2===1,winter=s2===3;g.fillStyle=night?'#1e293b':winter?'#e0f2fe':'#fef9c3';g.fillRect(0,0,LW,LH);g.fillStyle=winter?'#f1f5f9':'#86efac';g.fillRect(0,240,400,200);g.fillStyle='#0ea5e9';g.fillRect(400,250,400,190);
- g.font='900 26px sans-serif';g.textAlign='center';g.fillStyle=night?'#fff':'#0f172a';g.fillText(x.map?'대륙':'육지',200,300);g.fillText(x.map?'해양':'바다',600,310);g.font='60px serif';g.fillText(night?'🌙':winter?'⛄':'☀️',400,80);
- if(rev){g.font='900 24px sans-serif';g.fillStyle=x.land==='고'?'#dc2626':'#2563eb';g.fillText(x.land==='고'?'고기압':'저기압',200,200);g.fillStyle=x.sea==='고'?'#dc2626':'#2563eb';g.fillText(x.sea==='고'?'고기압':'저기압',600,200);const ph=(performance.now()/1000)%1;const dir=x.a===0?-1:1;arrow(g,400-dir*160,225,400+dir*160,225,'#0369a1',12,x.map?(x.a?'북서 계절풍':'남동 계절풍'):(x.a?'육풍':'해풍'))}g.restore()}
+/* GFX_WD1018 */
+/* ---------- GFX_WD1018 : 바람·기압차 그래픽 리뉴얼 (교과서 삽화형 단면: 상승 기류·해풍·복사 냉각) ---------- */
+function bigArrow(g,x1,y1,x2,y2,w,c1,c2,ol){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<8)return;const ux=dx/L,uy=dy/L,nx=-uy,ny=ux,hl=Math.min(L*.45,w*1.6),hw=w*1.15,sx=x2-ux*hl,sy=y2-uy*hl;
+ g.save();g.beginPath();g.moveTo(x1+nx*w/2,y1+ny*w/2);g.lineTo(sx+nx*w/2,sy+ny*w/2);g.lineTo(sx+nx*hw,sy+ny*hw);g.lineTo(x2,y2);g.lineTo(sx-nx*hw,sy-ny*hw);g.lineTo(sx-nx*w/2,sy-ny*w/2);g.lineTo(x1-nx*w/2,y1-ny*w/2);g.closePath();
+ const gr=g.createLinearGradient(x1,y1,x2,y2);gr.addColorStop(0,c1);gr.addColorStop(1,c2);g.fillStyle=gr;g.fill();g.strokeStyle=ol||'rgba(255,255,255,.7)';g.lineWidth=2.5;g.lineJoin='round';g.stroke();g.restore()}
+function tagPill(g,txt,x,y,bg,fg,fs){g.save();g.font='900 '+(fs||20)+'px sans-serif';const w=g.measureText(txt).width+22;rr(g,x-w/2,y-17,w,34,17);g.fillStyle=bg;g.fill();g.fillStyle=fg||'#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,x,y+1);g.restore()}
+function softCloud(g,x,y,s,a){g.save();g.globalAlpha=a;[[0,0,26],[-30,8,19],[30,10,21],[-8,-14,22],[16,-12,19]].forEach(p=>{const r=g.createRadialGradient(x+p[0]*s-5*s,y+p[1]*s-7*s,2,x+p[0]*s,y+p[1]*s,p[2]*s);r.addColorStop(0,'#ffffff');r.addColorStop(1,'#cbd5e1');g.fillStyle=r;g.beginPath();g.arc(x+p[0]*s,y+p[1]*s,p[2]*s,0,6.3);g.fill()});g.restore()}
+function gaugeDial(g,cx,cy,r,hp){g.save();g.fillStyle='#fff';g.beginPath();g.arc(cx,cy,r,0,6.3);g.fill();g.strokeStyle='#334155';g.lineWidth=4;g.stroke();
+ for(let i=0;i<=8;i++){const a=Math.PI*(0.8+1.4*i/8);g.beginPath();g.moveTo(cx+Math.cos(a)*(r-4),cy+Math.sin(a)*(r-4));g.lineTo(cx+Math.cos(a)*(r-11),cy+Math.sin(a)*(r-11));g.lineWidth=2;g.stroke()}
+ const f=clamp((hp-990)/40,0,1),a=Math.PI*(0.8+1.4*f);g.strokeStyle=hp>1010?'#dc2626':hp<1010?'#2563eb':'#64748b';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*(r-10),cy+Math.sin(a)*(r-10));g.stroke();
+ g.fillStyle='#334155';g.beginPath();g.arc(cx,cy,5,0,6.3);g.fill();g.restore()}
+// 공통: 하늘 + 땅(흙 질감)
+function skyGround(g,t,o){// o:{night,sky:[c0,c1],gy}
+ const sg=g.createLinearGradient(0,0,0,o.gy);sg.addColorStop(0,o.sky[0]);sg.addColorStop(1,o.sky[1]);g.fillStyle=sg;g.fillRect(0,0,LW,LH);
+ if(o.night){g.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<40;i++){g.beginPath();g.arc((i*97)%LW,(i*53)%200+8,1.2+(i%3)*.5,0,6.3);g.fill()}}}
+function soilPoly(g,pts,bot){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.lineTo(pts[pts.length-1][0],bot);g.lineTo(pts[0][0],bot);g.closePath()}
+function landY(x){return x<380?286+x*.1+11*Math.sin(x/62):(x<420?lerp(286+38+11*Math.sin(380/62),338,(x-380)/40):338)}
+function drawCoast(g,t,o){// o:{night,snow,landWarm,names,reveal,high:'land'|'sea'|null,windDir:-1|1,windName}
+ const night=o.night,GY=338;
+ skyGround(g,t,{night,sky:night?['#0b1d3a','#27496d']:(o.snow?['#bcd0e0','#eaf1f7']:['#5bbcf2','#dff1fb']),gy:GY});
+ // 해/달, 구름
+ if(night){g.fillStyle='#fef9c3';g.beginPath();g.arc(650,70,28,0,6.3);g.fill();g.fillStyle='#27496d';g.beginPath();g.arc(661,64,25,0,6.3);g.fill()}
+ else if(!o.snow){const sx=650,sy=70;g.fillStyle='rgba(253,224,71,.35)';g.beginPath();g.arc(sx,sy,56+4*Math.sin(t*2),0,6.3);g.fill();g.fillStyle='#fde047';g.beginPath();g.arc(sx,sy,32,0,6.3);g.fill();g.strokeStyle='#facc15';g.lineWidth=4;for(let i=0;i<12;i++){const a=i*.5236+t*.3;g.beginPath();g.moveTo(sx+Math.cos(a)*40,sy+Math.sin(a)*40);g.lineTo(sx+Math.cos(a)*54,sy+Math.sin(a)*54);g.stroke()}}
+ if(!night){softCloud(g,(120+t*6)%900-50,64,1.0,.95);softCloud(g,(420+t*4)%900-50,44,.75,.85);if(o.snow)softCloud(g,(300+t*5)%900-50,100,1.1,.9)}
+ // 공기 온도 틴트
+ const wL=o.landWarm,aL=g.createLinearGradient(0,90,0,GY);aL.addColorStop(0,wL?'rgba(251,113,60,0)':'rgba(96,165,250,0)');aL.addColorStop(1,wL?'rgba(251,113,60,.36)':'rgba(96,165,250,.38)');g.fillStyle=aL;g.fillRect(0,90,400,GY-90);
+ const aS=g.createLinearGradient(0,90,0,GY);aS.addColorStop(0,!wL?'rgba(251,113,60,0)':'rgba(96,165,250,0)');aS.addColorStop(1,!wL?'rgba(251,146,60,.22)':'rgba(96,165,250,.3)');g.fillStyle=aS;g.fillRect(400,90,400,GY-90);
+ // 바다
+ const wg=g.createLinearGradient(0,GY,0,LH);wg.addColorStop(0,night?'#1e4e8c':'#38bdf8');wg.addColorStop(1,night?'#0b2a55':'#0369a1');g.fillStyle=wg;g.fillRect(400,GY,400,LH-GY);
+ g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2.4;for(let r=0;r<2;r++){g.beginPath();for(let x=400;x<=800;x+=8){const y=GY+6+r*14+Math.sin(x/16+t*2.2+r)*2.6;x===400?g.moveTo(x,y):g.lineTo(x,y)}g.stroke()}
+ // 흙(육지) 단면
+ const pts=[];for(let x=0;x<=420;x+=10)pts.push([x,landY(x)]);
+ soilPoly(g,pts,LH);const sgd=g.createLinearGradient(0,280,0,LH);sgd.addColorStop(0,'#a16207');sgd.addColorStop(.3,'#7c4a1d');sgd.addColorStop(1,'#4a2c12');g.fillStyle=sgd;g.fill();
+ g.save();g.clip();g.fillStyle='rgba(0,0,0,.22)';for(let i=0;i<60;i++)g.fillRect((i*131)%420,330+((i*47)%100),3+(i%4),2+(i%3));g.fillStyle='rgba(253,230,138,.28)';for(let i=0;i<36;i++)g.fillRect((i*79+11)%420,322+((i*61)%110),3,2);g.restore();
+ // 지표 덮개(풀/눈)
+ g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.lineWidth=o.snow?14:10;g.lineCap='round';g.strokeStyle=o.snow?'#f8fafc':(night?'#1f6b3a':'#4ade80');g.stroke();
+ // 바다 아래 흙
+ g.fillStyle='#5b3a1a';g.beginPath();g.moveTo(400,LH);g.lineTo(400,LH-26);g.quadraticCurveTo(560,LH-44,800,LH-18);g.lineTo(800,LH);g.fill();
+ // 열/냉각 표시
+ if(wL){g.strokeStyle='rgba(239,68,68,.75)';g.lineWidth=3;g.lineCap='round';for(let i=0;i<6;i++){const bx=40+i*60;g.beginPath();for(let k=0;k<=24;k++){const y=landY(bx)-8-k*4;const x=bx+Math.sin(k*.7+t*5+i)*5;k?g.lineTo(x,y):g.moveTo(x,y)}g.globalAlpha=.55;g.stroke();g.globalAlpha=1}}
+ else{for(let i=0;i<4;i++){const bx=60+i*90;bigArrow(g,bx,landY(bx)-6,bx,landY(bx)-62-8*Math.sin(t*3+i),9,'rgba(147,197,253,.85)','rgba(96,165,250,.9)','rgba(255,255,255,.6)')}tagPill(g,'복사 냉각',100,landY(100)-92,'rgba(59,130,246,.85)','#fff',17)}
+ // 이름·온도 표지
+ tagPill(g,o.names[0]+(wL?': 빨리 데워져 따뜻':': 빨리 식어 차가움'),200,26,wL?'rgba(220,38,38,.9)':'rgba(37,99,235,.9)','#fff',18);
+ tagPill(g,o.names[1]+(wL?': 천천히 데워져 시원':': 천천히 식어 따뜻'),600,26,wL?'rgba(2,132,199,.9)':'rgba(234,88,12,.9)','#fff',18);
+ // 결과(확인 후): 기압, 상승/하강 기류, 바람
+ if(o.reveal){const landHigh=o.high==='land';
+  const upX=landHigh?600:200,dnX=landHigh?200:600;
+  bigArrow(g,upX,282,upX,112,50,'rgba(244,114,182,.35)','rgba(244,63,94,.85)','rgba(255,255,255,.75)');tagPill(g,'상승 기류',upX,190,'rgba(190,24,93,.85)','#fff',17);
+  bigArrow(g,dnX,100,dnX,262,46,'rgba(147,197,253,.4)','rgba(59,130,246,.85)','rgba(255,255,255,.75)');tagPill(g,'하강 기류',dnX,178,'rgba(29,78,216,.85)','#fff',17);
+  tagPill(g,(landHigh?'육지':'바다')+' 고기압',landHigh?200:600,76,'#dc2626','#fff',22);tagPill(g,(landHigh?'바다':'육지')+' 저기압',landHigh?600:200,76,'#2563eb','#fff',22);
+  const d=o.windDir,x0=400-d*190,x1=400+d*190,y=300;bigArrow(g,x0,y,x1,y,28,'rgba(125,211,252,.6)','rgba(14,165,233,.95)','rgba(255,255,255,.9)');
+  for(let k=0;k<8;k++){const u=((t*.35+k/8)%1),px=lerp(x0,x1,u);g.fillStyle='rgba(255,255,255,.95)';g.beginPath();g.arc(px,y-26+((k*13)%52),3.4,0,6.3);g.fill()}
+  tagPill(g,o.windName,400,y-48,'rgba(3,105,161,.92)','#fff',20)}
+}
+function drawPressure(g,t,pa,pb,pts,showTag){// 기압 차 장면 (c1/c3 공용)
+ const GY=372;skyGround(g,t,{night:false,sky:['#7cc7f4','#e6f4fc'],gy:GY});
+ softCloud(g,(80+t*5)%900-50,50,.9,.9);softCloud(g,(520+t*4)%900-50,36,.7,.85);
+ const ZONES=[[40,400,pa,'A'],[400,760,pb,'B']];
+ ZONES.forEach(z=>{const[x0,x1,p,nm]=z,hi=p>1010,lo=p<1010,cxm=(x0+x1)/2;
+  const gr=g.createLinearGradient(0,92,0,GY);gr.addColorStop(0,hi?'rgba(239,68,68,.06)':lo?'rgba(59,130,246,.06)':'rgba(148,163,184,.05)');gr.addColorStop(1,hi?'rgba(239,68,68,.34)':lo?'rgba(59,130,246,.32)':'rgba(148,163,184,.22)');g.fillStyle=gr;g.fillRect(x0+4,92,x1-x0-8,GY-92);
+  g.setLineDash([9,7]);g.strokeStyle=hi?'#ef4444':lo?'#3b82f6':'#94a3b8';g.lineWidth=3;g.strokeRect(x0+4,92,x1-x0-8,GY-92);g.setLineDash([]);
+  // 공기 분자 (기압이 높을수록 촘촘)
+  const n=Math.round((p-980)*1.4);g.fillStyle=hi?'rgba(185,28,28,.55)':lo?'rgba(29,78,216,.5)':'rgba(71,85,105,.5)';
+  for(let i=0;i<n;i++){const sx=x0+14+((i*97.3+11)%(x1-x0-28)),sy=104+((i*61.7+7)%(GY-124));g.beginPath();g.arc(sx+Math.sin(t*3+i)*2.4,sy+Math.cos(t*2.6+i*1.7)*2.4,3.4,0,6.3);g.fill()}
+  // 상승/하강 기류
+  if(Math.abs(pa-pb)>0||true){if(hi)bigArrow(g,cxm,112,cxm,222,42,'rgba(147,197,253,.5)','rgba(59,130,246,.9)','rgba(255,255,255,.8)');else if(lo)bigArrow(g,cxm,262,cxm,118,42,'rgba(244,114,182,.4)','rgba(244,63,94,.9)','rgba(255,255,255,.8)')}
+  // 표지/기압계
+  tagPill(g,nm+' 지역 '+(hi?'고기압':lo?'저기압':'기압 같음'),cxm,52,hi?'#dc2626':lo?'#2563eb':'#64748b','#fff',22);
+  gaugeDial(g,cxm,GY+34,22,p);g.fillStyle='#0f172a';g.font='900 22px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(p+' hPa',cxm+82,GY+34)});
+ // 땅
+ const gg=g.createLinearGradient(0,GY,0,LH);gg.addColorStop(0,'#86efac');gg.addColorStop(.18,'#4ade80');gg.addColorStop(.19,'#a16207');gg.addColorStop(1,'#4a2c12');g.fillStyle=gg;g.fillRect(0,GY+6,LW,LH-GY-6);
+ g.fillStyle='#16a34a';g.fillRect(0,GY-2,LW,10);
+ // 바람
+ const d=pa-pb;if(d!==0){const sg=d>0?1:-1,L=70+Math.abs(d)*5,y=GY-40;bigArrow(g,400-sg*L,y,400+sg*L,y,12+Math.abs(d)*1.1,'rgba(125,211,252,.55)','rgba(14,165,233,.95)','rgba(255,255,255,.9)');tagPill(g,'바람',400,y-34-Math.abs(d)*.5,'rgba(3,105,161,.92)','#fff',20)}
+ else tagPill(g,'바람 없음',400,GY-40,'rgba(100,116,139,.92)','#fff',20);
+ if(pts){pts.forEach(p=>{g.fillStyle='rgba(255,255,255,.95)';g.strokeStyle='rgba(14,165,233,.9)';g.lineWidth=1.6;g.beginPath();g.arc(p.x,clamp(p.y,120,GY-70),5,0,6.3);g.fill();g.stroke()})}
+}
+function draw1(){const{g}=view($('#c1'),LW,LH);drawPressure(g,performance.now()/1000,PA,PB,pp,true);g.restore()}
+function draw2(){const{g}=view($('#c2'),LW,LH);const x=SC2[s2],t=performance.now()/1000,night=s2===1,winter=s2===3,landWarm=x.land==='저';
+ drawCoast(g,t,{night,snow:winter,landWarm,names:x.map?['대륙','해양']:['육지','바다'],reveal:rev,high:x.land==='고'?'land':'sea',windDir:x.a===0?-1:1,windName:x.map?(x.a?'북서 계절풍':'남동 계절풍'):(x.a?'육풍':'해풍')});g.restore()}
+function draw3(){const{g}=view($('#c3'),LW,LH);drawPressure(g,performance.now()/1000,1020,1000,null,false);g.restore()}
+
 let MC3;
-function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);g.fillStyle='rgba(239,68,68,.18)';g.beginPath();g.arc(220,220,140,0,6.3);g.fill();g.fillStyle='rgba(59,130,246,.18)';g.beginPath();g.arc(580,220,140,0,6.3);g.fill();g.font='900 34px sans-serif';g.textAlign='center';g.fillStyle='#dc2626';g.fillText('고기압',220,230);g.fillStyle='#2563eb';g.fillText('저기압',580,230);arrow(g,330,220,470,220,'#0369a1',14,'바람');g.restore()}
 const LAB={key:'wind',
  quiz:[
  {q:'바람이 부는 까닭은?',o:['두 지점 사이의 기압 차이 때문','온도가 같아서','구름 때문'],a:0,e:'기압이 높은 곳에서 낮은 곳으로 공기가 이동해요.'},

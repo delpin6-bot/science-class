@@ -306,14 +306,71 @@ function TT(h){if(h<=11)return 15-6.5*h;if(h<=20)return -56.5;if(h<=50)return -5
 const lyOf=h=>h<11?0:h<50?1:h<80?2:3;let H=0,Hs=0,seen=[1,0,0,0];
 function step1(dt){Hs+=(H-Hs)*Math.min(1,4*dt);const k=lyOf(Hs);if(!seen[k]){seen[k]=1;sTick()}$('#tp1').textContent=TT(Hs).toFixed(0)+' ℃';$('#ly1').textContent=LY[k][0];$('#tg1').textContent=Hs.toFixed(0)+' km · '+LY[k][0];$('#v1').textContent=LY.map((l,i)=>(seen[i]?'✔ ':'☐ ')+l[0]).join(' ');
  if(seen.every(x=>x)&&!LAB._c1){LAB._c1=1;sOK();$('#s1').className='say ok';$('#s1').textContent='✅ 대류권(높을수록 기온↓) → 성층권(↑, 오존층) → 중간권(↓) → 열권(↑) 순서예요!';say('기권 4층 탐험 완료 🎉',3000);confetti(['🎈','🌈']);hud()}}
-function graph(g,x0,y0,W,Hh,mark){const X=T=>x0+(T+100)/150*W,Y=h=>y0-h/100*Hh;LY.forEach(l=>{g.fillStyle=l[3];g.fillRect(x0,Y(l[2]),W,Y(l[1])-Y(l[2]));g.fillStyle='#334155';g.font='900 20px sans-serif';g.textAlign='right';g.fillText(l[0],x0+W-8,Y((l[1]+l[2])/2)+7)});
+/* GFX_AT1018 */
+/* ---------- GFX_AT1018 : 기권의 층상 구조 그래픽 리뉴얼 (우주→하늘 그라데이션 삽화 + 분홍 기온 곡선) ---------- */
+const AY=h=>400-h/100*370;
+function atmBG(g){const gr=g.createLinearGradient(0,AY(100),0,AY(0));[[0,'#050818'],[.14,'#0b1440'],[.4,'#173a82'],[.62,'#2a74c4'],[.8,'#5bb0ea'],[1,'#c4e8fb']].forEach(s=>gr.addColorStop(s[0],s[1]));
+ g.fillStyle=gr;g.fillRect(0,0,LW,LH);g.fillStyle='#2f5a2a';g.fillRect(0,400,LW,LH-400);const t=performance.now()/1000;
+ for(let i=0;i<70;i++){const x=(i*113.7)%LW,y=8+((i*57.3)%190);const a=clamp((AY(45)-y)/150,0,1)*(.45+.4*Math.sin(t*2+i));if(a<=0)continue;g.fillStyle='rgba(255,255,255,'+a.toFixed(2)+')';g.beginPath();g.arc(x,y,.9+(i%3)*.5,0,6.3);g.fill()}}
+function atmHaze(g,x0,x1){// 대류권 계면, 오존층 띠
+ const o=g.createLinearGradient(0,AY(32),0,AY(18));o.addColorStop(0,'rgba(190,255,220,0)');o.addColorStop(.5,'rgba(190,255,225,.45)');o.addColorStop(1,'rgba(190,255,220,0)');g.fillStyle=o;g.fillRect(x0,AY(32),x1-x0,AY(18)-AY(32))}
+function atmCloud(g,x,y,s,a){g.save();g.globalAlpha=a==null?.95:a;[[0,0,16],[-18,5,12],[18,6,13],[-5,-9,14],[10,-8,12]].forEach(p=>{const r=g.createRadialGradient(x+p[0]*s-3*s,y+p[1]*s-4*s,1,x+p[0]*s,y+p[1]*s,p[2]*s);r.addColorStop(0,'#fff');r.addColorStop(1,'#cfd8e6');g.fillStyle=r;g.beginPath();g.arc(x+p[0]*s,y+p[1]*s,p[2]*s,0,6.3);g.fill()});g.restore()}
+function atmPlane(g,x,y,s){g.save();g.translate(x,y);g.scale(s,s);g.fillStyle='#f8fafc';g.strokeStyle='#64748b';g.lineWidth=1.2;g.beginPath();g.ellipse(0,0,24,5,0,0,6.3);g.fill();g.stroke();
+ g.fillStyle='#e2e8f0';g.beginPath();g.moveTo(-3,0);g.lineTo(-13,-13);g.lineTo(-7,-13);g.lineTo(6,0);g.closePath();g.fill();g.stroke();g.beginPath();g.moveTo(-3,2);g.lineTo(-12,12);g.lineTo(-6,12);g.lineTo(7,2);g.closePath();g.fill();g.stroke();
+ g.fillStyle='#dc2626';g.beginPath();g.moveTo(-20,-1);g.lineTo(-27,-12);g.lineTo(-22,-12);g.lineTo(-13,-1);g.closePath();g.fill();g.fillRect(-18,1,34,1.8);g.restore()}
+function atmSat(g,x,y,s,r){g.save();g.translate(x,y);g.rotate(r);g.scale(s,s);
+ [-1,1].forEach(d=>{g.save();g.translate(d*22,0);g.fillStyle='#1e40af';g.strokeStyle='#93c5fd';g.lineWidth=1;g.fillRect(-15,-8,30,16);g.strokeRect(-15,-8,30,16);g.beginPath();g.moveTo(-5,-8);g.lineTo(-5,8);g.moveTo(5,-8);g.lineTo(5,8);g.moveTo(-15,0);g.lineTo(15,0);g.stroke();g.restore()});
+ g.fillStyle='#fbbf24';g.strokeStyle='#b45309';g.lineWidth=1.4;g.fillRect(-8,-8,16,16);g.strokeRect(-8,-8,16,16);g.fillStyle='#e2e8f0';g.beginPath();g.arc(0,-11,4,0,6.3);g.fill();g.restore()}
+function atmBalloon(g,x,y,t){g.save();g.translate(x,y);const sw=Math.sin(t*1.5)*.05;g.rotate(sw);g.scale(.8,.8);
+ g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(2,6,18,3,0,0,6.3);g.fill();
+ g.strokeStyle='#475569';g.lineWidth=1.2;g.beginPath();g.moveTo(-9,-16);g.lineTo(-5,-2);g.moveTo(9,-16);g.lineTo(5,-2);g.stroke();
+ g.fillStyle='#7c4a1d';g.fillRect(-6,-2,12,8);g.strokeStyle='#3b2410';g.strokeRect(-6,-2,12,8);
+ const e=g.createRadialGradient(-6,-34,3,0,-28,20);e.addColorStop(0,'#fca5a5');e.addColorStop(1,'#b91c1c');g.fillStyle=e;g.beginPath();g.moveTo(-5,-15);g.bezierCurveTo(-26,-26,-18,-52,0,-52);g.bezierCurveTo(18,-52,26,-26,5,-15);g.closePath();g.fill();
+ g.save();g.clip();g.fillStyle='rgba(255,255,255,.85)';g.fillRect(-4,-56,8,44);g.fillRect(-18,-40,36,5);g.restore();g.strokeStyle='#7f1d1d';g.lineWidth=1.3;g.stroke();g.restore()}
+function atmScene(g,t){const x0=30,x1=330;
+ atmHaze(g,x0,x1);
+ // 열권: 오로라
+ for(let x=196;x<=324;x+=3){const top=AY(98)+Math.sin(x/15+t*1.1)*5,hh=34+14*Math.sin(x/9+t*.9);const gr=g.createLinearGradient(0,top,0,top+hh);gr.addColorStop(0,'rgba(74,222,128,0)');gr.addColorStop(.35,'rgba(74,222,128,.55)');gr.addColorStop(.75,'rgba(167,139,250,.35)');gr.addColorStop(1,'rgba(236,72,153,0)');g.fillStyle=gr;g.fillRect(x,top,3.4,hh)}
+ // 인공위성
+ atmSat(g,92,AY(93),.8,-.35+Math.sin(t*.6)*.05);
+ // 중간권: 유성
+ for(let i=0;i<4;i++){const u=((t*.22+i*.26)%1),x=310-u*190-i*14,y=AY(78)+u*(AY(56)-AY(78))+i*6;const gr=g.createLinearGradient(x,y,x+46,y-30);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');g.strokeStyle=gr;g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(x,y);g.lineTo(x+46,y-30);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(x,y,2.6,0,6.3);g.fill()}
+ // 오존층
+ g.fillStyle='#eafff3';g.font='900 15px sans-serif';g.textAlign='left';g.shadowColor='rgba(0,60,40,.7)';g.shadowBlur=4;g.fillText('오존층',64,AY(25)+5);g.shadowBlur=0;
+ // 대류권: 적란운, 구름, 비행기, 산
+ const my=AY(11);
+ g.fillStyle='rgba(255,255,255,.2)';g.fillRect(x0,my-2,x1-x0,2);
+ atmCloud(g,262,AY(6),1.2,.9);atmCloud(g,112,AY(8.5),.8,.8);atmCloud(g,70,AY(6),.9,.85);
+ atmPlane(g,178,AY(10.4),.9);
+ const mg=g.createLinearGradient(0,AY(9),0,400);mg.addColorStop(0,'#cbd5e1');mg.addColorStop(.35,'#7c8a6a');mg.addColorStop(1,'#3b5a2c');g.fillStyle=mg;g.beginPath();g.moveTo(x0,400);g.lineTo(x0,AY(1.5));g.lineTo(76,AY(5));g.lineTo(110,AY(2.5));g.lineTo(170,AY(8.8));g.lineTo(210,AY(3.4));g.lineTo(262,AY(5.8));g.lineTo(300,AY(2));g.lineTo(x1,AY(3));g.lineTo(x1,400);g.closePath();g.fill();
+ g.fillStyle='#f8fafc';g.beginPath();g.moveTo(152,AY(7));g.lineTo(170,AY(8.8));g.lineTo(188,AY(6.6));g.lineTo(176,AY(7.2));g.lineTo(168,AY(6.4));g.lineTo(160,AY(7.1));g.closePath();g.fill();
+ g.fillStyle='#2f5a2a';g.fillRect(x0,392,x1-x0,10);
+ // 층 경계(점선) + 이름
+ [[11,'대류권 계면'],[50,'성층권 계면'],[80,'중간권 계면']].forEach(b=>{g.setLineDash([6,5]);g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=1.4;g.beginPath();g.moveTo(x0,AY(b[0]));g.lineTo(x1,AY(b[0]));g.stroke();g.setLineDash([]);g.fillStyle='#fff';g.font='700 12px sans-serif';g.textAlign='right';g.fillText(b[1]+' '+b[0]+' km',x1-4,AY(b[0])-4)});
+ // 왼쪽 층 띠
+ g.save();LY.forEach(l=>{const ya=AY(l[2]),yb=AY(l[1]);g.fillStyle=l[3];g.globalAlpha=.9;g.fillRect(8,ya,20,yb-ya);g.globalAlpha=1;g.save();g.translate(18,(ya+yb)/2);g.rotate(-Math.PI/2);g.fillStyle='#1e293b';g.font='900 12px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(l[0],0,0);g.restore()});g.restore();
+ // 높이 눈금
+ g.fillStyle='rgba(255,255,255,.9)';g.font='700 11px sans-serif';g.textAlign='left';[0,20,40,60,80,100].forEach(h=>g.fillText(h,x0+2,AY(h)-2))}
+function graph(g,x0,y0,W,Hh,mark){const X=T=>x0+(T+100)/150*W,Y=h=>y0-h/100*Hh;
+ g.save();rr(g,x0-54,y0-Hh-12,W+64,Hh+56,14);g.fillStyle='rgba(255,255,255,.88)';g.fill();g.restore();
+ LY.forEach(l=>{g.globalAlpha=.75;g.fillStyle=l[3];g.fillRect(x0,Y(l[2]),W,Y(l[1])-Y(l[2]));g.globalAlpha=1;g.fillStyle='#334155';g.font='900 20px sans-serif';g.textAlign='right';g.fillText(l[0],x0+W-8,Y((l[1]+l[2])/2)+7)});
+ g.strokeStyle='rgba(51,65,85,.15)';g.lineWidth=1;[-100,-75,-50,-25,0,25,50].forEach(T=>{g.beginPath();g.moveTo(X(T),Y(0));g.lineTo(X(T),Y(100));g.stroke()});
+ g.setLineDash([7,5]);g.strokeStyle='#475569';g.lineWidth=1.6;[[11,'대류권 계면'],[50,'성층권 계면'],[80,'중간권 계면']].forEach(b=>{g.beginPath();g.moveTo(x0,Y(b[0]));g.lineTo(x0+W,Y(b[0]));g.stroke()});g.setLineDash([]);
+ g.fillStyle='#475569';g.font='700 12px sans-serif';g.textAlign='right';[[11,'대류권 계면'],[50,'성층권 계면'],[80,'중간권 계면']].forEach(b=>g.fillText(b[1]+' '+b[0]+'km',x0+W-6,Y(b[0])-4));
  g.strokeStyle='#334155';g.lineWidth=3;g.beginPath();g.moveTo(x0,y0-Hh);g.lineTo(x0,y0);g.lineTo(x0+W,y0);g.stroke();g.font='900 15px sans-serif';g.fillStyle='#0f172a';g.textAlign='right';[0,20,40,60,80,100].forEach(h=>g.fillText(h+'km',x0-4,Y(h)+5));g.textAlign='center';[-100,-50,0,50].forEach(T=>g.fillText(T+'℃',X(T),y0+18));
- g.strokeStyle='#dc2626';g.lineWidth=5;g.beginPath();for(let h=0;h<=100;h+=1){const x=X(TT(h)),y=Y(h);h?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();if(mark!=null){g.fillStyle='#dc2626';g.beginPath();g.arc(X(TT(mark)),Y(mark),9,0,6.3);g.fill()}return{X,Y}}
-function draw1(){const{g}=view($('#c1'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);const gr=graph(g,380,400,390,370,Hs);
- const y=400-Hs/100*370;g.fillStyle='#e0f2fe';g.fillRect(40,30,280,370);LY.forEach(l=>{g.fillStyle=l[3];g.fillRect(40,400-l[2]/100*370,280,(l[2]-l[1])/100*370)});g.fillStyle='#22c55e';g.fillRect(40,392,280,8);
- g.font='26px serif';g.textAlign='center';g.fillText('☁',100,375);g.fillText('⛈',230,365);g.fillText('✈',270,380-10/100*370);g.fillText('🛡',120,400-25/100*370);g.font='14px sans-serif';g.fillStyle='#334155';g.fillText('오존층',160,400-25/100*370);g.font='26px serif';g.fillText('☄',250,400-70/100*370);g.fillText('🌌',100,400-90/100*370);g.font='44px serif';g.fillText('🎈',180,y+10);g.restore()}
+ const line=()=>{g.beginPath();for(let h=0;h<=100;h+=1){const x=X(TT(h)),y=Y(h);h?g.lineTo(x,y):g.moveTo(x,y)}};g.lineJoin='round';g.lineCap='round';
+ g.strokeStyle='#fff';g.lineWidth=9;line();g.stroke();g.strokeStyle='#ec4899';g.lineWidth=5;line();g.stroke();
+ if(mark==null){[[0,'15℃'],[11,'-56℃'],[20,''],[50,'-1℃'],[80,'-90℃'],[100,'']].forEach(p=>{g.fillStyle='#ec4899';g.beginPath();g.arc(X(TT(p[0])),Y(p[0]),5,0,6.3);g.fill();if(p[1]){g.fillStyle='#9d174d';g.font='900 14px sans-serif';g.textAlign=p[0]===80||p[0]===11?'right':'left';g.fillText(p[1],X(TT(p[0]))+(p[0]===80||p[0]===11?-10:10),Y(p[0])+(p[0]===80?16:5))}})}
+ else{const px=X(TT(mark)),py=Y(mark);g.setLineDash([5,4]);g.strokeStyle='#be185d';g.lineWidth=1.8;g.beginPath();g.moveTo(x0,py);g.lineTo(px,py);g.stroke();g.setLineDash([]);const gl=g.createRadialGradient(px,py,2,px,py,20);gl.addColorStop(0,'rgba(236,72,153,.7)');gl.addColorStop(1,'rgba(236,72,153,0)');g.fillStyle=gl;g.beginPath();g.arc(px,py,20,0,6.3);g.fill();g.fillStyle='#be185d';g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(px,py,9,0,6.3);g.fill();g.stroke()}
+ return{X,Y}}
+function draw1(){const{g}=view($('#c1'),LW,LH);const t=performance.now()/1000;atmBG(g);atmScene(g,t);const gr=graph(g,420,400,350,370,Hs);
+ const by=AY(Hs)-14,px=gr.X(TT(Hs)),py=gr.Y(Hs);g.setLineDash([4,5]);g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=1.6;g.beginPath();g.moveTo(206,AY(Hs));g.lineTo(366,AY(Hs));g.stroke();g.setLineDash([]);
+ atmBalloon(g,180,AY(Hs)+10,t);
+ g.restore()}
+
 const S2=[['☁ 비·눈 등 기상 현상',0,'수증기가 있고 대류가 일어나요'],['🔄 공기의 대류가 활발',0,'아래가 따뜻해 대류가 일어나요'],['🛡 오존층이 있음',1,'오존이 자외선을 흡수해요'],['✈ 비행기 항로(안정)',1,'대류가 없어 안정해요'],['☄ 유성이 나타남',2,'중간권에서 유성이 타요'],['❄ 기온이 가장 낮은 곳',2,'중간권 위쪽 약 -90 ℃'],['🌌 오로라가 나타남',3,'열권에서 나타나요'],['🛰 인공위성 궤도',3,'공기가 매우 희박해요']];let SR2,MC3;
-function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);graph(g,120,400,560,370,null);g.restore()}
+function draw3(){const{g}=view($('#c3'),LW,LH);atmBG(g);atmHaze(g,0,LW);graph(g,130,400,570,370,null);g.restore()}
+
 const LAB={key:'atmlayer',
  quiz:[
  {q:'높이 올라갈수록 기온이 낮아지는 층은?',o:['대류권과 중간권','성층권과 열권','모든 층'],a:0,e:'대류권, 중간권은 높이 올라갈수록 기온이 낮아져요.'},

@@ -309,31 +309,173 @@ function sorterHTML(id,title,bins){return `<div class="card" id="${id}"><div cla
 let hl=0,side=false,seen1=[0,0],ang=0;
 function rh(m){document.querySelectorAll('[data-h]').forEach(b=>b.classList.toggle('on2',+b.dataset.h===hl));$('#wd1').textContent=hl?'시계 반대 방향으로 불어 들어옴':'시계 방향으로 불어 나감';$('#ud1').textContent=hl?'상승 기류':'하강 기류';$('#wx1').textContent=hl?'☁ 구름 · 비 (흐림)':'☀ 맑음';$('#tg1').textContent=(hl?'저기압':'고기압')+(side?' · 옆에서 본 모습':' · 위에서 본 모습');
  if(m&&!seen1[hl]){seen1[hl]=1;sOK();$('#s1').className='say ok';$('#s1').textContent=hl?'🔵 저기압: 주변보다 기압이 낮아 바람이 시계 반대 방향으로 불어 들어오고, 중심에서 공기가 상승 → 구름·비':'🔴 고기압: 주변보다 기압이 높아 바람이 시계 방향으로 불어 나가고, 중심에서 공기가 하강 → 맑음';if(seen1[0]&&seen1[1]){say('고기압·저기압 비교 완료 🎉',3000);confetti(['🌀','☀️'])}hud()}}
-function draw1(dt){const{g}=view($('#c1'),LW,LH);g.fillStyle='#f8fafc';g.fillRect(0,0,LW,LH);const cx=400,cy=225;g.textAlign='center';
- if(!side){g.fillStyle=hl?'rgba(59,130,246,.15)':'rgba(239,68,68,.15)';g.beginPath();g.arc(cx,cy,200,0,6.3);g.fill();g.strokeStyle='#94a3b8';g.lineWidth=2;[80,140,200].forEach(r=>{g.beginPath();g.arc(cx,cy,r,0,6.3);g.stroke()});
-  const dir=hl?-1:1;for(let i=0;i<8;i++){const a=ang*dir+i*Math.PI/4,r1=hl?190:70,r2=hl?90:180,s=hl?-.6:.6;const a1=a,a2=a+s*dir;arrow(g,cx+Math.cos(a1)*r1,cy+Math.sin(a1)*r1,cx+Math.cos(a2)*r2,cy+Math.sin(a2)*r2,hl?'#2563eb':'#dc2626',7,'')}
-  g.fillStyle=hl?'#2563eb':'#dc2626';g.font='900 54px sans-serif';g.fillText(hl?'L':'H',cx,cy+18);g.font='800 20px sans-serif';g.fillStyle='#334155';g.fillText(hl?'1000':'1020',cx+82,cy-8);g.fillText(hl?'1004':'1016',cx+142,cy-8)}
- else{g.fillStyle='#e0f2fe';g.fillRect(0,0,LW,380);g.fillStyle='#86efac';g.fillRect(0,380,LW,60);const t=(performance.now()/1000)%2/2;
-  for(let i=0;i<5;i++){const y=hl?360-((t+i/5)%1)*300:60+((t+i/5)%1)*300;g.fillStyle=hl?'#2563eb':'#dc2626';g.beginPath();g.arc(cx,y,8,0,6.3);g.fill()}arrow(g,cx,hl?330:80,cx,hl?90:320,hl?'#2563eb':'#dc2626',12,hl?'상승':'하강');
-  if(hl){arrow(g,120,360,320,360,'#0369a1',8,'');arrow(g,680,360,480,360,'#0369a1',8,'');g.font='80px serif';g.fillText('☁️',cx,90);g.font='40px serif';g.fillText('🌧',cx,150)}else{arrow(g,320,360,120,360,'#0369a1',8,'');arrow(g,480,360,680,360,'#0369a1',8,'');g.font='70px serif';g.fillText('☀️',cx+180,100)}
-  g.fillStyle='#0f172a';g.font='900 30px sans-serif';g.fillText(hl?'L 저기압':'H 고기압',cx,420)}g.restore()}
-function draw2(){const{g}=view($('#c2'),LW,LH);g.fillStyle='#e0f2fe';g.fillRect(0,0,LW,LH);g.strokeStyle='#64748b';g.lineWidth=2;
- [[230,230,[60,110,160]],[560,210,[50,100,150]]].forEach(([x,y,rs])=>rs.forEach(r=>{g.beginPath();g.ellipse(x,y,r*1.2,r,0,0,6.3);g.stroke()}));
- g.textAlign='center';g.font='900 46px sans-serif';g.fillStyle='#dc2626';g.fillText('H',230,245);g.font='800 18px sans-serif';g.fillText('1024',230,268);g.font='900 46px sans-serif';g.fillStyle='#2563eb';g.fillText('L',560,225);g.font='800 18px sans-serif';g.fillText('996',560,248);
- g.lineWidth=5;g.strokeStyle='#ef4444';g.beginPath();g.moveTo(585,255);g.quadraticCurveTo(660,250,720,190);g.stroke();for(let i=0;i<3;i++){const x=625+i*35,y=252-i*16;g.fillStyle='#ef4444';g.beginPath();g.arc(x,y,10,Math.PI,0);g.fill()}
- g.strokeStyle='#3b82f6';g.beginPath();g.moveTo(585,255);g.quadraticCurveTo(540,320,470,380);g.stroke();for(let i=0;i<3;i++){const x=568-i*30,y=290+i*32;g.fillStyle='#3b82f6';g.beginPath();g.moveTo(x-10,y-6);g.lineTo(x+10,y+6);g.lineTo(x-12,y+14);g.fill()}
- g.fillStyle='#0f172a';g.font='800 20px sans-serif';g.fillText('🅐',380,180);g.fillText('🅑',640,300);g.fillText('🅒',150,120);g.textAlign='left';g.font='700 18px sans-serif';g.fillText('등압선(4 hPa 간격)',20,420);g.restore()}
+/* GFX_HL1018 */
+/* ---------- GFX_HL1018 : 고기압·저기압·일기도 그래픽 리뉴얼 (3D 단면 블록, 위성 소용돌이, 관측소 기호가 있는 일기도) ---------- */
+function hBig(g,x1,y1,x2,y2,w,c1,c2,ol){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<8)return;const ux=dx/L,uy=dy/L,nx=-uy,ny=ux,hl_=Math.min(L*.45,w*1.6),hw=w*1.15,sx=x2-ux*hl_,sy=y2-uy*hl_;
+ g.save();g.beginPath();g.moveTo(x1+nx*w/2,y1+ny*w/2);g.lineTo(sx+nx*w/2,sy+ny*w/2);g.lineTo(sx+nx*hw,sy+ny*hw);g.lineTo(x2,y2);g.lineTo(sx-nx*hw,sy-ny*hw);g.lineTo(sx-nx*w/2,sy-ny*w/2);g.lineTo(x1-nx*w/2,y1-ny*w/2);g.closePath();
+ const gr=g.createLinearGradient(x1,y1,x2,y2);gr.addColorStop(0,c1);gr.addColorStop(1,c2);g.fillStyle=gr;g.fill();g.strokeStyle=ol||'rgba(255,255,255,.75)';g.lineWidth=2.4;g.lineJoin='round';g.stroke();g.restore()}
+function hPath(g,pts,w,c1,c2,ol){// 화면 좌표 폴리라인 → 굵은 곡선 화살표
+ const n=pts.length;if(n<3)return;const L=[],R=[];for(let i=0;i<n-1;i++){const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy)||1;const nx=-dy/d,ny=dx/d;const k=.55+.45*(i/(n-2));L.push([a[0]+nx*w*k/2,a[1]+ny*w*k/2]);R.push([a[0]-nx*w*k/2,a[1]-ny*w*k/2])}
+ const e=pts[n-1],p=pts[n-2],dx=e[0]-p[0],dy=e[1]-p[1],d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,nx=-uy,ny=ux,hw=w*1.0,hlen=w*1.5,bx=e[0]-ux*hlen,by=e[1]-uy*hlen;
+ g.save();g.beginPath();L.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.lineTo(bx+nx*hw,by+ny*hw);g.lineTo(e[0]+ux*2,e[1]+uy*2);g.lineTo(bx-nx*hw,by-ny*hw);for(let i=R.length-1;i>=0;i--)g.lineTo(R[i][0],R[i][1]);g.closePath();
+ const gr=g.createLinearGradient(pts[0][0],pts[0][1],e[0],e[1]);gr.addColorStop(0,c1);gr.addColorStop(1,c2);g.fillStyle=gr;g.fill();g.strokeStyle=ol||'rgba(255,255,255,.7)';g.lineWidth=2;g.lineJoin='round';g.stroke();g.restore()}
+function hPill(g,txt,x,y,bg,fg,fs){g.save();g.font='900 '+(fs||18)+'px sans-serif';const w=g.measureText(txt).width+20;rr(g,x-w/2,y-15,w,30,15);g.fillStyle=bg;g.fill();g.fillStyle=fg||'#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,x,y+1);g.restore()}
+function hCloud(g,x,y,s,a,dark){g.save();g.globalAlpha=a==null?.95:a;[[0,0,26],[-30,8,19],[30,10,21],[-8,-14,22],[16,-12,19],[-22,-8,16]].forEach(p=>{const r=g.createRadialGradient(x+p[0]*s-5*s,y+p[1]*s-7*s,2,x+p[0]*s,y+p[1]*s,p[2]*s);r.addColorStop(0,dark?'#e2e8f0':'#fff');r.addColorStop(1,dark?'#64748b':'#cbd5e1');g.fillStyle=r;g.beginPath();g.arc(x+p[0]*s,y+p[1]*s,p[2]*s,0,6.3);g.fill()});g.restore()}
+const IW=520,IH=210,IX=400,IY0=150,BH=135,SD=42;
+function P3(u,v,w){return[IX+(u-v)*IW/2,IY0+(u+v)*IH/2-w]}
+function poly3(g,a){g.beginPath();a.forEach((p,i)=>{const q=P3(p[0],p[1],p[2]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
+function hSpiral(low,i,k){// 지표 바람 경로(uv 평면). low: 반시계 방향으로 중심으로, high: 시계 방향으로 바깥으로
+ const ph=i*Math.PI/3+.4,pts=[];for(let s=0;s<=14;s++){const f=s/14,r=low?.46-.33*f:.13+.33*f,a=low?ph-1.15*f:ph+1.15*f;pts.push([clamp(.5+Math.cos(a)*r,.05,.95),clamp(.5+Math.sin(a)*r,.05,.95)])}return pts}
+function hBlock(g,low,t){
+ // 유리 상자(뒤쪽 벽)
+ [[[0,0,0],[0,1,0],[0,1,BH],[0,0,BH]],[[0,0,0],[1,0,0],[1,0,BH],[0,0,BH]]].forEach((w,i)=>{poly3(g,w);const a=P3(0,0,0),b=P3(0,0,BH),gr=g.createLinearGradient(0,b[1],0,a[1]);if(low){gr.addColorStop(0,'rgba(71,85,105,.75)');gr.addColorStop(1,'rgba(148,163,184,.55)')}else{gr.addColorStop(0,'rgba(56,189,248,.7)');gr.addColorStop(1,'rgba(224,242,254,.65)')}g.fillStyle=gr;g.fill();g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2;g.stroke()});
+ // 지표면
+ poly3(g,[[0,0,0],[1,0,0],[1,1,0],[0,1,0]]);const tg=g.createLinearGradient(...P3(0,0,0),...P3(1,1,0));tg.addColorStop(0,low?'#6f8a4a':'#9bc361');tg.addColorStop(1,low?'#4f6a35':'#7ba548');g.fillStyle=tg;g.fill();
+ g.save();g.clip();for(let i=0;i<90;i++){const q=P3(((i*37)%100)/100,((i*61+13)%100)/100,0);g.fillStyle=i%3?'rgba(60,80,30,.35)':'rgba(255,255,200,.25)';g.fillRect(q[0],q[1],3,2)}
+ if(low){g.fillStyle='rgba(30,64,175,.18)';g.fillRect(0,0,LW,LH)}g.restore();
+ // 흙 단면(앞쪽 두 면)
+ [[[0,1,0],[1,1,0],[1,1,-SD],[0,1,-SD]],[[1,0,0],[1,1,0],[1,1,-SD],[1,0,-SD]]].forEach((f,k)=>{poly3(g,f);const a=P3(f[0][0],f[0][1],0),b=P3(f[0][0],f[0][1],-SD);const gr=g.createLinearGradient(0,a[1],0,b[1]);gr.addColorStop(0,k?'#6b4a22':'#7a5428');gr.addColorStop(.35,'#5a3b1a');gr.addColorStop(1,'#33210f');g.fillStyle=gr;g.fill();g.save();g.clip();for(let i=0;i<46;i++){const u=((i*53)%100)/100,w=-((i*29)%100)/100*SD;const q=k?P3(1,u,w):P3(u,1,w);g.fillStyle=i%2?'rgba(0,0,0,.25)':'rgba(253,230,138,.25)';g.fillRect(q[0],q[1],3+(i%3),2+(i%2))}g.restore();g.strokeStyle='#241507';g.lineWidth=2;g.stroke()});
+ // 지표 바람 화살표 + 흐르는 점
+ const n=6;for(let i=0;i<n;i++){const pts=hSpiral(low,i).map(p=>P3(p[0],p[1],1));hPath(g,pts,13,low?'rgba(147,197,253,.55)':'rgba(254,202,202,.6)',low?'rgba(37,99,235,.95)':'rgba(220,38,38,.95)');
+  for(let k=0;k<2;k++){const f=((t*.3+i*.13+k*.5)%1),idx=Math.floor(f*(pts.length-1)),q=pts[idx];g.fillStyle='rgba(255,255,255,.95)';g.beginPath();g.arc(q[0],q[1]-2,3,0,6.3);g.fill()}}
+ // 수직 기류 + 구름/태양
+ const c0=P3(.5,.5,0);
+ if(low){hBig(g,c0[0],c0[1]-8,c0[0],c0[1]-BH+22,46,'rgba(244,114,182,.45)','rgba(244,63,94,.95)');
+  for(let i=0;i<8;i++){const f=((t*.5+i/8)%1);g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(c0[0]-16+((i*17)%34),c0[1]-10-f*(BH-40),3,0,6.3);g.fill()}
+  hCloud(g,c0[0],c0[1]-BH+6,1.5,.97,true);hCloud(g,c0[0]-70,c0[1]-BH+22,.8,.9,true);hCloud(g,c0[0]+72,c0[1]-BH+20,.85,.9,true);
+  g.strokeStyle='rgba(59,130,246,.65)';g.lineWidth=2;g.lineCap='round';for(let i=0;i<26;i++){const x=c0[0]-90+((i*37)%180),y0=c0[1]-BH+34+(((i*13)+t*90)%70);g.beginPath();g.moveTo(x,y0);g.lineTo(x-4,y0+11);g.stroke()}
+  hPill(g,'상승 기류',c0[0]+78,c0[1]-62,'rgba(190,24,93,.9)','#fff',17)}
+ else{hBig(g,c0[0],c0[1]-BH+14,c0[0],c0[1]-14,46,'rgba(147,197,253,.55)','rgba(37,99,235,.95)');
+  for(let i=0;i<8;i++){const f=((t*.5+i/8)%1);g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(c0[0]-16+((i*17)%34),c0[1]-BH+20+f*(BH-40),3,0,6.3);g.fill()}
+  const sx=P3(.85,.1,BH-28);g.fillStyle='rgba(253,224,71,.35)';g.beginPath();g.arc(sx[0],sx[1],44+3*Math.sin(t*2),0,6.3);g.fill();g.fillStyle='#fde047';g.beginPath();g.arc(sx[0],sx[1],26,0,6.3);g.fill();g.strokeStyle='#facc15';g.lineWidth=4;g.lineCap='round';for(let i=0;i<12;i++){const a=i*.5236+t*.3;g.beginPath();g.moveTo(sx[0]+Math.cos(a)*32,sx[1]+Math.sin(a)*32);g.lineTo(sx[0]+Math.cos(a)*44,sx[1]+Math.sin(a)*44);g.stroke()}
+  hPill(g,'하강 기류',c0[0]-78,c0[1]-70,'rgba(29,78,216,.9)','#fff',17)}
+ // 상자 윗면 테두리 + 앞 모서리
+ g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2;poly3(g,[[0,0,BH],[1,0,BH],[1,1,BH],[0,1,BH]]);g.stroke();[[1,0],[0,1],[1,1]].forEach(p=>{const a=P3(p[0],p[1],0),b=P3(p[0],p[1],BH);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()});
+ // 이름표
+ const a=P3(0,1,0);hPill(g,low?'지표: 반시계 방향으로 불어 들어옴':'지표: 시계 방향으로 불어 나감',IX,P3(1,1,-SD)[1]+30,low?'rgba(37,99,235,.92)':'rgba(220,38,38,.92)','#fff',17)}
+function hTop(g,low,t){
+ const cx=400,cy=225,R=205;g.save();g.beginPath();g.arc(cx,cy,R,0,6.3);g.clip();
+ const bg=g.createRadialGradient(cx,cy,10,cx,cy,R);if(low){bg.addColorStop(0,'#1e4f94');bg.addColorStop(1,'#3b82c4')}else{bg.addColorStop(0,'#5eb0ea');bg.addColorStop(1,'#a9d8f5')}g.fillStyle=bg;g.fillRect(cx-R,cy-R,2*R,2*R);
+ // 해안선 느낌의 육지(희미)
+ g.fillStyle=low?'rgba(120,150,90,.35)':'rgba(190,220,150,.55)';g.beginPath();g.moveTo(cx-R,cy-40);g.bezierCurveTo(cx-170,cy-110,cx-110,cy-30,cx-70,cy+10);g.bezierCurveTo(cx-40,cy+60,cx-120,cy+110,cx-R,cy+130);g.closePath();g.fill();
+ if(low){// 소용돌이 구름 (위성 사진 느낌)
+  const rot=-t*.25;for(let arm=0;arm<3;arm++){for(let s=0;s<70;s++){const r=14+s*2.6,a=rot-s*.07+arm*2.094;const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;const k=.2+.22*Math.sin(s*1.7+arm);g.fillStyle='rgba(255,255,255,'+k.toFixed(2)+')';g.beginPath();g.arc(x,y,9+(s%5)*2.2+s*.12,0,6.3);g.fill()}}
+  g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.arc(cx,cy,26,0,6.3);g.fill()}
+ else{for(let i=0;i<5;i++){g.fillStyle='rgba(255,255,255,.28)';g.beginPath();g.ellipse(cx-150+i*70+Math.sin(t+i)*6,cy-120+((i*53)%240),26,8,0,0,6.3);g.fill()}}
+ g.restore();
+ // 등압선
+ g.setLineDash([8,6]);g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=2.2;[80,140,200].forEach(r=>{g.beginPath();g.arc(cx,cy,r,0,6.3);g.stroke()});g.setLineDash([]);
+ g.strokeStyle='rgba(15,23,42,.55)';g.lineWidth=3;g.beginPath();g.arc(cx,cy,R,0,6.3);g.stroke();
+ // 바람 화살표
+ for(let i=0;i<8;i++){const ph=i*Math.PI/4+.2,pts=[];for(let s=0;s<=14;s++){const f=s/14,r=low?190-110*f:70+112*f,a=low?ph-1.0*f:ph+1.0*f;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}
+  hPath(g,pts,11,low?'rgba(224,242,254,.35)':'rgba(254,226,226,.45)',low?'rgba(14,165,233,.98)':'rgba(239,68,68,.98)','rgba(255,255,255,.85)');
+  const f=((t*.28+i*.125)%1),q=pts[Math.floor(f*(pts.length-1))];g.fillStyle='#fff';g.beginPath();g.arc(q[0],q[1],3.4,0,6.3);g.fill()}
+ // 중심 배지
+ const cg=g.createRadialGradient(cx-8,cy-10,4,cx,cy,34);cg.addColorStop(0,'#fff');cg.addColorStop(1,low?'#bfdbfe':'#fecaca');g.fillStyle=cg;g.strokeStyle=low?'#1d4ed8':'#b91c1c';g.lineWidth=4;g.beginPath();g.arc(cx,cy,34,0,6.3);g.fill();g.stroke();
+ g.fillStyle=low?'#1d4ed8':'#b91c1c';g.font='900 46px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(low?'L':'H',cx,cy+3);
+ g.font='800 18px sans-serif';g.fillStyle='#fff';g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=4;g.fillText(low?'1000':'1020',cx+82,cy-12);g.fillText(low?'1004':'1016',cx+142,cy-12);g.fillText(low?'1008':'1012',cx+202,cy-12);g.shadowBlur=0;
+ hPill(g,low?'바람이 반시계 방향으로 불어 들어옴':'바람이 시계 방향으로 불어 나감',cx,420,low?'rgba(37,99,235,.92)':'rgba(220,38,38,.92)','#fff',17)}
+function draw1(dt){const{g}=view($('#c1'),LW,LH);const t=performance.now()/1000;g.fillStyle='#e8f0f8';g.fillRect(0,0,LW,LH);
+ if(!side)hTop(g,!!hl,t);else{hBlock(g,!!hl,t);hPill(g,hl?'저(低) 기압':'고(高) 기압',130,34,hl?'#2563eb':'#dc2626','#fff',22)}g.restore()}
+/* ----- 일기도 ----- */
+const COLD={p0:[560,225],c:[545,305],p1:[468,388]},WARM={p0:[560,225],c:[650,208],p1:[735,300]};
+function bez(F,t){const a=1-t;return[a*a*F.p0[0]+2*a*t*F.c[0]+t*t*F.p1[0],a*a*F.p0[1]+2*a*t*F.c[1]+t*t*F.p1[1]]}
+function bezT(F,t){const dx=2*(1-t)*(F.c[0]-F.p0[0])+2*t*(F.p1[0]-F.c[0]),dy=2*(1-t)*(F.c[1]-F.p0[1])+2*t*(F.p1[1]-F.c[1]),d=Math.hypot(dx,dy);return[dx/d,dy/d]}
+function mapBG(g){const sg=g.createLinearGradient(0,0,0,LH);sg.addColorStop(0,'#dff1fc');sg.addColorStop(1,'#bfe3f7');g.fillStyle=sg;g.fillRect(0,0,LW,LH);
+ g.strokeStyle='rgba(100,150,190,.22)';g.lineWidth=1;for(let x=0;x<LW;x+=80){g.beginPath();g.moveTo(x,0);g.lineTo(x,LH);g.stroke()}for(let y=0;y<LH;y+=80){g.beginPath();g.moveTo(0,y);g.lineTo(LW,y);g.stroke()}
+ const land=[[0,0],[360,0],[380,50],[372,95],[410,130],[455,150],[470,190],[490,235],[535,262],[560,305],[552,360],[520,395],[470,420],[440,440],[0,440]];
+ g.beginPath();land.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();const lg=g.createLinearGradient(0,0,500,440);lg.addColorStop(0,'#d7ebc5');lg.addColorStop(1,'#bcd9a4');g.fillStyle=lg;g.fill();g.strokeStyle='#38a3d8';g.lineWidth=3;g.lineJoin='round';g.stroke();
+ g.fillStyle='rgba(120,150,90,.18)';[[120,80,60],[250,330,50],[180,200,40],[330,260,35]].forEach(b=>{g.beginPath();g.arc(b[0],b[1],b[2],0,6.3);g.fill()});
+ [[[690,130],[725,150],[742,200],[760,260],[745,320],[715,330],[700,270],[695,200]],[[632,372],[668,365],[680,392],[650,404]]].forEach(isl=>{g.beginPath();isl.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fillStyle='#cfe6bd';g.fill();g.strokeStyle='#38a3d8';g.lineWidth=2.5;g.stroke()})}
+function stn(g,x,y,low,cx,cy,hi){// 관측소 기호(바람 깃 + 구름양)
+ let px=x-cx,py=y-cy;const pr=Math.hypot(px,py)||1;let vx,vy;if(low){vx=-px/pr*.6+py/pr*.8;vy=-py/pr*.6-px/pr*.8}else{vx=px/pr*.6-py/pr*.8;vy=py/pr*.6+px/pr*.8}return[vx,vy]}
+function stationAt(g,x,y,cloud,spd){// 전역 바람장: 저기압(L)·고기압(H)
+ const L=[560,225],H=[230,230];let vx=0,vy=0;[[L,1,170],[H,0,200]].forEach(([c,low,sc])=>{const px=x-c[0],py=y-c[1],pr=Math.hypot(px,py)||1,wgt=1/(1+Math.pow(pr/sc,2));if(low){vx+=(-px/pr*.6+py/pr*.8)*wgt;vy+=(-py/pr*.6-px/pr*.8)*wgt}else{vx+=(px/pr*.6-py/pr*.8)*wgt;vy+=(py/pr*.6+px/pr*.8)*wgt}});
+ const m=Math.hypot(vx,vy)||1,dx=-vx/m,dy=-vy/m;// 바람이 불어오는 쪽
+ g.strokeStyle='#111827';g.lineWidth=1.8;g.beginPath();g.moveTo(x+dx*9,y+dy*9);g.lineTo(x+dx*34,y+dy*34);g.stroke();
+ for(let k=0;k<spd;k++){const f=34-k*7,nx=-dy,ny=dx;g.beginPath();g.moveTo(x+dx*f,y+dy*f);g.lineTo(x+dx*(f-3)+nx*9,y+dy*(f-3)+ny*9);g.stroke()}
+ g.fillStyle=cloud?'#111827':'#fff';g.strokeStyle='#111827';g.lineWidth=1.8;g.beginPath();g.arc(x,y,9,0,6.3);g.fill();g.stroke()}
+function frontLine(g,F,type,t){const N=60,pts=[];for(let i=0;i<=N;i++)pts.push(bez(F,i/N));g.lineCap='round';g.lineJoin='round';
+ g.strokeStyle=type?'#3b82f6':'#ef4444';g.lineWidth=5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();
+ let acc=0,next=18;for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i];acc+=Math.hypot(b[0]-a[0],b[1]-a[1]);if(acc>=next){next+=34;const tg=bezT(F,i/N);let nx=-tg[1],ny=tg[0];if(type){if(nx<0){nx=-nx;ny=-ny}}else{if(ny>0){nx=-nx;ny=-ny}}
+  g.save();g.translate(b[0],b[1]);if(type){g.fillStyle='#3b82f6';g.beginPath();g.moveTo(-tg[0]*10,-tg[1]*10);g.lineTo(tg[0]*10,tg[1]*10);g.lineTo(nx*17,ny*17);g.closePath();g.fill()}else{g.fillStyle='#ef4444';g.beginPath();g.arc(0,0,10,Math.atan2(ny,nx)-Math.PI/2,Math.atan2(ny,nx)+Math.PI/2);g.closePath();g.fill()}g.restore()}}}
+function hBadge(g,ch,x,y){rr(g,x-15,y-15,30,30,7);g.fillStyle='#0f172a';g.fill();g.fillStyle='#fff';g.font='900 20px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(ch,x,y+1)}
+function draw2(){const{g}=view($('#c2'),LW,LH);mapBG(g);const t=performance.now()/1000;
+ // 비·눈 구역(전선을 따라)
+ g.save();g.lineCap='round';g.globalAlpha=.32;g.strokeStyle='#2563eb';g.lineWidth=58;g.beginPath();for(let i=0;i<=30;i++){const p=bez(WARM,i/30);i?g.lineTo(p[0]+14,p[1]-18):g.moveTo(p[0]+14,p[1]-18)}g.stroke();
+ g.lineWidth=34;g.beginPath();for(let i=0;i<=30;i++){const p=bez(COLD,i/30);i?g.lineTo(p[0]-10,p[1]):g.moveTo(p[0]-10,p[1])}g.stroke();g.beginPath();g.arc(560,225,46,0,6.3);g.fillStyle='#2563eb';g.fill();g.restore();
+ // 등압선: H(넓은 간격), L(촘촘한 간격)
+ g.strokeStyle='rgba(51,65,85,.75)';g.lineWidth=1.8;[[230,230,[62,118,176]],[560,225,[30,58,86,114]]].forEach(([x,y,rs])=>rs.forEach(r=>{g.beginPath();g.ellipse(x,y,r*1.15,r,0,0,6.3);g.stroke()}));
+ g.fillStyle='#334155';g.font='700 15px serif';g.textAlign='center';g.textBaseline='middle';[[230+62*1.15,230,'1020'],[230+118*1.15,230,'1016'],[560-30*1.15-4,225-26,'1000'],[560+58*1.15,225+12,'1004'],[560+86*1.15,225+8,'1008']].forEach(l=>{g.fillStyle='rgba(223,241,252,.85)';g.fillRect(l[0]-17,l[1]-9,34,18);g.fillStyle='#334155';g.fillText(l[2],l[0],l[1])});
+ // 전선
+ frontLine(g,WARM,0);frontLine(g,COLD,1);
+ // 관측소
+ [[80,60,0,0],[160,140,0,1],[110,300,0,0],[300,95,0,1],[345,300,0,0],[380,200,0,1],[190,380,0,0],[430,240,1,2],[480,120,1,2],[610,120,1,1],[700,215,1,2],[420,350,1,2],[760,80,0,1],[700,395,0,1],[330,175,0,2],[520,330,1,2]].forEach(s=>stationAt(g,s[0],s[1],s[2],s[3]));
+ // H / L
+ g.textAlign='center';g.textBaseline='middle';g.font='900 54px sans-serif';g.fillStyle='#dc2626';g.strokeStyle='#fff';g.lineWidth=7;g.strokeText('H',230,226);g.fillText('H',230,226);g.font='800 19px sans-serif';g.fillStyle='#b91c1c';g.strokeText('1024',230,262);g.fillText('1024',230,262);
+ g.font='900 54px sans-serif';g.fillStyle='#2563eb';g.strokeStyle='#fff';g.lineWidth=7;g.strokeText('L',560,214);g.fillText('L',560,214);g.font='800 19px sans-serif';g.strokeText('996',560,247);g.fillText('996',560,247);
+ // 구역 표지
+ hBadge(g,'A',372,150);hBadge(g,'B',412,338);hBadge(g,'C',150,100);
+ g.font='800 15px sans-serif';g.textAlign='left';g.fillStyle='#1e3a8a';g.textAlign='center';g.fillText('구름이 끼고 비나 눈이 내리는 구역',640,52);g.textAlign='left';g.strokeStyle='#1e3a8a';g.lineWidth=1.4;g.beginPath();g.moveTo(640,62);g.lineTo(650,150);g.stroke();
+ g.fillStyle='#dc2626';g.fillText('온난 전선',690,284);g.fillStyle='#2563eb';g.fillText('한랭 전선',386,418);
+ // 범례
+ rr(g,14,14,214,74,10);g.fillStyle='rgba(255,255,255,.9)';g.fill();g.strokeStyle='#94a3b8';g.lineWidth=1.5;g.stroke();g.fillStyle='#0f172a';g.font='700 14px sans-serif';g.textAlign='left';g.fillText('등압선(4 hPa 간격)',60,32);g.strokeStyle='#475569';g.lineWidth=2;g.beginPath();g.moveTo(22,32);g.lineTo(52,32);g.stroke();
+ g.fillStyle='#3b82f6';g.beginPath();g.moveTo(24,56);g.lineTo(46,56);g.lineTo(35,42);g.fill();g.fillStyle='#0f172a';g.fillText('한랭 전선',60,52);g.fillStyle='#ef4444';g.beginPath();g.arc(35,74,9,Math.PI,0);g.fill();g.fillStyle='#0f172a';g.fillText('온난 전선',60,72);
+ g.fillStyle='#111827';g.beginPath();g.arc(150,50,8,0,6.3);g.fill();g.fillStyle='#0f172a';g.fillText('흐림',164,54);g.fillStyle='#fff';g.strokeStyle='#111827';g.lineWidth=1.8;g.beginPath();g.arc(150,72,8,0,6.3);g.fill();g.stroke();g.fillStyle='#0f172a';g.fillText('맑음',164,76);
+ g.restore()}
+
 let T3=0,z3=[0,0,0,0];
 const ZN=[{n:'저기압 앞(온난 전선 앞)',w:'☁ 층운형 구름, 넓은 지역에 지속적인 비',t:'낮음',d:'남동풍'},{n:'온난 전선과 한랭 전선 사이',w:'☀ 대체로 맑음',t:'높음',d:'남서풍'},{n:'한랭 전선 뒤',w:'⛈ 적운형 구름, 소나기 후 갬',t:'낮아짐',d:'북서풍'},{n:'저기압에서 멀리 떨어짐',w:'🌤 맑음',t:'보통',d:'약함'}];
 function zone3(){const lx=60+T3*6.8,rel=500-lx;if(rel>95)return rel<380?0:3;if(rel>-83)return 1;return rel>-360?2:3}
 function upd3(){const k=zone3(),z=ZN[k];$('#zn3').textContent=z.n;$('#wx3').textContent=z.w;$('#tp3').textContent=z.t;$('#wd3').textContent=z.d;$('#tg3').textContent='저기압 중심 이동 중 · '+z.n;
  if(!z3[k]){z3[k]=1;sTick();$('#f3').textContent=z3.filter(Boolean).length+' / 4';$('#s3').className='say';$('#s3').textContent='📍 '+z.n+': '+z.w;if(z3.every(x=>x)&&!LAB._c3){LAB._c3=1;sOK();$('#s3').className='say ok';$('#s3').textContent='🎉 온대 저기압은 편서풍을 타고 서→동으로 이동해요. 온난 전선 통과 → 기온↑ 맑음, 한랭 전선 통과 → 소나기 후 기온↓ 북서풍';say('날씨 예보관 완료 🎉',3000);confetti(['🔮','🌦'])}hud()}}
-function draw3(){const{g}=view($('#c3'),LW,LH);g.fillStyle='#e0f2fe';g.fillRect(0,0,LW,LH);const lx=60+T3*6.8,ly=170;g.textAlign='center';
- g.fillStyle='rgba(239,68,68,.15)';g.beginPath();g.moveTo(lx,ly);g.lineTo(lx+190,ly+260);g.lineTo(lx-166,ly+260);g.fill();
- g.lineWidth=5;g.strokeStyle='#ef4444';g.beginPath();g.moveTo(lx,ly);g.lineTo(lx+190,ly+260);g.stroke();g.strokeStyle='#3b82f6';g.beginPath();g.moveTo(lx,ly);g.lineTo(lx-166,ly+260);g.stroke();
- g.fillStyle='#000';g.font='38px serif';for(let i=0;i<4;i++)g.fillText('☁️',lx+150+i*55,ly+120+(i%2)*40);g.font='26px serif';g.fillText('🌧',lx+180,ly+190);g.fillText('🌧',lx+260,ly+200);g.font='44px serif';g.fillText('⛈',lx-150,ly+150);
- g.fillStyle='#2563eb';g.font='900 46px sans-serif';g.fillText('L',lx,ly-10);g.fillStyle='#000';g.font='54px serif';g.fillText('🏠',500,330);g.fillStyle='#0f172a';g.font='800 20px sans-serif';g.fillText('우리 동네',500,365);
- g.font='800 18px sans-serif';g.fillStyle='#ef4444';g.fillText('온난 전선',lx+150,ly+60);g.fillStyle='#3b82f6';g.fillText('한랭 전선',lx-140,ly+70);arrow(g,40,40,200,40,'#64748b',8,'편서풍 → 서쪽에서 동쪽');g.restore()}
+function hSection(g,lx){// 우리 동네 위도의 연직 단면 (온난·한랭 전선)
+ const ix=538,iy=36,iw=254,ih=126,gy=iy+ih-16,cx=ix+iw/2,sc=.45;const X=x=>cx+(x-500)*sc;
+ g.save();rr(g,ix,iy,iw,ih,12);g.fillStyle='#fff';g.fill();g.clip();
+ const sg=g.createLinearGradient(0,iy,0,gy);sg.addColorStop(0,'#bfe3f7');sg.addColorStop(1,'#eaf6fd');g.fillStyle=sg;g.fillRect(ix,iy,iw,ih);
+ const xw=X(lx+95),xc=X(lx-83);
+ // 따뜻한 공기(전체) 은은한 주황
+ g.fillStyle='rgba(251,146,60,.16)';g.fillRect(ix,iy,iw,gy-iy);
+ // 온난 전선 앞의 찬 공기(완만한 경사)
+ g.fillStyle='rgba(96,165,250,.55)';g.beginPath();g.moveTo(xw,gy);g.lineTo(xw+120,gy-50);g.lineTo(ix+iw+40,gy-58);g.lineTo(ix+iw+40,gy);g.closePath();g.fill();g.strokeStyle='#1d4ed8';g.lineWidth=2;g.beginPath();g.moveTo(xw,gy);g.lineTo(xw+120,gy-50);g.stroke();
+ // 한랭 전선 뒤의 찬 공기(가파른 쐐기)
+ g.fillStyle='rgba(59,130,246,.62)';g.beginPath();g.moveTo(ix-60,gy);g.lineTo(ix-60,gy-72);g.lineTo(xc-44,gy-72);g.quadraticCurveTo(xc-8,gy-52,xc-4,gy-20);g.quadraticCurveTo(xc,gy-6,xc,gy);g.closePath();g.fill();g.strokeStyle='#1d4ed8';g.beginPath();g.moveTo(xc-44,gy-72);g.quadraticCurveTo(xc-8,gy-52,xc-4,gy-20);g.quadraticCurveTo(xc,gy-6,xc,gy);g.stroke();
+ // 구름
+ hCloud(g,xw+70,gy-62,.5,.9);hCloud(g,xw+30,gy-46,.4,.85);hCloud(g,xc+22,gy-84,.55,.95,true);hCloud(g,xc+54,gy-70,.4,.9,true);
+ g.strokeStyle='rgba(59,130,246,.8)';g.lineWidth=1.6;for(let i=0;i<9;i++){const x=xw+14+i*11,y0=gy-24-i*3;g.beginPath();g.moveTo(x,y0);g.lineTo(x-3,y0+9);g.stroke()}for(let i=0;i<5;i++){const x=xc+4+i*7;g.beginPath();g.moveTo(x,gy-52);g.lineTo(x-3,gy-42);g.stroke()}
+ hBig(g,xc+12,gy-8,xc+34,gy-58,12,'rgba(251,146,60,.3)','rgba(239,68,68,.95)');hBig(g,xc+62,gy-74,xw-8,gy-74,12,'rgba(251,146,60,.3)','rgba(249,115,22,.95)');
+ g.fillStyle='#6b4a22';g.fillRect(ix,gy,iw,ih);g.fillStyle='#3d7a2e';g.fillRect(ix,gy,iw,4);
+ // 내 동네
+ g.setLineDash([4,3]);g.strokeStyle='#0f172a';g.lineWidth=1.8;g.beginPath();g.moveTo(cx,gy);g.lineTo(cx,iy+22);g.stroke();g.setLineDash([]);g.fillStyle='#fff';g.strokeStyle='#0f172a';g.lineWidth=2;g.beginPath();g.moveTo(cx-9,gy-1);g.lineTo(cx,gy-12);g.lineTo(cx+9,gy-1);g.closePath();g.fill();g.stroke();
+ g.font='800 11px sans-serif';g.textAlign='center';g.fillStyle='#bfdbfe';g.fillText('한랭 전선',clamp(xc-18,ix+30,ix+iw-30),gy+12);g.fillStyle='#fecaca';g.fillText('온난 전선',clamp(xw+12,ix+30,ix+iw-30),gy+12);
+ g.restore();g.strokeStyle='#64748b';g.lineWidth=2;rr(g,ix,iy,iw,ih,12);g.stroke();hPill(g,'연직 단면 (우리 동네 위도)',cx,iy+13,'rgba(15,23,42,.8)','#fff',11)}
+function draw3(){const{g}=view($('#c3'),LW,LH);g.beginPath();g.rect(0,0,LW,LH);g.clip();mapBG(g);const t=performance.now()/1000,lx=60+T3*6.8,ly=170;
+ const dw=y=>95*Math.pow(Math.max(0,y-ly)/160,.85),H0=ly+285;
+ // 온난역(전선 사이)
+ g.beginPath();for(let y=ly;y<=H0;y+=8)y===ly?g.moveTo(lx+dw(y),y):g.lineTo(lx+dw(y),y);for(let y=H0;y>=ly;y-=8)g.lineTo(lx-dw(y)*83/95,y);g.closePath();g.fillStyle='rgba(251,146,60,.2)';g.fill();
+ // 온난 전선 앞 비 구역(넓게)
+ g.save();g.beginPath();for(let y=ly;y<=H0;y+=8)y===ly?g.moveTo(lx+dw(y),y):g.lineTo(lx+dw(y),y);for(let y=H0;y>=ly;y-=8)g.lineTo(lx+dw(y)+130+(y-ly)*.2,y);g.closePath();const rg=g.createLinearGradient(lx+90,0,lx+260,0);rg.addColorStop(0,'rgba(37,99,235,.38)');rg.addColorStop(1,'rgba(37,99,235,.05)');g.fillStyle=rg;g.fill();g.restore();
+ // 한랭 전선 뒤 소나기 구역(좁게)
+ g.save();g.beginPath();for(let y=ly;y<=H0;y+=8)y===ly?g.moveTo(lx-dw(y)*83/95,y):g.lineTo(lx-dw(y)*83/95,y);for(let y=H0;y>=ly;y-=8)g.lineTo(lx-dw(y)*83/95-55,y);g.closePath();g.fillStyle='rgba(30,64,175,.32)';g.fill();g.restore();
+ // 구름·비 기호
+ for(let i=0;i<5;i++){const y=ly+60+i*46,x=lx+dw(y)+60+((i*37)%50);hCloud(g,x,y,.5,.92)}
+ g.strokeStyle='rgba(37,99,235,.7)';g.lineWidth=2;g.lineCap='round';for(let i=0;i<22;i++){const y=ly+50+((i*41)%230),x=lx+dw(y)+30+((i*29)%130),o=((t*60+i*7)%12);g.beginPath();g.moveTo(x,y+o);g.lineTo(x-3,y+o+9);g.stroke()}
+ for(let i=0;i<3;i++){const y=ly+80+i*80,x=lx-dw(y)*83/95-34;hCloud(g,x,y,.5,.95,true);g.fillStyle='#facc15';g.beginPath();g.moveTo(x+4,y+14);g.lineTo(x-6,y+30);g.lineTo(x+2,y+30);g.lineTo(x-4,y+46);g.lineTo(x+12,y+24);g.lineTo(x+4,y+24);g.closePath();if((Math.floor(t*2)+i)%3===0)g.fill()}
+ // 저기압 중심 소용돌이
+ g.save();g.translate(lx,ly);g.strokeStyle='rgba(51,65,85,.55)';g.lineWidth=1.6;[24,44,64].forEach(r=>{g.beginPath();g.ellipse(0,0,r*1.15,r,0,0,6.3);g.stroke()});for(let arm=0;arm<2;arm++)for(let s=0;s<24;s++){const a=-t*.5-s*.2+arm*3.14,r=6+s*2.6;g.fillStyle='rgba(255,255,255,'+(.55-s*.018).toFixed(2)+')';g.beginPath();g.arc(Math.cos(a)*r,Math.sin(a)*r,5+s*.2,0,6.3);g.fill()}g.restore();
+ // 전선
+ const f=(F)=>({p0:[lx,ly],c:[lx+F[0],ly+F[1]],p1:[lx+F[2],ly+F[3]]});
+ // 전선을 dw 곡선과 일치하도록 직접 그림
+ g.lineCap='round';g.lineJoin='round';[[1,0],[-83/95,1]].forEach(([k,type])=>{const pts=[];for(let y=ly;y<=H0;y+=6)pts.push([lx+dw(y)*k,y]);g.strokeStyle=type?'#3b82f6':'#ef4444';g.lineWidth=5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();
+  let acc=0,next=22;for(let i=1;i<pts.length;i++){acc+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(acc>=next){next+=36;const[x,y]=pts[i];g.save();g.translate(x,y);if(type){g.fillStyle='#3b82f6';g.beginPath();g.moveTo(0,-10);g.lineTo(0,10);g.lineTo(-17,0);g.closePath();g.fill()}else{g.fillStyle='#ef4444';g.beginPath();g.arc(0,0,10,-Math.PI/2,Math.PI/2);g.closePath();g.fill()}g.restore()}}});
+ g.textAlign='center';g.textBaseline='middle';g.fillStyle='#1d4ed8';g.strokeStyle='#fff';g.lineWidth=6;g.font='900 44px sans-serif';g.strokeText('L',lx,ly-6);g.fillText('L',lx,ly-6);
+ g.font='800 17px sans-serif';g.fillStyle='#b91c1c';g.strokeText('온난 전선',lx+160,ly+34);g.fillText('온난 전선',lx+160,ly+34);g.fillStyle='#1d4ed8';g.strokeText('한랭 전선',lx-120,ly+52);g.fillText('한랭 전선',lx-120,ly+52);
+ // 우리 동네
+ const hx=500,hy=332;g.fillStyle='rgba(15,23,42,.25)';g.beginPath();g.ellipse(hx,hy+22,22,7,0,0,6.3);g.fill();g.fillStyle='#fde68a';g.strokeStyle='#92400e';g.lineWidth=3;g.fillRect(hx-17,hy-4,34,24);g.strokeRect(hx-17,hy-4,34,24);g.fillStyle='#dc2626';g.beginPath();g.moveTo(hx-23,hy-3);g.lineTo(hx,hy-24);g.lineTo(hx+23,hy-3);g.closePath();g.fill();g.stroke();g.fillStyle='#92400e';g.fillRect(hx-4,hy+6,8,14);
+ hPill(g,'우리 동네',hx,hy+44,'rgba(15,23,42,.88)','#fff',16);
+ hBig(g,14,56,174,56,16,'rgba(100,116,139,.35)','rgba(71,85,105,.95)');hPill(g,'편서풍: 서 → 동으로 이동',110,90,'rgba(51,65,85,.9)','#fff',14);
+ hSection(g,lx);g.restore()}
+
 let MC2;
 const LAB={key:'hilo',
  quiz:[
