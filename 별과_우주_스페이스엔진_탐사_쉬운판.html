@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스페이스엔진 우주 탐사 · 쉬운 판 (중1)</title>
+<style>
+:root{--bg:#050816;--pn:#0e1630;--pn2:#17224a;--ln:#2b3a74;--tx:#f0f4ff;--mu:#a9b8e6;--ok:#34d399;--no:#f87171;--wa:#fbbf24;--ac:#5eead4}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(16px,1.6vw,20px);line-height:1.55;-webkit-text-size-adjust:100%}
+header{display:flex;align-items:center;gap:8px;padding:6px clamp(8px,2vw,16px);background:#02040c;border-bottom:1px solid var(--ln);flex-wrap:wrap}
+header h1{margin:0;font-size:clamp(16px,2.3vw,22px);flex:1;min-width:200px}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:8px 12px;font-weight:800;font-size:14px;text-decoration:none;cursor:pointer;font-family:inherit}
+main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;padding:12px clamp(8px,2vw,16px);max-width:1400px;margin:0 auto}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:12px 14px;min-width:0}
+.card h2{margin:0 0 8px;font-size:1.1em}
+canvas{width:100%;aspect-ratio:16/10;display:block;border-radius:14px;background:#01020a;border:1px solid var(--ln)}
+.bar{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:50px;padding:0 16px;border-radius:14px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:800;cursor:pointer;font-family:inherit;font-size:1em}
+.btn.on{background:#fff;color:#050816;border-color:#fff}
+.btn.pri{background:linear-gradient(#5eead4,#0d9488);color:#022c26;border-color:#99f6e4}
+.btn.wr{background:linear-gradient(#fbbf24,#d97706);color:#2b1700;border-color:#fde68a}
+.grp{margin:4px 0 2px;color:var(--mu);font-weight:800;font-size:.9em}
+.dest{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.dest .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;min-height:72px;font-size:.95em;line-height:1.25}
+.dest .btn i{font-style:normal;font-size:1.6em}.dest .btn.vis{border-color:var(--ok)}
+#hud{margin:0;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,"Noto Sans KR",monospace;font-size:.88em;color:#c9f7ee;line-height:1.6}
+.fact{display:flex;gap:10px;align-items:flex-start;background:#0a1230;border-radius:12px;padding:8px 10px;margin:6px 0}
+.fact b{color:#fff}.fact i{font-style:normal;font-size:1.5em}
+.tbar{height:22px;border-radius:11px;background:linear-gradient(90deg,#8fb4ff,#e0ecff 28%,#fff6c8 50%,#ffc66e 72%,#ff6a4a);position:relative;margin:14px 6px 4px}
+.tbar span{position:absolute;top:-8px;width:6px;height:38px;background:#fff;border:2px solid #000;border-radius:3px;transform:translateX(-3px)}
+.tl{display:flex;justify-content:space-between;font-size:.8em;color:var(--mu)}
+#log{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.msg{background:#0a1230;border:1px solid var(--ln);border-radius:12px;padding:8px 10px;font-size:.95em;white-space:pre-wrap}
+.msg.ok{border-color:var(--ok)}.msg.no{border-color:var(--no)}.msg.wa{border-color:var(--wa)}
+.q{background:#0a1230;border-left:5px solid var(--ac);border-radius:10px;padding:10px 12px;margin:8px 0}
+.q .opts{display:grid;gap:8px;margin-top:8px}
+.stars{font-size:1.4em;letter-spacing:2px}
+.chk{margin:3px 0}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs .btn{flex:1;min-height:44px;padding:0 6px;font-size:.92em}
+.gauge{height:26px;border-radius:13px;background:linear-gradient(90deg,#34d399 0 50%,#fbbf24 50% 75%,#f87171 75%);position:relative;margin:10px 0}
+.gauge b{position:absolute;top:-6px;width:8px;height:38px;background:#fff;border:2px solid #000;border-radius:4px;transform:translateX(-4px)}
+input[type=range]{width:100%;height:34px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#fff;color:#111;font-weight:800;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+#toast.on{opacity:1}
+</style></head><body>
+<header><h1>🚀 스페이스엔진 우주 탐사 <span style="font-size:.7em;color:var(--ac)">쉬운 판 · 중1</span></h1>
+<a class="hb" href="./우주탐사_활동지_중1.html" target="_blank">📝 활동지</a><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<main>
+<div class="col">
+ <div class="card"><canvas id="cv" width="960" height="600"></canvas>
+  <div class="bar" id="modes" style="margin-top:10px"></div></div>
+ <div class="card" id="apr" hidden></div>
+ <div class="card"><h2>🖥 우주 HUD</h2><pre id="hud"></pre></div>
+ <div class="card"><h2>🔎 이 천체는?</h2><div id="info"><span style="color:var(--mu)">아래에서 가고 싶은 곳을 눌러 보세요!</span></div></div>
+</div>
+<div class="col">
+ <div class="card"><h2>📋 오늘의 임무</h2><div id="mis"></div></div>
+ <div class="card"><h2>🧭 어디로 갈까요? (눌러서 워프!)</h2><div id="dest"></div></div>
+ <div class="card"><h2>💬 항법 AI 아스트라</h2><div id="log"></div></div>
+</div>
+</main><div id="toast"></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const O=[
+{id:'sun',g:'star',ic:'☀️',ko:'태양',T:5800,sz:1,d:0,col:'노란색',ds:'우리 태양계의 중심별이에요. 지구에 빛과 열을 줘요.',ex:'빛이 지구까지 오는 데 약 8분 20초',kind:'노란 별 (G형)'},
+{id:'prox',g:'star',ic:'🔴',ko:'프록시마 센타우리',T:3000,sz:0.15,d:4.2,col:'빨간색',ds:'태양 다음으로 가까운 별! 작고 어두운 붉은 별이라 맨눈으로는 안 보여요.',ex:'빛으로 4.2년',kind:'붉은 별 (M형)'},
+{id:'sir',g:'star',ic:'⚪',ko:'시리우스',T:9900,sz:1.7,d:8.6,col:'흰색',ds:'밤하늘에서 가장 밝게 보이는 별이에요.',ex:'빛으로 8.6년',kind:'흰 별 (A형)'},
+{id:'arc',g:'star',ic:'🟠',ko:'아르크투루스',T:4300,sz:25,d:37,col:'주황색',ds:'늙어서 부풀어 오른 주황색 별(거성)이에요. 봄철 밤하늘에서 잘 보여요.',ex:'빛으로 37년',kind:'주황 거성 (K형)'},
+{id:'rigel',g:'star',ic:'🔵',ko:'리겔',T:12000,sz:79,d:860,col:'파란색',ds:'오리온자리의 푸른 별! 태양보다 약 12만 배 밝아요.',ex:'빛으로 860년',kind:'푸른 초거성 (B형)'},
+{id:'bet',g:'star',ic:'🟥',ko:'베텔게우스',T:3600,sz:760,d:640,col:'빨간색',ds:'태양보다 지름이 약 760배 큰 붉은 초거성! 우주 시간으로는 곧 폭발할 별이에요.',ex:'빛으로 640년',kind:'붉은 초거성 (M형)',hz:'heat'},
+{id:'m42',g:'neb',ic:'🌈',ko:'오리온 성운',d:1344,ds:'별이 태어나는 가스 구름이에요. 안에서 아기별이 반짝여요.',ex:'빛으로 1,344년',kind:'성운 (별의 요람)'},
+{id:'m45',g:'cl',ic:'✨',ko:'플레이아데스 성단',d:444,ds:'젊은 파란 별 수백 개가 모여 있는 성단이에요. 우리말로 "좀생이별".',ex:'빛으로 444년',kind:'젊은 별무리 (산개성단)'},
+{id:'crab',g:'neb',ic:'💥',ko:'게성운',d:6500,ds:'별이 대폭발(초신성)하고 남은 잔해예요. 1054년에 사람들이 폭발을 직접 봤어요!',ex:'빛으로 6,500년',kind:'초신성 잔해'},
+{id:'m13',g:'cl',ic:'🟡',ko:'헤르쿨레스 구상성단',d:22200,ds:'아주 늙은 별 수십만 개가 공처럼 뭉쳐 있어요.',ex:'빛으로 2만 2천 년',kind:'늙은 별무리 (구상성단)'},
+{id:'bh',g:'bh',ic:'⚫',ko:'블랙홀 (백조자리 X-1)',d:7200,ds:'엄청난 중력 때문에 빛도 빠져나오지 못하는 천체예요. 옆의 큰 별에서 가스를 빨아들여요.',ex:'빛으로 7,200년',kind:'블랙홀',hz:'grav'},
+{id:'sgr',g:'bh',ic:'🕳️',ko:'우리은하 중심',d:26000,ds:'우리은하 한가운데에는 태양 400만 개 무게의 거대 블랙홀이 있어요. 먼지에 가려 눈으로는 안 보여요!',ex:'빛으로 2만 6천 년',kind:'은하 중심'},
+{id:'m31',g:'gal',ic:'🌀',ko:'안드로메다 은하',d:2540000,ds:'우리은하와 가장 가까운 큰 은하예요. 별이 약 1조 개! 은하 하나가 별 수천억 개의 집이에요.',ex:'빛으로 254만 년',kind:'다른 은하 (나선은하)'}];
+const BY={};O.forEach(o=>BY[o.id]=o);
+const GR=[['⭐ 별',['sun','prox','sir','arc','rigel','bet']],['☁️ 성운·성단',['m42','m45','crab','m13']],['🕳️ 블랙홀·은하',['bh','sgr','m31']]];
+const S={tgt:null,mode:'eye',vis:{},done:{},ent:{},ans:{},pos:50,tab:1};
+try{const j=JSON.parse(localStorage.getItem('spe1')||'null');if(j){S.vis=j.vis||{};S.done=j.done||{};S.ent=j.ent||{}}}catch(e){}
+const save=()=>{try{localStorage.setItem('spe1',JSON.stringify({vis:S.vis,done:S.done,ent:S.ent}))}catch(e){}};
+const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2400)};
+function say(h,c){const d=document.createElement('div');d.className='msg '+(c||'');d.innerHTML=h;$('log').appendChild(d);$('log').scrollTop=1e9}
+const fmtLy=d=>d<=0?'0 (우리 태양계)':d>=1e6?(d/1e6).toFixed(2)+'백만 광년':d>=1e4?(d/1e4).toFixed(1)+'만 광년':d.toLocaleString()+' 광년';
+const MODES={eye:['👀 눈으로 보기','가시광(눈으로 보기)'],temp:['🌡 온도 보기','온도 색 필터'],size:['📏 크기 비교','크기 비교'],map:['🌌 은하 지도','은하 지도']};
+/* --- 그리기 --- */
+const cv=$('cv'),c=cv.getContext('2d'),W=960,H=600;
+function rng(s){s=s>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function bb(T){const t=Math.max(1000,Math.min(40000,T))/100;let r,g,b;r=t<=66?255:329.7*Math.pow(t-60,-.1332);g=t<=66?99.47*Math.log(t)-161.1:288.1*Math.pow(t-60,-.0755);b=t>=66?255:(t<=19?0:138.5*Math.log(t-10)-305);const k=v=>Math.max(0,Math.min(255,v|0));return[k(r),k(g),k(b)]}
+const CC={'파란색':[140,175,255],'흰색':[238,244,255],'노란색':[255,222,110],'주황색':[255,165,75],'빨간색':[255,85,55]};const colOf=o=>CC[o.col]||bb(o.T);
+const rgb=(a,al)=>al==null?`rgb(${a[0]},${a[1]},${a[2]})`:`rgba(${a[0]},${a[1]},${a[2]},${al})`;
+function glow(x,y,r,col,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,rgb(col,a));g.addColorStop(1,rgb(col,0));c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+function sky(seed){const R=rng(seed);c.fillStyle='#01020a';c.fillRect(0,0,W,H);for(let i=0;i<300;i++){c.fillStyle='rgba(210,220,255,'+(.2+.6*R())+')';c.fillRect(R()*W,R()*H,R()>.95?2.4:1.3,R()>.95?2.4:1.3)}}
+function txt(t,x,y,sz,col,al){c.font='bold '+sz+'px sans-serif';c.fillStyle=col||'#fff';c.textAlign=al||'center';c.fillText(t,x,y)}
+function star(o,tm){const x=W/2,y=H/2-10;const col=colOf(o);const r=Math.max(10,Math.min(140,18+26*Math.log10(1+o.sz*2)));
+ glow(x,y,r*4,col,.4);glow(x,y,r*2,col,.65);
+ const g=c.createRadialGradient(x,y,r*.1,x,y,r);g.addColorStop(0,'#fff');g.addColorStop(.6,rgb(col));g.addColorStop(1,rgb(col.map(v=>v*.7)));c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill();
+ if(o.sz>100){const R=rng(5);c.save();c.beginPath();c.arc(x,y,r,0,7);c.clip();for(let i=0;i<22;i++){const a=R()*6.28,d=Math.sqrt(R())*r;c.fillStyle='rgba(255,220,150,.5)';c.beginPath();c.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,r*(.1+.2*R()),0,7);c.fill()}c.restore()}
+ c.strokeStyle=rgb(col,.5);c.lineWidth=2;for(let k=0;k<4;k++){const a=k*Math.PI/2+.4;c.beginPath();c.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.lineTo(x+Math.cos(a)*r*3.4,y+Math.sin(a)*r*3.4);c.stroke()}}
+function neb(o){const R=rng(o.id.length*97+o.d%977),x=W/2,y=H/2;
+ if(o.id==='m42'){for(let i=0;i<40;i++){const a=R()*6.28,d=Math.pow(R(),.7)*250;glow(x+Math.cos(a)*d*1.3,y+Math.sin(a)*d*.8,60+R()*110,R()<.7?[235,70,110]:[90,170,230],.2+R()*.15)}glow(x,y,90,[255,210,235],.6);for(let i=0;i<4;i++){c.fillStyle='#fff';c.beginPath();c.arc(x+(R()-.5)*26,y+(R()-.5)*18,3,0,7);c.fill()}txt('👶 새로 태어난 아기별들',x,y-46,22,'#ffd0e4')}
+ else if(o.id==='crab'){for(let i=0;i<340;i++){const a=R()*6.28,d=60+R()*190;c.strokeStyle=R()<.5?'rgba(255,120,50,.55)':'rgba(120,170,255,.45)';c.lineWidth=1.6;const px=x+Math.cos(a)*d*1.3,py=y+Math.sin(a)*d*.9;c.beginPath();c.moveTo(px,py);c.lineTo(px+(R()-.5)*60,py+(R()-.5)*50);c.stroke()}glow(x,y,130,[110,160,255],.45);txt('💥 폭발하고 남은 가스',x,y+170,22,'#cfe')}
+ else if(o.id==='m45'){for(let i=0;i<8;i++){const px=x+(R()-.5)*360,py=y+(R()-.5)*260;glow(px,py,52,[120,170,255],.45);glow(px,py,15,[210,230,255],.95);c.fillStyle='#fff';c.beginPath();c.arc(px,py,3.5,0,7);c.fill()}for(let i=0;i<120;i++){c.fillStyle='rgba(190,215,255,'+(.5+R()*.4)+')';c.fillRect(x+(R()-.5)*480,y+(R()-.5)*340,2,2)}txt('젊고 뜨거운 파란 별들',x,y+190,22,'#cfe')}
+ else{for(let i=0;i<1800;i++){const d=Math.pow(R(),2.1)*230,a=R()*6.28;c.fillStyle='rgba(255,'+(200+R()*50|0)+',160,'+(.35+R()*.6)+')';c.fillRect(x+Math.cos(a)*d*1.1,y+Math.sin(a)*d*.95,1.8,1.8)}glow(x,y,70,[255,230,170],.5);txt('오래된 별들이 공처럼 모였어요',x,y+190,22,'#fe9')}}
+function bh(o,tm){const x=W/2,y=H/2-10;
+ if(o.id==='sgr'&&S.mode==='eye'){const R=rng(3);for(let i=0;i<60;i++)glow(R()*W,R()*H,110+R()*120,[50,32,20],.6);c.fillStyle='rgba(0,0,0,.45)';c.fillRect(0,0,W,H);txt('🌫 먼지 때문에 눈으로는 안 보여요!',W/2,H/2-8,30,'#ffd9a0');txt('"🌡 온도 보기"로 바꿔 보세요',W/2,H/2+34,24,'#dde');return}
+ if(o.id==='sgr'){const R=rng(9);for(let i=0;i<80;i++){c.fillStyle='rgba(255,190,110,'+(.3+R()*.5)+')';c.fillRect(R()*W,R()*H,2.4,2.4)}glow(x,y,80,[255,160,60],.6);c.strokeStyle='rgba(120,255,220,.8)';c.lineWidth=2;c.beginPath();c.ellipse(x+30,y,150,80,-.5,0,7);c.stroke();const a=tm/2400*6.28,ex=Math.cos(a)*150,ey=Math.sin(a)*80;c.fillStyle='#8ff';c.beginPath();c.arc(x+30+ex*Math.cos(-.5)-ey*Math.sin(-.5),y+ex*Math.sin(-.5)+ey*Math.cos(-.5),6,0,7);c.fill();c.fillStyle='#000';c.beginPath();c.arc(x,y,13,0,7);c.fill();txt('별들이 가운데 블랙홀 둘레를 돌아요',x,y+190,22,'#cfe');return}
+ for(let k=0;k<9;k++){c.strokeStyle='rgba('+(255-k*8)+','+(180-k*14)+','+(70+k*10)+','+(.45-k*.04)+')';c.lineWidth=8;c.beginPath();c.ellipse(x,y+4,70*(2+k*.45),70*(.5+k*.11)/1.6,-.18,0,7);c.stroke()}
+ glow(x,y,150,[255,170,80],.35);c.strokeStyle='#ffe9b0';c.lineWidth=3;c.beginPath();c.arc(x,y,45,0,7);c.stroke();c.fillStyle='#000';c.beginPath();c.arc(x,y,40,0,7);c.fill();
+ glow(x-300,y-120,40,[130,170,255],.8);c.fillStyle='#cdf';c.beginPath();c.arc(x-300,y-120,16,0,7);c.fill();txt('옆의 큰 별',x-300,y-150,20,'#cdf');c.strokeStyle='rgba(255,180,100,.65)';c.lineWidth=4;c.setLineDash([8,6]);c.beginPath();c.moveTo(x-284,y-114);c.quadraticCurveTo(x-170,y-80,x-95,y-6);c.stroke();c.setLineDash([]);txt('가스가 빨려 들어가요',x-170,y-40,19,'#fda')}
+function gal(o){const R=rng(11),x=W/2,y=H/2;c.save();c.translate(x,y);c.rotate(-.6);c.scale(1,.4);glow(0,0,270,[170,190,255],.3);for(let i=0;i<2800;i++){const arm=i%2,t=Math.pow(R(),.8)*5.2+.4,a=t*1.35+arm*Math.PI+(R()-.5)*.55,d=28*t;c.fillStyle=R()<.75?'rgba(190,210,255,'+(.35+R()*.5)+')':'rgba(255,170,190,'+(.35+R()*.5)+')';c.fillRect(Math.cos(a)*d*1.4,Math.sin(a)*d*1.4,2.2,2.2)}glow(0,0,80,[255,225,160],.9);c.restore();txt('별 약 1조 개가 모인 은하',x,y+210,22,'#cfe')}
+function tempView(o){ // 온도 필터
+ sky(7);const T=o.T;const x=W/2,y=H/2-30;
+ if(!T){c.fillStyle='#01020a';c.fillRect(0,0,W,H);txt('온도 필터는 별에서 가장 잘 보여요',W/2,H/2,28,'#dde');return}
+ const col=colOf(o);glow(x,y,150,col,.5);c.fillStyle=rgb(col);c.beginPath();c.arc(x,y,60,0,7);c.fill();
+ txt(Math.round(T).toLocaleString()+' K',x,y+110,34,'#fff');txt('표면 온도 ('+o.col+' 별)',x,y+146,22,'#cde');
+ // 눈금
+ const gx=120,gw=W-240,gy=H-120;const gr=c.createLinearGradient(gx,0,gx+gw,0);gr.addColorStop(0,'#8fb4ff');gr.addColorStop(.28,'#e0ecff');gr.addColorStop(.5,'#fff6c8');gr.addColorStop(.72,'#ffc66e');gr.addColorStop(1,'#ff6a4a');c.fillStyle=gr;c.fillRect(gx,gy,gw,26);
+ const f=Math.max(0,Math.min(1,(Math.log(13000)-Math.log(Math.max(T,2500)))/(Math.log(13000)-Math.log(2500))));c.fillStyle='#fff';c.strokeStyle='#000';c.lineWidth=3;c.fillRect(gx+f*gw-4,gy-10,8,46);c.strokeRect(gx+f*gw-4,gy-10,8,46);
+ txt('🔥 뜨겁다 (파란색)',gx,gy+62,22,'#9cf','left');txt('차갑다 (빨간색) ❄',gx+gw,gy+62,22,'#f99','right')}
+function sizeView(o){sky(9);const x0=W/2;
+ if(o.g!=='star'){txt('크기 비교는 별에서 볼 수 있어요',W/2,H/2,28,'#dde');return}
+ const sunR=16;let r=sunR*o.sz;let capped=false;if(r>230){r=230;capped=true}
+ c.fillStyle=rgb(CC['노란색']);c.beginPath();c.arc(160,H/2-10,sunR,0,7);c.fill();txt('태양',160,H/2+50,22,'#ffe9a0');
+ const col=colOf(o);glow(x0+110,H/2-10,r*1.8,col,.4);c.fillStyle=rgb(col);c.beginPath();c.arc(x0+110,H/2-10,Math.max(r,2),0,7);c.fill();txt(o.ko,x0+110,H/2+Math.max(r,6)+46,24,'#fff');
+ txt('지름이 태양의 '+(o.sz>=1?o.sz.toLocaleString()+'배':(o.sz*100).toFixed(0)+'%'),W/2,60,30,'#fff');if(capped)txt('(너무 커서 줄여 그렸어요)',W/2,98,20,'#fc8')}
+function mapView(o){sky(2);const x=W/2,y=H/2,s=2.1/1000*H*.8;c.save();glow(x,y,260,[170,190,255],.3);const R=rng(4);for(let a=0;a<4;a++)for(let r=40;r<250;r+=3){const th=a*Math.PI/2+Math.log(r/30)/.2126;for(let k=0;k<3;k++){const rr=r+(R()-.5)*r*.12,t2=th+(R()-.5)*.1;c.fillStyle=R()<.25?'rgba(255,140,170,.85)':'rgba(190,215,255,.8)';c.fillRect(x+Math.cos(t2)*rr,y+Math.sin(t2)*rr,2.2,2.2)}}
+ glow(x,y,40,[255,225,160],.9);c.restore();
+ txt('우리은하 (위에서 본 모습) · 지름 약 10만 광년',x,34,22,'#cde');txt('가운데: 거대 블랙홀',x+10,y-48,19,'#ffe9b0','left');
+ const sx=x,sy=y+Math.round(250*.52);c.fillStyle='#fbbf24';c.beginPath();c.arc(sx,sy,7,0,7);c.fill();c.strokeStyle='#fbbf24';c.lineWidth=2;c.beginPath();c.arc(sx,sy,15,0,7);c.stroke();txt('☀ 태양계 (가장자리쪽, 중심에서 2.6만 광년)',sx,sy+36,20,'#fbbf24');
+ if(o&&o.id==='sgr'){c.strokeStyle='#5eead4';c.lineWidth=3;c.setLineDash([6,5]);c.beginPath();c.moveTo(sx,sy-10);c.lineTo(x,y+12);c.stroke();c.setLineDash([]);txt('여기까지 약 2만 6천 광년',x+130,(sy+y)/2,20,'#5eead4')}
+ if(o&&o.id==='m31'){txt('안드로메다 은하는 지도 밖 → 250만 광년!',W-30,H-30,22,'#5eead4','right')}
+ txt('나선팔: 파란 젊은 별이 많아요',W-24,60,19,'#9db','right')}
+function draw(tm){const o=S.tgt;
+ if(S.mode==='map'){mapView(o);return}
+ if(!o){sky(77);glow(W/2,H*.58,170,[255,230,160],.9);c.fillStyle='#fff';c.beginPath();c.arc(W/2,H*.58,4,0,7);c.fill();txt('☀ 멀리 보이는 태양 (0.8 광년)',W/2,H*.58+34,22,'#cfe');txt('오르트 구름 · 워프 대기 중 — 가고 싶은 곳을 눌러요!',W/2,H-30,22,'#cfe');return}
+ if(S.mode==='temp'&&o.g==='star'){tempView(o);return}
+ if(S.mode==='temp'&&o.g!=='bh'){tempView({T:0});return}
+ if(S.mode==='size'){sizeView(o);return}
+ sky(o.d%997+1);
+ if(o.g==='star')star(o,tm);else if(o.g==='neb'||o.g==='cl')neb(o);else if(o.g==='bh')bh(o,tm);else gal(o);
+ c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,0,W,38);txt(o.ic+' '+o.ko,12,27,22,'#fff','left')}
+/* --- 화면 --- */
+function hud(){const o=S.tgt;let t='[ 🔭 DEEP SPACE HUD ]\n';
+ if(!o)t+='* 대상 천체: 없음 (출발 준비)\n* 위치/거리: 오르트 구름 · 태양에서 0.8 광년\n* 탐사선 상태: 아스트라호 · 워프 엔진 대기\n';
+ else t+='* 대상 천체: '+o.ko+'  ('+o.kind+')\n* 위치/거리: 태양에서 '+fmtLy(o.d)+'\n* 탐사선 상태: 아스트라호 · '+(o.hz&&S.tgt?'접근 '+S.pos+'%':'안전하게 관측 중')+'\n';
+ t+='* 주변 관측 모드: '+MODES[S.mode][1];$('hud').textContent=t}
+function info(){const o=S.tgt;if(!o){$('info').innerHTML='<span style="color:var(--mu)">아래에서 가고 싶은 곳을 눌러 보세요!</span>';return}
+ let h='<div class="fact"><i>'+o.ic+'</i><div><b>'+o.ko+'</b><br>'+o.ds+'</div></div>';
+ h+='<div class="fact"><i>📍</i><div><b>거리</b>: '+fmtLy(o.d)+'<br><span style="color:var(--mu)">'+o.ex+' 걸려서 우리에게 와요 (1광년 = 빛이 1년 동안 가는 거리)</span></div></div>';
+ if(o.g==='star'){const tt=o.T>=10000?'매우 뜨거워요(약 '+(o.T/1000).toFixed(0)+'천 도 이상)':o.T>=6500?'뜨거워요':o.T>=5000?'보통이에요':'비교적 차가워요';
+  h+='<div class="fact"><i>🎨</i><div><b>색깔 = 온도!</b> '+o.ko+'은(는) <b>'+o.col+'</b> → 표면 온도 약 '+o.T.toLocaleString()+' K ('+tt+')<div class="tbar"><span style="left:'+(100*Math.max(0,Math.min(1,(Math.log(13000)-Math.log(Math.max(o.T,2500)))/(Math.log(13000)-Math.log(2500)))))+'%"></span></div><div class="tl"><span>🔥 뜨거움(파랑)</span><span>차가움(빨강) ❄</span></div></div></div>';
+  h+='<div class="fact"><i>📏</i><div><b>크기</b>: 지름이 태양의 <b>'+(o.sz>=1?o.sz.toLocaleString()+'배':'약 '+(o.sz*100).toFixed(0)+'%')+'</b>'+(o.sz>=100?' — 태양 자리에 놓으면 화성 궤도까지 삼켜요!':o.sz<1?' (태양보다 작아요)':'')+'</div></div>'}
+ if(o.id==='sgr'||o.id==='m31')h+='<div class="fact"><i>🌌</i><div><b>은하 지도</b> 버튼을 눌러 우리 위치를 확인해 봐요!</div></div>';
+ $('info').innerHTML=h}
+function modes(){$('modes').innerHTML=Object.keys(MODES).map(k=>'<button class="btn'+(S.mode===k?' on':'')+'" data-m="'+k+'">'+MODES[k][0]+'</button>').join('');$('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.mode=b.dataset.m;refresh()})}
+function dest(){$('dest').innerHTML=GR.map(g=>'<div class="grp">'+g[0]+'</div><div class="dest">'+g[1].map(i=>{const o=BY[i];return '<button class="btn'+(S.vis[i]?' vis':'')+'" data-w="'+i+'"><i>'+o.ic+'</i>'+o.ko+(S.vis[i]?' ✓':'')+'</button>'}).join('')+'</div>').join('');$('dest').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>warp(BY[b.dataset.w]))}
+function warp(o){S.tgt=o;S.pos=40;S.vis[o.id]=true;save();say('🚀 워프! <b>'+o.ko+'</b>에 도착했어요.\n'+o.ds,'ok');if(o.id==='bet')say('⚠ 베텔게우스는 아주 뜨거운 별이에요. 너무 가까이 가면 우주선이 녹아요. "접근 레버"를 조심해서 써요!','wa');if(o.id==='bh')say('⚠ 블랙홀은 중력이 엄청나게 세요. 너무 가까이 가면 빠져나올 수 없어요!','wa');checkM();refresh()}
+/* --- 접근 --- */
+function apr(){const o=S.tgt,b=$('apr');if(!o||!o.hz){b.hidden=true;return}b.hidden=false;
+ const p=S.pos,lv=p<50?'ok':p<75?'wa':'no';const msg=o.hz==='heat'?(lv==='ok'?'🟢 안전해요! 선체 온도가 괜찮아요.':lv==='wa'?'🟡 주의! 별이 가까워서 우주선이 뜨거워지고 있어요.':'🔴 위험! 우주선이 녹을 정도로 뜨거워요!'):(lv==='ok'?'🟢 안전해요! 중력이 아직 약해요.':lv==='wa'?'🟡 주의! 블랙홀의 중력이 점점 세져요.':'🔴 위험! 중력이 너무 세서 빨려 들어가요!');
+ b.innerHTML='<h2>🕹 접근 레버 — '+o.ko+'</h2><div class="gauge"><b style="left:'+p+'%"></b></div><input type="range" id="lv" min="0" max="100" value="'+p+'"><div class="tl"><span>멀리</span><span>가까이</span></div><div class="msg '+lv+'" style="margin:8px 0">'+msg+'</div><div class="bar"><button class="btn wr" id="go">📸 이 거리에서 관측하기</button><button class="btn" id="bk">↩ 안전하게 물러나기</button></div><div style="color:var(--mu);font-size:.85em;margin-top:6px">💡 너무 멀면 잘 안 보이고(25% 미만), 너무 가까우면 위험해요. <b>초록색 구역에서 관측</b>해요!</div>';
+ $('lv').oninput=e=>{S.pos=+e.target.value;apr();hud();$('lv').focus()};$('bk').onclick=()=>{S.pos=40;apr();hud()};
+ $('go').onclick=()=>{if(S.pos>=75){say('💥 우주선이 크게 손상됐어요! 비상 워프로 안전한 곳까지 후퇴했어요.\n'+(o.hz==='heat'?'👉 별 표면에 가까울수록 훨씬 뜨거워져요.':'👉 블랙홀에 가까울수록 중력이 아주 세져요.'),'no');S.pos=40}
+  else if(S.pos>=50){say('⚠ 관측은 했지만 우주선이 위험했어요. 초록색 구역(50% 미만)에서 다시 해 봐요.','wa')}
+  else if(S.pos<25){say('🔭 너무 멀어서 자세히 안 보여요. 조금 더 가까이 가 봐요(25% 이상).','wa')}
+  else{S.ent[o.id]=true;save();say('✅ 안전한 거리에서 관측 성공! '+(o.hz==='heat'?'붉은 초거성은 크지만 표면 온도는 낮은 편(약 3,600 K)이에요.':'블랙홀은 직접 보이진 않지만 주변 가스가 뜨겁게 빛나요.'),'ok');checkM()}
+  apr();hud()}}
+/* --- 미션 --- */
+const MS=[
+{t:'별 색깔 탐정',g:'색이 다른 별을 4가지 이상 찾아가 보세요. (파랑·흰색·노랑·주황·빨강)',chk:()=>{const cs=new Set();O.forEach(o=>{if(S.vis[o.id]&&o.g==='star')cs.add(o.col)});return {n:cs.size,need:4,txt:'찾은 색: '+[...cs].join(', ')}},
+ q:[{q:'파란 별과 빨간 별 중 표면 온도가 더 높은 별은?',o:['파란 별','빨간 별','똑같아요'],a:0,h:'🌡 온도 보기 모드의 색 막대를 보세요. 파란쪽이 뜨거워요.',e:'맞아요! 파란 별 > 흰 별 > 노란 별 > 주황 별 > 빨간 별 순으로 뜨거워요.'},{q:'우리 태양은 무슨 색 별일까요?',o:['파란색','노란색','빨간색'],a:1,h:'태양의 HUD 정보를 다시 봐요.',e:'태양은 표면 온도 약 5,800 K인 노란 별이에요.'}]},
+{t:'별의 크기와 거리',g:'태양·프록시마·시리우스·베텔게우스를 찾아가 크기와 거리를 비교하세요.',chk:()=>{const n=['sun','prox','sir','bet'].filter(i=>S.vis[i]).length;return {n,need:4,txt:'방문 '+n+'/4'}},
+ q:[{q:'네 별 중 가장 큰 별은?',o:['시리우스','베텔게우스','프록시마'],a:1,h:'📏 크기 비교 모드를 써 봐요.',e:'베텔게우스는 지름이 태양의 약 760배! 하지만 표면은 차가운 붉은 별이에요.'},{q:'태양 다음으로 지구에서 가장 가까운 별은?',o:['프록시마 센타우리','시리우스','베텔게우스'],a:0,h:'거리(광년)가 가장 작은 별을 찾아요.',e:'프록시마는 4.2광년! 그래도 빛이 4.2년이나 걸려요.'}]},
+{t:'은하와 성운 탐험',g:'오리온 성운·플레이아데스·안드로메다 은하를 찾아가 보세요.',chk:()=>{const n=['m42','m45','m31'].filter(i=>S.vis[i]).length;return {n,need:3,txt:'방문 '+n+'/3'}},
+ q:[{q:'별이 새로 태어나는 곳은 어디일까요?',o:['블랙홀','성운(가스 구름)','구상성단'],a:1,h:'오리온 성운 설명을 다시 읽어 봐요.',e:'성운 속 가스가 뭉쳐서 새 별이 태어나요.'},{q:'우리 태양계는 은하에서 어디쯤 있을까요?',o:['한가운데','가장자리 쪽(중심에서 멀리)','은하 밖'],a:1,h:'🌌 은하 지도 모드를 확인해 봐요.',e:'태양은 중심에서 약 2.6만 광년 떨어진 나선팔 가장자리에 있어요.'},{q:'안드로메다는 무엇일까요?',o:['우리은하 안의 별','우리은하 밖의 다른 은하','성운'],a:1,h:'안드로메다는 250만 광년이나 떨어져 있어요.',e:'은하 하나에 별이 수천억~1조 개나 있어요!'}]},
+{t:'안전 항행',g:'베텔게우스와 블랙홀에서 접근 레버를 초록 구역에 놓고 관측에 성공하세요.',chk:()=>{const n=['bet','bh'].filter(i=>S.ent[i]).length;return {n,need:2,txt:'관측 성공 '+n+'/2'}},q:[]}];
+function checkM(){MS.forEach((m,i)=>{const s=m.chk();if(s.n>=s.need&&!m.q.length&&!S.done[i]){S.done[i]=true;save();say('🏆 <b>임무 '+(i+1)+' 완료 — '+m.t+'</b>\n위험한 천체는 안전 거리를 지켜서 관측해야 해요!','ok');toast('🏆 임무 '+(i+1)+' 완료!')}});renderMis()}
+function renderMis(){const el=$('mis'),n=S.tab;const m=MS[n-1];let h='<div class="tabs">'+MS.map((x,i)=>'<button class="btn'+(S.tab===i+1?' on':'')+'" data-t="'+(i+1)+'">'+(S.done[i]?'✅':i+1)+'</button>').join('')+'</div><b>임무 '+n+'. '+m.t+'</b><div class="q" style="border-color:var(--wa)">'+m.g+'</div>';
+ const s=m.chk();h+='<div class="chk">'+(s.n>=s.need?'✅':'⬜')+' '+s.txt+' ('+Math.min(s.n,s.need)+'/'+s.need+')</div>';
+ if(m.q.length){if(s.n<s.need)h+='<div style="color:var(--mu)">먼저 위 목표를 채우면 퀴즈가 열려요!</div>';else if(S.done[n-1])h+='<div class="stars">⭐⭐</div><div class="msg ok">임무 완료! 잘했어요 🎉</div>';else{const qi=S.ans[n]||0,q=m.q[qi];h+='<div class="q"><b>Q'+(qi+1)+'. '+q.q+'</b><div class="opts">'+q.o.map((t,k)=>'<button class="btn" data-a="'+k+'">'+t+'</button>').join('')+'</div></div>'}}
+ else if(S.done[n-1])h+='<div class="msg ok">임무 완료! 🎉</div>';
+ const all=MS.every((x,i)=>S.done[i]);if(all)h+='<div class="msg ok" style="margin-top:10px">🌟 <b>모든 임무 완료! 우주 탐사대 대원 인증!</b></div>';
+ h+='<div style="margin-top:10px"><button class="btn" id="rst" style="min-height:40px;font-size:.85em">🔄 처음부터</button></div>';
+ el.innerHTML=h;el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.tab=+b.dataset.t;renderMis()});
+ el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const qi=S.ans[n]||0,q=m.q[qi];if(+b.dataset.a===q.a){say('⭕ 정답! '+q.e,'ok');if(qi+1>=m.q.length){S.done[n-1]=true;save();say('🏆 <b>임무 '+n+' 완료 — '+m.t+'</b>','ok');toast('🏆 임무 '+n+' 완료!');if(n<4)S.tab=n+1}else S.ans[n]=qi+1;renderMis()}else say('❌ 아쉬워요! 힌트: '+q.h,'no')});
+ $('rst').onclick=()=>{if(confirm('기록을 모두 지울까요?')){try{localStorage.removeItem('spe1')}catch(e){}location.reload()}}}
+function refresh(){hud();info();modes();dest();apr();renderMis()}
+$('fs').onclick=()=>{try{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}catch(e){}};
+refresh();
+say('🛰 <b>임무 브리핑</b>\n안녕하세요, 대원! 저는 아스트라호의 항법 AI "아스트라"예요.\n📍 지금 위치: 오르트 구름 (태양에서 0.8광년)\n🎯 오늘의 임무 1: 색깔이 다른 별을 4가지 이상 찾아가 보세요!\n👉 오른쪽 아래 "어디로 갈까요?"에서 <b>시리우스·베텔게우스·프록시마</b> 같은 별을 눌러 보세요.');
+(function f(t){try{draw(t)}catch(e){console.error(e)}requestAnimationFrame(f)})(0);
+window.__e={S,O,warp,checkM,apr,refresh};
+})();
+</script></body></html>
