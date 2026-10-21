@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우주 프로그램 · 로켓 설계와 궤도 비행 게임</title>
+<style>
+:root{--bg:#070b16;--pn:#101830;--pn2:#17213f;--ln:#2a3a6a;--tx:#e8eefc;--mu:#9db0da;--ac:#fb923c;--ac2:#22d3ee;--ok:#34d399;--no:#f87171;--wa:#fbbf24}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(14px,1.45vw,17px);line-height:1.5;-webkit-text-size-adjust:100%}
+header{display:flex;align-items:center;gap:8px;padding:8px clamp(8px,2vw,16px);background:#04070f;border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:30}
+header h1{margin:0;font-size:clamp(14px,2.4vw,21px);flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:7px clamp(8px,1.6vw,14px);font-weight:800;font-size:clamp(11px,1.6vw,14px);text-decoration:none;cursor:pointer;white-space:nowrap}
+.pill{font-size:clamp(11px,1.5vw,14px);font-weight:900;color:#fed7aa;background:#3b1d0a;border:1px solid #7c3a12;padding:5px 10px;border-radius:999px;white-space:nowrap}
+section{display:none;padding:12px clamp(8px,2vw,16px) 28px;max-width:1280px;margin:0 auto}
+section.on{display:block}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:12px 14px}
+.card h2{margin:0 0 8px;font-size:1.08em}
+.btn{background:var(--pn2);color:var(--tx);border:2px solid var(--ln);border-radius:12px;padding:8px 12px;font-weight:800;cursor:pointer;font-size:.95em}
+.btn.on{border-color:var(--ac);background:#3b1d0a;box-shadow:0 0 0 3px #fb923c33}
+.btn small{display:block;font-weight:600;color:var(--mu);font-size:.78em}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.go{width:100%;margin-top:10px;padding:13px;border:0;border-radius:14px;background:linear-gradient(180deg,#fb923c,#ea580c);color:#2b0f02;font-weight:900;font-size:1.1em;cursor:pointer;box-shadow:0 4px 0 #9a3412}
+.go.g2{background:linear-gradient(180deg,#34d399,#10b981);color:#04210f;box-shadow:0 4px 0 #0a7a57}
+.go:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 90px}
+.lab{font-size:.85em;color:var(--mu);font-weight:800;margin:10px 0 5px}
+/* intro */
+#sIntro{padding:0;max-width:none}
+.radio{position:relative;min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#02040a}
+#noise{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.radio .box{position:relative;z-index:2;max-width:760px;width:calc(100% - 24px);background:#061022e6;border:2px solid #1e3a6e;border-radius:18px;padding:18px 20px;box-shadow:0 0 40px #22d3ee22}
+.radio .tt{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(14px,2.1vw,19px);color:#9ff0ff;min-height:12em}
+.radio .tt p{margin:0 0 .6em;opacity:0;animation:fi .5s forwards}
+@keyframes fi{to{opacity:1}}
+.radio .tt .st{color:#6b7fa8}
+.radio .who{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.astro{width:64px;height:64px;flex:none}
+.tag{font-size:.8em;color:#7dd3fc;letter-spacing:.1em}
+/* menu */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.mc{background:var(--pn);border:2px solid var(--ln);border-radius:16px;padding:14px;cursor:pointer;position:relative}
+.mc:hover{border-color:var(--ac)}
+.mc.lock{opacity:.5;cursor:not-allowed}
+.mc h3{margin:0 0 4px;font-size:1.05em}
+.mc .n{position:absolute;right:12px;top:8px;font-size:2em;font-weight:900;color:#ffffff14}
+.mc p{margin:4px 0;color:var(--mu);font-size:.9em}
+.stars{font-size:1.3em;letter-spacing:2px;color:#fbbf24}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:.74em;background:#16254a;color:#bfd3ff;border:1px solid #2c4a8a;border-radius:999px;padding:2px 8px;font-weight:700}
+/* brief */
+.bgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+@media(max-width:860px){.bgrid{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.kv div{background:var(--pn2);border-radius:12px;padding:8px 6px;text-align:center}
+.kv b{display:block;font-size:1.2em;color:#fed7aa}.kv span{font-size:.78em;color:var(--mu)}
+.talk{display:flex;gap:10px;align-items:flex-start}
+.bubble{background:#0b1630;border:1px solid #28407a;border-radius:14px;padding:10px 12px;flex:1;font-size:.95em}
+.bubble b{color:#fed7aa}
+/* VAB */
+.vab{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;align-items:start}
+@media(max-width:940px){.vab{grid-template-columns:1fr}}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
+.stg{border:1px solid var(--ln);border-radius:14px;padding:8px 10px;margin-top:8px;background:#0c1430}
+.stg h4{margin:0 0 6px;font-size:.95em;display:flex;justify-content:space-between;gap:6px}
+.stg h4 span{color:var(--mu);font-weight:600;font-size:.85em}
+.stp{display:flex;align-items:center;gap:8px;background:var(--pn2);border-radius:12px;padding:5px 8px;margin-top:6px}
+.stp span{flex:1;font-weight:800;font-size:.9em}.stp b{min-width:2em;text-align:center;font-size:1.2em}
+.stp button{width:2.3em;height:2.3em;border-radius:10px;border:1px solid var(--ln);background:#22305a;color:#fff;font-weight:900;cursor:pointer}
+#rsvg{width:100%;height:clamp(230px,38vh,420px);background:linear-gradient(#0a1530,#142a52);border-radius:12px;display:block}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.stat div{background:var(--pn2);border-radius:12px;padding:7px 8px}
+.stat b{font-size:1.15em}.stat span{display:block;font-size:.76em;color:var(--mu)}
+.good{color:#6ee7b7}.warn{color:#fcd34d}.bad{color:#fca5a5}
+.bar{height:12px;background:#0a1128;border-radius:8px;overflow:hidden;margin-top:4px;position:relative}.bar i{display:block;height:100%;background:linear-gradient(90deg,#fb923c,#fbbf24);width:0;transition:width .25s}
+.bar.ok i{background:linear-gradient(90deg,#22d3ee,#34d399)}.bar.over i{background:#ef4444}
+.dvrow{display:flex;gap:6px;align-items:center;font-size:.85em;margin-top:3px}
+.dvrow .b{flex:1;height:10px;background:#0a1128;border-radius:6px;overflow:hidden}.dvrow .b i{display:block;height:100%}
+#tips{margin:8px 0 0;padding:0;list-style:none}
+#tips li{background:#101e3f;border-left:4px solid var(--wa);border-radius:8px;padding:6px 9px;margin-top:5px;font-size:.88em}
+#tips li.r{border-color:var(--no)}#tips li.g{border-color:var(--ok)}
+/* flight */
+.hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:6px;margin-bottom:8px}
+.hud div{background:#0b1630;border:1px solid #1f3262;border-radius:10px;padding:4px 8px;text-align:center}
+.hud b{display:block;font-size:clamp(14px,1.9vw,19px);font-variant-numeric:tabular-nums;color:#e0f2fe}
+.hud span{font-size:.7em;color:var(--mu)}
+.fl{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:10px}
+@media(max-width:860px){.fl{grid-template-columns:1fr}#modal{position:fixed;inset:0;border-radius:0;z-index:60;padding:10px}#modal .m{max-height:92vh}}
+.cvw{position:relative}
+canvas{width:100%;display:block;aspect-ratio:16/9;border-radius:12px;background:#0a1530}
+#modal{position:absolute;inset:0;display:none;background:#020510d9;border-radius:12px;align-items:center;justify-content:center;padding:8px;overflow:auto;z-index:5}
+#modal.on{display:flex}
+#modal .m{background:var(--pn);border:2px solid var(--ac);border-radius:16px;padding:12px 14px;width:min(100%,640px);max-height:100%;overflow:auto}
+#modal h3{margin:0 0 4px;font-size:1.1em;color:#fed7aa}
+#modal .ctx{font-size:.88em;color:var(--mu);margin-bottom:8px}
+#modal .ctx b{color:#e0f2fe}
+.ch{display:block;width:100%;text-align:left;margin-top:6px;background:var(--pn2);color:var(--tx);border:2px solid var(--ln);border-radius:12px;padding:8px 10px;font-weight:800;cursor:pointer;font-size:.95em}
+.ch:hover{border-color:var(--ac)}.ch small{display:block;font-weight:600;color:var(--mu);font-size:.82em;margin-top:2px}
+.sidebar .card{padding:8px 10px;margin-bottom:8px}
+.fuel{margin:6px 0}.fuel div{display:flex;justify-content:space-between;font-size:.82em}
+#log{background:#060b1a;border:1px solid var(--ln);border-radius:10px;padding:8px 10px;max-height:9em;overflow:auto;font-size:.85em;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#log p{margin:0 0 3px}
+.warp{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.warp button{flex:1 1 40px;padding:5px;font-size:.82em}
+/* result */
+#sResult .big{font-size:clamp(34px,7vw,64px);line-height:1}
+.rbox{border:2px solid var(--ln);border-radius:16px;padding:14px;background:var(--pn)}
+.rbox.ok{border-color:var(--ok);background:#0a2a22}.rbox.no{border-color:var(--no);background:#2a1214}
+.rbox h2{margin:6px 0}
+.rbox ul{margin:6px 0;padding-left:1.2em}
+.rbox li{margin:3px 0}
+table{border-collapse:collapse;width:100%;font-size:.9em;margin:6px 0}td{padding:3px 6px;border-bottom:1px solid #ffffff1a}td:last-child{text-align:right;font-weight:800}
+.law{background:#0b1630;border-left:4px solid var(--ac2);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:.92em}
+</style></head><body>
+<header><h1>🚀 우주 프로그램 · 로켓 설계와 궤도 비행</h1><span class="pill" id="hMis" style="display:none"></span><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+
+<section id="sIntro" class="on"><div class="radio"><canvas id="noise"></canvas>
+<div class="box"><div class="who"><svg class="astro" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#f1f5f9" stroke="#94a3b8" stroke-width="3"/><circle cx="32" cy="32" r="21" fill="#4ade80"/><ellipse cx="25" cy="29" rx="5.5" ry="7" fill="#fff"/><ellipse cx="39" cy="29" rx="5.5" ry="7" fill="#fff"/><circle cx="26" cy="30" r="2.6" fill="#0f172a"/><circle cx="38" cy="30" r="2.6" fill="#0f172a"/><path d="M24 41q8 6 16 0" stroke="#14532d" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M8 24q24-26 48 0" stroke="#e2e8f0" stroke-width="4" fill="none" opacity=".6"/></svg><div><div class="tag">KSC 비행 통제 센터 · 교신 채널 7</div><b style="font-size:1.1em">제바다이아 (초록 우주비행사)</b></div></div>
+<div class="tt" id="tt"></div>
+<button class="go" id="bStart" style="display:none">📻 교신 연결 · 임무 선택 ▶</button></div></div></section>
+
+<section id="sMenu"><div class="card"><h2>🗺️ 미션 선택 <span style="font-size:.8em;color:var(--mu);font-weight:600">· 앞 미션을 완수하면 다음이 열려요</span></h2>
+<div class="mgrid" id="mgrid"></div>
+<label style="display:flex;gap:6px;align-items:center;margin-top:12px;font-size:.85em;color:var(--mu)"><input type="checkbox" id="unl"> 교사용: 모든 미션 열기</label></div></section>
+
+<section id="sBrief"><div class="bgrid"><div class="card"><h2 id="bTitle"></h2><div class="kv" id="bKv"></div><div id="bText"></div><div class="chips" id="bChips"></div></div>
+<div class="card"><div class="talk"><svg class="astro" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#f1f5f9" stroke="#94a3b8" stroke-width="3"/><circle cx="32" cy="32" r="21" fill="#4ade80"/><ellipse cx="25" cy="29" rx="5.5" ry="7" fill="#fff"/><ellipse cx="39" cy="29" rx="5.5" ry="7" fill="#fff"/><circle cx="26" cy="30" r="2.6" fill="#0f172a"/><circle cx="38" cy="30" r="2.6" fill="#0f172a"/><path d="M24 41q8 6 16 0" stroke="#14532d" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg><div class="bubble" id="bBub"></div></div>
+<h2 style="margin-top:12px">📚 오늘 쓰는 물리</h2><div id="bLaw"></div>
+<button class="go" id="bGo">🏗️ 로켓 조립 건물(VAB)로 이동 ▶</button><button class="btn" id="bBack" style="width:100%;margin-top:8px">◀ 미션 목록</button></div></div></section>
+
+<section id="sVab"><div class="vab"><div>
+<div class="card" id="vPay"></div>
+<div class="card" style="margin-top:10px"><h2>🧱 단(스테이지) 구성 <span style="font-size:.78em;color:var(--mu);font-weight:600">· 아래 1단부터 점화, 빈 탱크는 분리</span></h2>
+<div class="opts" id="vNst"></div><div id="vStages"></div><div id="vBoost"></div></div>
+<div class="card" style="margin-top:10px"><h2>🌬️ 공기역학 부품</h2><div class="opts" id="vAero"></div></div></div>
+<div><div class="card"><h2>📐 설계 도면 &amp; 분석</h2><svg id="rsvg" viewBox="0 0 320 420" preserveAspectRatio="xMidYMax meet"></svg>
+<div class="stat" id="vStat"></div><div id="vDv"></div><ul id="tips"></ul>
+<div class="row" style="margin-top:8px"><button class="btn" id="pre1">① 힘으로 밀어붙이기<small>거대 SRB 1단</small></button><button class="btn" id="pre2">② 정석 다단 로켓<small>추천 설계</small></button><button class="btn" id="pre0">③ 처음부터<small>자유 설계</small></button></div>
+<button class="btn" id="pre3" style="width:100%;margin-top:8px">🧪 컴퓨터 모의 비행 (기본 결정으로 시험)<small>실제 발사 전에 설계가 날 수 있는지 계산해 봐요</small></button><div id="simRes" style="margin-top:6px;font-size:.88em"></div><button class="go" id="vGo">🚀 발사대로 이동 ▶</button><button class="btn" id="vBack" style="width:100%;margin-top:8px">◀ 브리핑</button></div></div></div></section>
+
+<section id="sFlight"><div class="hud" id="hud"></div>
+<div class="fl"><div><div class="cvw"><canvas id="cv" width="960" height="540"></canvas><div id="modal"><div class="m" id="mb"></div></div></div><div id="log" aria-live="polite"></div></div>
+<div class="sidebar"><div class="card"><b>🛢️ 연료 · 단 상태</b><div id="fuel"></div></div>
+<div class="card"><b>⏩ 시간 가속</b><div class="warp" id="warp"></div></div>
+<div class="card"><b>🧭 비행 단계</b><div id="phase" style="font-size:.9em;color:var(--mu);margin-top:4px"></div></div></div></div></section>
+
+<section id="sResult"><div class="rbox" id="rb"></div></section>
+
+<script>
+/* ===== 로켓 물리 엔진 (2D, 지구 실제 상수) ===== */
+const G0=9.80665, RE=6371000, MU=3.986004418e14;
+const rho=h=>h>140000?0:1.225*Math.exp(-Math.max(h,0)/8400);
+const pRatio=h=>h>140000?0:Math.exp(-Math.max(h,0)/7800);
+
+/* ---- 부품 도감 (질량 kg, 추력 N, Isp s, 비용 M$) ---- */
+const TANKS={S:{p:8000,n:'S'},M:{p:20000,n:'M'},L:{p:50000,n:'L'},XL:{p:120000,n:'XL'}};
+const tankDry=p=>0.065*p+250;
+const TANKCOST=p=>p/1000*0.30;
+const ENG={
+  lrA:{name:'대기용 액체엔진',m:1800,Fsl:900e3,Fv:990e3,Is:285,Iv:310,thr:true,cost:9,col:'#38bdf8'},
+  lrV:{name:'진공용 액체엔진',m:1100,Fsl:25e3,Fv:200e3,Is:120,Iv:455,thr:true,cost:14,col:'#a78bfa'},
+};
+const SRB={
+  S:{prop:6000,dry:700,F:180e3,Fv:195e3,Is:235,Iv:255,cost:2.4},
+  M:{prop:18000,dry:1900,F:540e3,Fv:585e3,Is:235,Iv:255,cost:7.0},
+  L:{prop:40000,dry:4200,F:1200e3,Fv:1300e3,Is:235,Iv:255,cost:15.0},
+};
+const PAY={
+  capsule:{name:'유인 캡슐',m:3000,lim:28e3,cda:1.0,cost:35},
+  probe:{name:'무인 탐사 프로브',m:350,lim:12e3,cda:0.3,cost:10},
+  module:{name:'우주정거장 모듈(화물)',m:9000,lim:30e3,cda:1.3,cost:60},
+};
+const EXTRA={solar:{m:60,cost:2},shield:{m:450,cost:4},chute:{m:180,cost:1}};
+const FAIR={m:900,cost:3}, FIN={m:250,cost:1};
+
+const DEC_M=250, ASP_ENG='lrA', ASP_TANK=20000;
+
+/* ---- 설계 → 기체 ---- */
+function buildVehicle(d){
+  const V={stages:[],boost:[],pay:PAY[d.pay],payM:0,fair:!!d.fair,fin:!!d.fin,extras:d.extra||{}};
+  V.payM=V.pay.m+(d.extra.solar?EXTRA.solar.m:0)+(d.extra.shield?EXTRA.shield.m:0)+(d.extra.chute?EXTRA.chute.m:0);
+  let cost=V.pay.cost+(d.extra.solar?2:0)+(d.extra.shield?4:0)+(d.extra.chute?1:0)+(d.fin?1:0);
+  d.stages.forEach((s,i)=>{
+    let st={eng:s.eng,n:s.n};
+    if(s.eng==='srb'){
+      const q=SRB[s.tank];
+      st.prop=q.prop*s.n;st.dry=q.dry*s.n+DEC_M;st.F=q.F*s.n;st.Fv=q.Fv*s.n;st.Is=q.Is;st.Iv=q.Iv;st.thr=false;st.col='#f97316';
+      cost+=q.cost*s.n+0.5;
+    }else{
+      const e=ENG[s.eng],p=TANKS[s.tank].p;
+      st.prop=p;st.dry=tankDry(p)+e.m*s.n+DEC_M;st.F=e.Fsl*s.n;st.Fv=e.Fv*s.n;st.Is=e.Is;st.Iv=e.Iv;st.thr=true;st.col=e.col;
+      cost+=e.cost*s.n+TANKCOST(p)+0.5;
+    }
+    st.prop0=st.prop;V.stages.push(st);
+  });
+  const b=d.boost||{type:'none',n:0};
+  if(b.type==='srb'&&b.n>0){
+    const q=SRB[b.size||'M'];
+    for(let i=0;i<b.n;i++)V.boost.push({kind:'srb',prop:q.prop,prop0:q.prop,dry:q.dry,F:q.F,Fv:q.Fv,Is:q.Is,Iv:q.Iv,pair:0});
+    cost+=q.cost*b.n;
+  }else if(b.type==='asp'&&b.n>0){
+    const e=ENG[ASP_ENG];
+    for(let k=0;k<b.n;k++){
+      const dry=2*(tankDry(ASP_TANK)+e.m+150);
+      V.boost.push({kind:'asp',prop:2*ASP_TANK,prop0:2*ASP_TANK,dry,F:2*e.Fsl,Fv:2*e.Fv,Is:e.Is,Iv:e.Iv,pair:k+1});
+      cost+=2*(e.cost+TANKCOST(ASP_TANK))+1;
+    }
+  }
+  V.cost=cost+(d.fair?3:0);
+  // 공기저항 면적 CdA (m²)
+  let cda=1.8;
+  const s0=d.stages[0];
+  if(s0&&s0.eng!=='srb'){const p=TANKS[s0.tank].p;cda+=({S:0,M:0.3,L:0.7,XL:1.1})[s0.tank]+(s0.n>2?0.3:0);}
+  else if(s0){cda+=0.3+0.2*s0.n;}
+  cda+=0.15*(d.stages.length-1);
+  V.boost.forEach(b=>{cda+=(b.kind==='srb'?0.45:0.8);});
+  V.cdaBody=cda;
+  V.cdaPay=V.pay.cda; // 페어링 없을 때 노출 추가
+  return V;
+}
+
+/* 단별 델타V·추력비 정적 분석 (진공, 무중력 시뮬) */
+function analyze(d){
+  const V=buildVehicle(d);
+  const F=new Flight(V,{target:100000,id:0},{}, {noGrav:true});
+  const out={cost:V.cost,stageDv:V.stages.map(()=>0)};
+  out.m0=F.mass();
+  out.twr=F.thrustNow(0)/(out.m0*G0);
+  out.twrVac=F.thrustNow(1e9)/(out.m0*G0);
+  out.dvSL=0;
+  const dt=0.25;let guard=0;
+  while(guard++<200000){
+    const i=F.cur;
+    if(i>=F.V.stages.length)break;
+    const m=F.mass();
+    const r=F.burnStep(dt,1e9,1);
+    if(!r.F)break;
+    out.stageDv[Math.min(i,F.V.stages.length-1)]+=r.F/m*dt;
+  }
+  out.dv=out.stageDv.reduce((a,b)=>a+b,0);
+  out.mpay=V.payM+(V.fair?FAIR.m:0)+(V.fin?FIN.m:0);
+  // 필요 델타V는 미션이 정함
+  // 해수면 발사 추력비 보강: 1단 TWR
+  return out;
+}
+
+/* ---- 비행 시뮬레이터 ---- */
+class Flight{
+  constructor(V,mission,dec,opt){
+    this.V=V;this.M=mission;this.dec=dec||{};this.opt=opt||{};
+    this.cur=0;this.t=0;this.alive=true;this.fairOn=V.fair;this.fairGone=false;
+    this.x=0;this.y=RE;this.vx=0;this.vy=0; // 발사대: 정지, +x 방향이 '동쪽'
+    this.phase='pad';this.log=[];this.thrOn=false;this.thrNow=0;
+    this.maxQ=0;this.maxG=0;this.alpha=0;this.pitch=90;this.kickT=null;this.kickDone=false;
+    this.pending=null;this.result=null;this.burnT=0;this.apoCut=false;this.heat=0;this.maxHeat=0;
+    this.trail=[];this.reent=null;this.chute=false;this.chuteOK=null;this.dvUsed=0;
+    this.stageEvents=[];this.pendingStage=null;
+    this.cutAlt=0;this.cutWhy='';
+  }
+  get r(){return Math.hypot(this.x,this.y)}
+  get h(){return this.r-RE}
+  get v(){return Math.hypot(this.vx,this.vy)}
+  get vr(){return (this.x*this.vx+this.y*this.vy)/this.r}
+  get vt(){return (-this.y*this.vx+this.x*this.vy)/this.r}
+  mass(){
+    if(this.capOnly)return this.V.payM;
+    const V=this.V;let m=V.payM+(this.fairOn?FAIR.m:0)+(V.fin?FIN.m:0);
+    for(let i=this.cur;i<V.stages.length;i++){m+=V.stages[i].dry+V.stages[i].prop}
+    V.boost.forEach(b=>{if(!b.gone)m+=b.dry+b.prop});
+    if(this.opt.retro)m+=0;
+    return m;
+  }
+  /* 현재 엔진 집합의 추력(N) */
+  thrustNow(h,thrCmd){
+    const V=this.V;if(this.cur>=V.stages.length)return 0;
+    const pr=h>1e8?0:pRatio(h),s=V.stages[this.cur];
+    const th=(thrCmd===undefined?1:thrCmd);
+    let F=0;
+    const mix=(Fv,Fs,t)=>(Fv-(Fv-Fs)*pr)*t;
+    // 심 불꽃: 코어
+    if(s.prop>0)F+=mix(s.Fv,s.F,s.thr?th:1);
+    V.boost.forEach(b=>{if(!b.gone&&b.prop>0){F+=(b.kind==='srb')?mix(b.Fv,b.F,1):mix(b.Fv,b.F,th)}});
+    return F;
+  }
+  /* 한 스텝 연소: 질량 소모·단 분리. 반환 {F,Isp} */
+  burnStep(dt,h,th){
+    const V=this.V;if(this.cur>=V.stages.length)return {F:0};
+    const pr=h>1e8?0:pRatio(h);
+    let Ftot=0,mdot=0;
+    const s=V.stages[this.cur];
+    const coreEmpty=s.prop<=0;
+    const mixF=(Fv,Fs,t)=>(Fv-(Fv-Fs)*pr)*t;
+    const mixI=(Iv,Is)=>Iv-(Iv-Is)*pr;
+    // 비동기 연소: 점화 중인 엔진 목록
+    const feed=[]; // 크로스피드 연료원 순서
+    const asps=V.boost.filter(b=>b.kind==='asp'&&!b.gone).sort((a,b)=>a.pair-b.pair);
+    let any=false;
+    // SRB 부스터: 독립 연소
+    V.boost.forEach(b=>{
+      if(b.kind==='srb'&&!b.gone&&b.prop>0){
+        const f=mixF(b.Fv,b.F,1),is=mixI(b.Iv,b.Is);
+        let md=f/(is*G0)*dt;if(md>b.prop){const k=b.prop/md;md=b.prop;Ftot+=f*k}else Ftot+=f;
+        b.prop-=md;mdot+=md;any=true;
+      }
+    });
+    // 코어 엔진
+    if(!coreEmpty){
+      const t=s.thr?th:1;
+      const f=mixF(s.Fv,s.F,t),is=mixI(s.Iv,s.Is);
+      let md=f/(is*G0)*dt;
+      // 연료: 먼저 아시파라거스 쌍(바깥쪽부터), 다음 코어
+      Ftot+=f;mdot+=md;any=true;
+      let rem=md;
+      for(const a of asps){if(rem<=0)break;const u=Math.min(a.prop,rem);a.prop-=u;rem-=u}
+      if(rem>0){s.prop=Math.max(0,s.prop-rem)}
+    }
+    // 아시파라거스 엔진: 코어와 같이 연료 공급을 받음 (코어 살아 있을 때만)
+    if(!coreEmpty){
+      for(const a of asps){
+        if(a.prop<=0&&!a.dropNow)continue;
+        const t=th;const f=mixF(a.Fv,a.F,t),is=mixI(a.Iv,a.Is);
+        let md=f/(is*G0)*dt;Ftot+=f;mdot+=md;
+        let rem=md;for(const b of asps){if(rem<=0)break;const u=Math.min(b.prop,rem);b.prop-=u;rem-=u}
+        if(rem>0){s.prop=Math.max(0,s.prop-rem)}
+        any=true;
+      }
+    }
+    // 분리 처리
+    const ev=[];
+    V.boost.forEach(b=>{if(!b.gone&&b.prop<=1e-6){b.gone=true;ev.push(b.kind==='srb'?'SRB 부스터 분리':'아시파라거스 '+b.pair+'번 쌍 분리')}});
+    if(s.prop<=1e-6&&!s.dropped){
+      // 코어 연료 소진 → 다음 단
+      let boostLeft=V.boost.some(b=>!b.gone&&b.kind==='asp');
+      s.dropped=true;this.cur++;ev.push((this.cur)+'단 분리');
+      V.boost.forEach(b=>{if(b.kind==='asp'&&!b.gone){b.gone=true}});
+    }
+    this.stageEvents.push(...ev);
+    return {F:any?Ftot:0,mdot};
+  }
+}
+
+/* ---- 궤도 요소 ---- */
+function orbit(f){
+  const r=f.r,v2=f.vx*f.vx+f.vy*f.vy;
+  const eps=v2/2-MU/r;
+  const dot=f.x*f.vx+f.y*f.vy;
+  const ex=(v2-MU/r)*f.x/MU-dot*f.vx/MU;
+  const ey=(v2-MU/r)*f.y/MU-dot*f.vy/MU;
+  const e=Math.hypot(ex,ey);
+  const hh=f.x*f.vy-f.y*f.vx;
+  const p=hh*hh/MU;
+  if(eps>=0)return {esc:true,eps,e,peri:p/(1+e)-RE,apo:Infinity,a:Infinity};
+  const a=-MU/(2*eps);
+  return {esc:false,eps,e,a,peri:a*(1-e)-RE,apo:a*(1+e)-RE,T:2*Math.PI*Math.sqrt(a*a*a/MU)};
+}
+
+
+const DVR={weak:4,good:90};
+const PROG={std:[70000,0.7],k:1.0,cl:7};
+Flight.prototype.accel=function(x,y,vx,vy,m,F,dx,dy,cda){
+  const r=Math.hypot(x,y),g=MU/(r*r);
+  let ax=-g*x/r,ay=-g*y/r;
+  if(F>0){ax+=F*dx/m;ay+=F*dy/m}
+  const rh=rho(r-RE);
+  if(rh>0&&cda>0){const v=Math.hypot(vx,vy);if(v>0){const D=0.5*rh*v*cda;ax-=D/m*vx;ay-=D/m*vy}}
+  return [ax,ay];
+};
+Flight.prototype.vacPitch=function(vrc){
+  const m=this.mass();const F=this.thrustNow(this.h,1);const aT=Math.max(F/m,0.1);
+  const g=MU/(this.r*this.r),cf=this.vt*this.vt/this.r;
+  let s=(g-cf)/aT;s=Math.max(-0.7,Math.min(0.98,s));
+  let p=Math.asin(s)*180/Math.PI+(vrc-this.vr)*0.05;
+  return Math.max(-25,Math.min(65,p));
+};
+Flight.prototype.qLim=function(){
+  let lim=50e3;if(!this.fairOn)lim=Math.min(lim,this.V.pay.lim);return lim;
+};
+Flight.prototype.dropFair=function(){
+  this.fairOn=false;this.fairGone=true;this.fairQ=0.5*rho(this.h)*this.v*this.v;
+  this.note('페어링 분리 (고도 '+(this.h/1000).toFixed(0)+' km, 동압 '+(this.fairQ/1000).toFixed(1)+' kPa)');
+};
+Flight.prototype.note=function(s){this.log.push('T+'+Math.round(this.t)+'s '+s)};
+Flight.prototype.fail=function(code,msg){if(!this.alive)return;this.alive=false;this.phase='failed';this.result={ok:false,code,msg};};
+Flight.prototype.win=function(extra){this.alive=false;this.phase='done';this.result=Object.assign({ok:true},extra||{});};
+Flight.prototype.dvLeftCalc=function(){
+  const V=this.V;let dv=0,m=this.mass();
+  for(let i=this.cur;i<V.stages.length;i++){const s=V.stages[i];if(s.prop>0)dv+=s.Iv*G0*Math.log(m/(m-s.prop));m=m-s.prop-s.dry}
+  return dv;
+};
+Flight.prototype.dvLeftSim=function(){
+  const V=JSON.parse(JSON.stringify(this.V));
+  const g=new Flight(V,this.M,{});g.cur=this.cur;g.fairOn=this.fairOn;
+  let dv=0,n=0;
+  while(g.cur<V.stages.length&&n++<4000){const m=g.mass();const r=g.burnStep(0.5,1e9,1);if(!r.F)break;dv+=r.F/m*0.5}
+  return dv;
+};
+Flight.prototype.thrustOn=function(){return this.cur<this.V.stages.length};
+
+/* 궤도 도달 판정 */
+Flight.prototype.judgeOrbit=function(){
+  const O=orbit(this),T=this.M.target;this.orb=O;
+  this.dvLeft=this.dvLeftSim();
+  if(O.esc){this.fail('esc_early','🚀 이미 탈출 속도를 넘겼습니다! 이번 미션은 원궤도가 목표예요.');return false}
+  if(O.peri<0){this.fail('suborb','💥 수평 속도 부족! 근지점 '+(O.peri/1000).toFixed(0)+' km (지면 아래) — 높이만 올라갔다가 지구 중력에 끌려 포물선으로 추락했습니다. 궤도를 돌려면 수평으로 약 7.8 km/s가 필요해요!');return false}
+  if(O.peri<80000){this.fail('decay','🔥 근지점 '+(O.peri/1000).toFixed(0)+' km — 아직 대기권 안! 몇 바퀴 못 돌고 공기 저항에 속도를 잃고 불덩이가 됩니다.');return false}
+  if(O.peri<T-4000){this.fail('low','🛰️ 근지점 '+(O.peri/1000).toFixed(0)+' km — 목표 '+(T/1000)+' km에 못 미칩니다. 연료가 바닥났어요!');return false}
+  if(O.apo>T*1.35+30000){this.fail('ecc','🛰️ 궤도가 너무 찌그러졌어요 (원지점 '+(O.apo/1000).toFixed(0)+' km). 안정적인 원형 궤도가 아닙니다.');return false}
+  this.note('원궤도 완성: 근지점 '+(O.peri/1000).toFixed(0)+' km × 원지점 '+(O.apo/1000).toFixed(0)+' km');
+  return true;
+};
+Flight.prototype.afterOrbit=function(){
+  const M=this.M,V=this.V,D=this.dec;
+  if(M.solar&&!V.extras.solar){this.fail('power','☀️ 태양전지판이 없어요! 배터리 3시간 후 방전 — 프로브가 우주 미아(우주 쓰레기)가 되었습니다. 우주에선 전력이 곧 생명!');return}
+  if(M.reentry){this.phase='orbit_ok';return}
+  if(M.escape){this.phase='orbit_ok';return}
+  this.win({orb:this.orb});
+};
+Flight.prototype.step=function(dt){
+  if(!this.alive||this.pending)return;
+  const V=this.V,M=this.M,D=this.dec;
+  let h=this.h,r=this.r;
+  const rhat=[this.x/r,this.y/r],that=[-this.y/r,this.x/r];
+  const vv=this.v;
+  const O=orbit(this);
+  let thr=0,pitch=this.pitch;
+  const gamma=vv>1?Math.atan2(this.vr,this.vt)*180/Math.PI:90;
+  const alive=this.thrustOn();
+  // ----- 발사대 -----
+  if(this.phase==='pad'){
+    if(!D.thr){this.pending='thr';return}
+    const F0=this.thrustNow(0,1);
+    if(F0/(this.mass()*G0)<1.0){this.fail('pad','🔥 TWR '+(F0/(this.mass()*G0)).toFixed(2)+' < 1! 엔진은 포효하는데 로켓은 꿈쩍도 안 합니다. 추력이 무게(질량×중력)보다 커야 떠요!');return}
+    this.phase='ascent';this.note('이륙!');
+  }
+  // ----- 상승 -----
+  if(this.phase==='ascent'){
+    if(!D.pitch&&this.v>=45){this.pending='pitch';return}
+    if(V.fair&&this.fairOn&&!D.fair&&h>=12000){this.pending='fair';return}
+    if(!D.circ&&(h>=45000)){this.pending='circ';return}
+    if(this.fairOn){
+      if(D.fair==='early'&&h>=12000)this.dropFair();
+      else if(D.fair==='late'&&h>=80000)this.dropFair();
+    }
+    const dp=D.pitch||'std';
+    const prog=(hend,hs,ex)=>Math.max(0,90*(1-Math.pow(Math.max(0,h-hs)/(hend-hs),ex)));
+    if(vv<45)pitch=90;
+    else if(h>=50000){pitch=this.vacPitch(Math.max(-30,Math.min(150,(M.target*1.03-h)/40)))}
+    else if(dp==='std'){const gt=prog(PROG.std[0],0,PROG.std[1]);const gg=Math.min(gamma,90);pitch=gg-Math.max(-PROG.cl,Math.min(PROG.cl,PROG.k*(gg-gt)))}
+    else if(dp==='late'){pitch=h<20000?90:75}
+    else{pitch=h<400?90:(h<7000?32:prog(22000,7000,0.8))}
+    pitch=Math.max(pitch,-25);
+    thr=1;
+    const q=0.5*rho(h)*vv*vv;
+    if(D.thr==='maxq'&&q>18e3)thr=Math.max(0.3,1-(q-18e3)/16e3);
+    if(D.circ!=='direct'&&O.apo>=M.target*1.03&&!O.esc){
+      if(h>=70000){this.phase='coast';this.tCoast=this.t;this.note('엔진 컷오프 (고도 '+(h/1000).toFixed(0)+' km, 원지점 '+(O.apo/1000).toFixed(0)+' km)')}
+      thr=0;
+    }
+    if(D.circ==='direct'&&O.peri>=M.target&&!O.esc&&h>70000){thr=0;if(this.judgeOrbit())this.afterOrbit();return}
+  }
+  else if(this.phase==='coast'){
+    if(D.circ==='skip'){if(this.vr<=0&&this.t>this.tCoast+2){if(this.judgeOrbit())this.afterOrbit();return}}
+    else if(this.vr<=0&&this.t>this.tCoast+2){this.phase='circ';this.note('정점 도달 – 원궤도화 연소 점화')}
+  }
+  if(this.phase==='circ'){
+    if(O.peri>=M.target&&!O.esc){thr=0;if(this.judgeOrbit())this.afterOrbit();return}
+    thr=1;pitch=this.vacPitch(0);
+  }
+  if(this.phase==='esc'){
+    thr=1;pitch=0;
+    if(O.esc&&O.eps>2e6){this.win({orb:O,esc:true});return}
+  }
+  // 연료가 다 떨어졌는가
+  if((this.phase==='ascent'||this.phase==='circ'||this.phase==='esc')&&!alive){
+    this.note('연료 소진');
+    if(this.phase==='esc'){const o=orbit(this);this.fail('esc_low','🛰️ 지구 중력권 탈출 실패! 연료가 바닥나 타원궤도(원지점 '+(o.apo/1000).toFixed(0)+' km)에 갇혔습니다. 탈출에는 약 11.2 km/s(제2우주속도)가 필요해요.');return}
+    if(h>70000&&O.peri>=80000){if(this.judgeOrbit())this.afterOrbit();return}
+    this.phase='doomed';
+  }
+  if(this.phase==='doomed'||this.phase==='coast'||this.phase==='orbit_ok'||this.phase==='reentry'||this.phase==='descent'){if(this.phase!=='coast')thr=0}
+  // ----- 물리 적분 -----
+  const th=Math.max(0,Math.min(1,thr));
+  let Fx=0,dir=[0,0],mdot=0;
+  const m0=this.mass();
+  if(th>0&&alive&&(this.phase==='ascent'||this.phase==='circ'||this.phase==='esc')){
+    const pr=pitch*Math.PI/180;
+    dir=[Math.cos(pr)*that[0]+Math.sin(pr)*rhat[0],Math.cos(pr)*that[1]+Math.sin(pr)*rhat[1]];
+    const b=this.burnStep(dt,h,th);Fx=b.F;this.thrOn=Fx>0;this.thrNow=Fx;this.pitch=pitch;
+    if(this.stageEvents.length){this.stageEvents.forEach(e=>this.note(e));this.stageEvents=[]}
+  }else{this.thrOn=false;this.thrNow=0}
+  let cda=V.cdaBody+(V.fair&&this.fairOn?0:V.cdaPay);
+  if(this.phase==='reentry'||this.phase==='descent')cda=this.reCda;
+  if(this.chute)cda=this.reCda+(this.chuteCda-this.reCda)*Math.pow(Math.min(1,(this.t-this.tChute)/14),2);
+  const vhat=vv>1?[this.vx/vv,this.vy/vv]:dir;
+  let al=0;
+  if(Fx>0&&vv>5){al=Math.acos(Math.max(-1,Math.min(1,dir[0]*vhat[0]+dir[1]*vhat[1])))*180/Math.PI}
+  this.alpha=al;
+  if(this.phase==='ascent')cda*=1+8*Math.pow(Math.sin(al*Math.PI/180),2);
+  const m=m0;
+  const fA=(x,y,vx,vy)=>this.accel(x,y,vx,vy,m,Fx,dir[0],dir[1],cda);
+  const x0=this.x,y0=this.y,u0=this.vx,w0=this.vy;
+  const k1=fA(x0,y0,u0,w0);
+  const k2=fA(x0+u0*dt/2,y0+w0*dt/2,u0+k1[0]*dt/2,w0+k1[1]*dt/2);
+  const k3=fA(x0+(u0+k1[0]*dt/2)*dt/2,y0+(w0+k1[1]*dt/2)*dt/2,u0+k2[0]*dt/2,w0+k2[1]*dt/2);
+  const k4=fA(x0+(u0+k2[0]*dt/2)*dt,y0+(w0+k2[1]*dt/2)*dt,u0+k3[0]*dt,w0+k3[1]*dt);
+  this.x=x0+dt*(u0+(u0+k1[0]*dt/2)*2+(u0+k2[0]*dt/2)*2+(u0+k3[0]*dt))/6;
+  this.y=y0+dt*(w0+(w0+k1[1]*dt/2)*2+(w0+k2[1]*dt/2)*2+(w0+k3[1]*dt))/6;
+  this.vx=u0+dt*(k1[0]+2*k2[0]+2*k3[0]+k4[0])/6;
+  this.vy=w0+dt*(k1[1]+2*k2[1]+2*k3[1]+k4[1])/6;
+  this.t+=dt;
+  if(this.phase==='reentry'||this.phase==='descent'){
+    const rh=rho(this.h),vq=this.v;
+    const flux=1.74e-4*Math.sqrt(rh)*vq*vq*vq;
+    this.flux=flux;if(flux>this.maxFlux)this.maxFlux=flux;
+    const lim=V.extras.shield?4.5e6:0.9e6;
+    const gl=Math.abs(0.5*rh*vq*vq*(this.chute?this.reCda+(this.chuteCda-this.reCda)*Math.pow(Math.min(1,(this.t-this.tChute)/14),2):this.reCda)/this.V.payM)/G0;
+    this.gNow=gl;if(gl>this.maxG)this.maxG=gl;
+    if(flux>lim){this.fail('burn','🔥 '+(V.extras.shield?'방열판 한계 초과! ':'방열판이 없어요! ')+'대기권 재진입 가열 '+(flux/1e6).toFixed(1)+' MW/m² (한계 '+(lim/1e6).toFixed(1)+') — 캡슐이 유성처럼 불타 사라졌습니다.');return}
+    if(gl>11&&V.pay.name.indexOf('유인')>=0){this.fail('gforce','💥 감속 중력가속도 '+gl.toFixed(0)+' g! 너무 가파르게 진입해 승무원이 버틸 수 없습니다 (한계 약 11 g).');return}
+    if(this.phase==='reentry'&&this.h<17000&&this.v<1200){this.phase='descent';this.note('재진입 종료, 낙하 단계 (속도 '+this.v.toFixed(0)+' m/s)')}
+    if(V.extras.chute&&!this.chute&&!D.chute&&this.h<36000&&this.vr<0){this.pending='chute';return}
+    if(V.extras.chute&&!this.chute&&D.chute){
+      const ca=D.chute==='high'?33000:D.chute==='mid'?3500:450;
+      if(this.h<=ca&&this.vr<0){
+        const qd=0.5*rho(this.h)*this.v*this.v;
+        if(qd>7000){this.fail('chute_rip','💥 낙하산이 너무 일찍(너무 빠를 때) 펴졌어요! 동압 '+(qd/1000).toFixed(0)+' kPa(한계 7 kPa) — 낙하산이 찢어졌습니다.');return}
+        this.chute=true;this.tChute=this.t;this.note('낙하산 전개 (고도 '+this.h.toFixed(0)+' m, '+this.v.toFixed(0)+' m/s)');
+      }
+    }
+    if(this.h<=0){
+      if(this.v<=18)this.win({landing:this.v,maxG:this.maxG,maxFlux:this.maxFlux});
+      else this.fail('crash_land','💥 착지 속도 '+this.v.toFixed(0)+' m/s! '+(V.extras.chute?(this.chute?'낙하산이 늦게 펴져 충분히 감속하지 못했습니다.':'낙하산을 펴지 못했습니다.'):'낙하산이 없어 땅과 정면 충돌했습니다.'));
+      return;
+    }
+  }
+  // ----- 안전 판정 -----
+  const q2=0.5*rho(this.h)*this.v*this.v;
+  if(q2>this.maxQ)this.maxQ=q2;
+  if(this.h>(this.maxH||0))this.maxH=this.h;
+  if(this.phase==='ascent'){
+    if(q2>this.qLim()){this.fail('maxq','💥 맥스Q 돌파 실패! 동압 '+(q2/1000).toFixed(0)+' kPa — 한계 '+(this.qLim()/1000).toFixed(0)+' kPa. 공기저항(항력 ∝ ρv²)에 기체가 찢어져 불꽃놀이가 되었습니다.');return}
+    if(this.h<45000&&al>(V.fin?25:3)&&q2>4000){this.fail('tumble','💥 '+(V.fin?'받음각 '+al.toFixed(0)+'°가 너무 커서 안정핀도 못 버티고':'안정핀이 없어서 받음각 '+al.toFixed(0)+'°를 못 잡고')+' 로켓이 공중에서 팽이처럼 돌다 분해되었습니다!');return}
+  }
+  if(this.phase==='ascent'||this.phase==='circ'||this.phase==='coast'||this.phase==='doomed'){
+    if(this.h<=0&&this.t>5){
+      this.fail('crash','💥 쾅! 수평 속도가 모자라 포물선을 그리며 추락했습니다. 최고 고도 '+((this.maxH||0)/1000).toFixed(0)+' km, 수평 속도 '+(Math.abs(this.vt)/1000).toFixed(2)+' km/s (궤도 비행엔 약 7.8 km/s 필요).');return}
+    if(this.phase==='doomed'&&this.h<60000&&this.vr<0){const o=orbit(this);if(o.peri<80000){}}
+  }
+  if(this.h<0&&this.t<=5){this.y=RE;this.vy=Math.max(this.vy,0)}
+  if(!this.lastTrail||this.t-this.lastTrail>(this.phase==='ascent'?2:15)){this.lastTrail=this.t;this.trail.push([this.x,this.y])}
+  if(this.phase==='doomed'&&!this.alive){}
+};
+Flight.prototype.startDeorb=function(choice){
+  const r0=this.r,v0=this.v;
+  let vn;
+  if(choice==='prograde'){vn=v0+180}
+  else vn=v0-DVR[choice];
+  const k=vn/v0;this.vx*=k;this.vy*=k;this.dvRetro=Math.abs(vn-v0);
+  this.capOnly=true;this.phase='reentry';this.reCda=1.3*10;this.chuteCda=250;this.maxFlux=0;this.maxG=0;
+  this.note('역추진 '+(choice==='prograde'?'(방향 오류!) +':'-')+Math.abs(vn-v0).toFixed(0)+' m/s');
+  if(choice==='prograde'){this.fail('lost','🛰️ 순방향으로 가속했어요! 궤도가 더 높아져 귀환 불가 — 승무원이 우주 미아가 되었습니다. 지구로 돌아오려면 진행 반대 방향(역추진)으로 감속해야 해요.');return}
+  {const o=orbit(this);if(o.peri>=85000){this.fail('noreturn','🛰️ 역추진이 너무 약했어요! 감속량 '+this.dvRetro.toFixed(0)+' m/s → 근지점 '+(o.peri/1000).toFixed(0)+' km로 아직 대기권 밖입니다. 궤도는 거의 그대로, 캡슐은 계속 지구를 돕니다.');return}}
+  if(this.dvRetro>260){this.fail('retro_fuel','⛽ 역추진 로켓 연료 부족! 필요한 감속 '+this.dvRetro.toFixed(0)+' m/s가 캡슐 내장 역추진(250 m/s)을 넘습니다.');return}
+};
+Flight.prototype.startEsc=function(choice){
+  if(choice==='pro'){this.phase='esc';this.alive=true;this.note('탈출 연소 점화 (진행 방향)')}
+  else if(choice==='retro'){this.fail('esc_retro','💥 반대로 연소! 속도가 줄어 궤도가 낮아지고 탐사선은 대기권에서 산화했습니다. 탈출은 진행 방향(순행) 가속이 정답!')}
+  else{this.fail('esc_none','🛰️ 점화하지 않아 지구 궤도에 그대로 머물러 있습니다. 중력권을 벗어나려면 탈출 속도(약 11.2 km/s)까지 가속해야 해요.')}
+};
+Flight.prototype.dtFor=function(){
+  if(this.phase==='coast'||this.phase==='doomed'||this.phase==='orbit_ok'){
+    if(this.h<90000)return 0.5;return 2;
+  }
+  if(this.phase==='descent')return 0.05;
+  if(this.phase==='reentry')return this.h<130000?0.2:1;
+  return 0.1;
+};
+
+/* ---- 자동 조종 실행 (테스트·검증용) ---- */
+function runFlight(d,mission,dec,maxT){
+  const V=buildVehicle(d);
+  const f=new Flight(V,mission,Object.assign({},dec));
+  let g=0;
+  while(f.alive&&g++<400000){
+    if(f.pending){f.dec[f.pending]=dec[f.pending]||'x';f.pending=null}
+    if(f.phase==='orbit_ok'){break}
+    f.step(f.dtFor());
+    if(f.t>(maxT||9000))break;
+  }
+  return f;
+}
+
+</script>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const fmt=(x,d=0)=>Number(x).toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const SC={};['sIntro','sMenu','sBrief','sVab','sFlight','sResult'].forEach(i=>SC[i]=$('#'+i));
+function show(id){Object.values(SC).forEach(e=>e.classList.remove('on'));SC[id].classList.add('on');window.scrollTo(0,0);$('#hMis').style.display=(id==='sIntro'||id==='sMenu')?'none':'inline-block'}
+let stars={};try{stars=JSON.parse(localStorage.getItem('kspStars')||'{}')}catch(e){}
+function saveStars(){try{localStorage.setItem('kspStars',JSON.stringify(stars))}catch(e){}}
+let unlAll=false;try{unlAll=localStorage.getItem('kspUnl')==='1'}catch(e){}
+
+/* ================= 미션 데이터 ================= */
+const MS=[
+{id:1,nm:'대기권 탈출 · 저궤도 진입',ic:'🌍',target:100000,pay:['capsule','probe'],budget:200,par:110,dvNeed:9.3,
+ goal:'고도 100 km 이상의 안정적인 원형 궤도(LKO)',
+ txt:'목표는 <b>높이만이 아니라 옆으로 약 7.8 km/s</b>! 우주는 100 km 위일 뿐, 궤도에 머물려면 중력과 구심력이 같아지는 <b>수평 속도(제1우주속도)</b>가 필요해요.',
+ chips:['작용·반작용','추력비 TWR','중력 선회','제1우주속도','델타V'],
+ law:['<b>F = ma, 작용·반작용</b>: 가스를 뒤로 뿜는 반작용이 로켓을 밀어요. 이륙하려면 추력 &gt; 무게(TWR &gt; 1).','<b>치올코프스키</b>: ΔV = Isp·g·ln(m₀/m₁). 연료가 많고 빈 질량이 작을수록 유리 → 빈 탱크는 버려요(단 분리).','<b>궤도 속도</b>: mg = mv²/r → v = √(gr) ≈ 7.8 km/s. 수직으로만 올라가면 곧 떨어져요.'],
+ say:'치지직… 첫 임무는 <b>저궤도(LKO) 진입</b>입니다! 뉴턴 아저씨가 우릴 보고 계세요. 오늘은 제바다이아도 청테이프를 줄였어요!'},
+{id:2,nm:'유인 비행 · 안전한 귀환',ic:'👨‍🚀',target:100000,pay:['capsule'],reentry:true,budget:280,par:138,dvNeed:9.3,
+ goal:'승무원 캡슐을 궤도에 올리고, 역분사 → 재진입 → 낙하산으로 무사히 착륙',
+ txt:'<b>유인 캡슐은 무겁고</b>, 돌아오려면 <b>방열판</b>(재진입 가열)과 <b>낙하산</b>이 꼭 필요해요. 그 무게까지 들어 올릴 로켓을 설계하세요!',
+ chips:['운동에너지→열','역추진 감속','공기저항','종단속도'],
+ law:['<b>역추진</b>: 진행 반대 방향으로 가속(−Δv)해야 궤도가 낮아져요. 앞으로 가속하면 더 높아져요!','<b>재진입</b>: 운동에너지(½mv²)가 공기와의 마찰열로 변해요 → 방열판.','<b>낙하산</b>: 항력 ½ρv²CdA가 중력 mg와 같아지는 종단속도로 안전하게 내려와요.'],
+ say:'이번엔 <b>유인 비행</b>이에요! 제바다이아가 캡슐에 탑승했습니다. 올라가는 건 쉬워도 <b>돌아오는 게 진짜 임무</b>입니다!'},
+{id:3,nm:'통신위성 · 고도 400 km',ic:'🛰️',target:400000,pay:['probe'],solar:true,budget:190,par:65,dvNeed:9.7,
+ goal:'고도 400 km 원궤도에 통신위성(무인 프로브)을 올리고 태양전지로 생존',
+ txt:'<b>무인 프로브는 가볍지만</b> 우주에선 배터리만으로 오래 못 버텨요. <b>태양전지판</b>이 없으면 전력이 끊겨 우주 쓰레기가 됩니다.',
+ chips:['더 높은 궤도','에너지 보존','전력 시스템'],
+ law:['<b>높은 궤도 = 더 큰 에너지</b>: 같은 속도라도 더 높이 올리려면 ΔV가 더 필요해요.','<b>궤도 속도는 고도가 높을수록 조금 느려져요</b> (v = √(GM/r)).','<b>태양전지판</b>: 우주에선 빛이 유일한 에너지원.'],
+ say:'<b>통신위성</b> 임무! 가벼운 프로브지만 맥스Q에서 약해요. 페어링을 언제 벗길지, 태양전지판은 달았는지 확인하세요!'},
+{id:4,nm:'지구 탈출 · 제2우주속도',ic:'☄️',target:100000,pay:['probe'],escape:true,budget:330,par:160,dvNeed:12.7,
+ goal:'저궤도에서 한 번 더 점화해 지구 중력을 벗어난다 (탈출 속도 약 11.2 km/s)',
+ txt:'궤도 속도의 √2배 이상이면 지구 중력권을 벗어나요! 3단 이상의 <b>다단 로켓</b>과 <b>진공용 엔진</b>(높은 Isp)이 필수입니다.',
+ chips:['탈출 속도','진공 엔진 Isp','다단 로켓','역학적 에너지'],
+ law:['<b>제2우주속도</b>: v_esc = √2·v_orb ≈ 11.2 km/s (지표 기준).','<b>역학적 에너지 E = ½mv² − GMm/r ≥ 0</b>이면 되돌아오지 않아요.','<b>순행 방향 연소</b>가 가장 효율적(오베르트 효과).'],
+ say:'<b>달과 행성을 향한 첫걸음!</b> 저궤도에 올린 뒤 한 번 더 점화해 탈출합니다. 연료가 모자라면 영원히 지구 주위만 맴돌아요.'},
+{id:5,nm:'우주정거장 모듈 · 중량 화물',ic:'🏗️',target:200000,pay:['module'],budget:420,par:295,dvNeed:9.6,
+ goal:'9톤짜리 정거장 모듈을 고도 200 km 원궤도로! (아시파라거스 도전)',
+ txt:'탑재체가 <b>9톤</b>! 한 단으로는 어림없어요. 측면 부스터를 <b>크로스피드(아시파라거스)</b>로 연결해 바깥쪽부터 연료를 쓰고 버리면 훨씬 효율적이에요.',
+ chips:['아시파라거스','질량비','비용 효율','F = ma'],
+ law:['<b>a = F/m</b>: 빈 탱크를 버릴수록 질량이 줄어 같은 추력으로 가속이 커져요.','<b>아시파라거스</b>: 부스터 연료를 먼저 쓰고 부스터를 차례로 버려 코어 연료를 아끼는 방식.','<b>예산</b>: 비싼 해법이 정답은 아니에요 — 가성비도 엔지니어의 능력!'],
+ say:'마지막 임무예요, <b>중량급 화물</b>! 아시파라거스 스테이징에 도전해 보세요. 제바다이아는 이번엔 지상관제에서 응원합니다 (탑승 불가 😅).'}
+];
+const PAYN={capsule:['🧑‍🚀','유인 캡슐','무거움. 방열판·낙하산이 있어야 귀환'],probe:['📡','무인 프로브','매우 가벼움. 태양전지판 없으면 전력 소진'],module:['🏗️','정거장 모듈','9 t 화물. 아주 무거움']};
+const ENN={lrA:['🔥','대기용 액체엔진','추력 900 kN · Isp 285/310 s · 스로틀 가능'],lrV:['🌌','진공용 액체엔진','추력 200 kN(진공)/25 kN(지상) · Isp 455 s · 이륙 불가'],srb:['💥','고체 부스터(SRB)','추력 대 · Isp 235/255 s · 끌 수도 조절도 못 함']};
+
+/* ================= 상태 ================= */
+let cur=0,D=null;
+const newD=m=>({pay:m.pay[0],extra:{solar:!!m.solar,shield:!!m.reentry,chute:!!m.reentry},fair:true,fin:true,stages:[{eng:'lrA',n:2,tank:'L'},{eng:'lrV',n:1,tank:'M'}],boost:{type:'none',n:0,size:'M'}});
+const PRESET={};
+PRESET[1]={"pay": "capsule", "extra": {"solar": false, "shield": false, "chute": false}, "fair": true, "fin": true, "stages": [{"eng": "lrA", "n": 2, "tank": "XL"}, {"eng": "lrV", "n": 1, "tank": "M"}], "boost": {"type": "srb", "n": 2, "size": "M"}};
+PRESET[2]={"pay": "capsule", "extra": {"solar": false, "shield": true, "chute": true}, "fair": true, "fin": true, "stages": [{"eng": "lrA", "n": 3, "tank": "XL"}, {"eng": "lrV", "n": 2, "tank": "M"}], "boost": {"type": "none", "n": 0, "size": "M"}};
+PRESET[3]={"pay": "probe", "extra": {"solar": true, "shield": false, "chute": false}, "fair": true, "fin": true, "stages": [{"eng": "lrA", "n": 2, "tank": "L"}, {"eng": "lrV", "n": 1, "tank": "M"}], "boost": {"type": "none", "n": 0, "size": "M"}};
+PRESET[4]={"pay": "probe", "extra": {"solar": true, "shield": false, "chute": false}, "fair": true, "fin": true, "stages": [{"eng": "lrA", "n": 3, "tank": "XL"}, {"eng": "lrV", "n": 2, "tank": "M"}], "boost": {"type": "asp", "n": 2, "size": "M"}};
+PRESET[5]={"pay": "module", "extra": {"solar": false, "shield": false, "chute": false}, "fair": true, "fin": true, "stages": [{"eng": "lrA", "n": 4, "tank": "L"}, {"eng": "lrA", "n": 3, "tank": "XL"}, {"eng": "lrV", "n": 3, "tank": "L"}], "boost": {"type": "asp", "n": 2, "size": "M"}};
+
+
+/* ================= 인트로 (무전기 소음) ================= */
+(function(){
+const cv=$('#noise'),cx=cv.getContext('2d');let run=true;
+function rs(){cv.width=cv.clientWidth/2|0;cv.height=cv.clientHeight/2|0}rs();addEventListener('resize',rs);
+(function f(){if(!run||!SC.sIntro.classList.contains('on')){requestAnimationFrame(f);return}
+const w=cv.width,h=cv.height,im=cx.createImageData(w,h),d=im.data;
+for(let i=0;i<d.length;i+=4){const v=Math.random()*70|0;d[i]=v;d[i+1]=v+10;d[i+2]=v+20;d[i+3]=255}
+cx.putImageData(im,0,0);cx.fillStyle='#22d3ee22';cx.fillRect(0,(Date.now()/9)%h,w,3);requestAnimationFrame(f)})();
+const L=['<span class="st">치지직… 치직… 지이이잉…</span>','"여기는 <b>KSC 비행 통제 센터</b>. 수석 엔지니어님, 들리십니까?"','"저는 캡슐에서 대기 중인 <b>제바다이아</b>입니다! 안전벨트 대신 청테이프를 감았는데, 괜찮겠죠? 😎"','"오늘 임무는 부품을 골라 <b>직접 로켓을 설계</b>하고, <b>뉴턴의 운동 법칙</b>으로 중력과 대기 저항을 이겨내 지구 궤도에 오르는 것입니다."','"추력, 질량, 델타V… 계산을 잘못하면 발사대에서 주저앉거나 💥 불꽃놀이가 됩니다. 행운을 빕니다!"'];
+const tt=$('#tt');let i=0;
+function nx(){if(i>=L.length){$('#bStart').style.display='block';return}const p=document.createElement('p');p.innerHTML=L[i++];tt.appendChild(p);setTimeout(nx,i===1?600:1300)}
+setTimeout(nx,400);
+$('#bStart').onclick=()=>{buildMenu();show('sMenu')};
+})();
+
+/* ================= 미션 메뉴 ================= */
+function unlocked(i){return unlAll||i===0||(stars[MS[i-1].id]||0)>0}
+function buildMenu(){
+ $('#unl').checked=unlAll;
+ $('#mgrid').innerHTML=MS.map((m,i)=>{const u=unlocked(i),s=stars[m.id]||0;
+  return `<div class="mc ${u?'':'lock'}" data-i="${i}"><span class="n">${m.id}</span><h3>${m.ic} 미션 ${m.id}. ${m.nm}</h3><p>${m.goal}</p><div class="chips">${m.chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div><div class="stars" style="margin-top:6px">${u?('★'.repeat(s)+'☆'.repeat(3-s)):'🔒 잠김'}</div></div>`}).join('');
+ $$('.mc').forEach(e=>e.onclick=()=>{const i=+e.dataset.i;if(!unlocked(i))return;openBrief(i)});
+}
+$('#unl').onchange=e=>{unlAll=e.target.checked;try{localStorage.setItem('kspUnl',unlAll?'1':'0')}catch(x){}buildMenu()};
+
+/* ================= 브리핑 ================= */
+function openBrief(i){
+ cur=i;const m=MS[i];D=newD(m);
+ $('#hMis').textContent='미션 '+m.id;
+ $('#bTitle').textContent=m.ic+' 미션 '+m.id+'. '+m.nm;
+ $('#bKv').innerHTML=`<div><b>${m.target/1000} km</b><span>목표 고도</span></div><div><b>${m.escape?'11.2 km/s':'≈ 7.8 km/s'}</b><span>${m.escape?'필요 속도':'궤도 속도'}</span></div><div><b>${m.budget} M$</b><span>예산 한도</span></div>`;
+ $('#bText').innerHTML=`<p><b>🎯 목표</b> ${m.goal}</p><p>${m.txt}</p><p style="color:var(--mu);font-size:.9em">⭐ 완수 ★ · 비용 ${m.par} M$ 이하 ★★ · 그리고 연료 여유 ${m.escape?100:150} m/s 이상 ★★★</p>`;
+ $('#bChips').innerHTML=m.chips.map(c=>`<span class="chip">${c}</span>`).join('');
+ $('#bBub').innerHTML=m.say;
+ $('#bLaw').innerHTML=m.law.map(l=>`<div class="law">${l}</div>`).join('');
+ show('sBrief');
+}
+$('#bBack').onclick=()=>{buildMenu();show('sMenu')};
+$('#bGo').onclick=()=>{vabInit();show('sVab')};
+
+/* ================= VAB ================= */
+const TK=['S','M','L','XL'],TKT={S:8,M:20,L:50,XL:120};
+function vabInit(){vabDraw()}
+function btn(label,on,fn,sub,dis){const b=document.createElement('button');b.className='btn'+(on?' on':'');b.innerHTML=label+(sub?`<small>${sub}</small>`:'');if(dis)b.disabled=true;b.onclick=fn;return b}
+function vabDraw(){
+ const m=MS[cur];
+ // 탑재체
+ const vp=$('#vPay');vp.innerHTML='<h2>🧑‍🚀 탑재체 · 사령 모듈</h2>';
+ const r1=document.createElement('div');r1.className='opts';
+ m.pay.forEach(p=>{const q=E_PAY[p];r1.appendChild(btn(PAYN[p][0]+' '+PAYN[p][1],D.pay===p,()=>{D.pay=p;vabDraw()},fmt(q.m)+' kg · '+PAYN[p][2]))});
+ vp.appendChild(r1);
+ const lb=document.createElement('div');lb.className='lab';lb.textContent='부착 장비';vp.appendChild(lb);
+ const r2=document.createElement('div');r2.className='opts';
+ [['solar','☀️ 태양전지판','+60 kg · 전력 공급'],['shield','🛡️ 방열판','+450 kg · 재진입 가열 방어'],['chute','🪂 낙하산','+180 kg · 착륙 감속']].forEach(([k,n,s])=>{
+  const req=(k==='solar'&&m.solar)||((k==='shield'||k==='chute')&&m.reentry);
+  r2.appendChild(btn(n+(req?' <span class="warn">필수</span>':''),D.extra[k],()=>{D.extra[k]=!D.extra[k];vabDraw()},s))});
+ vp.appendChild(r2);
+ // 단 수
+ const ns=D.stages.length;const vn=$('#vNst');vn.innerHTML='';
+ [1,2,3].forEach(n=>vn.appendChild(btn(n+'단 로켓',ns===n,()=>{while(D.stages.length<n)D.stages.push({eng:'lrV',n:1,tank:'M'});D.stages.length=n;if(n>1&&D.boost.type!=='none'&&false){}vabDraw()},n===1?'분리 없음':n===2?'표준':'고효율')));
+ // 단 카드
+ const vs=$('#vStages');vs.innerHTML='';
+ D.stages.forEach((s,i)=>{
+  const c=document.createElement('div');c.className='stg';
+  c.innerHTML=`<h4>${i+1}단 ${i===0?'(발사 단)':i===D.stages.length-1?'(최상단)':''}<span>${ENN[s.eng][0]} ${ENN[s.eng][1]} × ${s.n}</span></h4>`;
+  const a=document.createElement('div');a.className='opts';
+  ['lrA','lrV','srb'].forEach(e=>a.appendChild(btn(ENN[e][0]+' '+ENN[e][1],s.eng===e,()=>{s.eng=e;if(e==='srb'&&s.tank==='XL')s.tank='L';if(e==='srb'&&s.n>4)s.n=4;vabDraw()},ENN[e][2].split(' · ')[0]+' · '+ENN[e][2].split(' · ')[1])));
+  c.appendChild(a);
+  const st=document.createElement('div');st.className='stp';st.innerHTML=`<span>${s.eng==='srb'?'모터 개수':'엔진 개수'}</span><button>−</button><b>${s.n}</b><button>＋</button>`;
+  st.children[1].onclick=()=>{if(s.n>1){s.n--;vabDraw()}};st.children[3].onclick=()=>{if(s.n<4){s.n++;vabDraw()}};c.appendChild(st);
+  const lb=document.createElement('div');lb.className='lab';lb.textContent=s.eng==='srb'?'고체 모터 크기 (모터 1개당)':'연료 탱크 크기';c.appendChild(lb);
+  const t=document.createElement('div');t.className='opts';
+  TK.forEach(k=>{if(s.eng==='srb'){if(k==='XL')return;const q=E_SRB[k];t.appendChild(btn(k+' · '+q.prop/1000+' t',s.tank===k,()=>{s.tank=k;vabDraw()},q.cost+' M$'))}
+   else t.appendChild(btn(k+' · '+TKT[k]+' t',s.tank===k,()=>{s.tank=k;vabDraw()},fmt(E_TANKCOST(TKT[k]*1000),1)+' M$'))});
+  c.appendChild(t);vs.appendChild(c);
+ });
+ // 부스터
+ const vb=$('#vBoost');vb.innerHTML='<div class="stg"><h4>🧷 1단 측면 부스터 <span>선택</span></h4></div>';
+ const bx=vb.firstChild;const bo=document.createElement('div');bo.className='opts';
+ const B=D.boost;
+ bo.appendChild(btn('없음',B.type==='none',()=>{B.type='none';B.n=0;vabDraw()}));
+ bo.appendChild(btn('SRB × 2',B.type==='srb'&&B.n===2,()=>{B.type='srb';B.n=2;vabDraw()},'폭발적 추력'));
+ bo.appendChild(btn('SRB × 4',B.type==='srb'&&B.n===4,()=>{B.type='srb';B.n=4;vabDraw()},'더 큰 추력'));
+ bo.appendChild(btn('🌿 아시파라거스 1쌍',B.type==='asp'&&B.n===1,()=>{B.type='asp';B.n=1;vabDraw()},'크로스피드 · 부스터 2기'));
+ bo.appendChild(btn('🌿 아시파라거스 2쌍',B.type==='asp'&&B.n===2,()=>{B.type='asp';B.n=2;vabDraw()},'부스터 4기 · 바깥부터 소진'));
+ bx.appendChild(bo);
+ if(B.type==='srb'){const l=document.createElement('div');l.className='lab';l.textContent='SRB 크기';bx.appendChild(l);const t=document.createElement('div');t.className='opts';['S','M','L'].forEach(k=>t.appendChild(btn(k+' · '+E_SRB[k].prop/1000+' t',B.size===k,()=>{B.size=k;vabDraw()},E_SRB[k].cost+' M$')));bx.appendChild(t)}
+ // 공기역학
+ const va=$('#vAero');va.innerHTML='';
+ va.appendChild(btn('🧢 페어링 '+(D.fair?'ON':'OFF'),D.fair,()=>{D.fair=!D.fair;vabDraw()},'+900 kg · 항력↓, 탑재체 보호'));
+ va.appendChild(btn('🪽 안정핀 '+(D.fin?'ON':'OFF'),D.fin,()=>{D.fin=!D.fin;vabDraw()},'+250 kg · 대기권 안정성'));
+ vabStats();
+}
+function dCopy(){return JSON.parse(JSON.stringify(D))}
+function vabStats(){
+ const m=MS[cur],A=analyze(dCopy());
+ const over=A.cost>m.budget;
+ const tw=A.twr;
+ const twc=tw<1?'bad':tw<1.2?'warn':tw>2.4?'warn':'good';
+ $('#vStat').innerHTML=`<div><b>${fmt(A.m0/1000,1)} t</b><span>총 이륙 질량</span></div><div><b class="${twc}">${tw.toFixed(2)}</b><span>이륙 추력비 TWR</span></div><div><b>${fmt(A.dv/1000,2)} km/s</b><span>총 ΔV (진공 기준)</span></div><div><b class="${over?'bad':A.cost>m.par?'warn':'good'}">${fmt(A.cost,0)} M$</b><span>비용 (예산 ${m.budget} · 기준 ${m.par})</span></div>`;
+ const need=m.dvNeed*1000,mx=Math.max(need*1.15,A.dv);
+ const cols=['#fb923c','#22d3ee','#a78bfa'];
+ $('#vDv').innerHTML=`<div class="lab">단별 ΔV (필요 ≈ ${m.dvNeed} km/s, 손실 포함)</div>`+A.stageDv.map((v,i)=>`<div class="dvrow"><span style="width:3.2em">${i+1}단</span><div class="b"><i style="width:${v/mx*100}%;background:${cols[i%3]}"></i></div><span style="width:5em;text-align:right">${fmt(v)} m/s</span></div>`).join('')+`<div class="bar ${A.dv>=need?'ok':''}" style="margin-top:8px"><i style="width:${Math.min(100,A.dv/need*100)}%"></i></div>`;
+ // 팁
+ const T=[];const s0=D.stages[0],sl=D.stages[D.stages.length-1];
+ if(tw<1)T.push(['r','TWR '+tw.toFixed(2)+' &lt; 1 — 추력이 무게(mg)보다 작아 <b>발사대에서 주저앉아요</b>. 엔진을 늘리거나 연료를 줄이세요.']);
+ else if(tw<1.2)T.push(['','TWR가 낮아요(1.2 미만). 떠오르긴 해도 <b>중력 손실</b>이 커서 ΔV를 낭비합니다.']);
+ else if(tw>2.4)T.push(['','TWR가 높아요(2.4 초과). 낮은 고도에서 너무 빨라지면 <b>맥스Q</b>에서 기체가 찢어질 수 있어요.']);
+ if(A.dv<need*0.95)T.push(['r','ΔV가 부족해요(필요 ≈ '+m.dvNeed+' km/s). 상단에 <b>진공 엔진</b>(Isp 455 s)·더 큰 탱크·단 추가를 고려하세요.']);
+ else if(A.dv<need*1.03)T.push(['','ΔV가 간당간당해요. 중력·항력 손실을 고려해 여유를 더 두세요.']);
+ else T.push(['g','ΔV는 충분해 보여요. 이제 TWR과 비용을 점검하세요.']);
+ if(s0.eng==='lrV')T.push(['r','1단에 <b>진공용 엔진</b>? 지상 추력이 약해(25 kN) 이륙이 어려워요.']);
+ if(D.stages.length>1&&sl.eng==='lrA')T.push(['','상단에 대기용 엔진을 쓰면 진공 Isp(310 s)가 아쉬워요. <b>진공용(455 s)</b>이 연료를 훨씬 아껴요.']);
+ if(D.stages.length===1)T.push(['','1단 로켓은 다 쓴 빈 탱크까지 끝까지 끌고 가요. <b>단 분리</b>로 죽은 무게를 버려 보세요.']);
+ if(!D.fin)T.push(['','안정핀이 없어요 — 대기권에서 받음각이 조금만 생겨도 <b>빙글빙글</b> 돌 수 있어요.']);
+ if(!D.fair&&D.pay!=='capsule')T.push(['','페어링이 없으면 약한 탑재체가 <b>바람(동압)</b>에 노출돼 한계가 낮아져요.']);
+ if(m.solar&&!D.extra.solar)T.push(['r','☀️ 이 미션의 프로브엔 <b>태양전지판이 필수</b>예요. 없으면 전력이 끊겨요.']);
+ if(m.reentry&&!(D.extra.shield&&D.extra.chute))T.push(['r','🛡️🪂 귀환 미션: <b>방열판과 낙하산</b>이 모두 필요합니다.']);
+ if(D.stages.some(s=>s.eng==='srb')||D.boost.type==='srb')T.push(['','SRB는 <b>끌 수도, 조절할 수도 없어요</b>. 맥스Q를 넘길 때 주의하세요.']);
+ if(over)T.push(['r','💸 예산 초과! '+fmt(A.cost-m.budget)+' M$ 줄여야 발사할 수 있어요.']);
+ $('#tips').innerHTML=T.map(t=>`<li class="${t[0]}">${t[1]}</li>`).join('');
+ $('#vGo').disabled=over;
+ drawRocket();
+}
+const E_PAY=PAY,E_SRB=SRB,E_TANKCOST=p=>p/1000*0.30;
+function drawRocket(){
+ const svg=$('#rsvg');let y=410,o='';
+ const sc=Math.min(1,330/(D.stages.reduce((a,s)=>a+hOf(s),0)+80));
+ const W=60;
+ const cx=160;
+ o+=`<rect x="0" y="408" width="320" height="12" fill="#1f3a2a"/><rect x="110" y="404" width="100" height="6" fill="#475569"/>`;
+ // 부스터
+ const bs=D.boost;const s0=D.stages[0];const h0=hOf(s0)*sc;
+ if(bs.type!=='none'){
+  const bh=(bs.type==='srb'?({S:30,M:50,L:78})[bs.size]:56)*sc*1.1,col=bs.type==='srb'?'#f97316':'#38bdf8';
+  const n=bs.type==='srb'?bs.n:bs.n*2;
+  for(let k=0;k<n;k++){const side=k%2?1:-1,row=Math.floor(k/2);const bx=cx+side*(W/2+10+row*0)+(side>0?-0:-14)+side*row*12;
+   o+=`<rect x="${bx-(side>0?-2:2)}" y="${y-bh}" width="14" height="${bh}" rx="5" fill="${col}" stroke="#0007"/><path d="M${bx-(side>0?-2:2)} ${y-bh}l7 -10l7 10z" fill="#fde68a"/><rect x="${bx-(side>0?-2:2)+3}" y="${y}" width="8" height="5" fill="#475569"/>`}
+ }
+ // 단
+ D.stages.forEach((s,i)=>{
+  const h=hOf(s)*sc,col=s.eng==='srb'?'#f97316':s.eng==='lrA'?'#38bdf8':'#a78bfa';
+  o+=`<rect x="${cx-W/2}" y="${y-h}" width="${W}" height="${h}" rx="5" fill="${col}22" stroke="${col}" stroke-width="2"/>`;
+  o+=`<text x="${cx}" y="${y-h/2+4}" fill="#e8eefc" font-size="13" font-weight="800" text-anchor="middle">${i+1}단 ${s.tank}</text>`;
+  const ne=s.n,ew=Math.min(18,(W-6)/ne);
+  for(let k=0;k<ne;k++){const ex=cx-(ne*ew)/2+k*ew+ew/2;o+=`<path d="M${ex-ew/2+2} ${y}l${ew-4} 0l-3 8l-${ew-10} 0z" fill="#64748b"/>`}
+  if(D.fin&&i===0){o+=`<path d="M${cx-W/2} ${y-6}l-16 14l16 0z M${cx+W/2} ${y-6}l16 14l-16 0z" fill="#fbbf24"/>`}
+  y-=h+6;
+  if(i<D.stages.length-1)o+=`<rect x="${cx-W/2+8}" y="${y+1}" width="${W-16}" height="4" fill="#94a3b8"/>`;
+ });
+ // 탑재체
+ const pc={capsule:'#fcd34d',probe:'#e2e8f0',module:'#c4b5fd'}[D.pay];
+ const ph=D.pay==='module'?52:D.pay==='capsule'?34:22;
+ if(D.fair){o+=`<path d="M${cx-W/2} ${y} l0 ${-ph-10} q${W/2} ${-50} ${W} 0 l0 ${ph+10}z" fill="#cbd5e1" stroke="#64748b" stroke-width="2" opacity=".95"/><text x="${cx}" y="${y-ph/2}" fill="#0f172a" font-size="11" font-weight="800" text-anchor="middle">페어링</text>`}
+ else{o+=`<path d="M${cx-18} ${y} l0 ${-ph} q18 -28 36 0 l0 ${ph}z" fill="${pc}" stroke="#0007"/>`}
+ const solar=D.extra.solar?`<rect x="${cx-48}" y="${y-ph/2-4}" width="26" height="8" fill="#2563eb"/><rect x="${cx+22}" y="${y-ph/2-4}" width="26" height="8" fill="#2563eb"/>`:'';
+ if(!D.fair)o+=solar;
+ o+=`<text x="${cx}" y="${y-ph-(D.fair?44:26)}" fill="#fed7aa" font-size="12" font-weight="800" text-anchor="middle">${PAYN[D.pay][1]}</text>`;
+ svg.innerHTML=o;
+}
+function hOf(s){const p=s.eng==='srb'?E_SRB[s.tank].prop*s.n*0.45:TKT[s.tank]*1000;return 36+Math.pow(p/1000,0.62)*9}
+$('#pre1').onclick=()=>{D.stages=[{eng:'srb',n:1,tank:'L'}];D.boost={type:'none',n:0,size:'M'};D.fair=true;D.fin=true;vabDraw()};
+$('#pre2').onclick=()=>{const p=PRESET[MS[cur].id];if(p){const q=JSON.parse(JSON.stringify(p));D.pay=q.pay;D.extra=q.extra;D.fair=q.fair;D.fin=q.fin;D.stages=q.stages;D.boost=q.boost;vabDraw()}};
+$('#pre0').onclick=()=>{D=newD(MS[cur]);D.stages=[{eng:'lrA',n:1,tank:'M'}];vabDraw()};
+$('#pre3').onclick=()=>{
+ const out=$('#simRes');out.innerHTML='<span class="warn">계산 중…</span>';
+ setTimeout(()=>{
+  const m=MS[cur],dd={thr:'maxq',pitch:'std',fair:'late',circ:'apo',chute:'mid',deorb:'good',esc:'pro'};
+  const V=buildVehicle(dCopy());const f=new Flight(V,{target:m.target,solar:!!m.solar,reentry:!!m.reentry,escape:!!m.escape},Object.assign({},dd));
+  let g=0;
+  while(f.alive&&g++<500000){
+   if(f.pending){f.dec[f.pending]=dd[f.pending];f.pending=null}
+   if(f.phase==='orbit_ok'){if(m.reentry&&!f.capOnly&&f.phase!=='reentry'){f.startDeorb('good')}else if(m.escape){f.startEsc('pro')}else break;continue}
+   f.step(f.dtFor());if(f.t>40000)break;
+  }
+  const r=f.result;
+  out.innerHTML=r&&r.ok?'<div class="law" style="border-color:#34d399">✅ 모의 비행 성공! (최대 동압 '+fmt(f.maxQ/1000,1)+' kPa · 남은 ΔV '+fmt(f.dvLeft||0)+' m/s) — 실제 발사에선 결정(스로틀·피치·페어링·점화)에 따라 달라져요.</div>':'<div class="law" style="border-color:#f87171">❌ 모의 비행 실패: '+(r?r.msg:'알 수 없음')+'</div>';
+ },30);
+};
+$('#vBack').onclick=()=>show('sBrief');
+$('#vGo').onclick=()=>startFlight();
+
+/* ================= 비행 ================= */
+let F=null,warp=10,raf=0,lastTs=0,budget=0,decideAt=null,boom=null,endT=0;
+const WARPS=[1,5,10,30,100,300];
+function mkWarp(){const w=$('#warp');w.innerHTML='';WARPS.forEach(x=>{const b=document.createElement('button');b.className='btn'+(warp===x?' on':'');b.textContent='×'+x;b.onclick=()=>{warp=x;mkWarp()};w.appendChild(b)})}
+function startFlight(){
+ const m=MS[cur];const d=dCopy();
+ const V=buildVehicle(d);
+ F=new Flight(V,{target:m.target,solar:!!m.solar,reentry:!!m.reentry,escape:!!m.escape},{});
+ F.design=d;warp=10;mkWarp();boom=null;endT=0;budget=0;
+ $('#log').innerHTML='';$('#modal').classList.remove('on');logN=0;
+ show('sFlight');
+ hudBuild();
+ cancelAnimationFrame(raf);lastTs=performance.now();raf=requestAnimationFrame(loop);
+}
+let logN=0;
+function syncLog(){while(logN<F.log.length){const p=document.createElement('p');p.textContent=F.log[logN++];$('#log').appendChild(p);$('#log').scrollTop=1e9}}
+const HUDK=[['t','T+ (s)'],['alt','고도 (km)'],['spd','속도 (m/s)'],['vr','수직 속도'],['vt','수평 속도'],['q','동압 Q (kPa)'],['twr','TWR'],['ap','원지점 (km)'],['pe','근지점 (km)'],['dv','남은 ΔV (m/s)']];
+function hudBuild(){$('#hud').innerHTML=HUDK.map(k=>`<div><b id="h_${k[0]}">–</b><span>${k[1]}</span></div>`).join('')}
+let dvC={t:-1,v:0};
+function dvCache(f){const n=performance.now();if(n-dvC.t>400||f.alive===false){dvC.t=n;dvC.v=f.dvLeftSim()}return dvC.v}
+function hudUpd(){
+ const f=F,o=orbit(f);const m=f.mass();
+ const set=(k,v,c)=>{const e=$('#h_'+k);e.textContent=v;e.style.color=c||''};
+ set('t',fmt(f.t));set('alt',fmt(f.h/1000,1));set('spd',fmt(f.v));set('vr',fmt(f.vr));set('vt',fmt(f.vt));
+ const q=0.5*rho(f.h)*f.v*f.v;set('q',fmt(q/1000,1),q>0.8*f.qLim()?'#f87171':q>0.5*f.qLim()?'#fcd34d':'');
+ const tw=f.thrNow>0?f.thrNow/(m*G0):0;set('twr',tw.toFixed(2),tw>0&&tw<1?'#f87171':'');
+ set('ap',o.esc?'∞':fmt(o.apo/1000));set('pe',fmt(o.peri/1000));
+ set('dv',f.capOnly?'–':fmt(dvCache(f)));
+ // 연료
+ let h='';
+ f.V.stages.forEach((s,i)=>{const dropped=s.dropped;h+=`<div class="fuel"><div><span>${i+1}단 ${i===f.cur&&!dropped?'🔥':''}</span><span>${dropped?'분리됨':fmt(s.prop/s.prop0*100)+'%'}</span></div><div class="bar ${dropped?'over':'ok'}"><i style="width:${dropped?0:s.prop/s.prop0*100}%"></i></div></div>`});
+ f.V.boost.forEach(b=>{if(b.pair!==undefined&&b.kind){}});
+ const bl=f.V.boost.filter(b=>!b.gone);if(f.V.boost.length)h+=`<div class="fuel"><div><span>측면 부스터</span><span>${bl.length}/${f.V.boost.length}기</span></div><div class="bar"><i style="width:${f.V.boost.length?(bl.reduce((a,b)=>a+b.prop,0)/f.V.boost.reduce((a,b)=>a+b.prop0,0)*100):0}%"></i></div></div>`;
+ $('#fuel').innerHTML=h;
+ const PH={pad:'발사대 대기',ascent:'상승 (중력 선회)',coast:'타원 궤도 관성 비행 (정점 대기)',circ:'원궤도화 연소',doomed:'연료 소진 · 관성 비행',orbit_ok:'궤도 안정',reentry:'대기권 재진입',descent:'낙하 · 착륙',esc:'탈출 연소',failed:'실패',done:'성공'};
+ $('#phase').textContent=PH[f.phase]||f.phase;
+}
+
+/* ---- 의사결정 ---- */
+function qNow(){return 0.5*rho(F.h)*F.v*F.v}
+const DEC={
+ thr:()=>({t:'🔥 T−0 · 점화 순간: 스로틀 전략',c:`TWR <b>${(F.thrustNow(0,1)/(F.mass()*G0)).toFixed(2)}</b> · 이륙 질량 ${fmt(F.mass()/1000,1)} t<br>낮은 고도에서 빨라지면 공기가 짙어 <b>동압(Q)</b>이 커져요. 맥스Q 한계 ≈ 50 kPa${F.V.boost.some(b=>b.kind==='srb')||F.V.stages[0].eng==='srb'?'<br><span class="warn">⚠ SRB는 스로틀 조절이 안 됩니다.</span>':''}`,
+  o:[['full','🔥 풀 스로틀 유지','항상 100% 추력 — 가장 빠르게 올라가지만 맥스Q가 위험'],['maxq','🎚️ 맥스Q 스로틀 다운','동압이 높아지면 출력을 줄여 항력 한계 방어 (액체엔진만)']]}),
+ pitch:()=>({t:'↗️ 속도 45 m/s 돌파! 피치(기울기) 프로그램',c:`고도 ${fmt(F.h)} m · 수직 속도 ${fmt(F.vr)} m/s<br>궤도에 오르려면 결국 <b>옆으로</b> 가속해야 해요. 언제, 어떻게 눕힐까요?`,
+  o:[['std','↗️ 중력 선회','작게 꺾고 속도 방향을 따라 점차 눕히기 — 받음각 최소, 정석'],['late','⬆️ 수직 상승 → 20 km에서 눕히기','공기가 옅어질 때까지 똑바로 상승 후 75°로'],['steep','↘️ 지금 급경사 45°','즉시 45°로 확 눕힘 — 옆으로 빨리 가속?']]}),
+ fair:()=>({t:'🧢 고도 12 km · 페어링 분리 시점',c:`현재 동압 <b>${fmt(qNow()/1000,1)} kPa</b> · 속도 ${fmt(F.v)} m/s<br>탑재체(${F.V.pay.name}) 노출 한계 <b>${fmt(F.V.pay.lim/1000)} kPa</b> · 페어링 무게 900 kg`,
+  o:[['early','✂️ 지금 분리 (12 km)','무게를 일찍 줄이지만 탑재체가 바람에 노출'],['late','🌌 대기권 밖(80 km 이상)에서 분리','탑재체 보호, 대신 900 kg을 더 끌고 올라가요'],['never','🚫 분리하지 않음','끝까지 달고 감 — 죽은 무게!']]}),
+ circ:()=>{const o=orbit(F);return{t:'🎯 고도 45 km · 궤도 진입 전략',c:`원지점 ${o.esc?'∞':fmt(o.apo/1000)} km · 수평 속도 ${fmt(F.vt)} m/s (필요 약 7,800)<br>지금은 <b>높이는 낮고 수평 속도는 모자란</b> 상태. 어떻게 궤도를 완성할까요?`,
+  o:[['apo','🎯 정점 점화 (2회 연소)','목표 원지점까지 올라가 엔진 컷 → 정점(Apoapsis)에서 수평 점화'],['direct','🔁 연속 연소','컷오프 없이 고도를 유지하며 계속 가속해 곧장 원궤도로'],['skip','🪂 점화 안 함','컷오프 후 그냥 관성으로 올라가기 (포물선?)']]}},
+ deorb:()=>({t:'🛬 궤도 비행 성공! 귀환 연소 방향 선택',c:`고도 ${fmt(F.h/1000)} km · 속도 ${fmt(F.v)} m/s<br>캡슐 내장 역추진 로켓 (여유 250 m/s)`,
+  o:[['good','⬇️ 역추진 −90 m/s','진행 반대 방향으로 감속 → 근지점이 대기권 안으로'],['weak','🐢 살짝만 −4 m/s','연료를 아끼려고 아주 조금만 감속'],['prograde','⬆️ 순방향 +180 m/s','"빨리 내려가려면 가속?"']]}),
+ chute:()=>({t:'🪂 낙하산 전개 시점',c:`고도 ${fmt(F.h/1000,1)} km · 속도 ${fmt(F.v)} m/s · 동압 <b>${fmt(qNow()/1000,1)} kPa</b><br>낙하산은 동압 7 kPa를 넘으면 찢어지고, 너무 늦으면 감속이 모자라요.`,
+  o:[['high','⏫ 지금 즉시 (약 33 km)','높이 있을 때 일찍 펴기'],['mid','🎯 약 3.5 km까지 기다렸다 전개','공기가 충분히 짙어졌을 때'],['low','⏬ 아주 낮게 (450 m)','끝까지 기다렸다가!']]}),
+ esc:()=>({t:'☄️ 저궤도 안착! 탈출 연소',c:`속도 ${fmt(F.v)} m/s · 남은 ΔV ${fmt(F.dvLeftSim())} m/s<br>탈출 속도(약 11.2 km/s)까지는 지금 속도에서 약 <b>3,200 m/s</b>가 더 필요해요.`,
+  o:[['pro','➡️ 순행 방향 탈출 연소','진행 방향으로 가속 — 에너지를 가장 효율적으로 추가'],['retro','⬅️ 역행 연소','반대로 가속?'],['wait','⏸️ 점화하지 않음','그대로 궤도 비행 유지']]})
+};
+function ask(k){
+ const d=DEC[k]();const m=$('#modal'),b=$('#mb');
+ b.innerHTML=`<h3>${d.t}</h3><div class="ctx">${d.c}</div>`+d.o.map(o=>`<button class="ch" data-k="${o[0]}">${o[1]}<small>${o[2]}</small></button>`).join('');
+ b.querySelectorAll('.ch').forEach(e=>e.onclick=()=>{resolveDec(k,e.dataset.k)});
+ m.classList.add('on');
+}
+function resolveDec(k,v){
+ $('#modal').classList.remove('on');
+ const txt=DEC_LOG[k]&&DEC_LOG[k][v]||v;F.log.push('T+'+Math.round(F.t)+'s ▶ 결정: '+txt);
+ F.dec[k]=v;
+ if(F.pending===k)F.pending=null;
+ if(k==='deorb'){F.startDeorb(v);F.dec.deorb=v}
+ if(k==='esc'){F.startEsc(v);F.dec.esc=v}
+ syncLog();lastTs=performance.now();
+}
+const DEC_LOG={thr:{full:'풀 스로틀',maxq:'맥스Q 스로틀 다운'},pitch:{std:'중력 선회',late:'20 km까지 수직 상승',steep:'45° 급경사'},fair:{early:'12 km에서 페어링 분리',late:'대기권 밖에서 페어링 분리',never:'페어링 유지'},circ:{apo:'정점 점화',direct:'연속 연소',skip:'점화 안 함'},deorb:{good:'역추진 −90 m/s',weak:'−4 m/s 약한 감속',prograde:'순방향 가속'},chute:{high:'지금 낙하산 전개',mid:'3.5 km에서 전개',low:'450 m에서 전개'},esc:{pro:'순행 탈출 연소',retro:'역행 연소',wait:'점화 안 함'}};
+
+/* ---- 메인 루프 ---- */
+function autoWarp(){
+ if(F.phase==='coast'||F.phase==='doomed'||F.phase==='orbit_ok')return Math.max(warp,100);
+ return warp;
+}
+function loop(ts){
+ raf=requestAnimationFrame(loop);
+ const real=Math.min(0.1,(ts-lastTs)/1000);lastTs=ts;
+ if(!F)return;
+ if(F.pending&&!$('#modal').classList.contains('on')){ask(F.pending)}
+ else if(F.phase==='orbit_ok'&&!F.dec.deorb&&!F.dec.esc&&!$('#modal').classList.contains('on')){
+  if(F.M.reentry){ask('deorb')}else if(F.M.escape){ask('esc')}
+ }
+ if(!$('#modal').classList.contains('on')&&F.alive&&!boom){
+  budget+=real*autoWarp();let n=0;
+  while(budget>0&&F.alive&&!F.pending&&n++<4000){
+   if(F.phase==='orbit_ok'&&!F.dec.deorb&&!F.dec.esc){break}
+   const dt=Math.min(F.dtFor(),Math.max(budget,0.02));F.step(dt);budget-=dt;
+   if(F.phase==='orbit_ok'){break}
+  }
+  if(F.phase==='orbit_ok'&&!F.M.reentry&&!F.M.escape){}
+  if(budget>5)budget=0;
+  syncLog();
+ }
+ hudUpd();draw(ts);
+ if(!F.alive&&!boom&&!endT){
+  if(F.result&&!F.result.ok){boom={t:0,x:0,y:0,p:[]};for(let i=0;i<70;i++){const a=Math.random()*6.28,s=60+Math.random()*260;boom.p.push({a,s,l:1+Math.random()})}}
+  endT=ts+(F.result&&F.result.ok?1200:2400);
+ }
+ if(endT&&ts>endT){endT=0;finish()}
+}
+
+/* ---- 그리기 ---- */
+const cv=$('#cv'),cx=cv.getContext('2d');
+const rngCloud=[];for(let i=0;i<40;i++)rngCloud.push({s:(i*37%100)/100*400000,a:1500+((i*53)%100)*80,w:2000+((i*17)%10)*900});
+function skyCol(h){const t=Math.min(1,h/70000);const c0=[96,172,255],c1=[7,14,40];return `rgb(${c0.map((v,i)=>v+(c1[i]-v)*t|0)})`}
+function mapR(a){return 168+22*Math.log2(1+Math.max(a,0)/20000)}
+function draw(ts){
+ const f=F,W=960,H=540;
+ const o=orbit(f);
+ const useMap=f.h>40000||['coast','circ','doomed','orbit_ok','esc'].includes(f.phase)||(f.phase==='failed'&&f.h>40000)||(f.phase==='done'&&!f.capOnly&&f.h>40000);
+ cx.clearRect(0,0,W,H);
+ if(f.capOnly&&(f.phase==='reentry'||f.phase==='descent'||(f.phase==='done'&&f.h<130000)||(f.phase==='failed'&&f.h<130000)))drawGround(f,ts,true);
+ else if(!useMap)drawGround(f,ts,false);
+ else drawMap(f,o,ts);
+ if(boom){boom.t+=1/60;drawBoom()}
+}
+function bgStars(n,alpha){cx.fillStyle='#fff';for(let i=0;i<n;i++){const x=(i*733%960),y=(i*389%540);cx.globalAlpha=alpha*(0.3+((i*13)%7)/10);cx.fillRect(x,y,1.6,1.6)}cx.globalAlpha=1}
+function drawGround(f,ts,cap){
+ const W=960,H=540,h=f.h;
+ const hmax=Math.max(1500,h*1.35+700);const k=410/hmax;
+ const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,skyCol(Math.min(h*1.8,120000)));g.addColorStop(1,skyCol(Math.max(0,h*0.2)));
+ cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ if(h>20000)bgStars(80,Math.min(1,(h-20000)/40000));
+ const ang=Math.atan2(f.x,f.y);const s=ang*RE; // 지표 따라 이동 거리
+ const ry=480-410*(h/hmax),rx=480;
+ // 지평선(곡률 과장)
+ const Rpx=Math.min(RE*k,1600);
+ cx.fillStyle='#2f5d3a';cx.beginPath();cx.moveTo(0,H);
+ for(let x=0;x<=W;x+=40){const dx=x-480;const dy=Math.sqrt(Math.max(Rpx*Rpx-dx*dx,0))-Rpx;cx.lineTo(x,480+dy)}
+ cx.lineTo(W,H);cx.closePath();cx.fill();
+ cx.strokeStyle='#86efac66';cx.lineWidth=2;cx.stroke();
+ // 구름
+ cx.fillStyle='#ffffffaa';
+ rngCloud.forEach(c=>{const x=480+(c.s-s)*k*3,y=480-410*(c.a/hmax);if(x>-200&&x<1160&&c.a<hmax*0.95){cx.beginPath();cx.ellipse(x,y,Math.min(150,Math.max(25,c.w*k*1.2)),Math.min(14,Math.max(5,420*k*2)),0,0,6.28);cx.fill()}});
+ // 발사대
+ const px=480+(0-s)*k*3;if(px>-60&&px<1020){cx.fillStyle='#64748b';cx.fillRect(px-26,474,52,8);cx.fillStyle='#94a3b8';cx.fillRect(px+16,424,6,52)}
+ // 고도 눈금
+ cx.fillStyle='#ffffffcc';cx.font='12px sans-serif';cx.textAlign='left';
+ const step=hmax>20000?10000:hmax>8000?2000:hmax>3000?1000:500;
+ for(let a=0;a<hmax;a+=step){const y=480-410*(a/hmax);cx.fillRect(0,y,10,1.5);cx.fillText((a/1000)+' km',14,y+4)}
+ // 궤적
+ cx.strokeStyle='#fde68a99';cx.lineWidth=2;cx.beginPath();let st=false;
+ f.trail.forEach(p=>{const a=Math.atan2(p[0],p[1]),hh=Math.hypot(p[0],p[1])-RE;const x=480+(a*RE-s)*k*3,y=480-410*(hh/hmax);if(!st){cx.moveTo(x,y);st=true}else cx.lineTo(x,y)});cx.lineTo(rx,ry);cx.stroke();
+ // 로켓
+ const pitch=f.phase==='pad'?90:(f.thrOn?f.pitch:Math.atan2(f.vr,f.vt)*180/Math.PI);
+ const rot=Math.PI/2-pitch*Math.PI/180;
+ drawSprite(rx,ry,rot,1.0,f,ts,cap);
+ if(f.fairGone&&f.t-(f.tFair||(f.tFair=f.t))<4){const dt=f.t-f.tFair;cx.fillStyle='#cbd5e1';cx.fillRect(rx-26-dt*14,ry+dt*8,10,22);cx.fillRect(rx+16+dt*14,ry+dt*8,10,22)}
+ if(f.pending||$('#modal').classList.contains('on')){}
+}
+function drawSprite(x,y,rot,sc,f,ts,cap){
+ cx.save();cx.translate(x,y);cx.rotate(rot);cx.scale(sc,sc);
+ if(cap){ // 캡슐
+  cx.fillStyle='#fbbf24';cx.beginPath();cx.moveTo(-9,10);cx.lineTo(9,10);cx.lineTo(5,-12);cx.lineTo(-5,-12);cx.closePath();cx.fill();
+  cx.fillStyle=f.V.extras.shield?'#7c2d12':'#94a3b8';cx.fillRect(-10,10,20,4);
+  if(f.chute){cx.strokeStyle='#e5e7eb';cx.beginPath();cx.moveTo(0,-12);cx.lineTo(-30,-60);cx.moveTo(0,-12);cx.lineTo(30,-60);cx.stroke();cx.fillStyle='#ef4444';cx.beginPath();cx.ellipse(0,-66,38,16,0,Math.PI,0);cx.fill()}
+  if(f.flux>2e5){const l=Math.min(1,f.flux/1.2e6);const gr=cx.createLinearGradient(0,14,0,70*l+20);gr.addColorStop(0,'#fff7ae');gr.addColorStop(.4,'#fb923c');gr.addColorStop(1,'#fb923c00');cx.fillStyle=gr;cx.beginPath();cx.moveTo(-14,14);cx.lineTo(14,14);cx.lineTo(0,80*l+20);cx.closePath();cx.fill()}
+  cx.restore();return}
+ let hh=0;const V=f.V;
+ // 부스터
+ V.boost.forEach((b,i)=>{if(b.gone)return;cx.fillStyle=b.kind==='srb'?'#f97316':'#38bdf8';const sd=i%2?1:-1;cx.fillRect(sd*11-4,-6,8,44)});
+ // 단
+ for(let i=f.cur;i<V.stages.length;i++){cx.fillStyle=V.stages[i].col+'cc';const hs=16+Math.min(26,Math.pow(V.stages[i].prop0/1000,0.5)*2.2);cx.fillRect(-8,-hh+(-hs),16,hs);cx.strokeStyle='#0008';cx.strokeRect(-8,-hh-hs,16,hs);hh+=hs+2;
+  if(i===f.cur){}}
+ // 탑재체
+ cx.fillStyle=f.fairOn?'#cbd5e1':'#fcd34d';cx.beginPath();cx.moveTo(-8,-hh);cx.lineTo(8,-hh);cx.lineTo(0,-hh-18);cx.closePath();cx.fill();
+ if(V.fin){cx.fillStyle='#fbbf24';cx.beginPath();cx.moveTo(-8,0);cx.lineTo(-15,8);cx.lineTo(-8,5);cx.moveTo(8,0);cx.lineTo(15,8);cx.lineTo(8,5);cx.fill()}
+ // 불꽃
+ if(f.thrOn){const fl=(0.6+Math.random()*0.4);const gr=cx.createLinearGradient(0,4,0,64*fl);gr.addColorStop(0,'#ffffff');gr.addColorStop(.3,'#fde68a');gr.addColorStop(.7,'#fb923c');gr.addColorStop(1,'#fb923c00');cx.fillStyle=gr;cx.beginPath();cx.moveTo(-8,3);cx.lineTo(8,3);cx.lineTo(0,10+60*fl);cx.closePath();cx.fill()}
+ cx.restore();
+}
+function drawMap(f,o,ts){
+ const W=960,H=540,Cx=480,Cy=300;
+ cx.fillStyle='#02040c';cx.fillRect(0,0,W,H);bgStars(120,1);
+ // 대기권 후광, 지구
+ const R0=168;
+ const gg=cx.createRadialGradient(Cx,Cy,R0-4,Cx,Cy,R0+22);gg.addColorStop(0,'#38bdf8aa');gg.addColorStop(1,'#38bdf800');cx.fillStyle=gg;cx.beginPath();cx.arc(Cx,Cy,R0+22,0,6.28);cx.fill();
+ const eg=cx.createRadialGradient(Cx-40,Cy-50,20,Cx,Cy,R0);eg.addColorStop(0,'#3b82f6');eg.addColorStop(.7,'#1d4ed8');eg.addColorStop(1,'#0b2a6b');cx.fillStyle=eg;cx.beginPath();cx.arc(Cx,Cy,R0,0,6.28);cx.fill();
+ cx.fillStyle='#2f7d4a88';[[-60,-70,40,26],[30,-20,50,30],[-30,50,36,22],[80,60,28,18]].forEach(l=>{cx.beginPath();cx.ellipse(Cx+l[0],Cy+l[1],l[2],l[3],0.5,0,6.28);cx.fill()});
+ // 발사 지점
+ cx.fillStyle='#fde68a';cx.beginPath();cx.arc(Cx,Cy-R0,4,0,6.28);cx.fill();cx.fillStyle='#fde68acc';cx.font='12px sans-serif';cx.textAlign='left';cx.fillText('발사대',Cx+8,Cy-R0+3);
+ // 목표 궤도
+ const T=f.M.target;
+ cx.setLineDash([6,6]);cx.strokeStyle='#34d39988';cx.lineWidth=2;cx.beginPath();cx.arc(Cx,Cy,mapR(T),0,6.28);cx.stroke();cx.setLineDash([]);
+ cx.fillStyle='#34d399';cx.font='12px sans-serif';cx.fillText('목표 '+(T/1000)+' km',Cx+mapR(T)*0.7+6,Cy-mapR(T)*0.7);
+ // 100km 선(카르만)
+ cx.strokeStyle='#ffffff22';cx.beginPath();cx.arc(Cx,Cy,mapR(100000),0,6.28);cx.stroke();
+ // 예측 궤도
+ if(!f.capOnly||f.phase==='orbit_ok'){
+  const hh=f.x*f.vy-f.y*f.vx,sg=hh<0?-1:1;
+  const p=hh*hh/MU,e=o.e;const dot=f.x*f.vx+f.y*f.vy;
+  const ex=(f.vx*f.vx+f.vy*f.vy-MU/f.r)*f.x/MU-dot*f.vx/MU,ey=(f.vx*f.vx+f.vy*f.vy-MU/f.r)*f.y/MU-dot*f.vy/MU;
+  const w=Math.atan2(ey,ex);
+  cx.strokeStyle=o.esc?'#f472b6':'#fbbf24';cx.lineWidth=2.2;cx.beginPath();let st=false;
+  const lim=o.esc?Math.acos(-1/Math.max(e,1.0001))*0.98:Math.PI;
+  for(let i=-120;i<=120;i++){const nu=i/120*lim;const r=p/(1+e*Math.cos(nu));if(r<RE||r>1.2e9){st=false;continue}const th=w+sg*nu;const rs=Math.min(mapR(r-RE)+0*r,380);const X=Cx+rs*Math.cos(th),Y=Cy-rs*Math.sin(th);if(!st){cx.moveTo(X,Y);st=true}else cx.lineTo(X,Y)}
+  cx.stroke();
+  // Ap / Pe
+  if(!o.esc&&o.e>1e-3){[[0,'근지점'],[Math.PI,'원지점']].forEach(([nu,nm])=>{const r=p/(1+e*Math.cos(nu));const th=w+sg*nu;const rs=mapR(r-RE);cx.fillStyle='#fbbf24';cx.beginPath();cx.arc(Cx+rs*Math.cos(th),Cy-rs*Math.sin(th),3.5,0,6.28);cx.fill();cx.fillText(nm+' '+fmt((r-RE)/1000)+' km',Cx+rs*Math.cos(th)+6,Cy-rs*Math.sin(th)-5)})}
+ }
+ // 궤적
+ cx.strokeStyle='#ffffffaa';cx.lineWidth=1.6;cx.beginPath();let st2=false;
+ f.trail.concat([[f.x,f.y]]).forEach(p=>{const r=Math.hypot(p[0],p[1]),th=Math.atan2(p[1],p[0]);const rs=Math.min(mapR(r-RE),380);const X=Cx+rs*Math.cos(th),Y=Cy-rs*Math.sin(th);if(!st2){cx.moveTo(X,Y);st2=true}else cx.lineTo(X,Y)});cx.stroke();
+ // 로켓
+ const th=Math.atan2(f.y,f.x),rs=Math.min(mapR(f.h),380);const X=Cx+rs*Math.cos(th),Y=Cy-rs*Math.sin(th);
+ const vang=Math.atan2(-f.vy,f.vx); // 화면 방향
+ cx.save();cx.translate(X,Y);cx.rotate(vang+Math.PI/2);cx.scale(1.5,1.5);
+ if(f.thrOn){cx.fillStyle='#fb923c';cx.beginPath();cx.moveTo(-3,6);cx.lineTo(3,6);cx.lineTo(0,18+Math.random()*8);cx.fill()}
+ cx.fillStyle='#fff';cx.beginPath();cx.moveTo(0,-9);cx.lineTo(5,6);cx.lineTo(-5,6);cx.closePath();cx.fill();cx.restore();
+ // 정보
+ cx.fillStyle='#e0f2fe';cx.font='bold 14px sans-serif';cx.textAlign='left';
+ cx.fillText('🛰️ 궤도 지도 (고도는 보기 좋게 확대)',14,22);
+ if(f.phase==='coast'){cx.fillStyle='#fde68a';cx.fillText('정점(원지점)에 도달하면 자동으로 점화합니다…',14,44)}
+}
+function drawBoom(){
+ const f=F;const W=960;const bx=480,by=f.h<40000?Math.min(480,200):300;
+ boom.p.forEach(p=>{const t=boom.t;if(t>p.l)return;const x=bx+Math.cos(p.a)*p.s*t,y=by+Math.sin(p.a)*p.s*t+t*t*80;cx.fillStyle=`hsla(${20+Math.random()*30},100%,${55+Math.random()*30}%,${1-t/p.l})`;cx.beginPath();cx.arc(x,y,3+(1-t/p.l)*7,0,6.28);cx.fill()});
+ if(boom.t<0.5){cx.fillStyle=`rgba(255,240,200,${0.6-boom.t})`;cx.fillRect(0,0,960,540)}
+ cx.fillStyle='#fff';cx.font='bold 54px sans-serif';cx.textAlign='center';cx.globalAlpha=Math.min(1,boom.t*2);cx.fillText('💥 쾅!',480,120);cx.globalAlpha=1;
+}
+
+/* ================= 결과 ================= */
+const LESSON={
+ pad:'<b>뉴턴 제2법칙</b> F<sub>합</sub> = F<sub>추력</sub> − mg = ma. 추력이 무게보다 작으면 a &lt; 0이라 땅에서 뜨지 못해요. → 엔진을 늘리거나 연료(질량)를 줄여 TWR &gt; 1로!',
+ maxq:'<b>항력</b> D = ½ρv²C<sub>d</sub>A. 낮은 고도는 공기(ρ)가 짙고 속도(v)가 빠르면 동압 q = ½ρv²가 급증해요. 맥스Q 구간에서 <b>스로틀을 낮추고</b>, 약한 탑재체는 <b>페어링</b>으로 보호하세요.',
+ tumble:'받음각이 커지면 공기힘의 작용점(압력중심)이 무게중심 앞으로 가서 로켓이 돌아요. <b>안정핀</b>은 압력중심을 뒤로 옮겨 방향을 잡아줘요. 또 <b>속도 방향을 따라 기울이는 중력 선회</b>가 받음각을 줄여요.',
+ suborb:'궤도를 돌려면 <b>중력 = 구심력</b> (mg = mv²/r) → v = √(gr) ≈ <b>7.8 km/s의 수평 속도</b>가 필요해요. 높이만 올라가면 위로 던진 공처럼 떨어집니다. 중력 선회로 수평 속도를 만드세요.',
+ crash:'엔진이 꺼진 뒤엔 중력만 남아 포물선 운동(수평 속도가 모자라면 지면과 만남)! 궤도는 "계속 떨어지지만 지구가 휘어져 빗나가는 것"이에요.',
+ decay:'근지점이 대기권(약 80 km) 안이면 공기 저항으로 에너지를 잃고 떨어져요. <b>원지점에서 한 번 더 수평 점화</b>해 근지점을 올리는 것이 정석(호만 전이 아이디어).',
+ low:'목표보다 낮은 궤도 — ΔV(연료)가 부족했어요. 상단을 <b>진공용 엔진</b>(Isp 455 s)으로, 단을 나눠 죽은 무게를 버리면 같은 연료로 더 큰 ΔV를 얻어요.',
+ ecc:'원지점만 높고 근지점이 낮은 찌그러진 타원. 목표 고도에서 <b>수평으로</b> 충분히 가속해야 원궤도가 돼요.',
+ power:'우주에서는 <b>태양전지판</b>이 전력원이에요. 무인 프로브는 가벼운 대신 배터리가 작아 전지판이 필수입니다.',
+ burn:'재진입 시 <b>운동에너지(½mv²)가 공기 압축·마찰열</b>로 바뀌어 수천 ℃가 돼요. 방열판(열 차폐)이 그 열을 막아줍니다.',
+ gforce:'너무 가파른 진입은 짧은 시간에 큰 감속(큰 g)을 만들어요. 승무원은 약 10 g 이상을 견디기 어려워요.',
+ chute_rip:'낙하산의 항력은 속도²에 비례! 너무 빠를 때(동압 큼) 펴면 천이 찢어져요. 대기가 짙어져 속도가 줄어든 뒤 펴야 해요.',
+ crash_land:'착지 속도는 <b>종단속도</b>(항력 = 중력)로 결정돼요. 낙하산이 충분히 펴질 시간이 없으면 감속이 모자라요.',
+ lost:'<b>진행 방향 가속 → 궤도가 높아짐</b>, 진행 반대 방향 감속 → 낮아짐. 지구로 돌아오려면 <b>역추진</b>이 정답!',
+ noreturn:'궤도에서 지구로 돌아오려면 근지점을 대기권(≈80 km) 안으로 끌어내려야 해요. 감속량이 너무 작으면 그냥 계속 돌아요.',
+ retro_fuel:'역추진 로켓 연료가 모자라요. 감속량을 줄여야 해요.',
+ esc_low:'탈출 속도 v<sub>esc</sub> = √2·v<sub>orb</sub> ≈ 11.2 km/s. 역학적 에너지 E = ½mv² − GMm/r 가 0 이상이 돼야 돌아오지 않아요. 상단 단의 ΔV와 Isp를 키워야 해요.',
+ esc_retro:'역행 연소는 속도를 줄여 에너지를 낮춰요. 에너지를 높이려면 <b>진행 방향(순행)</b> 가속!',
+ esc_none:'연소하지 않으면 궤도 에너지는 그대로 — 지구 주위를 계속 맴돌 뿐이에요.',
+ esc_early:'이미 탈출 속도를 넘어버렸어요!'
+};
+const WINTXT={
+ 1:'<b>작용·반작용</b>으로 중력을 이기고(TWR &gt; 1), <b>중력 선회</b>로 수평 속도를 쌓아 <b>제1우주속도(≈7.8 km/s)</b>를 달성했어요. 빈 탱크를 버린 <b>단 분리</b>(a = F/m)와 정점 점화의 효율까지 완벽!',
+ 2:'궤도 비행 후 <b>역추진(−Δv)</b>으로 근지점을 낮추고, <b>방열판</b>이 재진입 열을 막고, <b>낙하산</b>의 항력이 종단속도까지 감속시켜 무사 귀환! 뉴턴과 에너지 보존의 합작이에요.',
+ 3:'더 높은 궤도(400 km)는 더 큰 역학적 에너지를 요구해요. 가벼운 프로브가 <b>페어링</b>과 <b>태양전지판</b> 덕분에 살아남았어요.',
+ 4:'<b>제2우주속도</b>를 넘어 중력 퍼텐셜 우물을 탈출! 다단 로켓과 <b>진공 엔진의 높은 Isp</b>가 만든 ΔV, 그리고 순행 연소의 에너지 효율 덕분이에요.',
+ 5:'9톤 화물을 올린 건 <b>아시파라거스 스테이징</b>의 승리! 바깥 부스터의 연료부터 쓰고 버려 코어를 아껴 a = F/m을 극대화했어요.'
+};
+function finish(){
+ const m=MS[cur],r=F.result,rb=$('#rb');
+ const A=analyze(F.design);
+ let h='';
+ if(r&&r.ok){
+  const cost=F.V.cost,left=F.dvLeft!==undefined?F.dvLeft:F.dvLeftCalc();
+  let s=1;if(cost<=m.par)s=2;if(cost<=m.par&&left>=150)s=3;
+  if(m.escape)s=cost<=m.par?(left>=100?3:2):1;
+  if(m.reentry&&r.landing!==undefined){}
+  const old=stars[m.id]||0;if(s>old){stars[m.id]=s;saveStars()}
+  rb.className='rbox ok';
+  h=`<div class="big">🎉</div><h2>미션 ${m.id} 성공! ${'★'.repeat(s)}${'☆'.repeat(3-s)}</h2><div class="law">${WINTXT[m.id]}</div>
+  <table><tr><td>총 비용</td><td>${fmt(cost,0)} M$ (기준 ${m.par} · 예산 ${m.budget})</td></tr><tr><td>최대 동압 (맥스Q)</td><td>${fmt(F.maxQ/1000,1)} kPa</td></tr><tr><td>이륙 TWR</td><td>${A.twr.toFixed(2)}</td></tr><tr><td>남은 ΔV</td><td>${fmt(left)} m/s</td></tr>${r.landing!==undefined?`<tr><td>착지 속도 / 최대 감속</td><td>${r.landing.toFixed(1)} m/s / ${(r.maxG||0).toFixed(1)} g</td></tr>`:''}${F.orb&&!r.esc?`<tr><td>최종 궤도</td><td>근지점 ${fmt(F.orb.peri/1000)} km × 원지점 ${fmt(F.orb.apo/1000)} km</td></tr>`:''}</table>
+  <p style="color:var(--mu);font-size:.9em">${s<3?'★★: 비용 기준 이하 · ★★★: 비용 기준 이하 + 연료 여유 '+(m.escape?100:150)+' m/s 이상. 더 가볍고 싸게 다시 도전해 보세요!':'완벽한 3성 설계입니다! 🥇'}</p>
+  <div class="row"><button class="go g2" id="rNext">${cur<MS.length-1?'다음 미션 ▶':'🏆 모든 미션 완료! 목록으로'}</button><button class="btn" id="rAgain">🔧 설계 고쳐서 재도전</button></div>`;
+ }else{
+  rb.className='rbox no';
+  const code=r&&r.code;
+  h=`<div class="big">💥</div><h2>미션 ${m.id} 실패</h2><p>${r?r.msg:'알 수 없는 실패'}</p><div class="law">${LESSON[code]||'원인을 로그에서 확인하고 설계·결정을 바꿔 보세요.'}</div>
+  <table><tr><td>최대 동압</td><td>${fmt(F.maxQ/1000,1)} kPa</td></tr><tr><td>최고 고도</td><td>${fmt((F.maxH||0)/1000,0)} km</td></tr></table>
+  <div class="row"><button class="go" id="rAgain">🔧 VAB에서 설계 수정 ▶</button><button class="btn" id="rRetry">🔁 같은 설계로 다시 발사</button></div>`;
+ }
+ h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:800">📜 비행 기록</summary><div id="log2" style="font-family:ui-monospace,monospace;font-size:.85em;margin-top:6px">${F.log.map(l=>`<div>${l}</div>`).join('')}</div></details>`;
+ rb.innerHTML=h;show('sResult');
+ const g=id=>$('#'+id);
+ if(g('rNext'))g('rNext').onclick=()=>{if(cur<MS.length-1)openBrief(cur+1);else{buildMenu();show('sMenu')}};
+ if(g('rAgain'))g('rAgain').onclick=()=>{vabDraw();show('sVab')};
+ if(g('rRetry'))g('rRetry').onclick=()=>startFlight();
+}
+
+/* 전체화면 */
+$('#fs').onclick=()=>{const e=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else if(e.requestFullscreen)e.requestFullscreen()};
+/* 테스트용 노출 */
+window.__game={get F(){return F},MS,start:i=>{openBrief(i)},vab:()=>{vabInit();show('sVab')},setD:d=>{D=d;vabDraw()},go:()=>startFlight(),resolve:resolveDec,get D(){return D},show};
+})();
+</script></body></html>
