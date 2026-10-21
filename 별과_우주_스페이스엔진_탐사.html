@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스페이스엔진 우주 탐사 시뮬레이터 · 별과 우주</title>
+<style>
+:root{--bg:#04060f;--pn:#0c1226;--pn2:#141d3d;--ln:#26346a;--tx:#e8eeff;--mu:#9aa9d6;--ac:#5eead4;--ok:#34d399;--no:#f87171;--wa:#fbbf24;--bl:#60a5fa}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(14px,1.45vw,17px);line-height:1.5;-webkit-text-size-adjust:100%}
+header{display:flex;align-items:center;gap:8px;padding:6px clamp(8px,2vw,16px);background:#02040a;border-bottom:1px solid var(--ln);flex-wrap:wrap;position:sticky;top:0;z-index:30}
+header h1{margin:0;font-size:clamp(14px,2.2vw,20px);white-space:nowrap}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:7px clamp(8px,1.6vw,14px);font-weight:800;font-size:clamp(11px,1.6vw,14px);text-decoration:none;cursor:pointer;white-space:nowrap;font-family:inherit}
+.tabs{display:flex;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
+.tab{min-height:42px;padding:0 12px;border-radius:12px;border:2px solid var(--ln);background:var(--pn2);color:var(--mu);font-weight:800;font-size:.92em;cursor:pointer;font-family:inherit}
+.tab.on{background:#fff;color:#04060f;border-color:#fff}
+main{padding:10px clamp(8px,2vw,16px);display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:10px;max-width:1500px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+@media(max-width:760px){header{position:static}header h1{flex:1 0 100%}.tabs{order:5;flex:1 0 100%;flex-wrap:nowrap;overflow-x:auto}.tab{flex:0 0 auto;white-space:nowrap;padding:0 10px}}
+.pane{display:flex;flex-direction:column;gap:10px;min-width:0}.pane[hidden]{display:none}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;min-width:0}
+.card h2{margin:0 0 6px;font-size:1.02em}
+.stagebox{position:relative;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--ln)}
+canvas{width:100%;display:block;touch-action:none;background:#02030a}
+#cv,#cg{aspect-ratio:960/540}#ch{aspect-ratio:960/620}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{min-height:42px;padding:0 14px;border-radius:12px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:800;cursor:pointer;font-family:inherit;font-size:.95em}
+.btn.pri{background:linear-gradient(#5eead4,#0d9488);border-color:#99f6e4;color:#022c26}
+.btn.wr{background:linear-gradient(#fbbf24,#d97706);border-color:#fde68a;color:#2b1700}
+.btn.on{border-color:#fff;background:#2c3d7e}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{min-height:34px;padding:0 10px;font-size:.85em}
+#hud{margin:0;font-family:ui-monospace,Menlo,Consolas,"Noto Sans KR",monospace;font-size:.9em;white-space:pre-wrap;line-height:1.55;color:#c9f7ee}
+#log{max-height:min(48vh,440px);overflow:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.msg{background:#080e20;border:1px solid var(--ln);border-radius:12px;padding:8px 10px;font-size:.93em;white-space:pre-wrap;line-height:1.55}
+.msg.ok{border-color:var(--ok)}.msg.no{border-color:var(--no)}.msg.wa{border-color:var(--wa)}.msg.hud{border-color:#0d9488;background:#041a1a;font-family:ui-monospace,Menlo,Consolas,"Noto Sans KR",monospace;font-size:.88em;color:#c9f7ee}
+.msg b{color:#fff}.msg .k{color:var(--ac)}
+.msg .nw{display:block;margin-top:6px;padding:6px 8px;border-left:3px solid var(--bl);background:#0b1636;border-radius:6px;font-size:.92em}
+form#cmd{display:flex;gap:6px}
+#ci{flex:1;min-width:0;background:#080e20;color:#fff;border:2px solid var(--ln);border-radius:10px;padding:8px 10px;font-size:16px;font-family:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:5px 10px;border-radius:999px;border:1px solid var(--ln);background:var(--pn2);color:var(--tx);font-size:.84em;font-weight:700;cursor:pointer;font-family:inherit}
+.mu{color:var(--mu)}.small{font-size:.88em}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pill{min-height:40px;min-width:40px;border-radius:999px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:900;cursor:pointer;font-family:inherit}
+.pill.on{background:#fff;color:#04060f}.pill.done{border-color:var(--ok)}
+.goal{background:#080e20;border-left:4px solid var(--ac);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.93em}
+.chk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.93em;margin:2px 0}
+.in{display:grid;grid-template-columns:1fr 100px;gap:6px 8px;align-items:center;margin:6px 0}
+.in input,.in select,select{background:#080e20;color:#fff;border:2px solid var(--ln);border-radius:8px;padding:6px;font-size:16px;font-family:inherit;width:100%}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;margin:6px 0}.sl input{grid-column:1/3;width:100%;height:28px}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-weight:800;font-size:.85em}
+.b-ok{background:#064e3b;color:#6ee7b7}.b-bad{background:#78350f;color:#fcd34d}.b-dead{background:#7f1d1d;color:#fca5a5}
+table.t{width:100%;border-collapse:collapse;font-size:.88em}table.t td,table.t th{border-bottom:1px solid var(--ln);padding:4px 6px;text-align:left}
+.ro{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;font-size:.88em}.ro div{background:#080e20;border:1px solid var(--ln);border-radius:8px;padding:5px 8px}.ro b{display:block;font-size:1.05em}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
+#catl{max-height:62vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#fff;color:#111;font-weight:800;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+#toast.on{opacity:1}
+</style></head><body>
+<header><h1>🚀 스페이스엔진 우주 탐사</h1><div class="tabs" id="tabs"></div>
+<a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<main>
+<section style="display:contents">
+<div style="min-width:0">
+ <div class="pane" id="p-bridge">
+  <div class="stagebox"><canvas id="cv" width="960" height="540"></canvas></div>
+  <div class="bar" id="sbar"></div>
+  <div class="card" id="apr" hidden></div>
+  <div class="card"><h2>🖥 현재 HUD</h2><pre id="hud"></pre></div>
+  <div class="card"><h2>💬 함선 항법 AI "아스트라"</h2><div id="log"></div>
+   <form id="cmd" autocomplete="off"><input id="ci" placeholder="예) 도약 시리우스 · HIP 27989 · M31 · 센서 적외선 · 분석 · 도움말"><button class="btn pri" type="submit">전송</button></form>
+   <div class="chips" id="chips"></div></div>
+ </div>
+ <div class="pane" id="p-gal" hidden>
+  <div class="bar" id="gbar"></div>
+  <div class="stagebox"><canvas id="cg" width="960" height="540"></canvas></div>
+  <div class="card" id="gfact"></div>
+ </div>
+ <div class="pane" id="p-hr" hidden>
+  <div class="stagebox"><canvas id="ch" width="960" height="620"></canvas></div>
+  <div class="card" id="hrinfo"></div>
+ </div>
+ <div class="pane" id="p-cat" hidden>
+  <div class="card"><div class="bar"><select id="catf" style="width:auto"><option value="all">전체</option><option value="star">항성</option><option value="ns">극한(펄서·블랙홀)</option><option value="neb">성운</option><option value="cl">성단</option><option value="gal">외부 은하</option></select><span class="mu small" id="catn"></span></div><div id="catl"></div></div>
+ </div>
+</div>
+<aside class="side"><div class="card" id="mis"></div></aside>
+</section>
+</main>
+<div id="toast"></div>
+<script>
+(()=>{'use strict';
+/* ===== 카탈로그 (실제 관측값 근사; d=ly, m=겉보기 V등급, T=K, R=R☉, Ms=M☉, ra=시간, dec=도, rv=km/s) ===== */
+const C=[
+// ---- 항성 ----
+{id:'sun',nm:'Sun (Sol)',ko:'태양',al:['태양','sol','해'],cat:'star',sp:'G2V',lc:'V',T:5772,R:1,Ms:1,m:-26.74,d:0,ra:0,dec:0,rv:0,pop:'I',evo:'주계열 중반(약 46억 살). 약 50억 년 뒤 적색거성 → 행성상 성운 → 백색왜성.',note:'우리 태양계의 중심별. 은하 중심에서 약 2.6만 광년 떨어진 오리온팔(국부팔) 가장자리에 있다.'},
+{id:'sirA',nm:'Sirius A',ko:'시리우스 A',hip:32349,hd:48915,al:['시리우스','sirius','큰개자리알파'],cat:'star',sp:'A1V',lc:'V',T:9940,R:1.71,Ms:2.06,m:-1.46,d:8.6,ra:6.752,dec:-16.72,rv:-5.5,pop:'I',evo:'질량 2배의 주계열성. 수억 년 안에 거성 단계를 거쳐 시리우스 B처럼 백색왜성이 될 운명.',note:'밤하늘에서 가장 밝은 별. 어두운 백색왜성 동반성(시리우스 B)이 있다.',comp:'sirB'},
+{id:'sirB',nm:'Sirius B',ko:'시리우스 B',hd:'48915B',al:['시리우스b','sirius b','sirb'],cat:'star',sp:'DA2',lc:'D',T:25200,R:0.0084,Ms:1.02,m:8.44,d:8.6,ra:6.752,dec:-16.72,rv:-5.5,pop:'I',evo:'과거 질량 약 5 M☉의 별이 거성 단계 뒤 바깥층을 날리고 남은 백색왜성 핵. 지구 크기에 태양 질량 — 밀도 약 3×10⁶ g/cm³.',note:'시리우스 A를 50년 주기로 도는 백색왜성. 1862년 발견.'},
+{id:'bet',nm:'Betelgeuse',ko:'베텔게우스',hip:27989,hd:39801,al:['베텔게우스','betelgeuse','오리온알파','알파오리'],cat:'star',sp:'M1-2Ia',lc:'I',T:3600,R:760,Ms:16.5,m:0.42,d:640,ra:5.919,dec:7.407,rv:21.9,pop:'I',mdot:3e-6,evo:'핵융합 말기의 적색초거성. 수십만 년 이내(천문학적 시간으로 임박) 초신성(II형) 폭발 → 중성자별 가능성.',note:'오리온자리 어깨의 붉은 별. 태양 자리에 놓으면 목성 궤도에 가깝다. 밝기가 불규칙하게 변하는 변광성.'},
+{id:'prox',nm:'Proxima Centauri',ko:'프록시마 센타우리',hip:70890,hd:'-',al:['프록시마','proxima','프록시마센타우리','센타우루스프록시마'],cat:'star',sp:'M5.5Ve',lc:'V',T:3042,R:0.154,Ms:0.122,m:11.13,d:4.24,ra:14.495,dec:-62.68,rv:-22.4,pop:'I',evo:'적색왜성: 연료를 천천히 태우므로 수조 년 동안 주계열에 머문다. 플레어(폭발적 증광)가 잦다.',note:'태양에서 가장 가까운 별(4.24 ly). 맨눈으로는 보이지 않는다.'},
+{id:'vega',nm:'Vega',ko:'직녀성 (베가)',hip:91262,hd:172167,al:['직녀','vega','베가','거문고알파'],cat:'star',sp:'A0V',lc:'V',T:9602,R:2.36,Ms:2.14,m:0.03,d:25,ra:18.616,dec:38.78,rv:-13.9,pop:'I',evo:'질량 2배의 주계열성. 빠르게 자전하여 적도가 부풀었고 먼지 원반을 가진다.',note:'칠월칠석의 직녀별. 거문고자리 알파별.'},
+{id:'rigel',nm:'Rigel',ko:'리겔',hip:24436,hd:34085,al:['리겔','rigel','오리온베타'],cat:'star',sp:'B8Ia',lc:'I',T:12100,R:79,Ms:21,m:0.13,d:860,ra:5.242,dec:-8.2,rv:17.8,pop:'I',evo:'청색초거성. 수백만 년의 짧은 일생을 마치면 초신성으로 폭발할 대질량별.',note:'오리온자리 다리의 푸른 별. 태양의 약 12만 배 밝다.'},
+{id:'ant',nm:'Antares',ko:'안타레스',hip:80763,hd:148478,al:['안타레스','antares','전갈자리알파'],cat:'star',sp:'M1.5Iab',lc:'I',T:3660,R:680,Ms:12,m:1.06,d:550,ra:16.49,dec:-26.43,rv:-3.4,pop:'I',mdot:1e-6,evo:'적색초거성. 헬륨·탄소 핵융합 후기 — 장차 II형 초신성.',note:'전갈자리의 붉은 심장. 이름은 "화성(Ares)의 라이벌".'},
+{id:'arc',nm:'Arcturus',ko:'아르크투루스',hip:69673,hd:124897,al:['아르크투루스','arcturus','대각성','목동자리알파'],cat:'star',sp:'K1.5III',lc:'III',T:4286,R:25.4,Ms:1.08,m:-0.05,d:36.7,ra:14.261,dec:19.18,rv:-5.2,pop:'II',evo:'적색거성(수소 껍질 연소 → 헬륨 핵융합). 늙은 별로 은하 헤일로 쪽에서 온 고속 별.',note:'봄철 대곡선 끝의 주황색 별. 금속 함량이 낮다.'},
+{id:'ald',nm:'Aldebaran',ko:'알데바란',hip:21421,hd:29139,al:['알데바란','aldebaran','황소자리알파'],cat:'star',sp:'K5III',lc:'III',T:3900,R:44.2,Ms:1.16,m:0.86,d:65,ra:4.599,dec:16.51,rv:54.3,pop:'I',evo:'주황색 거성 — 중심 수소가 고갈되어 팽창한 단계.',note:'황소의 붉은 눈. 히아데스 성단과 같은 방향이지만 성단 소속은 아니다.'},
+{id:'pol',nm:'Polaris',ko:'북극성',hip:11767,hd:8890,al:['북극성','polaris','작은곰자리알파'],cat:'star',sp:'F7Ib',lc:'I',T:6015,R:46,Ms:5.4,m:1.98,d:433,ra:2.53,dec:89.26,rv:-17,pop:'I',evo:'맥동 변광성(세페이드). 주기-광도 관계로 우주 거리 측정에 쓰인다.',note:'지구 자전축 연장선 근처의 별.'},
+{id:'pro',nm:'Procyon',ko:'프로키온',hip:37279,hd:61421,al:['프로키온','procyon','작은개자리알파'],cat:'star',sp:'F5V',lc:'V',T:6530,R:2.05,Ms:1.5,m:0.34,d:11.46,ra:7.655,dec:5.22,rv:-3.2,pop:'I',evo:'주계열 말기(부분 준거성). 수억 년 뒤 거성으로 진화. 백색왜성 동반성이 있다.',note:'겨울철 대삼각형의 한 꼭짓점.'},
+{id:'acA',nm:'Alpha Centauri A',ko:'알파 센타우리 A',hip:71683,hd:128620,al:['알파센타우리','센타우리a','rigilkent','리길켄타우루스','alphacen'],cat:'star',sp:'G2V',lc:'V',T:5790,R:1.22,Ms:1.1,m:-0.01,d:4.37,ra:14.66,dec:-60.83,rv:-21.4,pop:'I',evo:'태양과 거의 쌍둥이인 주계열성 (G2V). 약 60억 살.',note:'3중성계(A, B, 프록시마). 남반구에서 밝게 보이는 이웃 별.'},
+{id:'tau',nm:'Tau Ceti',ko:'타우 세티',hip:8102,hd:10700,al:['타우세티','tauceti','고래자리타우'],cat:'star',sp:'G8V',lc:'V',T:5344,R:0.79,Ms:0.78,m:3.5,d:11.9,ra:1.735,dec:-15.94,rv:-16.7,pop:'II',evo:'태양보다 약간 작고 늙은 주계열성.',note:'태양과 비슷하고 가까워 외계 생명 탐사의 단골 대상.'},
+{id:'eri',nm:'Epsilon Eridani',ko:'엡실론 에리다니',hip:16537,hd:22049,al:['엡실론에리다니','epsiloneridani','eps eri'],cat:'star',sp:'K2V',lc:'V',T:5084,R:0.74,Ms:0.82,m:3.73,d:10.5,ra:3.549,dec:-9.46,rv:15.5,pop:'I',evo:'젊은(약 5억 살) 주황색 주계열성. 먼지 원반과 외계 행성 보유.',note:'태양에 가까운 K형 주계열성.'},
+{id:'bar',nm:"Barnard's Star",ko:'바너드 별',hip:87937,hd:'-',al:['바너드','barnard','바나드'],cat:'star',sp:'M4V',lc:'V',T:3134,R:0.19,Ms:0.16,m:9.51,d:5.96,ra:17.963,dec:4.69,rv:-110.8,pop:'II',evo:'아주 오래된 적색왜성. 시선속도 −111 km/s로 우리에게 접근 중.',note:'고유운동이 가장 큰 별(연 10.3″).'},
+{id:'spi',nm:'Spica',ko:'스피카',hip:65474,hd:116658,al:['스피카','spica','처녀자리알파'],cat:'star',sp:'B1III',lc:'III',T:25300,R:7.5,Ms:11,m:0.97,d:250,ra:13.42,dec:-11.16,rv:1,pop:'I',evo:'푸른 거성(분광쌍성). 질량이 커 수천만 년 안에 초신성이 된다.',note:'처녀자리의 푸른 진주.'},
+{id:'naos',nm:'Naos (Zeta Puppis)',ko:'나오스 (고물자리 ζ)',hip:39429,hd:66811,al:['나오스','naos','zetapuppis','고물자리제타'],cat:'star',sp:'O4I(n)fp',lc:'I',T:40000,R:18.6,Ms:40,m:2.25,d:1080,ra:8.06,dec:-40.0,rv:-23,pop:'I',mdot:8e-6,evo:'가장 뜨거운 O형 초거성. 강한 항성풍으로 질량을 잃으며 수백만 년 내 초신성.',note:'이중 이온화한 헬륨선(He II)이 강하게 나타나는 O형 별.'},
+{id:'alt',nm:'Altair',ko:'견우성 (알타이르)',hip:97649,hd:187642,al:['견우','altair','알타이르','독수리자리알파'],cat:'star',sp:'A7V',lc:'V',T:7550,R:1.8,Ms:1.79,m:0.76,d:16.7,ra:19.846,dec:8.87,rv:-26.1,pop:'I',evo:'매우 빠르게 자전(9시간)하는 주계열성.',note:'칠월칠석의 견우별.'},
+{id:'fom',nm:'Fomalhaut',ko:'포말하우트',hip:113368,hd:216956,al:['포말하우트','fomalhaut'],cat:'star',sp:'A3V',lc:'V',T:8590,R:1.84,Ms:1.92,m:1.16,d:25.1,ra:22.96,dec:-29.62,rv:6.5,pop:'I',evo:'젊은 A형 주계열성(약 4억 살). 먼지 고리 보유.',note:'남쪽물고기자리의 외로운 가을 별.'},
+{id:'pol2',nm:'Pollux',ko:'폴룩스',hip:37826,hd:62509,al:['폴룩스','pollux','쌍둥이자리베타'],cat:'star',sp:'K0III',lc:'III',T:4865,R:9.06,Ms:1.9,m:1.14,d:34,ra:7.755,dec:28.03,rv:3.3,pop:'I',evo:'헬륨 핵융합 중인 주황색 거성. 외계 행성 보유.',note:'쌍둥이자리의 형제별.'},
+{id:'den',nm:'Deneb',ko:'데네브',hip:102098,hd:197345,al:['데네브','deneb','백조자리알파'],cat:'star',sp:'A2Ia',lc:'I',T:8525,R:203,Ms:19,m:1.25,d:2600,ra:20.69,dec:45.28,rv:-4.5,pop:'I',evo:'백색초거성. 태양의 약 20만 배 밝으며 훗날 적색초거성 → 초신성.',note:'여름철 대삼각형의 가장 먼 꼭짓점.'},
+{id:'vy',nm:'VY Canis Majoris',ko:'큰개자리 VY',hip:'-',hd:58061,al:['vy','vycma','큰개자리vy','vycanismajoris'],cat:'star',sp:'M3-4II',lc:'I',T:3490,R:1420,Ms:17,m:9.6,d:3900,ra:7.381,dec:-25.77,rv:20,pop:'I',mdot:2e-4,evo:'가장 큰 별 중 하나인 적색극대거성. 막대한 질량 손실을 겪으며 곧 폭발할 후보.',note:'태양을 대신하면 토성 궤도 밖까지 삼킨다. 강한 먼지 성운에 둘러싸임.'},
+{id:'muc',nm:'Mu Cephei',ko:'석류석별 (케페우스 μ)',hip:'-',hd:206936,al:['석류석별','mucep','케페우스뮤','garnetstar','뮤케페이'],cat:'star',sp:'M2Ia',lc:'I',T:3750,R:1260,Ms:19,m:4.08,d:2800,ra:21.725,dec:58.78,rv:20,pop:'I',mdot:1e-6,evo:'적색초거성. 헤르셜이 "석류석"이라 부른 붉은 별.',note:'맨눈으로 보이는 가장 붉은 별 중 하나.'},
+{id:'eta',nm:'Eta Carinae',ko:'에타 카리나',hip:'-',hd:93308,al:['에타카리나','etacar','etacarinae','카리나에타'],cat:'star',sp:'LBV',lc:'I',T:35000,R:60,Ms:100,m:4.3,d:7500,ra:10.75,dec:-59.68,rv:-25,pop:'I',mdot:1e-3,hz:'sn',evo:'질량 100 M☉ 급 초대형 청색 변광성(LBV). 1843년 대분출. 초신성(극초신성) 폭발이 임박한 별.',note:'카리나 성운 속. 폭발하면 γ선 폭발 가능성. 장시간 관측은 위험!'},
+// ---- 극한 천체 ----
+{id:'crab',nm:'Crab Pulsar (PSR B0531+21)',ko:'게성운 펄서',ng:'PSR B0531+21',al:['게펄서','crabpulsar','psrb0531','펄서'],cat:'ns',sp:'중성자별',lc:'NS',T:1e6,R:1.4e-5,Ms:1.4,m:16.5,d:6500,ra:5.575,dec:22.01,rv:0,pop:'I',hz:'ns',evo:'1054년 초신성 폭발(II형)의 잔해 핵. 초당 30회 자전하는 중성자별 — 밀도 ~10¹⁷ kg/m³.',note:'등대처럼 전파·X선 펄스를 쏜다. 둘러싼 게성운(M1)은 초신성 잔해.'},
+{id:'cyg',nm:'Cygnus X-1',ko:'백조자리 X-1',hd:226868,al:['cygx1','백조자리x1','cygnusx1','백조x1','블랙홀'],cat:'bh',sp:'BH + O9.7Iab',lc:'BH',T:31000,R:17,Ms:21,m:8.9,d:7200,ra:19.972,dec:35.2,rv:-5,pop:'I',hz:'bh',evo:'청색초거성(HDE 226868)과 21 M☉ 블랙홀의 X선 쌍성. 동반성 물질이 강착원반을 이루며 X선 방출.',note:'최초로 확인된 블랙홀 후보(1971). 슈바르츠실트 반지름 약 62 km.'},
+{id:'sgr',nm:'Sagittarius A*',ko:'궁수자리 A* (은하 중심)',ng:'Sgr A*',al:['sgra','궁수자리a','은하중심','궁수a','sagittariusa'],cat:'bh',sp:'초대질량 블랙홀',lc:'BH',T:0,R:0,Ms:4.15e6,m:99,d:26000,ra:17.761,dec:-29.01,rv:0,pop:'II',hz:'bh',ext:30,evo:'우리은하 중심의 초대질량 블랙홀. 주변 별 S2의 공전으로 질량 결정(노벨물리학상 2020).',note:'질량 약 415만 M☉(자료의 500만 M☉ 근사). 성간먼지 때문에 가시광으로는 보이지 않고 적외선·전파로만 관측.'},
+// ---- 성운·성단 ----
+{id:'m42',nm:'Orion Nebula (M42, NGC 1976)',ko:'오리온 성운',ng:'M42',al:['m42','ngc1976','오리온성운','orionnebula'],cat:'neb',tp:'emis',sp:'방출 스펙트럼',lc:'',T:10000,m:4.0,d:1344,ra:5.588,dec:-5.39,rv:25,pop:'I',evo:'별이 탄생하는 방출성운. 가운데 트라페지움의 O형 별들이 자외선으로 수소 가스를 약 10,000 K로 이온화해 붉게(Hα 656 nm) 빛나게 한다.',note:'맨눈으로도 보이는 별 탄생 요람. 주변 분자구름에서 계속 새 별이 태어난다.'},
+{id:'hh',nm:'Horsehead Nebula (IC 434, B33)',ko:'말머리 성운',ng:'IC 434',al:['ic434','말머리성운','horsehead','b33'],cat:'neb',tp:'dark',sp:'암흑성운 (흡수)',lc:'',T:10,m:99,d:1375,ra:5.683,dec:-2.46,rv:0,pop:'I',evo:'차가운(약 10 K) 가스와 먼지 구름. 뒤쪽 방출성운(IC 434)의 빛을 가려 실루엣으로 보인다. 장차 별이 태어날 곳.',note:'암흑성운은 가시광을 흡수하지만 적외선·전파로는 내부를 볼 수 있다.'},
+{id:'m1',nm:'Crab Nebula (M1, NGC 1952)',ko:'게 성운',ng:'M1',al:['m1','ngc1952','게성운','crabnebula'],cat:'neb',tp:'snr',sp:'초신성 잔해',lc:'',T:15000,m:8.4,d:6500,ra:5.575,dec:22.01,rv:-1,pop:'I',hz:'snrzone',evo:'1054년 초신성(SN 1054) 폭발의 잔해. 가스가 약 1,500 km/s로 팽창 중. 중심에 펄서.',note:'중국·한국(고려 사서)의 "객성" 기록이 남은 초신성.'},
+{id:'m57',nm:'Ring Nebula (M57, NGC 6720)',ko:'고리 성운',ng:'M57',al:['m57','ngc6720','고리성운','ringnebula'],cat:'neb',tp:'pn',sp:'행성상 성운',lc:'',T:125000,m:8.8,d:2300,ra:18.893,dec:33.03,rv:-20,pop:'I',evo:'태양 같은 별의 최후: 바깥층이 흩어져 가스 고리가 되고, 중심에 백색왜성(약 125,000 K)이 남는다.',note:'행성과는 무관한 이름 — 작은 망원경으로 둥근 행성처럼 보여 붙은 이름.'},
+{id:'helix',nm:'Helix Nebula (NGC 7293)',ko:'나선(헬릭스) 성운',ng:'NGC 7293',al:['ngc7293','헬릭스성운','helix','나선성운'],cat:'neb',tp:'pn',sp:'행성상 성운',lc:'',T:100000,m:7.6,d:650,ra:22.494,dec:-20.84,rv:-23,pop:'I',evo:'가까운 행성상 성운 — 죽어가는 별이 방출한 가스가 "신의 눈"처럼 보인다.',note:'지구에서 가장 가까운 행성상 성운 중 하나.'},
+{id:'m45',nm:'Pleiades (M45)',ko:'플레이아데스 성단 (좀생이별)',ng:'M45',al:['m45','플레이아데스','좀생이','pleiades','칠자매'],cat:'cl',tp:'oc',sp:'산개성단',lc:'',T:12000,m:1.6,d:444,ra:3.79,dec:24.1,rv:5.7,pop:'I',evo:'약 1억 살의 젊은 산개성단(종족 I). 푸른 별이 많아 푸른 반사성운이 감싼다. 수억 년 뒤 서서히 흩어진다.',note:'은하 원반 속 나선팔의 젊은 별 무리.'},
+{id:'m13',nm:'Hercules Globular Cluster (M13)',ko:'헤르쿨레스 구상성단',ng:'M13',al:['m13','ngc6205','구상성단','헤르쿨레스성단'],cat:'cl',tp:'gc',sp:'구상성단',lc:'',T:5000,m:5.8,d:22200,ra:16.695,dec:36.46,rv:-245,pop:'II',evo:'약 120억 살, 수십만 개의 늙은 별(종족 II)이 공 모양으로 모여 있다. 은하 헤일로에 분포하며 샤플리가 은하 중심 위치를 찾는 데 썼다.',note:'구상성단은 은하 중심에서 약 15만 광년 범위에 약 100~150개가 분포.'},
+// ---- 은하 ----
+{id:'m31',nm:'Andromeda Galaxy (M31, NGC 224)',ko:'안드로메다 은하',ng:'M31',al:['m31','ngc224','안드로메다','andromeda'],cat:'gal',tp:'spiral',sp:'나선은하 Sb',lc:'',T:0,m:3.44,d:2.54e6,ra:0.712,dec:41.27,rv:-300,vcz:-300,pop:'',evo:'국부은하군 최대 은하(별 약 1조 개). 우리은하와 함께 국부은하군 질량의 약 75%. 약 40억 년 뒤 충돌·병합 예정.',note:'청색편이(−300 km/s): 허블 팽창이 아니라 중력으로 우리에게 접근 중.'},
+{id:'m33',nm:'Triangulum Galaxy (M33, NGC 598)',ko:'삼각형자리 은하',ng:'M33',al:['m33','ngc598','삼각형자리은하','triangulum'],cat:'gal',tp:'spiral',sp:'나선은하 Sc',lc:'',T:0,m:5.72,d:2.73e6,ra:1.564,dec:30.66,rv:-180,vcz:-180,pop:'',evo:'국부은하군의 세 번째 큰 나선은하. 활발한 별 탄생 지역(NGC 604) 보유.',note:'안드로메다의 위성처럼 움직이는 중.'},
+{id:'lmc',nm:'Large Magellanic Cloud (LMC)',ko:'대마젤란은하',ng:'LMC',al:['lmc','대마젤란','마젤란은하','largemagellaniccloud'],cat:'gal',tp:'irr',sp:'불규칙은하',lc:'',T:0,m:0.9,d:1.63e5,ra:5.393,dec:-69.76,rv:262,vcz:262,pop:'',evo:'우리은하의 위성은하. 1987년 초신성 SN 1987A가 폭발한 곳.',note:'남반구에서 맨눈으로 보이는 은하.'},
+{id:'smc',nm:'Small Magellanic Cloud (SMC)',ko:'소마젤란은하',ng:'SMC',al:['smc','소마젤란','smallmagellaniccloud'],cat:'gal',tp:'irr',sp:'불규칙은하',lc:'',T:0,m:2.7,d:2.0e5,ra:0.877,dec:-72.8,rv:158,vcz:158,pop:'',evo:'우리은하의 또 다른 위성은하.',note:'대마젤란과 가스 다리로 연결.'},
+{id:'m81',nm:"Bode's Galaxy (M81, NGC 3031)",ko:'보데 은하',ng:'M81',al:['m81','ngc3031','보데은하'],cat:'gal',tp:'spiral',sp:'나선은하 Sb',lc:'',T:0,m:6.9,d:1.18e7,ra:9.926,dec:69.07,rv:-34,vcz:-34,pop:'',evo:'M81 은하군의 중심. 너무 가까워 고유 운동이 허블 팽창보다 커서 허블 법칙 적용 불가.',note:'가까운 은하는 중력 상호작용으로 청색편이도 나타난다.'},
+{id:'m87',nm:'Virgo A (M87, NGC 4486)',ko:'처녀자리 A (M87)',ng:'M87',al:['m87','ngc4486','처녀자리a','virgoa','virgo a'],cat:'gal',tp:'ell',sp:'타원은하 E0 (AGN)',lc:'',T:0,m:8.6,d:5.35e7,ra:12.514,dec:12.39,rv:1284,vcz:1284,pop:'',evo:'처녀자리 은하단 중심의 거대 타원은하. 중심 블랙홀(약 65억 M☉)이 제트를 뿜는다 — 2019년 사건지평선망원경(EHT)이 그림자를 촬영.',note:'가까운 은하단: 허블 법칙이 근사적으로 적용되기 시작.'},
+{id:'n4889',nm:'NGC 4889 (Coma Cluster)',ko:'NGC 4889 (머리털자리 은하단)',ng:'NGC 4889',al:['ngc4889','머리털자리은하단','coma','comacluster'],cat:'gal',tp:'ell',sp:'초거대 타원은하 cD',lc:'',T:0,m:12.9,d:3.08e8,ra:13.0,dec:27.98,rv:6505,vcz:6505,pop:'',evo:'머리털자리 은하단의 중심 은하. 초대질량 블랙홀(약 210억 M☉).',note:'은하단 규모에서는 은하가 허블 흐름을 따라 후퇴한다.'},
+{id:'3c273',nm:'3C 273 (quasar)',ko:'퀘이사 3C 273',ng:'3C 273',al:['3c273','퀘이사','quasar','3c 273'],cat:'gal',tp:'qso',sp:'퀘이사 (z = 0.158)',lc:'',T:0,m:12.9,d:2.4e9,ra:12.485,dec:2.05,rv:47374,vcz:47374,z:0.158,pop:'',evo:'먼 은하 중심의 활동핵 — 거대 블랙홀이 물질을 삼키며 은하 전체보다 밝게 빛난다.',note:'z = 0.158. 이 정도에서는 v = cz 가 대략적인 근사일 뿐이다.'},
+{id:'gnz11',nm:'GN-z11',ko:'GN-z11 (초기 우주 은하)',ng:'GN-z11',al:['gnz11','gn-z11','가장먼은하'],cat:'gal',tp:'irr',sp:'초기 은하 (z = 10.96)',lc:'',T:0,m:25,d:1.34e10,ra:12.6,dec:62.2,rv:3.3e6,vcz:3.3e6,z:10.96,pop:'',evo:'빅뱅 후 약 4억 년 된 은하. 자외선이 적외선으로 우주 팽창 적색편이 되어 도착(Lyα 121.6 nm → 약 1,450 nm).',note:'z ≫ 1: 허블 법칙(v=cz)을 쓸 수 없고 상대론적 우주론이 필요하다.'}
+];
+const BYID={};C.forEach(o=>BYID[o.id]=o);
+/* 국부은하군 장식용 왜소은하 (ra h, dec °, d Mly) */
+const LG=[['M31',0.712,41.27,2.54],['M33',1.564,30.66,2.73],['LMC',5.393,-69.76,0.163],['SMC',0.877,-72.8,0.2],['NGC 205',0.673,41.69,2.7],['NGC 185',0.643,48.34,2.0],['NGC 147',0.55,48.51,2.5],['Leo I',10.14,12.3,0.82],['Leo II',11.22,22.15,0.69],['Sextans',10.2,-1.6,0.28],['Sculptor',1.0,-33.7,0.28],['Fornax',2.67,-34.45,0.46],['IC 1613',1.07,2.13,2.4],['WLM',0.0,-15.5,3.0]];
+
+/* ===== 천체물리 엔진 ===== */
+const K={c:299792.458,G:6.674e-11,cm:2.998e8,Msun:1.989e30,Rsun:6.957e8,AU:1.496e11,ly:9.461e15,pc:3.0857e16,pcly:3.2616,Tsun:5772,H0:70,Lship:200,gLim:98,Thull:1500,Tw:1000};
+const log10=Math.log10;
+function pcOf(o){return o.d/K.pcly}
+function lumOf(o){return o.R>0&&o.T>0?o.R*o.R*Math.pow(o.T/K.Tsun,4):null}
+function distMod(o){return o.d>0?5*log10(pcOf(o))-5:null}
+function MV(o){if(o.d<=0)return 4.83;if(o.m>=90)return null;return o.m-distMod(o)}
+function wien(T){return 2.898e6/T}
+function bbRGB(T){T=Math.max(1000,Math.min(40000,T));const t=T/100;let r,g,b;
+ r=t<=66?255:329.698727446*Math.pow(t-60,-0.1332047592);
+ g=t<=66?99.4708025861*Math.log(t)-161.1195681661:288.1221695283*Math.pow(t-60,-0.0755148492);
+ b=t>=66?255:(t<=19?0:138.5177312231*Math.log(t-10)-305.0447927307);
+ const cl=v=>Math.max(0,Math.min(255,Math.round(v)));return [cl(r),cl(g),cl(b)]}
+function rgbStr(a,al){return al==null?`rgb(${a[0]},${a[1]},${a[2]})`:`rgba(${a[0]},${a[1]},${a[2]},${al})`}
+function classOfT(T){return T>=30000?'O':T>=10000?'B':T>=7500?'A':T>=6000?'F':T>=5200?'G':T>=3700?'K':'M'}
+const CLS_INFO={O:['≥ 30,000 K','푸른색','He II 선'],B:['10,000–30,000 K','청백색','He I 선'],A:['7,500–10,000 K','흰색','H(발머)선 최강'],F:['6,000–7,500 K','황백색','Ca II H·K 증가'],G:['5,200–6,000 K','노란색','Ca II H·K 강함'],K:['3,700–5,200 K','주황색','금속선 강함'],M:['≤ 3,700 K','붉은색','TiO 분자 띠'],D:['수만 K','청백색','압력으로 넓어진 H선(백색왜성)']};
+const LC_INFO={I:'초거성 (R 수십~수천 R☉)',III:'거성 (R 10~100 R☉)',V:'주계열성 (왜성)',D:'백색왜성 (R≈0.01 R☉)',NS:'중성자별 (R≈10 km)',BH:'블랙홀'};
+function specClass(o){if(o.id==='cyg')return 'O';return o.cat==='star'||o.cat==='ns'?(o.sp.match(/^[OBAFGKM]/)?o.sp[0]:(o.sp==='LBV'?'O':o.sp[0]==='D'?'D':'-')):'-'}
+/* 좌표: 적도 → 은하좌표 */
+function vec(o){const a=o.ra*15*Math.PI/180,d=o.dec*Math.PI/180;return [o.d*Math.cos(d)*Math.cos(a),o.d*Math.cos(d)*Math.sin(a),o.d*Math.sin(d)]}
+const GM=[[-0.0548755604,-0.8734370902,-0.4838350155],[0.4941094279,-0.4448296300,0.7469822445],[-0.8676661490,-0.1980763734,0.4559837762]];
+function toGal(v){return [0,1,2].map(i=>GM[i][0]*v[0]+GM[i][1]*v[1]+GM[i][2]*v[2])}
+function galLB(o){const g=toGal([Math.cos(o.dec*Math.PI/180)*Math.cos(o.ra*15*Math.PI/180),Math.cos(o.dec*Math.PI/180)*Math.sin(o.ra*15*Math.PI/180),Math.sin(o.dec*Math.PI/180)]);
+ let l=Math.atan2(g[1],g[0])*180/Math.PI;if(l<0)l+=360;return [l,Math.asin(g[2])*180/Math.PI]}
+function dist3(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])}
+function raStr(h){const H=Math.floor(h),M=Math.round((h-H)*60);return String(H).padStart(2,'0')+'h'+String(M%60).padStart(2,'0')+'m'}
+function decStr(d){const s=d<0?'−':'+',a=Math.abs(d),D=Math.floor(a),M=Math.round((a-D)*60);return s+String(D).padStart(2,'0')+'°'+String(M%60).padStart(2,'0')+'′'}
+function fmtLy(ly){if(ly<0.01)return (ly*63241).toFixed(0)+' AU';if(ly<1e3)return ly.toFixed(ly<10?2:1)+' ly';if(ly<1e6)return Math.round(ly).toLocaleString()+' ly';if(ly<1e9)return (ly/1e6).toFixed(ly<1e7?2:1)+' Mly';return (ly/1e9).toFixed(2)+' Gly'}
+function fmtSci(x,n){if(x===0)return '0';n=n||2;const e=Math.floor(log10(Math.abs(x)));if(e>-3&&e<5)return (+x.toPrecision(n+1)).toString();return (x/Math.pow(10,e)).toFixed(n-1)+'×10'+String(e).split('').map(c=>({'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'}[c])).join('')}
+/* 성간소광 */
+function extinction(o){if(o.ext!=null)return o.ext;if(o.cat==='gal')return 0.1;const [l,b]=galLB(o);const dk=o.d/3261.6;return +(0.7*dk*Math.max(0,1-Math.abs(b)/18)).toFixed(2)}
+/* 스펙트럼 */
+const LN={Hd:['Hδ',410.2],Hg:['Hγ',434.0],Hb:['Hβ',486.1],Ha:['Hα',656.3],K:['Ca K',393.4],H:['Ca H',396.8],G:['G띠',430.8],Mg:['Mg b',517.3],Na:['Na D',589.0],He1:['He I',447.1],He1b:['He I',587.6],HeII:['He II',468.6],Fe:['Fe',527.0],CaI:['Ca I',422.7]};
+function lineSet(o){const c=o.cat==='gal'?'gal':(o.sp==='DA2'||o.lc==='D'?'D':specClass(o));
+ const L=(k,d,w)=>({k,nm:LN[k][0],l:LN[k][1],d,w:w||1.2});
+ switch(c){
+ case 'O':return [L('HeII',.75),L('He1',.55),L('He1b',.3),L('Hb',.35),L('Hg',.35),L('Hd',.3),L('Ha',.2)];
+ case 'B':return [L('He1',.6),L('He1b',.5),L('Hb',.55),L('Hg',.55),L('Hd',.5),L('Ha',.4),L('K',.1)];
+ case 'A':return [L('Hb',.9,2),L('Hg',.85,2),L('Hd',.8,2),L('Ha',.8,2),L('K',.35),L('H',.3)];
+ case 'F':return [L('Hb',.6),L('Hg',.55),L('Hd',.5),L('Ha',.55),L('K',.65),L('H',.6),L('G',.3),L('Mg',.2)];
+ case 'G':return [L('K',.9,1.6),L('H',.9,1.6),L('G',.6),L('Hb',.35),L('Hg',.3),L('Mg',.5),L('Na',.4),L('Fe',.35),L('Ha',.4)];
+ case 'K':return [L('K',1,2),L('H',1,2),L('G',.8,1.5),L('Mg',.8,1.5),L('Na',.7),L('CaI',.5),L('Fe',.5),L('Hb',.2),L('Ha',.25)];
+ case 'M':return [L('K',.9,2),L('H',.9,2),L('Na',.85,1.5),L('CaI',.7),{k:'TiO',nm:'TiO',l:495,d:.45,w:8},{k:'TiO',nm:'TiO',l:517,d:.5,w:6},{k:'TiO',nm:'TiO',l:548,d:.55,w:8},{k:'TiO',nm:'TiO',l:567,d:.55,w:6},{k:'TiO',nm:'TiO',l:620,d:.65,w:9},{k:'TiO',nm:'TiO',l:670,d:.55,w:9},{k:'TiO',nm:'TiO',l:712,d:.8,w:14}];
+ case 'D':return [L('Hb',.8,9),L('Hg',.75,9),L('Hd',.7,8),L('Ha',.6,10)];
+ case 'gal':return [L('K',.6,2.5),L('H',.55,2.5),L('G',.4,2.5),L('Hb',.2,2),L('Mg',.5,3),L('Na',.4,3)];
+ }return [];}
+function zOf(o){if(o.z!=null)return o.z;const v=o.vcz!=null?o.vcz:o.rv;return v/K.c}
+function planck(l,T){const x=1.4388e7/(l*T);return Math.pow(l,-5)/(Math.exp(Math.min(x,700))-1)}
+function wl2rgb(w){let r=0,g=0,b=0;
+ if(w>=380&&w<440){r=-(w-440)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=-(w-510)/20}else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=-(w-645)/65}else if(w<=780){r=1}
+ let f=w<420?.3+.7*(w-380)/40:w>700?.3+.7*(780-w)/80:1;return [r*f,g*f,b*f].map(v=>Math.round(255*Math.pow(Math.max(0,v),.8)))}
+/* 허블 */
+function hubble(v){const dMpc=v/K.H0;return {dMpc,dMly:dMpc*3.2616}}
+/* 위험 평가 */
+function bodyM(o){return o.Ms*K.Msun}
+function Rm(o){if(o.hz==='bh')return 0;return o.R*K.Rsun}
+function Rs(o){return 2*K.G*bodyM(o)/(K.cm*K.cm)}
+function hazardLimits(o){
+ const hz=o.hz;const out={thermR:0,tideR:0,horizon:0,ISCO:0};
+ if(!hz||hz==='snrzone')return out;
+ const GMm=K.G*bodyM(o);
+ out.tideR=Math.cbrt(2*GMm*K.Lship/K.gLim);
+ if(hz==='bh'){out.horizon=Rs(o);out.ISCO=3*Rs(o)}
+ else{const R=Rm(o);out.thermR=R*Math.pow(o.T/K.Thull,2)/2}
+ out.safe=Math.max(out.thermR,out.tideR,out.ISCO,hz==='bh'?out.horizon*3:0);
+ return out}
+function arrivalR(o){const L=hazardLimits(o);if(!L.safe)return 0;
+ if(o.hz==='bh')return Math.max(1000*Rs(o),L.safe*100);
+ if(o.hz==='ns')return L.safe*4.5;
+ return Math.max(Rm(o)*Math.pow(o.T/300,2)/2,L.safe*6)}
+function floorR(o){return o.hz==='bh'?Rs(o)*0.8:Rm(o)*1.02}
+function assess(o,r){
+ const L=hazardLimits(o);const res={r,lvl:'ok',txt:[],lines:[]};
+ const GMm=K.G*bodyM(o);
+ const tide=2*GMm*K.Lship/(r*r*r);res.tide=tide;res.tideG=tide/9.80665;
+ if(o.hz==='bh'){const rs=Rs(o);res.rs=rs;res.rOverRs=r/rs;
+  if(r<=rs){res.lvl='dead';res.txt.push('💀 사건의 지평선 통과 — 빛조차 탈출 불가. 통신 두절!');res.dil=0}
+  else{res.dil=Math.sqrt(1-rs/r)}
+  if(r>rs&&r<1.5*rs){res.lvl=res.lvl==='dead'?'dead':'bad';res.txt.push('⚠ 광자구(1.5 Rs) 안쪽 — 어떤 안정 궤도도 없다.')}
+  else if(r>=1.5*rs&&r<3*rs){res.lvl=res.lvl==='dead'?'dead':'bad';res.txt.push('⚠ 최내곽 안정 궤도(ISCO=3 Rs) 안쪽 — 궤도 유지 불가, 추락!')}
+ }else if(o.hz==='ns'||o.hz==='sn'||o.cat==='star'){
+  const th=o.T*Math.sqrt(Rm(o)/(2*r));res.Th=th;res.rOverR=r/Rm(o);
+  if(th>K.Thull){res.lvl='dead';res.txt.push('🔥 선체 평형온도 '+Math.round(th).toLocaleString()+' K > 1,500 K → 선체 용융!')}
+  else if(th>K.Tw){res.lvl='bad';res.txt.push('⚠ 선체 온도 '+Math.round(th)+' K — 선체 냉각 한계(1,000 K) 초과')}
+ }
+ if(tide>K.gLim){res.lvl='dead';res.txt.push('💥 조석력 '+res.tideG.toFixed(1)+' g (함선 양끝 Δa=2GM·L/r³) → 선체 파열!')}
+ else if(tide>20){if(res.lvl!=='dead')res.lvl='bad';res.txt.push('⚠ 조석 가속도차 '+res.tideG.toFixed(1)+' g — 승무원 위험')}
+ return res}
+function parseDist(s){const m=s.replace(/,/g,'').match(/^([\d.eE+\-]+)\s*(km|m|au|ly|r☉|rsun|r|rs|배rs|rsafe)?$/i);if(!m)return null;return {v:parseFloat(m[1]),u:(m[2]||'').toLowerCase()}}
+
+/* ===== 그리기 ===== */
+function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function hashS(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),W=960,H=540;
+let TT=0;
+function irc(rgb,ir,k){if(!ir)return rgb;const l=(rgb[0]*.3+rgb[1]*.5+rgb[2]*.2)/255*(k||1);return [Math.min(255,60+l*230),Math.min(255,l*170),Math.min(255,l*60)]}
+function glow(c,x,y,r,col,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,rgbStr(col,a));g.addColorStop(1,rgbStr(col,0));c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+function drawSky(c,o,ir){
+ const R=rng(hashS(o.id)),gl=galLB(o);c.fillStyle='#01020a';c.fillRect(0,0,W,H);
+ const b=Math.abs(gl[1]);
+ if(b<14){const g=c.createLinearGradient(0,H*.1,0,H*.9);const a=.16*(1-b/14);g.addColorStop(0,'rgba(120,130,170,0)');g.addColorStop(.5,'rgba(150,150,190,'+a+')');g.addColorStop(1,'rgba(120,130,170,0)');c.fillStyle=g;c.save();c.translate(W/2,H/2);c.rotate(-.35);c.translate(-W/2,-H/2);c.fillRect(-200,0,W+400,H);c.restore()}
+ const n=Math.round(160+420*Math.exp(-b/14));
+ for(let i=0;i<n;i++){const x=R()*W,y=R()*H,s=R(),a=.25+.6*R();c.fillStyle=ir?'rgba(255,170,90,'+a+')':'rgba('+(200+R()*55|0)+','+(200+R()*55|0)+',255,'+a+')';c.fillRect(x,y,s>.96?2.2:1.2,s>.96?2.2:1.2)}}
+function scaleSun(R){return Math.min(120,16+24*Math.log10(1+R*2))}
+function drawStar(c,o,ir){
+ const cxx=W/2,cyy=H/2-10;let rad=o.lc==='D'?7:scaleSun(o.R);
+ let col=irc(bbRGB(o.T),ir,1.15);
+ const big=o.m<4;
+ glow(c,cxx,cyy,rad*4.2,col,.45);glow(c,cxx,cyy,rad*2.2,col,.65);
+ if(o.lc==='I'&&o.T<5000){ // 대류 반점
+  const R=rng(hashS(o.id)+(TT/60|0));
+  c.save();c.beginPath();c.arc(cxx,cyy,rad,0,7);c.clip();c.fillStyle=rgbStr(col);c.fillRect(cxx-rad,cyy-rad,rad*2,rad*2);
+  const R2=rng(hashS(o.id));for(let i=0;i<30;i++){const a=R2()*6.28,d=Math.sqrt(R2())*rad;c.fillStyle=rgbStr(irc([255,210,120],ir,1.3),.55);c.beginPath();c.arc(cxx+Math.cos(a)*d,cyy+Math.sin(a)*d,rad*(.1+.22*R2()),0,7);c.fill()}
+  c.restore()}
+ else{const g=c.createRadialGradient(cxx,cyy,rad*.1,cxx,cyy,rad);g.addColorStop(0,'#fff');g.addColorStop(.55,rgbStr(col));g.addColorStop(1,rgbStr(col.map(v=>v*.7)));c.fillStyle=g;c.beginPath();c.arc(cxx,cyy,rad,0,7);c.fill()}
+ if(big&&o.lc!=='D'){c.strokeStyle=rgbStr(col,.5);c.lineWidth=1.5;for(let k=0;k<4;k++){const a=k*Math.PI/2+.4,L=rad*3.6;c.beginPath();c.moveTo(cxx+Math.cos(a)*rad,cyy+Math.sin(a)*rad);c.lineTo(cxx+Math.cos(a)*L,cyy+Math.sin(a)*L);c.stroke()}}
+ if(ir&&o.mdot){ // 먼지 껍질
+  const rr=rad*(2.2+0.5*Math.log10(o.mdot*1e7));for(let k=0;k<3;k++){c.strokeStyle='rgba(255,140,60,'+(.5-k*.14)+')';c.lineWidth=6-k*1.6;c.beginPath();c.arc(cxx,cyy,rr+k*18+Math.sin(TT/400+k)*3,0,7);c.stroke()}
+  c.fillStyle='#ffd7a8';c.font='bold 17px sans-serif';c.textAlign='center';c.fillText('먼지 껍질 · 질량손실 Ṁ = '+o.mdot.toExponential(0).replace('e-','×10⁻')+' M☉/yr',cxx,cyy+rr+52)}
+ if(o.comp&&!ir){const b=BYID[o.comp];glow(c,cxx+rad*3.4,cyy+rad*1.3,10,[200,220,255],.9);c.fillStyle='#fff';c.beginPath();c.arc(cxx+rad*3.4,cyy+rad*1.3,3,0,7);c.fill();c.fillStyle='#9fe';c.font='16px sans-serif';c.textAlign='left';c.fillText('백색왜성 동반성 (Sirius B)',cxx+rad*3.4+12,cyy+rad*1.3+4)}
+}
+function drawNeb(c,o,ir){
+ const R=rng(hashS(o.id)),cxx=W/2,cyy=H/2;
+ const P=(rgb,a)=>rgbStr(irc(rgb,ir,1),a);
+ if(o.tp==='emis'){
+  for(let i=0;i<46;i++){const a=R()*6.28,d=Math.pow(R(),.7)*230;glow(c,cxx+Math.cos(a)*d*1.3,cyy+Math.sin(a)*d*.8,50+R()*110,R()<.7?[235,70,110]:[90,170,230],.18+R()*.16)}
+  glow(c,cxx,cyy,90,[255,200,230],.55);
+  for(let i=0;i<4;i++){c.fillStyle='#fff';c.beginPath();c.arc(cxx+(R()-.5)*24,cyy+(R()-.5)*18,2.4,0,7);c.fill()}
+  c.fillStyle='#ffd0e4';c.font='16px sans-serif';c.textAlign='left';c.fillText('트라페지움(젊은 O·B형 별 4개)',cxx+22,cyy-16)
+ }else if(o.tp==='dark'){
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(220,70,90,.1)');g.addColorStop(.55,'rgba(230,90,110,.7)');g.addColorStop(1,'rgba(200,60,90,.2)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  if(!ir){c.fillStyle='#03030a';c.beginPath();c.moveTo(280,H);c.lineTo(300,330);c.quadraticCurveTo(380,250,430,210);c.quadraticCurveTo(470,150,520,170);c.quadraticCurveTo(560,150,590,190);c.lineTo(570,235);c.quadraticCurveTo(600,300,640,330);c.lineTo(680,H);c.closePath();c.fill()}
+  else{c.fillStyle='rgba(20,0,0,.35)';c.fillRect(0,0,W,H);for(let i=0;i<9;i++){const x=300+R()*350,y=250+R()*200;glow(c,x,y,22,[255,150,60],.9);c.fillStyle='#ffe8c0';c.beginPath();c.arc(x,y,3,0,7);c.fill()}c.fillStyle='#ffd7a8';c.font='bold 17px sans-serif';c.textAlign='center';c.fillText('적외선: 먼지 속 아기별(원시성) 이 보인다',W/2,60)}
+ }else if(o.tp==='snr'){
+  for(let i=0;i<340;i++){const a=R()*6.28,d=60+R()*170;c.strokeStyle=R()<.5?P([255,120,50],.5):P([120,170,255],.4);c.lineWidth=1.2;c.beginPath();const x=cxx+Math.cos(a)*d*1.25,y=cyy+Math.sin(a)*d*.85;c.moveTo(x,y);c.lineTo(x+(R()-.5)*60,y+(R()-.5)*50);c.stroke()}
+  glow(c,cxx,cyy,120,[110,160,255],.45);
+  c.fillStyle='#bff';c.beginPath();c.arc(cxx,cyy,3,0,7);c.fill();c.fillStyle='#cfe';c.font='16px sans-serif';c.textAlign='left';c.fillText('중심 펄서(중성자별)',cxx+10,cyy-8)
+ }else if(o.tp==='pn'){
+  for(let k=0;k<3;k++){c.strokeStyle=P(k===0?[240,70,70]:k===1?[90,230,170]:[120,140,255],.55-k*.12);c.lineWidth=26-k*7;c.beginPath();c.ellipse(cxx,cyy,150-k*28,115-k*22,0,0,7);c.stroke()}
+  glow(c,cxx,cyy,34,[200,230,255],.9);c.fillStyle='#fff';c.beginPath();c.arc(cxx,cyy,3.5,0,7);c.fill();c.fillStyle='#cfe';c.font='16px sans-serif';c.textAlign='left';c.fillText('중심 백색왜성',cxx+10,cyy+4)
+ }else if(o.tp==='oc'){
+  for(let i=0;i<7;i++){const x=cxx+(R()-.5)*320,y=cyy+(R()-.5)*220;glow(c,x,y,46,[120,170,255],.4);glow(c,x,y,14,[200,225,255],.95);c.fillStyle='#fff';c.beginPath();c.arc(x,y,3.2,0,7);c.fill()}
+  for(let i=0;i<110;i++){c.fillStyle=P([190,215,255],.5+R()*.4);c.fillRect(cxx+(R()-.5)*420,cyy+(R()-.5)*300,1.8,1.8)}
+ }else if(o.tp==='gc'){
+  for(let i=0;i<1700;i++){const d=Math.pow(R(),2.1)*210,a=R()*6.28;c.fillStyle=P(R()<.5?[255,235,190]:[255,205,150],.35+R()*.6);c.fillRect(cxx+Math.cos(a)*d*1.1,cyy+Math.sin(a)*d*.9,1.6,1.6)}
+  glow(c,cxx,cyy,60,[255,230,170],.5)
+ }
+}
+function drawGal(c,o,ir){
+ const R=rng(hashS(o.id)),cxx=W/2,cyy=H/2;
+ const P=(rgb,a)=>rgbStr(irc(rgb,ir,1),a);
+ if(o.tp==='spiral'){
+  c.save();c.translate(cxx,cyy);c.rotate(o.id==='m31'?-.6:.3);c.scale(1,o.id==='m31'?.38:.82);
+  glow(c,0,0,250,[170,190,255],.28);
+  for(let i=0;i<2600;i++){const arm=i%2,t=Math.pow(R(),.8)*5.2+.4,a=t*1.35+arm*Math.PI+(R()-.5)*.55,d=26*t;const x=Math.cos(a)*d*1.35,y=Math.sin(a)*d*1.35;c.fillStyle=P(R()<.75?[190,210,255]:[255,170,190],.35+R()*.5);c.fillRect(x,y,1.8,1.8)}
+  glow(c,0,0,70,[255,225,160],.9);c.restore()
+ }else if(o.tp==='ell'){
+  for(let i=0;i<2200;i++){const d=Math.pow(R(),2)*230,a=R()*6.28;c.fillStyle=P([255,220,170],.2+R()*.5);c.fillRect(cxx+Math.cos(a)*d*1.2,cyy+Math.sin(a)*d*.8,1.6,1.6)}
+  glow(c,cxx,cyy,140,[255,215,160],.65);
+  if(o.id==='m87'){c.strokeStyle=P([140,190,255],.9);c.lineWidth=5;c.beginPath();c.moveTo(cxx,cyy);c.lineTo(cxx+170,cyy-100);c.stroke();glow(c,cxx+170,cyy-100,24,[140,190,255],.7);c.fillStyle='#bdf';c.font='16px sans-serif';c.textAlign='left';c.fillText('블랙홀 제트',cxx+110,cyy-118)}
+ }else if(o.tp==='qso'){
+  glow(c,cxx,cyy,200,[160,190,255],.35);glow(c,cxx,cyy,40,[255,255,255],1);
+  c.strokeStyle=P([150,190,255],.8);c.lineWidth=4;c.beginPath();c.moveTo(cxx,cyy);c.lineTo(cxx+140,cyy-90);c.stroke();
+  c.fillStyle='#fff';c.beginPath();c.arc(cxx,cyy,5,0,7);c.fill();
+  for(let i=0;i<5;i++){c.fillStyle=P([255,220,170],.7);c.fillRect(cxx+(R()-.5)*500,cyy+(R()-.5)*300,2,2)}
+ }else{ // irr
+  for(let i=0;i<1100;i++){const a=R()*6.28,d=Math.pow(R(),1.4)*200;c.fillStyle=P(R()<.4?[255,160,190]:[190,210,255],.25+R()*.55);c.fillRect(cxx+Math.cos(a)*d*1.3+40,cyy+Math.sin(a)*d*.8-20,1.8,1.8)}
+  glow(c,cxx+10,cyy,120,[200,220,255],.35)}
+}
+function drawBH(c,o,ir,vis){
+ const cxx=W/2,cyy=H/2-10;
+ if(o.id==='sgr'&&!ir&&vis){ // 먼지로 가려짐
+  {const Rq=rng(5);for(let i=0;i<60;i++){glow(c,Rq()*W,Rq()*H,100+Rq()*120,[50,30,20],.55)}}
+  c.fillStyle='rgba(0,0,0,.45)';c.fillRect(0,0,W,H);
+  c.fillStyle='#ffd9a0';c.font='bold 22px sans-serif';c.textAlign='center';c.fillText('성간먼지가 시야를 완전히 가린다 (A_V ≈ 30등급)',W/2,H/2-6);
+  c.font='17px sans-serif';c.fillStyle='#cdd';c.fillText('가시광은 1/10¹² 로 약해짐 → 적외선(2 μm)·전파·X선 센서로 전환하세요',W/2,H/2+22);return}
+ if(o.id==='sgr'&&ir){ // S-stars
+  {const Rq=rng(9);for(let i=0;i<70;i++){c.fillStyle='rgba(255,190,110,'+(.3+Rq()*.5)+')';c.fillRect(Rq()*W,Rq()*H,2,2)}}
+  glow(c,cxx,cyy,70,[255,160,60],.6);
+  c.strokeStyle='rgba(120,255,220,.7)';c.lineWidth=1.5;c.beginPath();c.ellipse(cxx+30,cyy,120,64,-.5,0,7);c.stroke();
+  const t=TT/2400;const a=t*6.28;const ex=Math.cos(a)*120,ey=Math.sin(a)*64;const px=cxx+30+ex*Math.cos(-.5)-ey*Math.sin(-.5),py=cyy+ex*Math.sin(-.5)+ey*Math.cos(-.5);
+  c.fillStyle='#8ff';c.beginPath();c.arc(px,py,5,0,7);c.fill();c.fillStyle='#bff';c.font='16px sans-serif';c.textAlign='left';c.fillText('S2 (공전 16년, 질량 측정의 열쇠)',px+10,py-8);
+  c.fillStyle='#000';c.beginPath();c.arc(cxx,cyy,10,0,7);c.fill();c.strokeStyle='#ffb';c.lineWidth=2;c.beginPath();c.arc(cxx,cyy,12,0,7);c.stroke();return}
+ const rr=o.id==='sgr'?44:30;
+ for(let k=0;k<9;k++){const a=.45-k*.04;c.strokeStyle='rgba('+(255-k*8)+','+(180-k*14)+','+(70+k*10)+','+a+')';c.lineWidth=7;c.beginPath();c.ellipse(cxx,cyy+4,rr*(2.0+k*.45),rr*(.5+k*.11),-.18,0,7);c.stroke()}
+ glow(c,cxx,cyy,rr*4,[255,170,80],.35);
+ const sw=ir?[255,120,60]:[255,235,190];c.strokeStyle=rgbStr(sw,.95);c.lineWidth=3;c.beginPath();c.arc(cxx,cyy,rr*1.12,0,7);c.stroke();
+ c.fillStyle='#000';c.beginPath();c.arc(cxx,cyy,rr,0,7);c.fill();
+ c.fillStyle='#ffd9a0';c.font='16px sans-serif';c.textAlign='left';c.fillText('사건의 지평선 그림자 · 중력렌즈 광자 고리',cxx+rr*1.3,cyy-rr*1.2)
+ if(o.id==='cyg'){const bx=cxx-290,by=cyy-110;glow(c,bx,by,36,[130,170,255],.8);c.fillStyle='#cdf';c.beginPath();c.arc(bx,by,15,0,7);c.fill();c.fillText('동반성 HDE 226868 (O형 초거성)',bx-70,by-26);c.strokeStyle='rgba(255,180,100,.6)';c.lineWidth=3;c.setLineDash([6,5]);c.beginPath();c.moveTo(bx+15,by+4);c.quadraticCurveTo(cxx-170,cyy-70,cxx-rr*2.2,cyy-4);c.stroke();c.setLineDash([])}
+}
+function drawNS(c,o,ir){
+ const cxx=W/2,cyy=H/2-10,a=TT/70;
+ glow(c,cxx,cyy,180,[120,170,255],.2);
+ for(const s of [1,-1]){const g=c.createLinearGradient(cxx,cyy,cxx+Math.cos(a)*s*300,cyy+Math.sin(a)*s*300);g.addColorStop(0,'rgba(120,255,255,.9)');g.addColorStop(1,'rgba(120,255,255,0)');c.strokeStyle=g;c.lineWidth=9;c.beginPath();c.moveTo(cxx,cyy);c.lineTo(cxx+Math.cos(a)*s*300,cyy+Math.sin(a)*s*300);c.stroke()}
+ glow(c,cxx,cyy,22,[220,240,255],1);c.fillStyle='#fff';c.beginPath();c.arc(cxx,cyy,6,0,7);c.fill();
+ c.fillStyle='#bff';c.font='16px sans-serif';c.textAlign='left';c.fillText('회전하는 자기극 빔 — 초당 30회 펄스 (등대 효과)',cxx+20,cyy+60)}
+function drawView(){
+ const o=S.tgt,c=cx;TT=performance.now();
+ if(!o){c.fillStyle='#01020a';c.fillRect(0,0,W,H);const R=rng(77);for(let i=0;i<420;i++){const s=R();c.fillStyle='rgba(200,215,255,'+(.2+.6*R())+')';c.fillRect(R()*W,R()*H,s>.95?2.3:1.2,s>.95?2.3:1.2)}
+  const g=c.createRadialGradient(W/2,H*.58,0,W/2,H*.58,150);g.addColorStop(0,'rgba(255,230,160,.9)');g.addColorStop(.2,'rgba(255,220,120,.35)');g.addColorStop(1,'rgba(255,220,120,0)');c.fillStyle=g;c.beginPath();c.arc(W/2,H*.58,150,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(W/2,H*.58,3,0,7);c.fill();
+  c.fillStyle='#cfe';c.font='17px sans-serif';c.textAlign='center';c.fillText('☀ 먼 곳의 태양 (0.8 ly)',W/2,H*.58+26);c.fillText('오르트 구름 · 워프 구동 대기 — 목적지(천체 이름)를 입력하세요',W/2,H-26);return}
+ const ir=S.mode==='ir';
+ if(S.mode==='spec'||S.mode==='dop'){drawSpecView(c,o);return}
+ drawSky(c,o,ir);
+ if(o.cat==='star')drawStar(c,o,ir);else if(o.cat==='neb'||o.cat==='cl')drawNeb(c,o,ir);else if(o.cat==='gal')drawGal(c,o,ir);else if(o.cat==='bh')drawBH(c,o,ir,true);else if(o.cat==='ns')drawNS(c,o,ir);
+ c.fillStyle='rgba(0,0,0,.45)';c.fillRect(0,0,W,30);c.fillStyle='#e8eeff';c.font='bold 17px sans-serif';c.textAlign='left';c.fillText((ir?'🌡 적외선 센서 (가짜색)':'🌈 가시광 센서')+' · '+o.ko,10,20);
+}
+/* 스펙트럼 */
+function spectrumTo(c,o,x0,y0,w,h,w1,w2,opt){
+ opt=opt||{};const z=opt.z!=null?opt.z:zOf(o),T=o.T>100?o.T:5800;const lines=lineSet(o);
+ const px=l=>x0+(l-w1)/(w2-w1)*w;
+ // 연속 스펙트럼
+ const N=Math.round(w/2);let pk=0;for(let l=w1;l<=w2;l+=(w2-w1)/80)pk=Math.max(pk,planck(l/(1+z),T));
+ const fl=l=>{let f=planck(l/(1+z),T)/Math.max(pk,1e-300);return Math.min(1,f)};
+ for(let i=0;i<N;i++){const l=w1+(i+.5)/N*(w2-w1);const rgb=wl2rgb(Math.max(380,Math.min(780,l)));let f=Math.pow(Math.max(.05,Math.min(1,fl(l))),.6);
+  let ab=0;for(const L of lines){const lo=L.l*(1+z);const wd=Math.max(L.w*(1+z),(w2-w1)/w*1.1);const d=(l-lo)/wd;ab=Math.max(ab,L.d*Math.exp(-d*d*2.2))}
+  f*=1-ab*.92;
+  const wide=opt.beyond?.35:1;c.fillStyle='rgb('+(rgb[0]*f*wide|0)+','+(rgb[1]*f*wide|0)+','+(rgb[2]*f*wide|0)+')';c.fillRect(x0+i*w/N,y0,w/N+1,h)}
+ if(w2>780||w1<380){c.fillStyle='rgba(0,0,0,.5)';if(w2>780)c.fillRect(px(780),y0,x0+w-px(780),h)}
+ // 눈금 + 이름
+ c.font='15px sans-serif';c.textAlign='center';c.fillStyle='#9fb';
+ const step=(w2-w1)>300?50:(w2-w1)>120?20:(w2-w1)>40?5:(w2-w1)>10?2:(w2-w1)>3?.5:.1;
+ for(let l=Math.ceil(w1/step)*step;l<=w2;l+=step){const x=px(l);c.fillRect(x,y0+h,1,5);c.fillText(+l.toFixed(2)+'',x,y0+h+18)}
+ c.textAlign='left';
+ return {px,z}}
+function drawSpecView(c,o){
+ c.fillStyle='#02030a';c.fillRect(0,0,W,H);
+ const dop=S.mode==='dop';
+ c.fillStyle='#e8eeff';c.font='bold 18px sans-serif';c.textAlign='left';c.fillText((dop?'〰 도플러 센서':'🔬 전천 분광 센서')+' · '+o.ko+(o.sp?'  ['+o.sp+']':''),12,24);
+ if(!(o.T>100)&&o.cat!=='gal'){
+  c.fillStyle='#cdd';c.font='17px sans-serif';c.textAlign='center';
+  const msg=o.cat==='bh'?['블랙홀 자체는 빛을 내지 않는다 → 선 스펙트럼 없음','강착원반의 X선(수 keV)과 동반성 스펙트럼으로 간접 관측']:['방출/흡수 성운: 연속 스펙트럼이 아니라 선 스펙트럼','센서 필터를 바꿔 관측하세요'];
+  if(o.cat==='neb'&&o.tp==='dark')msg[0]='암흑성운: 뒤쪽 별빛을 흡수·적색화(성간 소광)하는 차가운 먼지(≈10 K)';
+  c.fillText(msg[0],W/2,H/2-10);c.fillText(msg[1],W/2,H/2+18);return}
+ if(o.cat==='neb'||o.cat==='cl'){ // 방출선
+  if(o.tp==='emis'||o.tp==='pn'||o.tp==='snr'){
+   c.fillStyle='#000';c.fillRect(60,70,W-120,150);const lines=[[486.1,'Hβ',.8,[80,200,255]],[500.7,'[O III]',1,[80,255,170]],[656.3,'Hα',1,[255,60,60]],[658.4,'[N II]',.5,[255,70,70]]];
+   const w1=400,w2=700,px=l=>60+(l-w1)/(w2-w1)*(W-120);
+   let li=0;for(const [l,n,a,col] of lines){const x=px(l);const yy=li++%2?44:60;c.fillStyle=rgbStr(col,a);c.fillRect(x-2,70,4,150);c.fillStyle='#ffd';c.font='16px sans-serif';c.textAlign='center';c.fillText(n+' '+l,x,yy)}
+   c.fillStyle='#9fb';c.textAlign='center';for(let l=400;l<=700;l+=50){c.fillText(l+'',px(l),240)}
+   c.fillStyle='#cdd';c.font='17px sans-serif';c.fillText('방출선 스펙트럼 = 이온화한 저밀도 가스 (T≈10,000 K) — 별빛의 자외선이 에너지원',W/2,285);return}
+  }
+ const z=zOf(o);
+ if(dop){drawDop(c,o,z);return}
+ let w1=380,w2=780,beyond=false;
+ if(z>1){c.fillStyle='#fc8';c.font='bold 18px sans-serif';c.textAlign='center';c.fillText('z = '+z+' : 자외선 선들이 가시광을 벗어나 적외선으로 이동!',W/2,150);c.font='17px sans-serif';c.fillStyle='#cdd';c.fillText('Lyα 121.6 nm × (1+z) = '+(121.6*(1+z)).toFixed(0)+' nm (근적외선) — 우주 팽창이 파장을 늘렸다',W/2,185);return}
+ const x0=60,w=W-120;const info=spectrumTo(c,o,x0,60,w,130,w1,w2);
+ // 선 이름
+ const lines=lineSet(o);c.font='15px sans-serif';c.textAlign='center';let k=0;const used=[];
+ for(const L of lines){if(L.k==='TiO'){if(L.l===620){c.fillStyle='#ffb';c.fillText('TiO 띠',info.px(L.l*(1+z)),50)}continue}
+  const x=info.px(L.l*(1+z));if(used.some(u=>Math.abs(u-x)<30))continue;used.push(x);c.fillStyle='#ffe';c.fillText(L.nm,x,48-(k++%2)*13)}
+ // 강도 곡선
+ const gy=215,gh=120;c.strokeStyle='#244';c.strokeRect(x0,gy,w,gh);
+ c.beginPath();c.strokeStyle='#5eead4';c.lineWidth=2;
+ let pk=0;const T=o.T>100?o.T:5800;for(let l=w1;l<=w2+400;l+=10)pk=Math.max(pk,planck(l/(1+z),T));
+ for(let i=0;i<=w;i+=3){const l=w1+i/w*(w2-w1);let f=planck(l/(1+z),T)/pk;let ab=0;for(const L of lines){const lo=L.l*(1+z);const d=(l-lo)/Math.max(L.w*(1+z),1.2);ab=Math.max(ab,L.d*Math.exp(-d*d*2.2))}f*=1-ab*.9;const y=gy+gh-Math.min(1,f)*(gh-8);i?c.lineTo(x0+i,y):c.moveTo(x0+i,y)}
+ c.stroke();c.lineWidth=1;
+ // 빈 피크
+ const lm=wien(T)*(1+z);c.setLineDash([5,4]);c.strokeStyle='#fbbf24';
+ if(lm>=w1&&lm<=w2){c.beginPath();c.moveTo(info.px(lm),gy);c.lineTo(info.px(lm),gy+gh);c.stroke();c.fillStyle='#fbbf24';c.textAlign='center';c.fillText('λmax='+lm.toFixed(0)+' nm',info.px(lm),gy-4)}
+ else{c.fillStyle='#fbbf24';c.textAlign=lm<w1?'left':'right';c.fillText((lm<w1?'◀ ':'')+'λmax = '+lm.toFixed(0)+' nm'+(lm<w1?' (자외선)':' (적외선) ▶'),lm<w1?x0+4:x0+w-4,gy+16)}
+ c.setLineDash([]);
+ c.fillStyle='#9fb';c.textAlign='center';c.font='16px sans-serif';c.fillText('파장 (nm)  →',W/2,gy+gh+22);
+ c.fillStyle='#cdd';c.textAlign='left';c.font='17px sans-serif';
+ const rows=[ 'T = '+Math.round(T).toLocaleString()+' K → 빈의 법칙 λmax = 2.898×10⁶ / T = '+wien(T).toFixed(0)+' nm','분광형 '+o.sp+(o.cat==='star'?' ('+(CLS_INFO[specClass(o)]?CLS_INFO[specClass(o)].join(' · '):'')+')':'')];
+ rows.forEach((r,i)=>c.fillText(r,x0,gy+gh+48+i*20))}
+function drawDop(c,o,z){
+ const l0=393.4,lo=l0*(1+z),dl=lo-l0,v=o.vcz!=null?o.vcz:o.rv;
+ const mg=Math.max(Math.abs(dl)*.7,.04),a=Math.min(l0,lo)-mg,b=Math.max(l0,lo)+mg;
+ const x0=70,w=W-140,px=l=>x0+(l-a)/(b-a)*w;
+ c.fillStyle='#08121a';c.fillRect(x0,70,w,120);
+ const grd=c.createLinearGradient(x0,0,x0+w,0);grd.addColorStop(0,'#4a2fb8');grd.addColorStop(1,'#6d3bd6');c.fillStyle=grd;c.globalAlpha=.55;c.fillRect(x0,70,w,120);c.globalAlpha=1;
+ // 정지 / 관측
+ c.setLineDash([6,5]);c.strokeStyle='#8cf';c.lineWidth=2;c.beginPath();c.moveTo(px(l0),64);c.lineTo(px(l0),196);c.stroke();c.setLineDash([]);
+ c.strokeStyle=dl<0?'#60a5fa':'#f87171';c.lineWidth=5;c.beginPath();c.moveTo(px(lo),64);c.lineTo(px(lo),196);c.stroke();c.lineWidth=1;
+ c.font='16px sans-serif';c.textAlign='center';c.fillStyle='#8cf';c.fillText('정지 파장 λ₀ = '+l0.toFixed(3)+' nm (Ca II K)',px(l0),56);
+ c.fillStyle=dl<0?'#9cf':'#fca5a5';c.fillText('관측 λ = '+lo.toFixed(Math.abs(dl)<1?4:3)+' nm',px(lo),dl>=0?214:224);
+ if(Math.abs(dl)>1e-4){c.strokeStyle='#fff';c.beginPath();c.moveTo(px(l0),240);c.lineTo(px(lo),240);c.stroke();c.fillStyle='#fff';c.fillText('Δλ = '+dl.toFixed(Math.abs(dl)<1?4:3)+' nm',(px(l0)+px(lo))/2,236)}
+ c.fillStyle='#9fb';c.textAlign='center';const st=(b-a)/6;for(let i=0;i<=6;i++){const l=a+i*st;c.fillRect(px(l),190,1,5);c.fillText(l.toFixed(Math.abs(b-a)<1?3:1),px(l),250+20)}
+ c.fillStyle='#cdd';c.font='17px sans-serif';c.textAlign='left';
+ const hid=S.hideCalc&&S.hideCalc(o);
+ const lines=hid?['[계산 미션] z = Δλ/λ₀ , v = c·z , d = v/H₀ (H₀=70 km/s/Mpc) 를 직접 계산하세요.','관측 파장은 위 눈금에서 읽을 수 있습니다.']:['z = Δλ/λ₀ = '+(dl/l0).toExponential(3)+'   →   v = c·z = '+(K.c*dl/l0).toFixed(1)+' km/s  ('+(dl<0?'청색편이: 접근':'적색편이: 후퇴')+')',o.cat==='gal'?(Math.abs(o.vcz)<500?'※ 너무 가까운 은하 — 중력에 의한 고유운동이 우주 팽창보다 커서 허블 법칙(v=H₀d)을 쓸 수 없다.':'허블 법칙: d = v/H₀ = '+(Math.abs(o.vcz)/K.H0).toFixed(1)+' Mpc  (H₀=70 km/s/Mpc)'):'별의 시선속도 — 허블 팽창이 아니라 별 자체의 운동'];
+ lines.forEach((r,i)=>c.fillText(r,70,310+i*24));
+ if(o.cat!=='gal'){c.fillStyle='#fcd34d';c.fillText('※ 별의 도플러 이동은 매우 작다. 눈금을 극도로 확대해서 표시했다.',70,372)}
+}
+/* H-R도 */
+const hr=document.getElementById('ch'),hx=hr.getContext('2d'),HW=960,HH=620;
+const MS=[[40000,5.4],[25000,4.2],[15000,2.9],[10000,1.6],[7500,0.95],[6500,0.55],[5772,0],[5000,-0.45],[4000,-1.2],[3500,-1.6],[3000,-2.6]];
+function drawHR(){
+ const c=hx,L=70,Rr=HW-30,Tp=40,B=HH-70;const xs=T=>L+(Math.log10(50000)-Math.log10(T))/(Math.log10(50000)-Math.log10(2400))*(Rr-L);const ys=l=>B-(l+4.5)/(7.5+4.5)*(B-Tp);
+ c.fillStyle='#02030a';c.fillRect(0,0,HW,HH);
+ // 분광형 색띠
+ const cl=[['O',50000,30000],['B',30000,10000],['A',10000,7500],['F',7500,6000],['G',6000,5200],['K',5200,3700],['M',3700,2400]];
+ for(const [n,a,b] of cl){const x1=xs(a),x2=xs(b);const col=bbRGB((a+b)/2);c.fillStyle=rgbStr(col,.14);c.fillRect(x1,Tp,x2-x1,B-Tp);c.fillStyle=rgbStr(col);c.font='bold 17px sans-serif';c.textAlign='center';c.fillText(n,(x1+x2)/2,Tp-8)}
+ c.strokeStyle='#26346a';c.lineWidth=1;c.font='15px sans-serif';c.fillStyle='#9fb';
+ for(let l=-4;l<=7;l++){const y=ys(l);c.beginPath();c.moveTo(L,y);c.lineTo(Rr,y);c.stroke();c.textAlign='right';c.fillText('10'+String(l).replace('-','⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]),L-6,y+4)}
+ for(const T of [40000,20000,10000,7000,5000,4000,3000]){const x=xs(T);c.beginPath();c.moveTo(x,Tp);c.lineTo(x,B);c.stroke();c.textAlign='center';c.fillText(T.toLocaleString(),x,B+16)}
+ c.fillStyle='#cdd';c.font='16px sans-serif';c.textAlign='center';c.fillText('← 표면 온도 (K) : 뜨겁다 … 차갑다 →',(L+Rr)/2,B+40);
+ c.save();c.translate(18,(Tp+B)/2);c.rotate(-Math.PI/2);c.fillText('광도 L (태양=1)',0,0);c.restore();
+ // 영역
+ c.lineWidth=26;c.lineCap='round';c.strokeStyle='rgba(120,160,255,.22)';c.beginPath();MS.forEach((p,i)=>{const x=xs(p[0]),y=ys(p[1]);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();
+ c.lineCap='butt';c.lineWidth=1;
+ const blob=(pts,col,txt,tx,ty)=>{c.fillStyle=col;c.beginPath();pts.forEach((p,i)=>{const x=xs(p[0]),y=ys(p[1]);i?c.lineTo(x,y):c.moveTo(x,y)});c.closePath();c.fill();c.fillStyle='rgba(255,255,255,.7)';c.font='bold 16px sans-serif';c.textAlign='center';c.fillText(txt,xs(tx),ys(ty))};
+ blob([[5800,1.1],[3400,1.1],[3400,3],[5800,3]],'rgba(255,170,80,.14)','거성 (III)',4400,2.0);
+ blob([[40000,4.2],[2800,4.2],[2800,6.3],[40000,6.3]],'rgba(255,120,120,.10)','초거성 (I)',9000,5.9);
+ blob([[30000,-1],[7500,-1],[7500,-3.7],[30000,-3.7]],'rgba(180,220,255,.13)','백색왜성 (D)',14000,-2.9);
+ c.fillStyle='rgba(180,200,255,.7)';c.font='bold 16px sans-serif';c.textAlign='left';c.fillText('주계열 (V)',xs(22000),ys(2.2));
+ // 점
+ const pts=[];for(const o of C){if(o.cat!=='star')continue;const Lm=lumOf(o);if(!Lm)continue;pts.push(o)}
+ pts.forEach(o=>{const vis=S.visited[o.id];const x=xs(o.T),y=ys(log10(lumOf(o)));
+  if(!vis){c.fillStyle='rgba(150,170,220,.28)';c.beginPath();c.arc(x,y,3,0,7);c.fill();return}
+  const col=bbRGB(o.T);const r=3+Math.min(10,Math.max(0,log10(o.R+1)*3.2));glow(c,x,y,r*2.2,col,.4);c.fillStyle=rgbStr(col);c.beginPath();c.arc(x,y,r,0,7);c.fill();
+  c.strokeStyle=S.tgt===o?'#fff':'rgba(255,255,255,.4)';c.lineWidth=S.tgt===o?2.5:1;c.beginPath();c.arc(x,y,r+3,0,7);c.stroke();c.lineWidth=1;
+  c.fillStyle='#fff';c.font='15px sans-serif';c.textAlign='left';c.fillText(o.ko.replace(/ \(.*\)/,''),x+r+5,y+4)});
+ c.fillStyle='#9fb';c.font='15px sans-serif';c.textAlign='left';c.fillText('● 흐린 점 = 아직 방문하지 않은 카탈로그 항성 · 밝은 점 = 분광 관측 완료',L,HH-10);
+ return {xs,ys}}
+
+/* ===== 상태 ===== */
+const $=id=>document.getElementById(id);
+const D2R=Math.PI/180;
+const START=(()=>{const d=[0.6,-0.3,0.74],n=Math.hypot(...d);return d.map(v=>v/n*0.8)})();
+const S={pos:START.slice(),tgt:null,r:0,mode:'spec',visited:{},irSeen:{},integ:100,retreats:0,tab:'bridge',mis:1,done:{},ent:{},snExp:{},gview:'top',last:null,warps:0,
+ hideCalc:o=>!S.done[4]&&['m87','n4889','3c273'].includes(o.id)};
+C.forEach(o=>{if(o.cat==='star'&&!o.hz)o.hz='star'});
+const M3IDS=['vega','arc','rigel'],M4IDS=['m87','n4889','3c273'],M2IDS=['bet','ant','vy','muc'],M5IDS=['cyg','sgr','crab'];
+function hideDist(o){return !S.done[3]&&M3IDS.includes(o.id)}
+try{const j=JSON.parse(localStorage.getItem('sp1021')||'null');if(j){S.visited=j.visited||{};S.done=j.done||{};S.ent=j.ent||{}}}catch(e){}
+function save(){try{localStorage.setItem('sp1021',JSON.stringify({visited:S.visited,done:S.done,ent:S.ent}))}catch(e){}}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+const MODES={spec:['🔬 분광','전천 분광(All-Sky Spectroscopy)'],vis:['🌈 가시광','가시광 광학 관측(Visible)'],ir:['🌡 적외선','적외선 관측(IR 2 μm)'],dop:['〰 도플러','도플러·적색편이 정밀 분광(Doppler)']};
+const norm=s=>String(s).toLowerCase().replace(/[\s\-_().,*·'’]/g,'');
+function keysOf(o){const k=[o.id,o.nm,o.ko,o.ng,o.hip&&o.hip!=='-'?'hip'+o.hip:null,o.hd&&o.hd!=='-'?'hd'+o.hd:null,...(o.al||[])].filter(Boolean).map(norm);return k}
+function find(q){q=norm(q);if(!q)return null;
+ let ex=C.find(o=>keysOf(o).includes(q));if(ex)return ex;
+ if(q.length>=3){const m=C.filter(o=>keysOf(o).some(k=>k.startsWith(q)));if(m.length)return m[0];const m2=C.filter(o=>keysOf(o).some(k=>k.includes(q)));if(m2.length)return m2[0]}
+ return null}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function say(h,cls){const d=document.createElement('div');d.className='msg '+(cls||'');d.innerHTML=h;$('log').appendChild(d);$('log').scrollTop=1e9;return d}
+function fmtR(m){if(m<=0)return '—';if(m<1e3)return m.toFixed(0)+' m';if(m<1e7)return (m/1e3).toFixed(m<1e5?1:0)+' km';if(m<K.AU*0.02)return Math.round(m/1e3).toLocaleString()+' km';if(m<K.ly*0.1)return (m/K.AU).toFixed(m/K.AU<10?2:1)+' AU';return (m/K.ly).toFixed(3)+' ly'}
+function fmtTime(y){if(y<1/8766*2)return Math.max(1,Math.round(y*8766*60))+' 분';if(y<1/365)return (y*8766).toFixed(1)+' 시간';if(y<1)return (y*365).toFixed(1)+' 일';if(y<1000)return y.toFixed(1)+' 년';return Math.round(y).toLocaleString()+' 년'}
+function names(o){const a=[];if(o.hip&&o.hip!=='-')a.push('HIP '+o.hip);if(o.hd&&o.hd!=='-')a.push('HD '+o.hd);if(o.ng)a.push(o.ng);return a.join(' · ')}
+function ctr(o){return o.cat==='star'||o.cat==='ns'||o.cat==='bh'}
+/* ===== HUD ===== */
+function hudText(o){
+ const mode=MODES[S.mode][1];
+ let t='[ 🔭 DEEP SPACE HUD ]\n';
+ if(!o){t+='* 대상 천체: 없음 (탐색 대기)\n* 위치/거리: 오르트 구름 · Sol로부터 0.8 ly (약 0.25 pc)\n* 탐사선 상태: 아스트라호 · 워프 구동 대기(Standby) · 선체 '+S.integ+'%\n';
+  t+='* 주변 관측 모드: '+mode;return t}
+ const [l,b]=galLB(o);
+ t+='* 대상 천체: '+o.nm+(names(o)?' ('+names(o)+')':'')+'\n';
+ t+='   ↳ '+(o.cat==='star'?'분광형 '+o.sp+' · '+(LC_INFO[o.lc]||''):o.sp)+(o.pop?' · 종족 '+o.pop:'')+'\n';
+ const dS=hideDist(o)?'🔒 비공개(미션 3 진행 중 — 분광시차로 직접 구하세요)':(o.id==='sun'?'0 (태양계 중심)':fmtLy(o.d)+(o.d<3e4?' (≈'+(o.d/K.pcly).toFixed(o.d<100?2:0)+' pc)':''));
+ t+='* 위치/거리: RA '+raStr(o.ra)+' Dec '+decStr(o.dec)+' · 은하좌표 l='+l.toFixed(0)+'° b='+b.toFixed(0)+'°\n   Sol로부터 '+dS+(S.r>0?' · 아스트라호↔대상 '+fmtR(S.r):'')+'\n';
+ const as=S.r>0&&o.hz?assess(o,S.r):null;
+ t+='* 탐사선 상태: 아스트라호 · '+(S.r>0?'관측 궤도 유지':'정지 관측')+' · 선체 '+S.integ+'%'+(as&&as.Th?' · 선체온도 '+Math.round(as.Th).toLocaleString()+' K':'')+(as?' · 조석 '+(as.tideG<0.01?as.tideG.toExponential(1):as.tideG.toFixed(2))+' g':'')+(as&&as.dil!=null&&as.dil<1?' · 시간지연 ×'+as.dil.toFixed(3):'')+' · 워프 구동 대기\n';
+ t+='* 주변 관측 모드: '+mode;return t}
+function updHud(){$('hud').textContent=hudText(S.tgt)}
+/* ===== 서술 ===== */
+function hrPos(o){const L=lumOf(o);if(!L)return null;const lt=log10(o.T),ll=log10(L);let g='';
+ if(o.lc==='D')g='좌하단 — 백색왜성 영역';else if(o.lc==='V')g='대각선 — 주계열';else if(o.lc==='III')g='우상단 — 거성 가지';else g='맨 위 — 초거성 영역';return {lt,ll,L,g}}
+function orbitCmp(R){const O=[['수성',83],['금성',155],['지구',215],['화성',328],['목성',1120],['토성',2050]];let last='태양 표면';for(const [n,r] of O){if(R>=r)last=n;}return R<83?'태양 자리에 놓아도 수성 궤도 안쪽에 머문다':'태양 자리에 놓으면 '+last+' 궤도('+O.find(x=>x[0]===last)[1]+' R☉)까지 삼켜버린다'}
+function lifetime(o){if(o.lc!=='V')return null;const t=1e10*Math.pow(o.Ms,-2.5);return t>1e12?(t/1e12).toFixed(1)+'조 년':t>=1e9?(t/1e9).toFixed(t>1e10?0:1)+'억'.replace('억','')+'':(t/1e6).toFixed(0)+'백만 년'}
+function lifeStr(o){if(o.lc!=='V')return '';const t=1e10*Math.pow(o.Ms,-2.5);if(t>=1e12)return '주계열 수명 ≈ 10¹⁰·M⁻²·⁵ = '+(t/1e12).toFixed(0)+'조 년';if(t>=1e9)return '주계열 수명 ≈ 10¹⁰·M⁻²·⁵ = '+(t/1e9).toFixed(1)+'×10⁹ 년';return '주계열 수명 ≈ 10¹⁰·M⁻²·⁵ = '+(t/1e6).toFixed(0)+'×10⁶ 년'}
+function narrate(o){
+ const out=[];const T=o.T,lt=[];
+ if(o.cat==='star'){
+  const c=specClass(o),ci=CLS_INFO[c];const col=bbRGB(T);
+  out.push('🎨 <b>겉모습</b>: 표면 온도 '+T.toLocaleString()+' K → '+(ci?ci[1]:'')+' 별. 빈의 법칙 λmax = 2.898×10⁶/T = <b>'+wien(T).toFixed(0)+' nm</b>'+(wien(T)<380?' (자외선 영역 — 눈에는 오히려 푸르게 보임)':wien(T)>780?' (적외선 영역 — 눈에는 붉게 보임)':'')+'. 겉보기 등급 m = '+o.m+(o.m<=6?' (맨눈 관측 가능)':' (망원경 필요)')+'.');
+  out.push('🔬 <b>분광 판독</b>: '+o.sp+(ci?' — 온도 '+ci[0]+', 특징 <b>'+ci[2]+'</b>':'')+'. 광도계급 '+o.lc+' = '+LC_INFO[o.lc]+'. 시선속도 '+(o.rv>0?'+':'')+o.rv+' km/s → 도플러로 '+(o.rv<0?'청색편이(접근)':'적색편이(후퇴)')+', Δλ(Ca K)='+(393.4*o.rv/K.c).toFixed(4)+' nm.');
+  const h=hrPos(o);
+  const Mv=MV(o);
+  let t='📈 <b>H-R도 위치</b>: log T = '+h.lt.toFixed(2)+', log L = '+h.ll.toFixed(2)+' (L = R²(T/5772)⁴ = '+fmtSci(h.L,2)+' L☉, R = '+(o.R>=0.1?o.R:o.R.toExponential(1))+' R☉) → <b>'+h.g+'</b>.';
+  if(!hideDist(o))t+=' 절대등급 M_V = '+Mv.toFixed(2)+', 거리지수 m−M = '+distMod(o).toFixed(2)+' (= 5 log d − 5, d = '+pcOf(o).toFixed(pcOf(o)<100?2:0)+' pc).';
+  else t+=' 절대등급 M_V ≈ '+Mv.toFixed(1)+' (분광형·광도계급으로 추정). 거리는 m − M = 5 log d − 5 로 직접 계산!';
+  out.push(t);
+  if(o.R>=5)out.push('📏 <b>크기</b>: 반지름 '+o.R+' R☉ — '+orbitCmp(o.R)+'.');
+  let ev='🌱 <b>진화 단계</b>: '+o.evo;const ls=lifeStr(o);if(ls)ev+=' ('+ls+', M='+o.Ms+' M☉)';out.push(ev);
+  const ex=extinction(o);if(ex>=0.3)out.push('🌫 <b>성간 소광</b>: 은하 원반 속 먼지가 별빛을 약 '+ex.toFixed(1)+'등급 어둡게 한다(A_V).');
+  if(o.pop)out.push('👥 <b>종족</b>: '+(o.pop==='I'?'종족 I — 젊은 별, 은하 원반·나선팔에 분포(금속 풍부).':'종족 II — 늙은 별(~100억 년), 헤일로·팽대부·구상성단에 분포(금속 빈약).'));
+  if(o.note)out.push('📝 '+o.note);
+ }else if(o.cat==='ns'){
+  out.push('⭐ <b>중성자별</b>: 질량 '+o.Ms+' M☉이 반지름 ≈ 10 km에 압축 → 평균 밀도 ≈ '+fmtSci(o.Ms*K.Msun/(4/3*Math.PI*1e12),2)+' kg/m³. 표면 중력 ≈ 10¹² g.');
+  out.push('🌱 <b>진화 단계</b>: '+o.evo);out.push('📝 '+o.note);
+ }else if(o.cat==='bh'){
+  const rs=Rs(o);out.push('⚫ <b>블랙홀</b>: 질량 '+fmtSci(o.Ms,3)+' M☉ → 슈바르츠실트 반지름 R_s = 2GM/c² = <b>'+fmtR(rs)+'</b>(= '+(rs/K.Rsun).toExponential(2)+' R☉). 광자구 1.5 R_s, 최내곽 안정궤도(ISCO) 3 R_s.');
+  out.push('🌱 <b>정체</b>: '+o.evo);out.push('📝 '+o.note);
+ }else if(o.cat==='neb'||o.cat==='cl'){
+  out.push('🎨 <b>겉모습/물리</b>: '+o.sp+(o.T?' — 온도 ≈ '+o.T.toLocaleString()+' K':'')+'.');
+  out.push('🌱 <b>진화 단계</b>: '+o.evo);if(o.pop)out.push('👥 <b>종족</b>: '+(o.pop==='I'?'종족 I (젊음, 나선팔·원반).':'종족 II (늙음, 헤일로).'));out.push('📝 '+o.note);
+  const ex=extinction(o);if(ex>=0.5)out.push('🌫 <b>성간 소광</b> A_V ≈ '+ex.toFixed(1)+'등급.');
+ }else if(o.cat==='gal'){
+  const v=o.vcz;out.push('🌌 <b>외부 은하</b>: '+o.sp+', 겉보기 등급 '+o.m+'. 적색편이 속도 '+(o.z!=null?'z = '+o.z:'cz = '+(v>0?'+':'')+v+' km/s')+(S.hideCalc(o)?' (미션 4: 직접 계산!)':v<0?' — <b>청색편이</b>: 후퇴가 아니라 접근!':'.'));
+  if(!S.hideCalc(o)&&v>0&&v<500)out.push('📐 <b>허블 법칙 부적합</b>: 가까운 은하는 중력 상호작용에 의한 고유운동(수백 km/s)이 팽창 속도보다 커서 v=H₀d 로 거리를 구할 수 없다.');
+  if(!S.hideCalc(o)&&v>=500){const h=hubble(v);out.push('📐 <b>허블 법칙</b>: d = v/H₀ = '+v.toLocaleString()+' / 70 = <b>'+h.dMpc.toFixed(h.dMpc<100?1:0)+' Mpc</b> ≈ '+(h.dMly>=1000?(h.dMly/1000).toFixed(2)+' Gly':h.dMly.toFixed(0)+' Mly')+(o.z>0.1?' (z가 크면 v=cz는 근사일 뿐)':'')+'.')}
+  out.push('🌱 '+o.evo);out.push('📝 '+o.note)}
+ // 위험
+ if(o.hz&&o.hz!=='snrzone'){const L=hazardLimits(o);const bits=[];
+  if(L.thermR)bits.push('열: T_hull = T√(R/2r) ≤ 1,500 K → r ≥ <b>'+fmtR(L.thermR)+'</b> (치명 경계; 1,000 K 초과부터 경고 — 여유 있게 2배 이상 권장)');
+  if(L.tideR&&(o.cat!=='star'||L.tideR>Rm(o)))bits.push('조석: Δa = 2GM·L/r³ ≤ 10 g (L=200 m) → r ≥ <b>'+fmtR(L.tideR)+'</b>');
+  if(o.hz==='bh')bits.push('지평선 R_s = '+fmtR(L.horizon)+', ISCO = '+fmtR(L.ISCO)+' (이 안쪽은 궤도 유지 불가)');
+  if(bits.length)out.push('⚠ <b>항법 안전 한계</b>: '+bits.join(' · '));
+  if(o.hz==='sn')out.push('☢ <b>초신성 경보</b>: 불안정한 LBV — 장시간 관측하면 폭발 충격(γ선·충격파)에 노출됩니다. <b>분석 3회 이내</b>에 이탈하세요!');}
+ if(o.hz==='snrzone')out.push('☢ <b>초신성 잔해 구역</b>: 팽창하는 충격파면(≈1,500 km/s)과 싱크로트론 방사 — 성운 내부 접근은 위험, 중심 펄서는 따로 도약해 접근 한계 안에서 관측하세요.');
+ return out}
+function narrHtml(o){return '<span class="nw">'+narrate(o).join('</span><span class="nw">')+'</span>'}
+/* ===== 도약(워프) ===== */
+function warpTo(o){
+ if(!o)return;
+ if(S.tgt===o&&S.r>0&&o.hz){say('이미 '+o.ko+' 궤도에 있습니다. "분석"을 입력하거나 다른 목적지를 지정하세요.');return}
+ const p=vec(o),dd=dist3(S.pos,p);const w=dd<1e5?1e5:dd<1e9?1e9:1e12;const t=dd/w;
+ S.pos=p;S.tgt=o;S.r=o.hz&&o.hz!=='snrzone'?arrivalR(o):0;S.warps++;S.integ=100;S.snExp[o.id]=0;
+ const first=!S.visited[o.id];S.visited[o.id]=true;if(S.mode==='ir')S.irSeen[o.id]=true;save();
+ say('🚀 <b>워프 도약</b> → '+o.ko+'\n이동 거리 <b>'+fmtLy(dd)+'</b> · 워프 속도 '+(w>=1e12?'10¹²':w>=1e9?'10⁹':'10⁵')+' c · 소요 '+fmtTime(t)+'\n아스트라호가 <b>'+(S.r>0?'안전 관측 거리 '+fmtR(S.r):'관측 위치')+'</b>에 도착했습니다.'+(first?'\n🆕 도감에 새 천체가 등록되었습니다!':''),'ok');
+ hudMsg();say(narrHtml(o));
+ if(o.cat==='gal'&&(o.id==='m31'||o.id==='m33'))say('💡 <b>국부은하군</b>: 우리은하와 안드로메다가 국부은하군 질량의 약 75%를 차지합니다 (은하 지도 탭의 "국부은하군" 보기 참고).');
+ if(o.id==='sirA')say('💡 시리우스 A에는 백색왜성 동반성이 있습니다. "시리우스 B"로 도약해 H-R도에서 위치를 비교해 보세요!');
+ renderAll();checkMissions('arrive')}
+function hudMsg(){say(hudText(S.tgt),'hud')}
+/* ===== 접근/위험 ===== */
+function rFromSlider(o,v){const a=arrivalR(o),f=floorR(o);return a*Math.pow(f/a,v/1000)}
+function sliderFromR(o,r){const a=arrivalR(o),f=floorR(o);return Math.round(1000*Math.log(r/a)/Math.log(f/a))}
+function aprHTML(){const o=S.tgt;const box=$('apr');
+ if(!o||!o.hz||o.hz==='snrzone'){box.hidden=true;return}box.hidden=false;
+ const as=assess(o,S.r),L=hazardLimits(o);const unit=o.hz==='bh'?'R_s':'R';
+ const lvl=as.lvl==='ok'?'<span class="badge b-ok">안전</span>':as.lvl==='bad'?'<span class="badge b-bad">경고</span>':'<span class="badge b-dead">치명</span>';
+ const ratio=o.hz==='bh'?as.rOverRs:S.r/Rm(o);
+ const cells=[['거리 r',fmtR(S.r)],['r / '+unit,ratio>=100?ratio.toFixed(0):ratio.toFixed(2)],['안전 한계',fmtR(L.safe)+' ('+(S.r/L.safe).toFixed(S.r/L.safe<10?2:1)+'배)'],['조석 Δa',as.tideG<0.01?as.tideG.toExponential(1)+' g':as.tideG.toFixed(2)+' g']];
+ if(as.Th)cells.splice(3,0,['선체온도',Math.round(as.Th).toLocaleString()+' K']);
+ if(as.dil!=null)cells.push(['시간 지연 √(1−R_s/r)',as.dil.toFixed(4)]);
+ box.innerHTML='<h2>🛰 접근 제어 '+lvl+'</h2><div class="sl"><span class="small mu">멀리 ◀ 접근 거리 ▶ 가까이 (로그 눈금)</span><b id="aprv"></b><input type="range" id="aprs" min="0" max="1000" value="'+sliderFromR(o,S.r)+'"></div><div class="ro">'+cells.map(c=>'<div>'+c[0]+'<b>'+c[1]+'</b></div>').join('')+'</div>'+(as.txt.length?'<div class="goal">'+as.txt.join('<br>')+'</div>':'')+'<div class="bar" style="margin-top:8px"><button class="btn wr" id="aprGo">▶ 궤도 진입·관측</button><button class="btn" id="aprBack">↩ 안전 거리로 복귀</button><button class="btn sm" id="aprSafe">안전 한계로</button></div>';
+ const sl=$('aprs');sl.oninput=()=>{S.r=rFromSlider(o,+sl.value);aprUpd()};
+ $('aprGo').onclick=()=>enterOrbit();$('aprBack').onclick=()=>{S.r=arrivalR(o);renderAll()};$('aprSafe').onclick=()=>{S.r=Math.max(hazardLimits(o).safe*1.05,floorR(o));renderAll()};
+ $('aprv').textContent=fmtR(S.r)}
+function aprUpd(){const o=S.tgt;updHud();const keep=document.activeElement&&document.activeElement.id==='aprs';aprHTMLKeep(keep)}
+function aprHTMLKeep(keep){const sl=$('aprs');const v=sl?sl.value:null;aprHTML();if(keep){const s2=$('aprs');s2.value=v;s2.focus();S.r=rFromSlider(S.tgt,+v);$('aprv').textContent=fmtR(S.r)}}
+function enterOrbit(){const o=S.tgt;if(!o||!o.hz)return;const as=assess(o,S.r);const L=hazardLimits(o);
+ if(o.hz==='sn'){S.snExp[o.id]=(S.snExp[o.id]||0)}
+ if(as.lvl==='dead'){S.integ=0;S.retreats++;
+  say('💥 <b>선체 손상 — 궤도 진입 실패</b>\n'+as.txt.join('\n')+'\n비상 워프로 안전 거리까지 복귀했습니다. (비상 복귀 '+S.retreats+'회)\n👉 <b>교훈</b>: '+(as.tide>K.gLim?'조석력은 거리의 세제곱에 반비례(Δa ∝ 1/r³)하므로 접근 한계를 계산해야 합니다.':as.Th>K.Thull?'선체 온도는 T√(R/2r) — 뜨겁고 큰 별일수록 멀리서 멈춰야 합니다.':'지평선·ISCO 안쪽은 되돌아올 수 없습니다.'),'no');
+  S.r=arrivalR(o);S.integ=100;renderAll();return}
+ if(as.lvl==='bad'){S.integ=Math.max(20,Math.round(100-40*Math.min(1,(as.Th||0)/K.Thull+as.tideG/10)));say('⚠ <b>위험 궤도 진입 — 선체 '+S.integ+'%로 손상</b>\n'+as.txt.join('\n')+'\n계속 머물면 위험합니다. 안전 한계 밖으로 이동하세요.','wa')}
+ else{S.integ=100;say('✅ <b>안정 궤도 진입</b> — r = '+fmtR(S.r)+' ('+(S.r/L.safe).toFixed(1)+'×안전한계). 정밀 관측을 시작합니다.','ok')}
+ const k=S.r/L.safe;if(as.lvl!=='dead'&&as.lvl!=='bad'&&k>=1&&k<=10&&M5IDS.includes(o.id)){S.ent[o.id]=true;save();say('🏅 <b>미션 5 기록</b>: '+o.ko+' — 안전 한계의 '+k.toFixed(1)+'배에서 관측 성공!','ok')}
+ if(o.cat==='bh'&&as.lvl==='ok'){say(bhLesson(o,as),'')}
+ if(o.cat==='ns'&&as.lvl==='ok')say('<span class="nw">🔭 안전 거리에서 펄스 주기 33 ms(초당 30회)가 안정적으로 잡힙니다. 가까이 갈수록 열(T_hull) 한계가 먼저 문제가 되고, 더 가까이는 조석력이 문제가 됩니다 — <b>어느 쪽이 더 큰 반지름을 요구하나요?</b></span>');
+ renderAll();checkMissions('enter')}
+function bhLesson(o,as){const rs=Rs(o);return '<span class="nw">⚫ 지금 r = '+as.rOverRs.toFixed(1)+' R_s. 먼 관측자에게 내 시계는 √(1−R_s/r) = '+as.dil.toFixed(3)+'배로 느려 보입니다. '+(o.id==='sgr'?'질량이 클수록 R_s가 커서 지평선에서의 조석력은 오히려 약합니다(Δa∝M/r³ ∝ 1/M²) — 그래도 지평선 안으로는 돌아올 수 없습니다.':'항성질량 블랙홀은 R_s가 작아 지평선 근처 조석력이 엄청나므로 스파게티화(spaghettification)가 먼저 일어납니다.')+'</span>'}
+/* ===== 분석 ===== */
+function analyze(){const o=S.tgt;if(!o){say('분석할 대상이 없습니다. 먼저 목적지를 지정하세요.','wa');return}
+ if(S.mode==='ir')S.irSeen[o.id]=true;
+ if(o.hz==='sn'){S.snExp[o.id]=(S.snExp[o.id]||0)+1;const n=S.snExp[o.id];
+  if(n===2)say('☢ <b>경고!</b> 에타 카리나의 방출량이 급증합니다. 한 번 더 관측하면 위험합니다!','wa');
+  if(n>=3){S.integ=0;S.retreats++;say('💥 <b>초신성급 대분출!</b> 충격파와 γ선이 선체를 덮쳤습니다. 비상 워프로 오르트 구름까지 귀환합니다.\n👉 불안정한 초대질량 별(M≈100 M☉)은 언제든 초신성으로 폭발할 수 있어 장시간 근접 관측이 금지됩니다.','no');S.tgt=null;S.r=0;S.integ=100;S.pos=START.slice();renderAll();return}}
+ if(o.cat==='gal'||ctr(o)||o.cat==='neb'||o.cat==='cl'){hudMsg();say(narrHtml(o))}
+ const rows=[];
+ if(o.cat==='star'){const h=hrPos(o);rows.push(['표면 온도 T',o.T.toLocaleString()+' K'],['반지름 R',o.R+' R☉'],['광도 L = R²(T/5772)⁴',fmtSci(h.L,3)+' L☉'],['빈 피크 λmax',wien(o.T).toFixed(0)+' nm'],['겉보기 등급 m',o.m]);
+  if(!hideDist(o)){rows.push(['거리 d',pcOf(o).toFixed(2)+' pc ('+fmtLy(o.d)+')'],['거리지수 m−M',distMod(o).toFixed(2)],['절대등급 M_V',MV(o).toFixed(2)])}else rows.push(['절대등급 M_V(추정)',MV(o).toFixed(1)],['거리 d','🔒 직접 계산']);
+  rows.push(['질량',o.Ms+' M☉'],['시선속도',(o.rv>0?'+':'')+o.rv+' km/s']);if(o.mdot)rows.push(['질량 손실률 Ṁ',o.mdot.toExponential(1)+' M☉/yr']);}
+ else if(o.cat==='gal'){rows.push(['겉보기 등급',o.m],['관측 Ca K(393.4nm)',(393.4*(1+zOf(o))).toFixed(3)+' nm'],['유형',o.sp])}
+ else if(o.cat==='bh'||o.cat==='ns'){rows.push(['질량',fmtSci(o.Ms,3)+' M☉'],['R_s 또는 반지름',fmtR(o.cat==='bh'?Rs(o):1e4)])}
+ else rows.push(['유형',o.sp],['거리',fmtLy(o.d)]);
+ say('<b>📊 정밀 분석표 — '+o.ko+'</b><table class="t">'+rows.map(r=>'<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>').join('')+'</table>'+(S.mode==='ir'&&o.mdot?'\n🌡 적외선: 먼지 껍질 발견! 질량 손실률 Ṁ = <b>'+o.mdot.toExponential(1)+' M☉/yr</b>':''));
+ renderAll();checkMissions('analyze')}
+function helper(){const o=S.tgt;
+ say('<b>📐 계산 도우미</b><table class="t"><tr><td>거리지수</td><td><b>m − M = 5 log₁₀ d − 5</b> (d: pc)  →  d = 10^((m−M+5)/5)</td></tr><tr><td>1 pc</td><td>3.26 ly</td></tr><tr><td>스테판-볼츠만</td><td><b>L = R²(T/5772)⁴</b> (태양=1)</td></tr><tr><td>빈의 법칙</td><td>λmax = 2.898×10⁶ / T (nm)</td></tr><tr><td>도플러</td><td>z = (λ−λ₀)/λ₀ , v ≈ c·z (c=299,792 km/s)</td></tr><tr><td>허블 법칙</td><td><b>v = H₀·d</b>, H₀ = 70 km/s/Mpc → d = v/H₀ (Mpc)</td></tr><tr><td>슈바르츠실트 반지름</td><td>R_s = 2GM/c² = 2.95 km × (M/M☉)</td></tr><tr><td>조석 가속도차</td><td>Δa = 2GM·L/r³ (L=200 m, 한계 10 g)</td></tr><tr><td>선체 온도</td><td>T_hull = T√(R/2r) (한계 1,500 K)</td></tr></table>')}
+/* ===== 명령 ===== */
+function help(){say('<b>📖 아스트라 명령어</b>\n• <span class="k">도약 [이름]</span> — 카탈로그 이름·HIP·HD·M·NGC·한글 모두 가능 (이름만 입력해도 됨)\n• <span class="k">센서 가시광/분광/적외선/도플러</span> — 관측 필터 변경\n• <span class="k">분석</span> — 정밀 분석표 · <span class="k">계산</span> — 공식 도우미\n• <span class="k">접근 [값][km|AU|R|Rs]</span> / <span class="k">진입</span> / <span class="k">복귀</span> — 위험 천체 접근·궤도 진입\n• <span class="k">거리 A [B]</span> — 두 천체 사이 거리 · <span class="k">목록 [O/B/A/F/G/K/M/은하…]</span>\n• <span class="k">미션</span> — 현재 임무 · 탭: 🌌 은하 지도, 📈 H-R도, 📚 도감')}
+function cmd(line){line=line.trim();if(!line)return;say('▶ '+esc(line),'');
+ const m=line.match(/^(\S+)\s*(.*)$/),v=m[1],arg=m[2].trim();
+ const verbs={도약:'warp',워프:'warp',이동:'warp',가자:'warp',센서:'sensor',필터:'sensor',모드:'sensor',분석:'ana',관측:'ana',스캔:'ana',계산:'help2',도움말:'help',help:'help','?':'help',접근:'near',진입:'enter',궤도진입:'enter',복귀:'back',거리:'dist',목록:'list',미션:'mission',임무:'mission',허블:'hub'};
+ const k=verbs[v];
+ if(!k){const o=find(line);if(o){warpTo(o);return}say('❓ 카탈로그에서 "'+esc(line)+'" 을(를) 찾지 못했습니다. <span class="k">목록</span> 으로 후보를 확인하거나 HIP 번호·M/NGC 번호·한글 이름을 입력하세요.','wa');return}
+ if(k==='warp'){const o=find(arg);if(!o){say('❓ "'+esc(arg)+'" 을(를) 찾지 못했습니다. (예: 도약 HIP 32349 / 도약 M31)','wa');return}warpTo(o)}
+ else if(k==='sensor'){const a=norm(arg);const mp=a.includes('가시')||a.includes('vis')||a.includes('광학')?'vis':a.includes('적외')||a.includes('ir')?'ir':a.includes('도플')||a.includes('적색')||a.includes('dop')?'dop':a.includes('분광')||a.includes('전천')||a.includes('spec')?'spec':null;if(!mp){say('센서: 가시광 / 분광 / 적외선 / 도플러 중 선택하세요.','wa');return}setMode(mp)}
+ else if(k==='ana')analyze();else if(k==='help')help();else if(k==='help2')helper();
+ else if(k==='near'){const o=S.tgt;if(!o||!o.hz||o.hz==='snrzone'){say('접근 제어가 필요한 천체(항성·펄서·블랙홀)에 도착한 상태가 아닙니다.','wa');return}
+  const p=parseDist(arg);if(!p||!(p.v>0)){say('사용법: 접근 10 Rs / 접근 5 R / 접근 0.5 AU / 접근 20000 km / 접근 2 rsafe(안전한계의 배수)','wa');return}
+  let r;const u=p.u;const rs=o.hz==='bh';
+  if(u==='km')r=p.v*1e3;else if(u==='m')r=p.v;else if(u==='au')r=p.v*K.AU;else if(u==='ly')r=p.v*K.ly;else if(u==='rsafe')r=p.v*hazardLimits(o).safe;else if(u==='r☉'||u==='rsun')r=p.v*K.Rsun;else if(u==='rs'||u==='배rs')r=p.v*Rs(o);else if(u==='r'||u==='')r=rs?p.v*Rs(o):p.v*Rm(o);
+  r=Math.max(floorR(o),Math.min(r,arrivalR(o)*1.0001));S.r=r;renderAll();say('거리를 '+fmtR(r)+'로 조정했습니다. 사고를 막으려면 <span class="k">진입</span> 전에 아래 접근 패널의 판정을 확인하세요.')}
+ else if(k==='enter')enterOrbit();
+ else if(k==='back'){if(S.tgt&&S.tgt.hz){S.r=arrivalR(S.tgt);renderAll();say('안전 관측 거리로 복귀했습니다.','ok')}}
+ else if(k==='dist'){const p=arg.split(/\s+(?:와|과|에서|to|->|→|,)\s*|\s+/).filter(Boolean);let a,b;
+  if(p.length>=2){a=find(p[0]);b=find(p.slice(1).join(' '))}else{a=S.tgt;b=find(arg)}
+  if(!b){say('거리 계산: "거리 시리우스 베텔게우스" 또는 현재 위치 기준 "거리 M31"','wa');return}
+  const pa=a?vec(a):S.pos,d=dist3(pa,vec(b));
+  const hid=[a,b].some(x=>x&&hideDist(x)&&x.id!=='sun');say('📏 '+(a?a.ko:'아스트라호')+' ↔ '+b.ko+' : '+(hid&&!a?'🔒 (미션 3 진행 중)':'<b>'+fmtLy(d)+'</b> (≈'+(d/K.pcly).toFixed(d<100?2:0)+' pc)')+(d>0?' · 빛의 속도로 '+fmtTime(d):'')+'.')}
+ else if(k==='list'){const a=norm(arg);let L=C;
+  if(/^[obafgkm]$/i.test(arg))L=C.filter(o=>o.cat==='star'&&specClass(o)===arg.toUpperCase());else if(a.includes('은하'))L=C.filter(o=>o.cat==='gal');else if(a.includes('성운')||a.includes('성단'))L=C.filter(o=>o.cat==='neb'||o.cat==='cl');else if(a.includes('블랙')||a.includes('펄서')||a.includes('극한'))L=C.filter(o=>o.cat==='bh'||o.cat==='ns');else if(a.includes('별')||a.includes('항성'))L=C.filter(o=>o.cat==='star');
+  say('<b>📚 카탈로그 '+L.length+'개</b>\n'+L.map(o=>(S.visited[o.id]?'✅ ':'· ')+o.ko+' <span class="mu">'+(names(o)||o.nm)+(o.cat==='star'?' · '+o.sp:'')+'</span>').join('\n'))}
+ else if(k==='mission'){setTab('bridge');window.scrollTo(0,0);$('mis').scrollIntoView({behavior:'smooth'});say('📋 오른쪽(모바일은 아래) 미션 패널을 확인하세요.')}
+ else if(k==='hub'){say('📐 허블 상수 H₀ = 70 km/s/Mpc (1 Mpc = 326만 ly). v = H₀·d')}
+}
+function setMode(m){S.mode=m;if(m==='ir'&&S.tgt)S.irSeen[S.tgt.id]=true;renderAll();if(S.tgt)checkMissions('mode')}
+
+/* ===== 미션 ===== */
+S.inp={};
+const MIS={
+1:{t:'우리은하 인근 항성의 분광 관측',g:'서로 다른 분광형(O·B·A·F·G·K·M) 별을 <b>5종 이상</b> 방문해 분광 관측하고, H-R도에 <b>주계열·거성/초거성·백색왜성</b>이 모두 찍히도록 완성하라.'},
+2:{t:'적색초거성 질량 손실 조사',g:'<b>적외선 센서</b>로 적색초거성 4개(베텔게우스·안타레스·큰개자리 VY·케페우스 μ)를 모두 관측해 먼지 껍질을 확인하고, <b>질량 손실률 Ṁ이 가장 큰 별</b>을 보고하라.'},
+3:{t:'거리지수로 별까지 거리 구하기',g:'직녀성·아르크투루스·리겔을 방문하라. 거리는 비공개! <b>겉보기 등급 m</b>과 <b>절대등급 M</b>으로 <b>d = 10^((m−M+5)/5) pc</b>를 계산해 ±5% 이내로 보고하라.'},
+4:{t:'허블 법칙으로 외부 은하 거리 구하기',g:'M87·NGC 4889·퀘이사 3C 273에서 Ca II K선(λ₀=393.4 nm)의 <b>관측 파장</b>을 읽고 z → v=cz → d=v/H₀(70)로 거리(Mpc)를 구하라(±3%). 또 안드로메다(M31)가 <b>청색편이</b>인 이유를 답하라.'},
+5:{t:'위험 천체 항법',g:'백조자리 X-1(블랙홀)·궁수자리 A*(초대질량 블랙홀)·게 펄서에서 접근 패널이 <b>“안전”(경고 없음)</b>으로 판정하고 <b>안전 한계의 10배 이내</b>인 거리에서 <b>궤도 진입</b>에 성공하라. 너무 멀면 관측 불가, 너무 가까우면 선체 파괴! (열·조석·ISCO 한계를 계산하세요)'}};
+function m1State(){const cls={},grp={V:0,G:0,D:0};
+ C.forEach(o=>{if(!S.visited[o.id])return;if(o.cat==='star'&&o.lc!=='D'){const c=specClass(o);if('OBAFGKM'.includes(c))cls[c]=1}
+  if(o.cat==='star'){if(o.lc==='V')grp.V=1;if(o.lc==='I'||o.lc==='III')grp.G=1;if(o.lc==='D')grp.D=1}});
+ return {cls,grp,n:Object.keys(cls).length,ok:Object.keys(cls).length>=5&&grp.V&&grp.G&&grp.D}}
+function checkMissions(ev){
+ let ch=false;const fin=(n,msg)=>{if(S.done[n])return;S.done[n]=true;ch=true;save();say('🏆 <b>미션 '+n+' 완료 — '+MIS[n].t+'</b>\n'+msg,'ok');toast('🏆 미션 '+n+' 완료!')};
+ if(m1State().ok)fin(1,'분광형별로 색·온도·스펙트럼선이 달라지고, H-R도에서 주계열(대각선)·거성/초거성(위)·백색왜성(좌하)이 서로 다른 자리에 놓임을 확인했습니다. 별의 일생이 H-R도 위에서 움직입니다!');
+ if(M5IDS.every(i=>S.ent[i]))fin(5,'열(T_hull∝√(R/r))·조석(Δa∝1/r³)·ISCO(3R_s) 중 가장 큰 한계 반지름 밖에서 관측하는 것이 항법의 기본입니다.');
+ if(ch||ev==='arrive'||ev==='mode'||ev==='analyze')renderMis();else renderMis()}
+function pct(a,b){return Math.abs(a-b)/b}
+function submit(n){
+ if(n===2){const sel=$('m2sel').value;S.inp.m2sel=sel;
+  if(!M2IDS.every(i=>S.irSeen[i])){say('❗ 아직 적외선으로 관측하지 않은 적색초거성이 있습니다.','wa');return}
+  if(sel==='vy'){S.done[2]=true;save();say('🏆 <b>미션 2 완료</b> — 큰개자리 VY가 Ṁ ≈ 2×10⁻⁴ M☉/yr 로 가장 큽니다. 베텔게우스(3×10⁻⁶)보다 약 70배! 적색초거성은 별빛에 밀려난 가스가 식어 <b>먼지</b>로 응결되고 이 먼지가 적외선으로 빛납니다. 이렇게 잃은 물질이 다음 세대 별·행성의 재료가 됩니다.','ok');toast('🏆 미션 2 완료!')}
+  else say('❌ 다른 별의 먼지 껍질이 더 두껍습니다. 분석표의 Ṁ(질량 손실률) 값을 비교해 보세요.','no');renderMis();return}
+ if(n===3){let ok=0;const res=[];M3IDS.forEach((id,i)=>{const o=BYID[id],v=parseFloat(S.inp['m3_'+id]);const tr=pcOf(o);const g=!isNaN(v)&&pct(v,tr)<=.05;if(g)ok++;res.push((g?'✅ ':'❌ ')+o.ko+(g?': '+v+' pc (참값 '+tr.toFixed(1)+' pc)':': 오차 5% 초과 — 10^((m−M+5)/5) 를 다시 계산하세요'))});
+  if(ok===3){S.done[3]=true;save();say('🏆 <b>미션 3 완료</b> — 거리지수로 세 별의 거리를 구했습니다.\n'+res.join('\n')+'\n(이제 세 별의 거리가 공개됩니다.) 분광형·광도계급으로 M을 알면 m만 재어 거리를 구하는 방법이 <b>분광시차</b>입니다.','ok');toast('🏆 미션 3 완료!')}else say(res.join('\n'),ok?'wa':'no');renderMis();return}
+ if(n===4){let ok=0;const res=[];M4IDS.forEach(id=>{const o=BYID[id],v=parseFloat(S.inp['m4_'+id]);const tr=Math.abs(o.vcz)/K.H0;const g=!isNaN(v)&&pct(v,tr)<=.03;if(g)ok++;res.push((g?'✅ ':'❌ ')+o.ko+(g?': '+v+' Mpc (v='+o.vcz.toLocaleString()+' km/s)':': z=Δλ/λ₀ → v=c·z → d=v/70 로 다시 계산'))});
+  const sel=S.inp.m4sel;const sOk=sel==='b';res.push((sOk?'✅':'❌')+' M31 청색편이 설명'+(sOk?': 국부은하군 안에서는 중력으로 끌려 접근 속도(−300 km/s)가 팽창 효과보다 크다':''));
+  if(ok===3&&sOk){S.done[4]=true;save();say('🏆 <b>미션 4 완료</b> — 은하가 멀수록 더 빨리 멀어진다(v=H₀d): 우주가 팽창한다는 증거입니다.\n'+res.join('\n')+'\n※ 3C 273은 z=0.158로 v=cz 는 근사. GN-z11(z≈11)은 완전히 상대론적 우주론이 필요합니다.','ok');toast('🏆 미션 4 완료!')}else say(res.join('\n'),ok?'wa':'no');renderMis();return}
+}
+function renderMis(){
+ const el=$('mis');const n=S.mis;const mi=MIS[n];
+ let h='<h2>📋 임무 (Mission)</h2><div class="pills">'+[1,2,3,4,5].map(i=>'<button class="pill'+(i===n?' on':'')+(S.done[i]?' done':'')+'" data-m="'+i+'">'+(S.done[i]?'✓':i)+'</button>').join('')+'</div>';
+ h+='<b>미션 '+n+'. '+mi.t+'</b><div class="goal">'+mi.g+'</div>';
+ if(n===1){const s=m1State();h+='<div class="chk"><span>분광형:</span> '+'OBAFGKM'.split('').map(c=>'<span class="badge '+(s.cls[c]?'b-ok':'b-bad')+'" style="margin-right:3px">'+c+(s.cls[c]?'✓':'')+'</span>').join('')+' <span>('+s.n+'/5종)</span></div><div class="chk">'+(s.grp.V?'✅':'⬜')+' 주계열 · '+(s.grp.G?'✅':'⬜')+' 거성/초거성 · '+(s.grp.D?'✅':'⬜')+' 백색왜성</div><div class="small mu">추천: 시리우스 A(A) · 베텔게우스(M) · 프록시마(M) · 나오스(O) · 스피카(B) · 알파 센타우리 A(G) · 아르크투루스(K) · 프로키온(F) · 시리우스 B(D)</div>'}
+ if(n===2){h+=M2IDS.map(i=>'<div class="chk">'+(S.irSeen[i]?'✅':'⬜')+' '+BYID[i].ko+' 적외선 관측</div>').join('');
+  h+='<div class="small mu">적외선 필터를 켠 채 도약 → "분석"으로 Ṁ 확인</div><div class="in"><span>Ṁ 최대인 별</span><select id="m2sel">'+M2IDS.map(i=>'<option value="'+i+'"'+(S.inp.m2sel===i?' selected':'')+'>'+BYID[i].ko.replace(/ \(.*\)/,'')+'</option>').join('')+'</select></div><button class="btn pri" data-sub="2"'+(S.done[2]?' disabled':'')+'>보고서 제출</button>'}
+ if(n===3){h+=M3IDS.map(i=>{const o=BYID[i],v=S.visited[i];return '<div class="in"><span>'+o.ko.replace(/ \(.*\)/,'')+(v?'<br><span class="mu small">m = '+o.m+', M ≈ '+MV(o).toFixed(1)+'</span>':'<br><span class="mu small">🔒 방문 필요</span>')+'</span><input type="number" step="any" data-in="m3_'+i+'" placeholder="d (pc)" value="'+(S.inp['m3_'+i]||'')+'"'+(v&&!S.done[3]?'':' disabled')+'></div>'}).join('')+'<button class="btn pri" data-sub="3"'+(S.done[3]||!M3IDS.every(i=>S.visited[i])?' disabled':'')+'>거리 보고</button>'}
+ if(n===4){h+=M4IDS.map(i=>{const o=BYID[i],v=S.visited[i];return '<div class="in"><span>'+o.ko.replace(/ \(.*\)/,'')+(v?'<br><span class="mu small">λ관측(Ca K) = '+(393.4*(1+zOf(o))).toFixed(3)+' nm</span>':'<br><span class="mu small">🔒 방문 필요</span>')+'</span><input type="number" step="any" data-in="m4_'+i+'" placeholder="d (Mpc)" value="'+(S.inp['m4_'+i]||'')+'"'+(v&&!S.done[4]?'':' disabled')+'></div>'}).join('')+'<div class="in" style="grid-template-columns:1fr"><span>M31이 청색편이(−300 km/s)인 이유는?</span><select id="m4sel" data-in="m4sel"><option value="">선택…</option><option value="a"'+(S.inp.m4sel==='a'?' selected':'')+'>허블 법칙이 M31에는 틀린 값을 준다</option><option value="b"'+(S.inp.m4sel==='b'?' selected':'')+'>국부은하군 안에서는 중력 끌림이 우주 팽창보다 커서 접근한다</option><option value="c"'+(S.inp.m4sel==='c'?' selected':'')+'>M31이 빛보다 빠르게 움직여서</option></select></div><button class="btn pri" data-sub="4"'+(S.done[4]||!M4IDS.every(i=>S.visited[i])?' disabled':'')+'>거리 보고</button>'}
+ if(n===5){h+=M5IDS.map(i=>{const o=BYID[i],L=hazardLimits(o);return '<div class="chk">'+(S.ent[i]?'✅':'⬜')+' '+o.ko.replace(/ \(.*\)/,'')+' <span class="mu small">(안전 ≥ '+fmtR(L.safe)+')</span></div>'}).join('')+'<div class="small mu">비상 복귀 '+S.retreats+'회 · 접근 패널에서 거리를 정하고 "궤도 진입"</div>'}
+ h+='<hr style="border-color:var(--ln);margin:10px 0"><div class="bar"><button class="btn sm" id="rst">🔄 처음부터(기록 삭제)</button></div>';
+ el.innerHTML=h;
+ el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mis=+b.dataset.m;renderMis();if(S.mis===2&&S.mode!=='ir')toast('💡 적외선 센서로 바꿔 관측하세요')});
+ el.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>submit(+b.dataset.sub));
+ el.querySelectorAll('[data-in]').forEach(i=>{i.oninput=i.onchange=()=>S.inp[i.dataset.in]=i.value});
+ const ms=$('m2sel');if(ms)ms.onchange=()=>S.inp.m2sel=ms.value;
+ $('rst').onclick=()=>{if(confirm('방문 기록과 미션 진행을 모두 지울까요?')){try{localStorage.removeItem('sp1021')}catch(e){}location.reload()}}}
+/* ===== 은하 지도 ===== */
+const gc=$('cg'),gx=gc.getContext('2d');
+const GF={
+ top:['우리은하는 별 약 <b>2,000억 개</b>의 막대나선은하. 원반 지름 약 <b>10만 ly</b> (헤르셜 1785년의 추정 7,000 ly는 먼지에 가린 일부였다).','태양은 중심에서 약 <b>2.6만 ly</b>(자료: 약 3만 ly) 떨어진 <b>오리온팔</b> 가장자리 — 중심이 아니다(샤플리의 구상성단 연구).','나선팔에는 젊은 푸른 별(종족 I)과 가스가 모여 있다. <b>밀도파 이론</b>: 가스(≈250 km/s)가 무늬(≈125 km/s)를 추월하며 충격으로 압축돼 별이 탄생.','점선 원 = 가시광으로 볼 수 있는 한계(≈1만 ly): 은하 원반 속 <b>성간먼지</b>가 별빛을 가린다. 적외선·전파로는 더 멀리 본다.'],
+ side:['옆에서 보면 원반은 지름의 1/50 이하로 매우 얇고(두께 8배 과장), 중심에 부푼 <b>팽대부</b>가 있다.','<b>구상성단</b>(약 100~150개, 종족 II)은 중심에서 약 15만 ly 범위의 헤일로에 구형으로 분포 — 샤플리(1917)가 이 분포로 중심 위치를 알아냈다.','원반 <b>면 방향</b>으로는 먼지가 가려 가시광이 1만 ly 정도만 닿지만, 면에 <b>수직</b>인 방향으로는 1억 ly 이상 투과 → 은하 밖 우주를 본다.','중심부 Sgr A*: 질량 약 415만 M☉(자료의 약 500만 M☉). 주변 가스원반 회전 속도 110 km/s(중심 10 ly).'],
+ near:['태양 근방 ±1,000 ly를 위에서 본 지도(위쪽 = 은하 중심 방향). 방문한 별만 이름이 표시된다.','오리온자리의 리겔·베텔게우스(≈640~860 ly)는 모두 <b>오리온팔</b> 안의 젊은 거성/초거성(종족 I).','목록의 별들은 은하 원반 속에서 서로 다른 거리·나이·질량을 가진 이웃들이다.'],
+ lg:['<b>국부은하군</b>: 우리은하와 안드로메다(M31)가 전체 질량의 약 <b>75%</b>를 차지하는 은하 무리(지름 약 600만 ly).','M33, 대·소마젤란은하 외에 NGC 205·185·147, 사자자리 I·II, 육분의자리, 조각가자리, 화로자리 왜소은하 등이 있다.','M31은 −300 km/s 로 <b>접근</b> 중 — 약 40억 년 뒤 우리은하와 충돌·병합할 것이다.']};
+let galTime=0;
+function drawMapBase(c,st){c.fillStyle='#01020a';c.fillRect(0,0,W,H);const R=rng(21);for(let i=0;i<300;i++){c.fillStyle='rgba(200,215,255,'+(.15+.4*R())+')';c.fillRect(R()*W,R()*H,1.3,1.3)}}
+function drawMap(){
+ const c=gx,v=S.gview;drawMapBase(c);const cxx=W/2,cyy=H/2;
+ const sp=S.pos,gp=toGal(sp);
+ const lab=(t,x,y,col,al)=>{c.fillStyle=col||'#e8eeff';c.font='15px sans-serif';c.textAlign=al||'left';c.fillText(t,x,y)};
+ if(v==='top'){const s=235/58000;const P=(x,y)=>[cxx+x*s,cyy-y*s];
+  const gr=c.createRadialGradient(cxx,cyy,0,cxx,cyy,58000*s);gr.addColorStop(0,'rgba(255,230,170,.65)');gr.addColorStop(.12,'rgba(210,190,170,.3)');gr.addColorStop(.6,'rgba(120,140,220,.14)');gr.addColorStop(1,'rgba(80,100,200,0)');c.fillStyle=gr;c.beginPath();c.arc(cxx,cyy,58000*s,0,7);c.fill();
+  const R=rng(4),arms=[['노르마',0],['방패-센타우루스',Math.PI/2],['궁수',Math.PI],['페르세우스',Math.PI*1.5]];
+  arms.forEach(([nm,t0],ai)=>{for(let r=3600;r<=52000;r+=260){const th=t0+Math.log(r/3500)/0.2126;for(let k=0;k<4;k++){const j=(R()-.5)*r*.12;const a=th+(R()-.5)*.08;const [x,y]=P(Math.cos(a)*(r+j),Math.sin(a)*(r+j));c.fillStyle=R()<.25?'rgba(255,140,170,.85)':'rgba(190,215,255,.8)';c.fillRect(x,y,1.8,1.8)}}
+   const rr=33000,th=t0+Math.log(rr/3500)/0.2126;const [x,y]=P(Math.cos(th)*rr,Math.sin(th)*rr);lab(nm+'팔',x,y,'#9db',x<cxx?'right':'left')});
+  c.save();c.translate(cxx,cyy);c.rotate(-.47);c.fillStyle='rgba(255,215,140,.8)';c.beginPath();c.ellipse(0,0,4300*s,1400*s,0,0,7);c.fill();c.restore();
+  glow(c,cxx,cyy,34,[255,225,160],.9);
+  c.strokeStyle='rgba(251,191,36,.7)';c.setLineDash([5,4]);const [sx,sy]=P(0,-26000);c.beginPath();c.arc(sx,sy,10000*s,0,7);c.stroke();c.setLineDash([]);
+  c.fillStyle='#fbbf24';c.beginPath();c.arc(sx,sy,4,0,7);c.fill();lab('☀ 태양 (중심에서 ≈2.6만 ly)',sx+8,sy+16,'#fbbf24');lab('가시광 한계 ≈1만 ly',sx+10000*s*.72+2,sy-10000*s*.72,'#fbbf24');
+  lab('은하 중심 (Sgr A* 415만 M☉)',cxx+10,cyy-14,'#ffe9b0');
+  lab('은하 원반 지름 ≈ 10만 ly',cxx,H-14,'#9db','center');c.strokeStyle='rgba(150,180,255,.4)';c.setLineDash([3,4]);c.beginPath();c.arc(cxx,cyy,50000*s,0,7);c.stroke();c.setLineDash([]);
+  // 방문 천체
+  C.forEach(o=>{if(!S.visited[o.id]||o.d>58000||o.cat==='gal')return;const g=toGal(vec(o));const [x,y]=P(-g[1],g[0]-26000);const col=o.cat==='star'?bbRGB(o.T):[255,200,255];c.fillStyle=rgbStr(col);c.beginPath();c.arc(x,y,3,0,7);c.fill();if(o.id!=='sgr'&&Math.hypot(g[0],g[1])>2500)lab(o.ko.replace(/ \(.*\)/,''),x+5,y-4,'#e8eeff')});
+  const [shx,shy]=P(-gp[1],gp[0]-26000);c.fillStyle='#5eead4';c.beginPath();c.moveTo(shx,shy-8);c.lineTo(shx-6,shy+6);c.lineTo(shx+6,shy+6);c.fill();
+ }else if(v==='side'){const s=250/80000,ex=8;const P=(x,z)=>[cxx+x*s,cyy-z*s*ex];
+  // 헤일로
+  c.strokeStyle='rgba(150,180,255,.35)';c.setLineDash([4,5]);c.beginPath();c.arc(cxx,cyy,75000*s,0,7);c.stroke();c.setLineDash([]);lab('헤일로 · 구상성단 분포 (≈15만 ly)',cxx,cyy-75000*s-6,'#9bd','center');
+  const R=rng(8);for(let i=0;i<110;i++){const r=Math.pow(R(),1.7)*70000,a=R()*6.28,b=Math.acos(2*R()-1);const x=r*Math.sin(b)*Math.cos(a),z=r*Math.cos(b)*.9;const [px,py]=P(x,z/ex*1);c.fillStyle='rgba(255,220,160,.9)';c.beginPath();c.arc(px,cyy-(z*s),1.6,0,7);c.fill()}
+  const g=c.createLinearGradient(0,cyy-14,0,cyy+14);g.addColorStop(0,'rgba(170,190,255,0)');g.addColorStop(.5,'rgba(190,205,255,.9)');g.addColorStop(1,'rgba(170,190,255,0)');c.fillStyle=g;c.fillRect(cxx-50000*s,cyy-14,100000*s,28);
+  c.fillStyle='rgba(30,16,8,.8)';c.fillRect(cxx-50000*s,cyy-2,100000*s,4);
+  glow(c,cxx,cyy,60,[255,225,160],.85);c.save();c.beginPath();c.ellipse(cxx,cyy,9000*s*1.6,5000*s*ex*.5+12,0,0,7);c.fillStyle='rgba(255,215,140,.55)';c.fill();c.restore();
+  const sx=cxx-26000*s;c.fillStyle='#fbbf24';c.beginPath();c.arc(sx,cyy,4,0,7);c.fill();lab('☀ 태양',sx,cyy+22,'#fbbf24','center');lab('중심 팽대부',cxx,cyy+44,'#ffe9b0','center');
+  // 시선 방향 (면 방향 vs 수직)
+  const gg=c.createLinearGradient(sx,0,cxx,0);gg.addColorStop(0,'rgba(94,234,212,.9)');gg.addColorStop(1,'rgba(94,234,212,0)');c.strokeStyle=gg;c.lineWidth=3;c.beginPath();c.moveTo(sx,cyy);c.lineTo(cxx-18000*s,cyy);c.stroke();c.lineWidth=1;
+  lab('면 방향: 가시광은 먼지에 막혀 ≈1만 ly',sx+6,cyy-20,'#5eead4');
+  c.strokeStyle='rgba(94,234,212,.9)';c.lineWidth=3;c.beginPath();c.moveTo(sx,cyy-6);c.lineTo(sx,cyy-150);c.stroke();c.lineWidth=1;lab('수직: 1억 ly 이상 투과 ↑',sx+6,cyy-110,'#5eead4');
+  lab('(두께 8배 과장 · 원반 지름 ≈ 10만 ly)',cxx,H-14,'#9db','center');
+  C.forEach(o=>{if(!S.visited[o.id]||o.cat==='gal'||o.d>80000)return;const g2=toGal(vec(o));const x=cxx+(g2[0]-26000)*s,y=cyy-g2[2]*s*ex;c.fillStyle='#fff';c.beginPath();c.arc(x,y,2.5,0,7);c.fill();if(o.d>2000)lab(o.ko.replace(/ \(.*\)/,''),x+5,y-4)});
+  const shx=cxx+(gp[0]-26000)*s,shy=cyy-gp[2]*s*ex;c.fillStyle='#5eead4';c.beginPath();c.arc(shx,shy,3.5,0,7);c.fill();
+ }else if(v==='near'){const s=225/1000;const P=(g)=>[cxx-g[1]*s,cyy-g[0]*s];
+  c.strokeStyle='#26346a';[250,500,1000].forEach(r=>{c.beginPath();c.arc(cxx,cyy,r*s,0,7);c.stroke();lab(r+' ly',cxx+r*s*.71+2,cyy-r*s*.71,'#6b7bb5')});
+  c.strokeStyle='#223';c.beginPath();c.moveTo(cxx,cyy-240);c.lineTo(cxx,cyy+240);c.moveTo(cxx-420,cyy);c.lineTo(cxx+420,cyy);c.stroke();lab('▲ 은하 중심 방향 (l=0°)',cxx+6,cyy-224,'#6b7bb5');lab('l=90° 은하 자전 방향 ◀',cxx-414,cyy-6,'#6b7bb5');
+  c.fillStyle='#fbbf24';c.beginPath();c.arc(cxx,cyy,5,0,7);c.fill();lab('☀ 태양',cxx+8,cyy+16,'#fbbf24');
+  let k=0;C.forEach(o=>{if(o.cat==='gal'||o.d>1000||o.id==='sun')return;const g=toGal(vec(o));const [x,y]=P(g);const vis=S.visited[o.id];const col=o.cat==='star'?bbRGB(o.T):[255,190,240];
+   c.fillStyle=vis?rgbStr(col):'rgba(150,170,220,.3)';c.beginPath();c.arc(x,y,vis?4:2.5,0,7);c.fill();if(vis){const nm=o.ko.replace(/ \(.*\)/,'');lab(nm,x+7,y+4+((k++)%3)*0,'#e8eeff')}});
+  const [sx,sy]=P(gp);c.fillStyle='#5eead4';c.beginPath();c.moveTo(sx,sy-8);c.lineTo(sx-6,sy+6);c.lineTo(sx+6,sy+6);c.fill();
+ }else{ // 국부은하군
+  const wp=LG.map(a=>({n:a[0],g:toGal(vec({ra:a[1],dec:a[2],d:a[3]*1e6}))}));
+  const m31=wp[0].g,mid=[m31[0]/2,m31[1]/2];const s=205/1.6e6;const P=g=>[cxx-(g[1]-mid[1])*s,cyy-(g[0]-mid[0])*s];
+  c.strokeStyle='rgba(150,180,255,.4)';c.setLineDash([4,5]);c.beginPath();c.arc(cxx,cyy,3.0e6*s*.62,0,7);c.stroke();c.setLineDash([]);lab('국부은하군 (지름 ≈ 600만 ly)',cxx,26,'#9bd','center');
+  wp.forEach((w,i)=>{const [x,y]=P(w.g);const big=i<2,mid3=i===1;if(big||mid3){c.save();c.translate(x,y);c.rotate(i?.6:0);c.scale(1,i===0?.4:.9);glow(c,0,0,i===0?30:18,[190,205,255],.55);c.fillStyle='#ffe9b0';c.beginPath();c.arc(0,0,3,0,7);c.fill();c.restore()}else{c.fillStyle='#c9d4ff';c.beginPath();c.arc(x,y,2.5,0,7);c.fill()}
+   lab(w.n==='M31'?'M31 안드로메다':w.n==='M33'?'M33':w.n,x+8,y-6,'#e8eeff')});
+  const [mx,my]=P([0,0,0]);glow(c,mx,my,26,[200,215,255],.8);c.fillStyle='#fbbf24';c.beginPath();c.arc(mx,my,3.5,0,7);c.fill();lab('우리은하 (☀)',mx-10,my+20,'#fbbf24','right');
+  const [m1x,m1y]=P(m31);c.strokeStyle='#60a5fa';c.lineWidth=2;c.beginPath();c.moveTo(m1x+(mx-m1x)*.3,m1y+(my-m1y)*.3);c.lineTo(m1x+(mx-m1x)*.5,m1y+(my-m1y)*.5);c.stroke();c.lineWidth=1;lab('−300 km/s 접근',(m1x+mx)/2+10,(m1y+my)/2,'#60a5fa');
+  lab('MW + M31 = 국부은하군 질량의 약 75%',cxx,H-14,'#9db','center');
+  if(S.tgt&&S.tgt.cat==='gal'){const o=S.tgt;const i=LG.findIndex(a=>norm(a[0])===norm(o.ng||''));if(i>=0){const [x,y]=P(wp[i].g);c.strokeStyle='#5eead4';c.lineWidth=2;c.beginPath();c.arc(x,y,12,0,7);c.stroke();c.lineWidth=1}}}
+}
+/* ===== 렌더 ===== */
+function renderSbar(){const b=$('sbar');b.innerHTML=Object.keys(MODES).map(k=>'<button class="btn'+(S.mode===k?' on':'')+'" data-md="'+k+'">'+MODES[k][0]+'</button>').join('')+'<button class="btn pri" data-a="ana">🛰 분석</button><button class="btn" data-a="help2">📐 계산</button><button class="btn" data-a="home">🏠 오르트 구름</button>';
+ b.querySelectorAll('[data-md]').forEach(x=>x.onclick=()=>setMode(x.dataset.md));
+ b.querySelector('[data-a=ana]').onclick=analyze;b.querySelector('[data-a=help2]').onclick=helper;
+ b.querySelector('[data-a=home]').onclick=()=>{S.tgt=null;S.r=0;S.pos=START.slice();say('🏠 오르트 구름(0.8 ly)으로 귀환했습니다. 워프 구동 대기.','ok');renderAll()}}
+function renderChips(){const ch=[['HIP 32349 시리우스 A','도약 HIP 32349'],['HIP 27989 베텔게우스','도약 HIP 27989'],['HIP 70890 프록시마','도약 HIP 70890'],['시리우스 B','도약 시리우스 B'],['M42 오리온','도약 M42'],['M13','도약 M13'],['궁수자리 A*','도약 궁수자리 A*'],['M31','도약 M31'],['도움말','도움말']];
+ $('chips').innerHTML=ch.map(c=>'<button class="chip" data-c="'+c[1]+'">'+c[0]+'</button>').join('');$('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>cmd(b.dataset.c))}
+function renderHRinfo(){const v=C.filter(o=>o.cat==='star'&&S.visited[o.id]).sort((a,b)=>b.T-a.T);
+ $('hrinfo').innerHTML='<h2>📈 H-R도 (헤르츠스프룽–러셀)</h2><div class="small mu" style="margin-bottom:6px">가로축 = 표면 온도(분광형) · 세로축 = 광도. 방문한 별만 밝게 표시됩니다.</div>'+(v.length?'<table class="t"><tr><th>별</th><th>분광형</th><th>log T</th><th>log L</th><th>위치</th></tr>'+v.map(o=>{const h=hrPos(o);return '<tr><td>'+o.ko.replace(/ \(.*\)/,'')+'</td><td>'+o.sp+'</td><td>'+h.lt.toFixed(2)+'</td><td>'+h.ll.toFixed(2)+'</td><td>'+h.g.split(' — ')[1]+'</td></tr>'}).join('')+'</table>':'<div class="mu">아직 관측한 항성이 없습니다. 함교 탭에서 별로 도약하세요.</div>')}
+function renderGfact(){$('gfact').innerHTML='<h2>🌌 은하수 이야기 <span class="mu small">(Newton Special 자료 참고)</span></h2>'+GF[S.gview].map(t=>'<div class="goal">'+t+'</div>').join('')}
+function renderGbar(){const v=[['top','⬆ 위에서 본 은하'],['side','➡ 옆에서 본 은하'],['near','☀ 태양 근방'],['lg','🌐 국부은하군']];$('gbar').innerHTML=v.map(x=>'<button class="btn'+(S.gview===x[0]?' on':'')+'" data-v="'+x[0]+'">'+x[1]+'</button>').join('');$('gbar').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.gview=b.dataset.v;renderGbar();renderGfact()})}
+function renderCat(){const f=$('catf').value;const L=C.filter(o=>f==='all'||(f==='ns'?(o.cat==='ns'||o.cat==='bh'):o.cat===f));$('catn').textContent=L.filter(o=>S.visited[o.id]).length+' / '+L.length+' 방문';
+ $('catl').innerHTML='<table class="t">'+L.map(o=>'<tr><td>'+(S.visited[o.id]?'✅':'⬜')+'</td><td><b>'+o.ko.replace(/ \(.*\)/,'')+'</b><br><span class="mu small">'+(names(o)||o.nm)+'</span></td><td>'+(o.cat==='star'?o.sp:o.sp.slice(0,12))+'</td><td>'+(hideDist(o)?'🔒':fmtLy(o.d))+'</td><td><button class="btn sm" data-w="'+o.id+'">도약</button></td></tr>').join('')+'</table>';
+ $('catl').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{setTab('bridge');warpTo(BYID[b.dataset.w])})}
+function renderAll(){updHud();renderSbar();aprHTML();renderMis();renderHRinfo();if(S.tab==='cat')renderCat()}
+const TABS=[['bridge','🚀 함교'],['gal','🌌 은하 지도'],['hr','📈 H-R도'],['cat','📚 도감']];
+function setTab(t){S.tab=t;['bridge','gal','hr','cat'].forEach(k=>$('p-'+k).hidden=k!==t);$('tabs').querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='cat')renderCat();if(t==='gal'){renderGbar();renderGfact()}}
+function tabsInit(){$('tabs').innerHTML=TABS.map(t=>'<button class="tab" data-t="'+t[0]+'">'+t[1]+'</button>').join('');$('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t))}
+let lastT=0;
+function frame(t){if(t-lastT>45){lastT=t;try{if(S.tab==='bridge')drawView();else if(S.tab==='gal')drawMap();else if(S.tab==='hr')drawHR()}catch(e){console.error(e)}}requestAnimationFrame(frame)}
+$('cmd').onsubmit=e=>{e.preventDefault();const v=$('ci').value;$('ci').value='';cmd(v)};
+$('catf').onchange=renderCat;
+$('fs').onclick=()=>{try{const d=document;if(!d.fullscreenElement)d.documentElement.requestFullscreen();else d.exitFullscreen()}catch(e){}};
+tabsInit();renderChips();renderAll();setTab('bridge');
+say('🛰 <b>임무 브리핑 — 미션 1: 우리은하 인근 항성의 분광 관측</b>\n안녕하세요, 함장님. 저는 아스트라호의 항법 AI "아스트라"입니다.\n🎯 <b>목표</b>: 분광형이 다른 별(O·B·A·F·G·K·M)을 5종 이상 관측하고 H-R도를 완성하세요.\n📍 <b>현재 위치</b>: 오르트 구름 · Sol에서 0.8 ly(≈0.25 pc)\n🔬 <b>관측 모드</b>: 전천 분광 · 워프 구동 대기\n\n<b>도약 후보</b>\n1. HIP 32349 시리우스 A (8.6 ly)\n2. HIP 27989 베텔게우스 (640 ly)\n3. HIP 70890 프록시마 센타우리 (4.24 ly)\n\n워프 좌표를 <b>카탈로그 이름</b>(예: HIP 91262, M31, 안타레스)으로 입력하거나, 아래 버튼·센서 필터를 설정하세요.');
+hudMsg();
+window.__sp={S,C,BYID,cmd,warpTo,enterOrbit,analyze,assess,hazardLimits,arrivalR,submit,renderAll,setMode,setTab,lumOf,MV,distMod,find,checkMissions,rFromSlider};
+requestAnimationFrame(frame);
+
+})();
+</script></body></html>

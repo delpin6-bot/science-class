@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>에너지 스케이트 파크 · 역학적 에너지 보존 게임</title>
+<style>
+:root{--bg:#0a1020;--pn:#111a33;--pn2:#18244a;--ln:#2b3d70;--tx:#e9eefc;--mu:#9fb2dc;--ac:#22d3ee;--ok:#34d399;--no:#f87171;--wa:#fbbf24;--ep:#22c55e;--ek:#3b82f6;--eth:#f97316;--tot:#eab308}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(14px,1.45vw,17px);line-height:1.5;-webkit-text-size-adjust:100%}
+header{display:flex;align-items:center;gap:8px;padding:6px clamp(8px,2vw,16px);background:#060b18;border-bottom:1px solid var(--ln);flex-wrap:wrap;position:sticky;top:0;z-index:30}
+header h1{margin:0;font-size:clamp(14px,2.2vw,20px);white-space:nowrap}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:7px clamp(8px,1.6vw,14px);font-weight:800;font-size:clamp(11px,1.6vw,14px);text-decoration:none;cursor:pointer;white-space:nowrap;font-family:inherit}
+.tabs{display:flex;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
+.tab{min-height:42px;padding:0 12px;border-radius:12px;border:2px solid var(--ln);background:var(--pn2);color:var(--mu);font-weight:800;font-size:.92em;cursor:pointer;font-family:inherit}
+.tab.on{background:#fff;color:#0a1020;border-color:#fff}
+main{padding:10px clamp(8px,2vw,16px);display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:10px;max-width:1500px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+@media(max-width:760px){header{position:static}header h1{flex:1 0 100%}.tabs{order:5;flex:1 0 100%;flex-wrap:nowrap;overflow-x:auto}.tab{flex:0 0 auto;white-space:nowrap;padding:0 10px}}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:10px 12px}
+.card h2{margin:0 0 6px;font-size:1.02em}
+.stagebox{position:relative;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--ln)}
+#cv{width:100%;aspect-ratio:960/560;display:block;touch-action:none;background:#9ad1f5}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;background:#0b1430;border-top:1px solid var(--ln)}
+.btn{min-height:42px;padding:0 14px;border-radius:12px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:800;cursor:pointer;font-family:inherit;font-size:.95em}
+.btn.pri{background:linear-gradient(#22d3ee,#0891b2);border-color:#67e8f9;color:#052e38}
+.btn.ok{background:linear-gradient(#34d399,#059669);border-color:#6ee7b7;color:#022c22}
+.btn.on{border-color:#fff;background:#25356b}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.rd{display:flex;gap:10px;align-items:center;font-weight:700}
+.rd label{display:flex;gap:4px;align-items:center;cursor:pointer}
+.chk{display:flex;align-items:center;gap:8px;min-height:34px;font-weight:700;cursor:pointer}
+.chk input{width:20px;height:20px}
+.side{display:flex;flex-direction:column;gap:10px}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;margin:8px 0}
+.sl input[type=range]{grid-column:1/3;width:100%;height:28px}
+.sl b{color:#fff}
+select{background:#0b1430;color:var(--tx);border:2px solid var(--ln);border-radius:8px;padding:6px;font-family:inherit;font-size:1em}
+.av{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.av button{font-size:1.5em;padding:3px 0;border-radius:10px;border:2px solid var(--ln);background:#0b1430;cursor:pointer}
+.av button.on{border-color:#fff;background:#25356b}
+.pre{display:flex;gap:6px;flex-wrap:wrap}.pre .btn{flex:1;min-width:56px;padding:0 6px;font-size:.88em}
+.sw{font-size:1.5em;font-weight:900;text-align:center;background:#0b1430;border:2px solid var(--ln);border-radius:10px;padding:2px 8px;font-variant-numeric:tabular-nums}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pill{min-height:40px;min-width:40px;border-radius:999px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:900;cursor:pointer;font-family:inherit}
+.pill.on{background:#fff;color:#0a1020}.pill.done{border-color:var(--ok)}.pill:disabled{opacity:.35}
+.goal{background:#0b1430;border-left:4px solid var(--ac);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.94em}
+.in{display:grid;grid-template-columns:1fr 92px;gap:6px 8px;align-items:center;margin:6px 0}
+.in input[type=number]{width:100%;background:#0b1430;color:#fff;border:2px solid var(--ln);border-radius:8px;padding:6px;font-size:1em;font-family:inherit}
+.in input[type=range]{grid-column:1/3;width:100%}
+#log{max-height:min(46vh,420px);overflow:auto;display:flex;flex-direction:column;gap:8px}
+.msg{background:#0b1430;border:1px solid var(--ln);border-radius:12px;padding:8px 10px;font-size:.93em;white-space:pre-wrap;line-height:1.55}
+.msg.ok{border-color:var(--ok)}.msg.no{border-color:var(--no)}.msg.wa{border-color:var(--wa)}
+.msg code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;display:block;margin-top:4px;line-height:1.45}
+.mu{color:var(--mu)}.small{font-size:.88em}
+#ov{position:absolute;left:8px;top:8px;pointer-events:none}
+#ctab{background:#4b3d86e6;border-radius:6px;padding:4px 8px;color:#fff;font-size:clamp(10px,1.4vw,14px);display:none}
+#ctab td{padding:1px 6px;border:0}#ctab td:last-child{text-align:right;background:#fff;color:#111;font-weight:800;border-radius:4px;min-width:74px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#fff;color:#111;font-weight:800;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+#toast.on{opacity:1}
+</style></head><body>
+<header><h1>🛹 에너지 스케이트 파크</h1><div class="tabs" id="tabs"></div>
+<a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<main>
+<div><div class="stagebox"><canvas id="cv" width="960" height="560"></canvas><div id="ov"><table id="ctab"></table></div></div><div class="bar" id="bar"></div></div>
+<div class="side" id="side"></div>
+</main><div id="toast"></div>
+<script>
+(()=>{'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const PX=45,OX=20,GY=500,CW=960,CH=560,DS=0.02;
+const wx=x=>OX+x*PX,wy=y=>GY-y*PX;
+const COL={ep:'#22c55e',ek:'#3b82f6',eth:'#f97316',tot:'#eab308'};
+/* ===== 트랙 ===== */
+function hermite(P,n){n=n||40;const out=[];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],dx=b.x-a.x;for(let k=0;k<n;k++){const t=k/n,t2=t*t,t3=t2*t;out.push([a.x+dx*t,(2*t3-3*t2+1)*a.y+(t3-2*t2+t)*dx*a.m+(-2*t3+3*t2)*b.y+(t3-t2)*dx*b.m])}}const l=P[P.length-1];out.push([l.x,l.y]);return out}
+function crom(P,n){n=n||36;const out=[];for(let i=0;i<P.length-1;i++){const p0=P[Math.max(i-1,0)],p1=P[i],p2=P[i+1],p3=P[Math.min(i+2,P.length-1)];for(let k=0;k<n;k++){const t=k/n,t2=t*t,t3=t2*t,f=(a,b,c,d)=>.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);out.push([f(p0[0],p1[0],p2[0],p3[0]),f(p0[1],p1[1],p2[1],p3[1])])}}out.push(P[P.length-1].slice());return out}
+function loopPoly(cx,r,d){const out=[],N=Math.ceil(2*Math.PI*r/0.05);for(let i=0;i<=N;i++){const f=-Math.PI/2+2*Math.PI*i/N;let u=0;if(f>Math.PI){const z=Math.min(1,(f-Math.PI)/(Math.PI/2));u=z*z*(3-2*z)}out.push([cx+r*Math.cos(f)+d*u,r+r*Math.sin(f)])}return out}
+function polyLen(pts,i1){let L=0;for(let i=1;i<=i1&&i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);return L}
+function makeTrack(raw,loopIdx){
+ const pts=[raw[0]];for(let i=1;i<raw.length;i++){const a=pts[pts.length-1],b=raw[i];if(Math.hypot(b[0]-a[0],b[1]-a[1])>1e-6)pts.push(b)}
+ const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+ const total=L[L.length-1],n=Math.max(4,Math.round(total/DS)),ds=total/n,xs=new Float64Array(n+1),ys=new Float64Array(n+1);let j=0;
+ for(let k=0;k<=n;k++){const s=k*ds;while(j<pts.length-2&&L[j+1]<s)j++;const f=Math.min(1,Math.max(0,(s-L[j])/Math.max(1e-9,L[j+1]-L[j])));xs[k]=pts[j][0]+(pts[j+1][0]-pts[j][0])*f;ys[k]=pts[j][1]+(pts[j+1][1]-pts[j][1])*f}
+ const th=new Float64Array(n+1);let pv=0;for(let k=0;k<=n;k++){const i0=Math.max(0,k-2),i1=Math.min(n,k+2);let a=Math.atan2(ys[i1]-ys[i0],xs[i1]-xs[i0]);while(a-pv>Math.PI)a-=2*Math.PI;while(a-pv<-Math.PI)a+=2*Math.PI;th[k]=a;pv=a}
+ const kap=new Float64Array(n+1),w=6;for(let k=0;k<=n;k++){const i0=Math.max(0,k-w),i1=Math.min(n,k+w);kap[k]=(th[i1]-th[i0])/((i1-i0)*ds)}
+ const T={n,ds,total,xs,ys,th,kap,loop:null,
+  at(s,q){let u=s/ds;if(u<0)u=0;if(u>n-1e-9)u=n-1e-9;const i=Math.floor(u),f=u-i;q.x=xs[i]+(xs[i+1]-xs[i])*f;q.y=ys[i]+(ys[i+1]-ys[i])*f;q.th=th[i]+(th[i+1]-th[i])*f;q.k=kap[i]+(kap[i+1]-kap[i])*f;return q},
+  near(x,y){let bd=1e9,bk=0;for(let k=0;k<=n;k++){const dx=xs[k]-x,dy=ys[k]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bk=k}}return{s:bk*ds,d:Math.sqrt(bd)}}};
+ if(loopIdx)T.loop=[polyLen(raw,loopIdx[0]),polyLen(raw,loopIdx[1])];
+ return T}
+/* ===== 물리 ===== */
+function newSim(tr){return{track:tr,mode:'track',s:0,v:0,x:0,y:0,vx:0,vy:0,Eabs:0,Eth:0,t:0,airT:0,g:9.8,m:60,mu:0,stick:true,rest:false,det:null,end:null,noRe:false,landed:0,q:{x:0,y:0,th:0,k:0}}}
+function place(o,s,v){o.track.at(s,o.q);o.mode='track';o.s=s;o.v=v||0;o.x=o.q.x;o.y=o.q.y;o.Eth=0;o.rest=false;o.det=null;o.end=null;o.noRe=false;o.vx=o.v*Math.cos(o.q.th);o.vy=o.v*Math.sin(o.q.th);o.Eabs=.5*o.m*o.v*o.v+o.m*o.g*o.y}
+function ekOf(o){return o.mode==='track'?.5*o.m*o.v*o.v:.5*o.m*(o.vx*o.vx+o.vy*o.vy)}
+function resetE(o){o.Eabs=ekOf(o)+o.m*o.g*o.y+o.Eth}
+function step(o,dt){o.t+=dt;if(o.mode==='track')stepTrack(o,dt);else if(o.mode==='air')stepAir(o,dt)}
+function leave(o){const q=o.q;o.track.at(o.s,q);o.mode='air';o.airT=0;o.vx=o.v*Math.cos(q.th);o.vy=o.v*Math.sin(q.th);o.x=q.x;o.y=q.y}
+function stepTrack(o,dt){
+ const tr=o.track,q=o.q,g=o.g;tr.at(o.s,q);const sn=Math.sin(q.th),cs=Math.cos(q.th),Nm=o.v*o.v*q.k+g*cs;
+ if(!o.stick&&Nm<-0.3&&(!tr.zoneOnly||(tr.loop&&o.s>=tr.loop[0]&&o.s<=tr.loop[1]))){o.det={s:o.s,v:o.v,x:q.x,y:q.y,th:q.th,Nm,k:q.k,t:o.t};o.mode='air';o.airT=0;o.vx=o.v*Math.cos(q.th);o.vy=o.v*Math.sin(q.th);o.x=q.x;o.y=q.y;return}
+ const a=-g*sn,fr=o.mu>0?o.mu*Math.max(0,Nm):0;
+ if(fr>0&&Math.abs(o.v)<0.004&&Math.abs(a)<=fr){o.v=0;o.rest=true;return}
+ let v2;if(fr>0){if(Math.abs(o.v)>1e-9){v2=o.v+(a-Math.sign(o.v)*fr)*dt;if(v2*o.v<0)v2=0}else v2=(a-Math.sign(a)*fr)*dt}else v2=o.v+a*dt;
+ const ds=(o.v+v2)/2*dt;o.s+=ds;o.v=v2;o.rest=false;o.Eth+=o.m*fr*Math.abs(ds);
+ if(o.s>=tr.total){o.s=tr.total;o.end='right';leave(o);return}
+ if(o.s<=0){o.s=0;o.end='left';leave(o);return}
+ tr.at(o.s,q);o.x=q.x;o.y=q.y;
+ const ekT=o.Eabs-o.m*g*o.y-o.Eth,sg=Math.sign(o.v)||Math.sign(a)||1;o.v=ekT>0?sg*Math.sqrt(2*ekT/o.m):0}
+function stepAir(o,dt){
+ o.airT+=dt;const g=o.g;o.vy-=g*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;
+ const ekT=o.Eabs-o.m*g*o.y-o.Eth,ek=.5*o.m*(o.vx*o.vx+o.vy*o.vy);if(ek>1e-9&&ekT>0){const f=Math.sqrt(ekT/ek);o.vx*=f;o.vy*=f}
+ if(o.y<=0){o.y=0;o.mode='ground';o.vx=o.vy=0;o.Eth=o.Eabs;o.crash=true;return}
+ if(o.airT>0.06&&!o.noRe){const tr=o.track;let bd=1e9,bk=0;for(let k=0;k<=tr.n;k+=2){const dx=tr.xs[k]-o.x,dy=tr.ys[k]-o.y,d=dx*dx+dy*dy;if(d<bd){bd=d;bk=k}}
+  if(bd<0.0144){const th=tr.th[bk],nx=-Math.sin(th),ny=Math.cos(th),side=(o.x-tr.xs[bk])*nx+(o.y-tr.ys[bk])*ny,vn=o.vx*nx+o.vy*ny;
+   if(vn<0&&side>-0.2){const ekb=ek,v=o.vx*Math.cos(th)+o.vy*Math.sin(th);o.s=bk*tr.ds;o.v=v;o.mode='track';o.x=tr.xs[bk];o.y=tr.ys[bk];o.Eth+=ekb-.5*o.m*v*v;o.landed++;o.end=null;
+    const ekT2=o.Eabs-o.m*g*o.y-o.Eth;if(ekT2>0)o.v=Math.sign(v||1)*Math.sqrt(2*ekT2/o.m);}}}}
+function En(o,href){const ek=ekOf(o),ep=o.m*o.g*(o.y-(href||0));return{ep,ek,eth:o.Eth,tot:ep+ek+o.Eth}}
+/* ===== 미션 트랙 ===== */
+const m0=(A,B,w)=>-1.5*(A-B)/w;
+const T_TARGET=4.5;
+const BLD={
+ 1:p=>{const h=hermite([{x:0,y:p.A,m:m0(p.A,p.B,5)},{x:5,y:p.B,m:0},{x:11,y:p.C,m:0},{x:15.5,y:0,m:0}]);h.push([18.5,0]);return{raw:h}},
+ 2:p=>{const h=hermite([{x:0,y:p.A,m:m0(p.A,0,4)},{x:4,y:0,m:0},{x:8,y:4,m:0},{x:12,y:0,m:0},{x:16,y:p.C,m:0},{x:19.3,y:0,m:0}]);h.push([20.4,0]);return{raw:h}},
+ 3:p=>{const h=hermite([{x:0,y:p.A,m:m0(p.A,0,6)},{x:6,y:0,m:0}]);h.push([8,0]);const i0=h.length-1,d=.8*p.r+.6,lp=loopPoly(8,p.r,d);lp.shift();h.push(...lp);const i1=h.length-1;h.push([8+d+5,0]);return{raw:h,loopIdx:[i0,i1],r:p.r}},
+ 4:p=>{const h=hermite([{x:0,y:p.A,m:m0(p.A,0,5)},{x:5,y:0,m:0},{x:14,y:9.8,m:0}]);h.push([16.5,9.8]);return{raw:h}},
+ 5:p=>{const h=hermite([{x:0,y:p.A,m:m0(p.A,0,5)},{x:5,y:0,m:0}]);h.push([7,0]);const i0=h.length-1,d=.8*p.r+.6,lp=loopPoly(7,p.r,d);lp.shift();h.push(...lp);const i1=h.length-1,xe=7+d;h.push([xe+2,0]);const hh=hermite([{x:xe+2,y:0,m:0},{x:xe+5.5,y:3,m:0},{x:xe+8.5,y:0,m:0}]);hh.shift();h.push(...hh);h.push([xe+9.3,0]);return{raw:h,loopIdx:[i0,i1],r:p.r}}
+};
+function buildStage(id,p){const b=BLD[id](p);const tr=makeTrack(b.raw,b.loopIdx);tr.r=b.r||0;tr.zoneOnly=true;return tr}
+function runHeadless(tr,mu,p){
+ const o=newSim(tr);o.mu=mu;o.stick=false;place(o,0,0);const E0=o.Eabs,smp=[],evs=[];const dt=1/480;
+ const sm=()=>smp.push({t:o.t,x:o.x,y:o.y,th:o.mode==='track'?(tr.at(o.s,o.q),o.q.th):Math.atan2(o.vy,o.vx),v:o.mode==='track'?o.v:Math.hypot(o.vx,o.vy),ep:o.m*o.g*o.y,ek:ekOf(o),eth:o.Eth,mode:o.mode,s:o.s});
+ sm();let k=0,fatal=false,out=null,dirPos=false,tbEnd=null,apex=null,lastMode='track',tEnd=null;
+ while(o.t<90){
+  const wm=o.mode;step(o,dt);k++;
+  if(wm==='track'&&o.mode==='air'&&!o.end){const inLoop=tr.loop&&o.det&&o.det.s>=tr.loop[0]&&o.det.s<=tr.loop[1];if(inLoop){fatal=true;o.noRe=true}evs.push({t:o.t,i:smp.length,type:inLoop?'loopdet':'detach',d:o.det})}
+  if(wm==='air'&&o.mode==='track')evs.push({t:o.t,i:smp.length,type:'land'});
+  if(k%8===0)sm();
+  if(o.end==='right'&&o.mode==='air'&&o.airT<0.01){out='finish';sm();break}
+  if(o.mode==='ground'){out=fatal?'loopfall':'crash';sm();break}
+  if(o.mode==='track'&&o.rest){out='rest';sm();break}
+  if(o.mode==='track'){if(o.v>0.05)dirPos=true;if(dirPos&&o.v<-0.0005&&tbEnd===null){apex={y:o.y,x:o.x,i:smp.length,s:o.s,t:o.t};evs.push({t:o.t,i:smp.length,type:'turnback',d:apex});tbEnd=o.t+1.4}}
+  if(tbEnd!==null&&o.t>=tbEnd){out='turnback';sm();break}
+ }
+ if(!out){out='timeout';sm()}
+ return{o,E0,smp,evs,out,apex,fatal}}
+/* ===== 중계 텍스트 ===== */
+const f0=x=>Math.round(x).toLocaleString('ko-KR'),f1=x=>(Math.round(x*10)/10).toFixed(1),f2=x=>(Math.round(x*100)/100).toFixed(2);
+function bars(s,E0){const row=(nm,v,c)=>{const n=Math.max(0,Math.min(10,Math.round(10*v/Math.max(E0,1))));return nm+' '+c.repeat(n)+'⬜'.repeat(10-n)+' '+f0(v)+' J'};
+ return '[위치(Ep) 🟩 | 운동(Ek) 🟦 | 열(Eth) 🟧 | 총합(Total) 🟨]\n'+row('위치(Ep)  ',s.ep,'🟩')+'\n'+row('운동(Ek)  ',s.ek,'🟦')+'\n'+row('열(Eth)   ',s.eth,'🟧')+'\n'+row('총합(Total)',s.ep+s.ek+s.eth,'🟨')}
+window.SK={hermite,crom,loopPoly,makeTrack,newSim,place,step,resetE,ekOf,En,buildStage,runHeadless,bars,f0,f1,f2,T_TARGET,wx,wy,PX,OX,GY,CW,CH,COL,$,$$};
+})();
+</script>
+<script>
+(()=>{'use strict';
+const K=window.SK,{$,$$,wx,wy,PX,OX,GY,CW,CH,COL,f0,f1,f2}=K;
+const cv=$('#cv'),ctx=cv.getContext('2d');
+const PRE={U:{nm:'U자',pts:[[1.5,8.5],[4.7,3.4],[10,0.25],[15.3,3.4],[18.5,8.5]]},AS:{nm:'비대칭',pts:[[1.5,7.5],[5,1.4],[8.5,0.25],[13,3],[18.5,9]]},DW:{nm:'더블 힐',pts:[[1.5,8.2],[4,2.6],[7,0.3],[10,4.4],[13,0.4],[16,3.2],[18.5,7]]},
+ U6:{nm:'U자',pts:[[1.5,5.5],[4.7,2.2],[10,0.25],[15.3,2.2],[18.5,5.5]]},DW6:{nm:'더블 힐',pts:[[1.5,5.6],[4,2.2],[7,0.3],[10,3.4],[13,0.4],[16,2.4],[18.5,5]]},HILL3:{nm:'삼중 언덕',pts:[[1.5,8],[4,2],[6.5,0.4],[8.5,4.2],[11,0.5],[13,3.2],[15.5,0.4],[18.5,6]]},LOOP:{nm:'🎡 루프',loop:true}};
+const TABS=[['intro','① 인트로',['U','AS','DW'],['pie','tab','bar','speed','path','stick']],['measure','② 측정',['DW','U','AS'],['bar','speed','path','grid','ref','tape','sw','stick']],['graph','③ 그래프',['U6','DW6'],['graph','speed','path','sw','stick']],['play','④ 놀이터',['U','DW','HILL3','LOOP'],['bar','pie','tab','speed','path','grid','ref','tape','sw','graph','stick']],['miss','🎯 ⑤ 미션',[],['bar','pie','speed','path','grid']]];
+const OL={bar:'막대 그래프',pie:'원 그래프',tab:'에너지 표',speed:'속력계',path:'경로 표시',grid:'격자',ref:'기준 높이',tape:'줄자',sw:'스톱워치',graph:'에너지-시간 그래프',stick:'트랙에 붙기'};
+const DEF={intro:{pie:1,tab:1,stick:1},measure:{bar:1,speed:1,ref:1,stick:1},graph:{graph:1,sw:1,stick:1},play:{bar:1,pie:1,stick:1},miss:{bar:1,pie:1,speed:1}};
+const AV=[{c:'👧',m:40},{c:'🧒',m:55},{c:'👦',m:60},{c:'🧑',m:70},{c:'🐱',m:15},{c:'🐶',m:25}];
+const PL=[['지구',9.8],['달',1.62],['화성',3.71],['금성',8.87],['목성',24.8],['직접',0]];
+const app={tab:'intro',pid:'U',edit:null,trk:null,sim:null,run:false,slow:false,href:0,opt:{},av:2,g:9.8,m:60,mu:0,loopR:2,del:false,zb:1,zg:1,gmode:'time',ser:{ep:1,ek:1,eth:1,tot:1},hist:[],trail:[],swT:0,tape:{a:[3,1.6],b:[7.5,1.6]},hacc:0,btns:[],lastTh:0,snap:null,drag:null};
+function toast(m,ms){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),ms||2200)}
+$('#fs').onclick=()=>{const e=document.documentElement;document.fullscreenElement?document.exitFullscreen():e.requestFullscreen&&e.requestFullscreen()};
+/* ===== 트랙/시뮬 구성 ===== */
+function buildPre(){const P=PRE[app.pid];if(P.loop){const t=K.buildStage(3,{A:7.5,r:app.loopR});t.zoneOnly=false;return t}
+ return K.makeTrack(K.crom(app.edit,36).map(p=>[p[0],Math.max(0.03,p[1])]))}
+function applyPhys(){const o=app.sim;if(!o)return;o.g=app.g;o.m=app.m;o.mu=app.mu;o.stick=!!app.opt.stick;K.resetE(o)}
+function startS(){return PRE[app.pid].loop?0:app.trk.total*0.12}
+function loadPre(id,keepEdit){app.pid=id;const P=PRE[id];if(!P.loop&&!keepEdit)app.edit=P.pts.map(p=>p.slice());app.trk=buildPre();app.sim=K.newSim(app.trk);app.sim.g=app.g;app.sim.m=app.m;app.sim.mu=app.mu;app.sim.stick=!!app.opt.stick;K.place(app.sim,startS(),0);app.hist=[];app.trail=[];app.swT=0;app.run=false;app.hacc=0}
+function restartSkater(){const o=app.sim;K.place(o,startS(),0);o.t=0;app.hist=[];app.trail=[];app.swT=0;app.run=false;renderBar()}
+/* ===== 탭 ===== */
+function setTab(id){app.tab=id;const lc=$('#logCard');if(lc&&id!=='miss')lc.remove();app.opt=Object.assign({},DEF[id]);app.del=false;$$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
+ if(id==='miss'){MS_enter()}else{const T=TABS.find(t=>t[0]===id);loadPre(T[2].includes(app.pid)?app.pid:T[2][0]);}
+ renderSide();renderBar();syncOv()}
+function tabsInit(){$('#tabs').innerHTML=TABS.map(t=>`<button class="tab ${t[0]===app.tab?'on':''}" data-t="${t[0]}">${t[1]}</button>`).join('');$$('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t))}
+/* ===== 하단 바 ===== */
+function renderBar(){const B=$('#bar');
+ if(app.tab==='miss'){B.innerHTML=`<button class="btn pri" id="bPlay">${MS.playing?'⏸ 일시정지':'▶ 재생'}</button><button class="btn" id="bRe">↺ 처음부터 다시 보기</button><span class="rd"><label><input type="radio" name="sp" value="0.5" ${MS.speed===.5?'checked':''}>0.5×</label><label><input type="radio" name="sp" value="1" ${MS.speed===1?'checked':''}>1×</label><label><input type="radio" name="sp" value="2" ${MS.speed===2?'checked':''}>2×</label></span>`;
+  $('#bPlay').onclick=()=>{if(!MS.cur){toast('먼저 오른쪽에서 트랙을 설계하고 출발하세요');return}if(MS.done){missReplay();return}MS.playing=!MS.playing;renderBar()};$('#bRe').onclick=missReplay;$$('input[name=sp]').forEach(r=>r.onchange=()=>{MS.speed=+r.value});return}
+ B.innerHTML=`<button class="btn pri" id="bPlay">${app.run?'⏸ 일시정지':'▶ 재생'}</button><button class="btn" id="bStep">⏭ 한 걸음</button><span class="rd"><label><input type="radio" name="sp" value="1" ${!app.slow?'checked':''}>보통</label><label><input type="radio" name="sp" value="0.25" ${app.slow?'checked':''}>느리게</label></span><button class="btn" id="bRs">🔄 스케이터 다시 시작</button>`;
+ $('#bPlay').onclick=()=>{app.run=!app.run;renderBar()};$('#bStep').onclick=()=>{app.run=false;for(let i=0;i<8;i++)stepRec(1/240);renderBar()};$('#bRs').onclick=restartSkater;$$('input[name=sp]').forEach(r=>r.onchange=()=>{app.slow=r.value==='0.25'})}
+/* ===== 사이드 패널 ===== */
+function renderSide(){const S=$('#side');if(app.tab==='miss'){S.innerHTML='';missSide(S);return}
+ const T=TABS.find(t=>t[0]===app.tab);let h='';
+ h+=`<div class="card"><h2>👁 보기</h2>${T[3].map(k=>`<label class="chk"><input type="checkbox" data-o="${k}" ${app.opt[k]?'checked':''}>${OL[k]}</label>`).join('')}${app.opt.graph?`<div class="small mu" style="margin-top:4px">그래프 선: ${[['ep','🟩위치'],['ek','🟦운동'],['eth','🟧열'],['tot','🟨총합']].map(a=>`<label style="margin-right:6px"><input type="checkbox" data-s="${a[0]}" ${app.ser[a[0]]?'checked':''}>${a[1]}</label>`).join('')}</div>`:''}</div>`;
+ h+=`<div class="card"><h2>🛤 트랙</h2><div class="pre">${T[2].map(id=>`<button class="btn ${app.pid===id?'on':''}" data-p="${id}">${PRE[id].nm}</button>`).join('')}</div>`;
+ if(app.tab==='play'&&!PRE[app.pid].loop)h+=`<div class="pre" style="margin-top:6px"><button class="btn" id="aPt">＋ 점 추가</button><button class="btn ${app.del?'on':''}" id="dPt">✖ 점 지우기</button></div><div class="small mu" style="margin-top:4px">빨간 점을 끌어 트랙 모양을 바꿔요. 스케이터를 끌어 옮길 수도 있어요.</div>`;
+ if(PRE[app.pid].loop)h+=`<div class="sl"><span>루프 반지름 r</span><b id="lrv">${app.loopR.toFixed(1)} m</b><input type="range" id="lr" min="1" max="3" step="0.5" value="${app.loopR}"></div><div class="small mu">꼭대기를 통과하려면 v ≥ √(gr), 출발 높이 ≥ 2.5r</div>`;
+ h+='</div>';
+ h+=`<div class="card"><h2>🔥 마찰</h2><div class="sl"><span class="mu small">없음 ◀ ▶ 많음</span><b id="muv">${app.mu===0?'없음':'μ='+app.mu.toFixed(2)}</b><input type="range" id="mu" min="0" max="0.3" step="0.01" value="${app.mu}"></div></div>`;
+ h+=`<div class="card"><h2>🪐 중력</h2><div class="sl"><span><select id="pl">${PL.map((p,i)=>`<option value="${i}" ${(p[1]===app.g||(p[1]===0&&!PL.some(q=>q[1]===app.g)))?'selected':''}>${p[0]}</option>`).join('')}</select></span><b id="gv">${app.g.toFixed(1)} m/s²</b><input type="range" id="gr" min="1" max="26" step="0.1" value="${app.g}"></div></div>`;
+ h+=`<div class="card"><h2>⚖ 질량·스케이터</h2><div class="sl"><span class="mu small">5 ◀ ▶ 100 kg</span><b id="mv">${app.m} kg</b><input type="range" id="ms" min="5" max="100" step="1" value="${app.m}"></div><div class="av">${AV.map((a,i)=>`<button data-a="${i}" class="${app.av===i?'on':''}">${a.c}</button>`).join('')}</div></div>`;
+ if(app.opt.sw)h+=`<div class="card"><h2>⏱ 스톱워치</h2><div class="sw" id="swv">0.00 s</div><button class="btn" id="swr" style="width:100%;margin-top:6px">↺ 0으로</button></div>`;
+ S.innerHTML=h;
+ $$('[data-o]').forEach(c=>c.onchange=()=>{app.opt[c.dataset.o]=c.checked;if(c.dataset.o==='stick')applyPhys();renderSide();syncOv()});
+ $$('[data-s]').forEach(c=>c.onchange=()=>{app.ser[c.dataset.s]=c.checked?1:0});
+ $$('[data-p]').forEach(b=>b.onclick=()=>{loadPre(b.dataset.p);renderSide();renderBar()});
+ if($('#aPt'))$('#aPt').onclick=()=>{const P=app.edit;let bi=0,bg=0;for(let i=0;i<P.length-1;i++){const g=P[i+1][0]-P[i][0];if(g>bg){bg=g;bi=i}}if(P.length>=12){toast('점은 최대 12개예요');return}const a=P[bi],b=P[bi+1];P.splice(bi+1,0,[(a[0]+b[0])/2,Math.max(.3,(a[1]+b[1])/2+1.2)]);rebuild()};
+ if($('#dPt'))$('#dPt').onclick=()=>{app.del=!app.del;renderSide();if(app.del)toast('지우고 싶은 빨간 점을 누르세요')};
+ if($('#lr'))$('#lr').oninput=e=>{app.loopR=+e.target.value;$('#lrv').textContent=app.loopR.toFixed(1)+' m';loadPre('LOOP');};
+ $('#mu').oninput=e=>{app.mu=+e.target.value;$('#muv').textContent=app.mu===0?'없음':'μ='+app.mu.toFixed(2);applyPhys()};
+ $('#gr').oninput=e=>{app.g=+e.target.value;$('#gv').textContent=app.g.toFixed(1)+' m/s²';const i=PL.findIndex(p=>Math.abs(p[1]-app.g)<.001);$('#pl').value=i<0?5:i;applyPhys()};
+ $('#pl').onchange=e=>{const p=PL[+e.target.value];if(p[1]>0){app.g=p[1];$('#gr').value=app.g;$('#gv').textContent=app.g.toFixed(1)+' m/s²';applyPhys()}};
+ $('#ms').oninput=e=>{app.m=+e.target.value;$('#mv').textContent=app.m+' kg';applyPhys()};
+ $$('[data-a]').forEach(b=>b.onclick=()=>{app.av=+b.dataset.a;app.m=AV[app.av].m;applyPhys();renderSide()});
+ if($('#swr'))$('#swr').onclick=()=>{app.swT=0}}
+function rebuild(){const o=app.sim,x=o.x,y=o.y;app.trk=buildPre();o.track=app.trk;const n=app.trk.near(x,y);K.place(o,n.s,0);app.hist=[];app.trail=[];}
+function syncOv(){$('#ctab').style.display=(app.opt.tab&&app.tab!=='miss')?'block':'none'}
+/* ===== 상태 스냅샷 ===== */
+function snapSand(){const o=app.sim,e=K.En(o,app.href);let th=app.lastTh;
+ if(o.mode==='track'){o.track.at(o.s,o.q);th=o.q.th}else if(o.mode==='air')th=Math.atan2(o.vy,o.vx);else if(o.mode==='ground')th=Math.PI/2;
+ if(o.mode==='air'){let d=th-app.lastTh;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;th=app.lastTh+d*.2}
+ app.lastTh=th;return{x:o.x,y:o.y,th,v:o.mode==='track'?o.v:Math.hypot(o.vx,o.vy),ep:e.ep,ek:e.ek,eth:e.eth,tot:e.tot,mode:o.mode,t:o.t,m:o.m,g:o.g}}
+function stepRec(dt){const o=app.sim;if(o.mode==='held')return;K.step(o,dt);app.swT+=dt;app.hacc+=dt;if(app.hacc>=1/30){app.hacc-=1/30;const e=K.En(o,app.href);app.hist.push({t:app.swT,x:o.x,ep:e.ep,ek:e.ek,eth:e.eth,tot:e.tot});if(app.hist.length>1500)app.hist.shift();if(app.opt.path||1){const l=app.trail[app.trail.length-1];if(!l||Math.hypot(l[0]-o.x,l[1]-o.y)>.06){app.trail.push([o.x,o.y]);if(app.trail.length>900)app.trail.shift()}}}}
+/* ===== 그리기 ===== */
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)}
+function btn(x,y,w,h,txt,fn,on){rr(x,y,w,h,6);ctx.fillStyle=on?'#c7d2fe':'#eef2ff';ctx.fill();ctx.strokeStyle='#64748b';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#111';ctx.font='700 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,x+w/2,y+h/2+1);app.btns.push({x,y,w,h,fn})}
+function drawSkater(x,y,th,ch,m,mode){ctx.save();ctx.translate(wx(x),wy(y));ctx.rotate(-th);const sc=.75+.5*(m-5)/95;ctx.scale(sc,sc);
+ ctx.fillStyle='#7c3f12';rr(-26,-10,52,6,3);ctx.fill();ctx.fillStyle='#222';[-15,15].forEach(a=>{ctx.beginPath();ctx.arc(a,-4,4,0,7);ctx.fill()});
+ ctx.strokeStyle='#2b4a8c';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,-11);ctx.lineTo(-3,-30);ctx.moveTo(9,-11);ctx.lineTo(3,-30);ctx.stroke();
+ ctx.fillStyle='#e8718d';rr(-10,-54,20,26,6);ctx.fill();ctx.strokeStyle='#d99a7a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-9,-48);ctx.lineTo(-20,-36);ctx.moveTo(9,-48);ctx.lineTo(20,-36);ctx.stroke();
+ ctx.font='30px "Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ch,0,-66);ctx.restore()}
+function mountains(){ctx.fillStyle='#a79f8c';ctx.beginPath();ctx.moveTo(0,GY);ctx.lineTo(80,GY-50);ctx.lineTo(150,GY-18);ctx.lineTo(240,GY-80);ctx.lineTo(330,GY);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(240,GY-80);ctx.lineTo(222,GY-60);ctx.lineTo(240,GY-64);ctx.lineTo(258,GY-60);ctx.fill();ctx.fillStyle='#b9b19e';ctx.beginPath();ctx.moveTo(640,GY);ctx.lineTo(760,GY-62);ctx.lineTo(860,GY-24);ctx.lineTo(960,GY-70);ctx.lineTo(960,GY);ctx.fill()}
+function draw(){app.btns=[];const c=ctx,o=app.opt,mis=app.tab==='miss';
+ const st=mis?missSnap():snapSand();app.snap=st;const trk=mis?MS.trk:app.trk;if(!trk)return;
+ const g=c.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#86c4f0');g.addColorStop(1,'#e4f4fd');c.fillStyle=g;c.fillRect(0,0,CW,CH);mountains();
+ c.fillStyle='#8a6a4a';c.fillRect(0,GY,CW,CH-GY);c.fillStyle='#6f5338';c.fillRect(0,GY,CW,4);
+ if(o.grid){c.strokeStyle='#3b82c4aa';c.lineWidth=1;c.font='12px system-ui';c.fillStyle='#1e3a8a';c.textAlign='left';c.textBaseline='top';for(let x=0;x<=21;x++){c.beginPath();c.moveTo(wx(x),0);c.lineTo(wx(x),GY);c.stroke();if(x%2===0)c.fillText(x+' m',wx(x)+2,GY-14)}for(let y=1;y<=11;y++){c.beginPath();c.moveTo(0,wy(y));c.lineTo(CW,wy(y));c.stroke();if(y%2===0)c.fillText(y+' m',3,wy(y)+2)}}
+ if(o.ref&&!mis){const yy=wy(app.href);c.strokeStyle='#2563eb';c.lineWidth=2.5;c.setLineDash([12,8]);c.beginPath();c.moveTo(0,yy);c.lineTo(CW,yy);c.stroke();c.setLineDash([]);c.fillStyle='#fde047';c.beginPath();c.moveTo(wx(.9),yy-18);c.lineTo(wx(.9)+14,yy);c.lineTo(wx(.9),yy+18);c.lineTo(wx(.9)-14,yy);c.fill();c.strokeStyle='#92400e';c.stroke();c.fillStyle='#1e3a8a';c.font='700 14px system-ui';c.textAlign='left';c.textBaseline='middle';c.fillText('기준 높이 = '+f1(app.href)+' m',wx(1.5),yy-14)}
+ if(mis)missMarks();
+ // 트랙
+ c.lineCap='round';c.lineJoin='round';c.beginPath();for(let k=0;k<=trk.n;k+=3){const X=wx(trk.xs[k]),Y=wy(trk.ys[k]);k?c.lineTo(X,Y):c.moveTo(X,Y)}c.lineTo(wx(trk.xs[trk.n]),wy(trk.ys[trk.n]));c.strokeStyle='#4b4b4b';c.lineWidth=11;c.stroke();c.strokeStyle='#8c8c8c';c.lineWidth=7;c.stroke();c.setLineDash([9,9]);c.strokeStyle='#f1f1f1';c.lineWidth=2;c.stroke();c.setLineDash([]);
+ if(!mis&&app.tab==='play'&&app.edit&&!PRE[app.pid].loop)app.edit.forEach(p=>{c.beginPath();c.arc(wx(p[0]),wy(p[1]),11,0,7);c.fillStyle=app.del?'#f97316':'#e0443e';c.fill();c.strokeStyle='#7f1d1d';c.lineWidth=2;c.stroke()});
+ if(!mis&&app.tab==='intro'||!mis&&app.tab==='measure'){}
+ if(o.path&&app.trail.length>1){c.fillStyle='#7c3aed';app.trail.forEach(p=>{c.beginPath();c.arc(wx(p[0]),wy(p[1]),2.2,0,7);c.fill()})}
+ const ch=AV[app.av].c;drawSkater(st.x,st.y,st.th,mis?'🧒':ch,st.m,st.mode);
+ if(o.pie){const px=Math.max(40,Math.min(CW-40,wx(st.x))),py=Math.max(40,wy(st.y)-100),r=26,tot=Math.max(0,st.ep)+Math.max(0,st.ek)+Math.max(0,st.eth);if(tot>1e-6){let a=-Math.PI/2;[[Math.max(0,st.ep),COL.ep],[Math.max(0,st.ek),COL.ek],[Math.max(0,st.eth),COL.eth]].forEach(([v,cl])=>{if(v<=0)return;const b=a+2*Math.PI*v/tot;c.beginPath();c.moveTo(px,py);c.arc(px,py,r,a,b);c.closePath();c.fillStyle=cl;c.fill();a=b});c.beginPath();c.arc(px,py,r,0,7);c.strokeStyle='#fff';c.lineWidth=2;c.stroke()}}
+ if(o.speed){const gx=app.tab==='graph'||o.graph?760:CW/2,gy=64,R=54;c.fillStyle='#fffffff0';c.beginPath();c.arc(gx,gy,R,0,7);c.fill();c.strokeStyle='#64748b';c.lineWidth=2;c.stroke();c.strokeStyle='#334155';c.fillStyle='#334155';c.font='11px system-ui';c.textAlign='center';c.textBaseline='middle';for(let i=0;i<=8;i++){const a=(-225+i*33.75)*Math.PI/180,x1=gx+Math.cos(a)*(R-4),y1=gy-Math.sin(a)*(R-4),x2=gx+Math.cos(a)*(R-10),y2=gy-Math.sin(a)*(R-10);c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();if(i%2===0)c.fillText(String(i*2.5),gx+Math.cos(a)*(R-19),gy-Math.sin(a)*(R-19))}
+  const sp=Math.min(20,Math.abs(st.v)),a=(-225+sp/20*270)*Math.PI/180;c.strokeStyle='#dc2626';c.lineWidth=3;c.beginPath();c.moveTo(gx,gy);c.lineTo(gx+Math.cos(a)*(R-12),gy-Math.sin(a)*(R-12));c.stroke();c.fillStyle='#fff';rr(gx-40,gy+R-16,80,24,6);c.fill();c.strokeStyle='#64748b';c.lineWidth=1.5;c.stroke();c.fillStyle='#111';c.font='800 15px system-ui';c.fillText(f1(Math.abs(st.v))+' m/s',gx,gy+R-3)}
+ if(o.bar){const x0=8,y0=8,w=152,h=292,zb=app.zb,Z=190/8000*zb,base=y0+195;c.fillStyle='#ffffffe6';rr(x0,y0,w,h,10);c.fill();c.strokeStyle='#94a3b8';c.lineWidth=1.5;c.stroke();c.fillStyle='#111';c.font='800 14px system-ui';c.textAlign='left';c.textBaseline='top';c.fillText('에너지 (J)',x0+10,y0+6);
+  c.strokeStyle='#475569';c.lineWidth=2;c.beginPath();c.moveTo(x0+12,base);c.lineTo(x0+w-8,base);c.stroke();
+  [[st.ep,COL.ep,'위치'],[st.ek,COL.ek,'운동'],[st.eth,COL.eth,'열'],[st.tot,COL.tot,'총합']].forEach(([v,cl,nm],i)=>{const bx=x0+16+i*34,hh=Math.max(-70,Math.min(170,v*Z));c.fillStyle=cl;if(hh>=0)c.fillRect(bx,base-hh,26,hh);else c.fillRect(bx,base,26,-hh);c.strokeStyle='#334155';c.lineWidth=1;c.strokeRect(bx,hh>=0?base-hh:base,26,Math.abs(hh));c.fillStyle='#111';c.font='700 12px system-ui';c.textAlign='center';c.textBaseline='top';c.fillText(nm,bx+13,y0+h-62);c.font='11px system-ui';c.fillText(f0(v),bx+13,y0+h-46)});
+  btn(x0+10,y0+h-30,30,24,'−',()=>{app.zb=Math.max(.25,app.zb/2)});btn(x0+46,y0+h-30,30,24,'＋',()=>{app.zb=Math.min(8,app.zb*2)});btn(x0+w-48,y0+h-30,38,24,'🗑',()=>{const o2=app.sim;if(o2&&app.tab!=='miss'){o2.Eabs-=o2.Eth;o2.Eth=0;toast('열에너지를 비웠어요')}})}
+ if(o.graph&&!mis)drawGraph();
+ if(o.tape){const a=app.tape.a,b=app.tape.b,ax=wx(a[0]),ay=wy(a[1]),bx=wx(b[0]),by=wy(b[1]);c.strokeStyle='#1d4ed8';c.lineWidth=4;c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);c.stroke();[[ax,ay],[bx,by]].forEach(p=>{c.beginPath();c.arc(p[0],p[1],10,0,7);c.fillStyle='#fde047';c.fill();c.strokeStyle='#1d4ed8';c.lineWidth=2.5;c.stroke()});const d=Math.hypot(a[0]-b[0],a[1]-b[1]);c.fillStyle='#fff';rr((ax+bx)/2-38,(ay+by)/2-30,76,24,6);c.fill();c.fillStyle='#111';c.font='800 14px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(f2(d)+' m',(ax+bx)/2,(ay+by)/2-17)}
+ if(app.tab==='intro'||app.tab==='measure'||app.tab==='play'||mis){/*height/speed label */const s2=st;if(!mis&&(app.opt.speed&&false)){}}
+ // 표
+ if(o.tab&&!mis){const t=$('#ctab'),h2=`<tr><td colspan=2 style="background:none;color:#fff;text-align:center;font-weight:800">에너지</td></tr><tr><td style="background:none;color:#fff;text-align:left">🟩 위치</td><td>${f1(st.ep)} J</td></tr><tr><td style="background:none;color:#fff;text-align:left">🟦 운동</td><td>${f1(st.ek)} J</td></tr><tr><td style="background:none;color:#fff;text-align:left">🟧 열</td><td>${f1(st.eth)} J</td></tr><tr><td style="background:none;color:#fff;text-align:left">🟨 총합</td><td>${f1(st.tot)} J</td></tr>`;if(t._h!==h2){t.innerHTML=h2;t._h=h2}}
+ if(st.mode==='ground'&&!mis){c.fillStyle='#000a';rr(CW/2-170,GY-120,340,40,10);c.fill();c.fillStyle='#fff';c.font='800 16px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText('스케이터가 떨어졌어요! 🔄 다시 시작을 눌러요',CW/2,GY-100)}
+ if(mis)missOverlay();
+}
+function drawGraph(){const c=ctx,x0=190,y0=8,w=750,h=172;c.fillStyle='#fffffff0';rr(x0,y0,w,h,10);c.fill();c.strokeStyle='#94a3b8';c.lineWidth=1.5;c.stroke();
+ const pl=x0+98,pr=x0+w-14,pt=y0+30,pb=y0+h-34,ym=6000/app.zg;c.fillStyle='#111';c.font='800 14px system-ui';c.textAlign='left';c.textBaseline='middle';c.fillText('에너지 그래프',x0+12,y0+16);
+ btn(x0+w/2-78,y0+4,70,24,'위치',()=>{app.gmode='pos'},app.gmode==='pos');btn(x0+w/2,y0+4,70,24,'시간',()=>{app.gmode='time'},app.gmode==='time');btn(x0+w-48,y0+4,38,24,'🧽',()=>{app.hist=[];app.swT=0});
+ btn(x0+10,y0+52,30,24,'＋',()=>{app.zg=Math.min(8,app.zg*1.5)});btn(x0+10,y0+82,30,24,'−',()=>{app.zg=Math.max(.5,app.zg/1.5)});
+ c.strokeStyle='#cbd5e1';c.lineWidth=1;c.fillStyle='#334155';c.font='11px system-ui';c.textAlign='right';for(let i=-2;i<=2;i++){const yy=pt+(pb-pt)*(.5-i/4);c.beginPath();c.moveTo(pl,yy);c.lineTo(pr,yy);c.stroke();c.fillText(f0(ym*i/2),pl-4,yy)}
+ const hs=app.hist,tmax=hs.length?hs[hs.length-1].t:0,t1=Math.max(20,tmax),t0=t1-20;c.textAlign='center';for(let i=0;i<=5;i++){const xx=pl+(pr-pl)*i/5;c.beginPath();c.moveTo(xx,pt);c.lineTo(xx,pb);c.stroke();c.fillText(app.gmode==='time'?f0(t0+4*i):f0(4*i),xx,pb+10)}
+ c.fillText(app.gmode==='time'?'시간 (s)':'위치 (m)',(pl+pr)/2,pb+25);c.save();c.translate(x0+58,(pt+pb)/2);c.rotate(-Math.PI/2);c.fillText('에너지 (J)',0,0);c.restore();
+ c.save();c.beginPath();c.rect(pl,pt,pr-pl,pb-pt);c.clip();[['ep',COL.ep],['ek',COL.ek],['eth',COL.eth],['tot',COL.tot]].forEach(([k,cl])=>{if(!app.ser[k])return;c.strokeStyle=cl;c.lineWidth=2.5;c.beginPath();let f=true;hs.forEach(p=>{const xv=app.gmode==='time'?(p.t-t0)/20:p.x/20;if(xv<0||xv>1)return;const X=pl+(pr-pl)*xv,Y=pt+(pb-pt)*(.5-p[k]/ym/2);f?(c.moveTo(X,Y),f=false):c.lineTo(X,Y)});c.stroke()});c.restore()}
+/* ===== 포인터 ===== */
+function P(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*CW/r.width,(e.clientY-r.top)*CH/r.height]}
+cv.addEventListener('pointerdown',e=>{const[px,py]=P(e);for(const b of app.btns)if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h){b.fn();return}
+ if(app.tab==='miss')return;const X=(px-OX)/PX,Y=(GY-py)/PX,o=app.opt;
+ if(o.tape){for(const k of['a','b']){const q=app.tape[k];if(Math.hypot(wx(q[0])-px,wy(q[1])-py)<20){app.drag={t:'tape',k};cv.setPointerCapture(e.pointerId);return}}}
+ if(o.ref&&Math.hypot(wx(.9)-px,wy(app.href)-py)<26){app.drag={t:'ref'};cv.setPointerCapture(e.pointerId);return}
+ if(app.tab==='play'&&app.edit&&!PRE[app.pid].loop){for(let i=0;i<app.edit.length;i++){const p=app.edit[i];if(Math.hypot(wx(p[0])-px,wy(p[1])-py)<18){if(app.del){if(app.edit.length>3){app.edit.splice(i,1);rebuild()}else toast('점은 최소 3개 필요해요');return}app.drag={t:'pt',i};cv.setPointerCapture(e.pointerId);return}}}
+ const sn=app.snap;if(sn&&Math.hypot(wx(sn.x)-px,wy(sn.y+0.9)-py)<46){app.drag={t:'sk'};app.wasRun=app.run;app.sim.mode='held';app.sim.v=0;cv.setPointerCapture(e.pointerId);moveSk(X,Y)}});
+function moveSk(X,Y){const o=app.sim,n=app.trk.near(X,Y);if(n.d<1.3){app.trk.at(n.s,o.q);o.x=o.q.x;o.y=o.q.y;o.s=n.s;o.held=n.s}else{o.x=Math.max(.2,Math.min(20.5,X));o.y=Math.max(0,Math.min(11,Y));o.held=null}}
+cv.addEventListener('pointermove',e=>{const d=app.drag;if(!d)return;const[px,py]=P(e),X=(px-OX)/PX,Y=(GY-py)/PX;
+ if(d.t==='tape'){app.tape[d.k]=[Math.max(0,Math.min(20.8,X)),Math.max(0,Math.min(11,Y))]}
+ else if(d.t==='ref'){app.href=Math.max(0,Math.min(10,Y));if(app.sim)K.resetE(app.sim)}
+ else if(d.t==='pt'){const P2=app.edit,i=d.i,lo=i>0?P2[i-1][0]+.4:.3,hi=i<P2.length-1?P2[i+1][0]-.4:20.5;P2[i][0]=Math.max(lo,Math.min(hi,X));P2[i][1]=Math.max(.05,Math.min(10,Y));rebuild()}
+ else if(d.t==='sk')moveSk(X,Y)});
+const endDrag=()=>{const d=app.drag;if(!d)return;app.drag=null;if(d.t==='sk'){const o=app.sim;if(o.held!=null){K.place(o,o.held,0)}else{o.mode='air';o.airT=0;o.vx=o.vy=0;o.Eth=0;o.noRe=false;o.det=null;o.end=null;o.Eabs=o.m*o.g*o.y}app.hist=[];app.trail=[];app.swT=0}};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+/* ===== 메인 루프 ===== */
+let last=performance.now(),acc=0;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(app.tab==='miss')missTick(dt);else if(app.run&&app.sim.mode!=='held'){acc+=dt*(app.slow?.25:1);const h=1/240;let n=0;while(acc>=h&&n<80){stepRec(h);acc-=h;n++}if(n>=80)acc=0}
+ draw();const sw=$('#swv');if(sw)sw.textContent=app.swT.toFixed(2)+' s';requestAnimationFrame(frame)}
+/* ===== 미션 모드 ===== */
+const T_T=K.T_TARGET;
+const SG=[
+ {id:1,nm:'기초 롤러코스터와 언덕 넘기',goal:'출발 후 1차 골짜기(B)를 지나 2차 언덕(C)을 넘어 결승선까지 완주하기',env:'레일 마찰 없음 (완전한 역학적 에너지 보존)',lim:'출발점 높이 최대 10 m · 가드레일이 있어 언덕에서 튕겨 나가지는 않아요',mu:()=>0,
+  inp:[{k:'A',l:'출발점 A 높이 (m)',min:2,max:10,st:.5,v:6},{k:'B',l:'골짜기 B 바닥 높이 (m)',min:0,max:3,st:.5,v:0},{k:'C',l:'2차 언덕 C 높이 (m)',min:1,max:9,st:.5,v:4}],chk:p=>p.A<p.B+.5?'출발점 A는 골짜기 B보다 높아야 해요!':''},
+ {id:2,nm:'더블 힐 — 열에너지 손실 계산',goal:'마찰로 에너지가 열로 빠져나가는 트랙에서 두 언덕(4 m, C)을 모두 넘어 완주하기',env:'레일 마찰 있음 (아래에서 선택)',lim:'출발점 높이 최대 10 m · 첫 언덕 4 m 고정',mu:p=>p.mu,
+  inp:[{k:'A',l:'출발점 A 높이 (m)',min:2,max:10,st:.5,v:8},{k:'C',l:'마지막 언덕 높이 (m)',min:3,max:8,st:.5,v:6},{k:'mu',l:'마찰 계수 μ',sel:[[.02,'약간 (μ=0.02)'],[.04,'보통 (μ=0.04)']],v:.02}],chk:()=>''},
+ {id:3,nm:'360° 루프 통과',goal:'루프 꼭대기에서 레일을 이탈하지 않고 한 바퀴 돌아 결승선까지 완주하기',env:'레일 마찰 없음',lim:'출발점 높이 최대 10 m · 루프 반지름 1~3 m · 루프 구간은 가드레일이 없어요',mu:()=>0,
+  inp:[{k:'A',l:'출발점 A 높이 (m)',min:2,max:10,st:.5,v:6},{k:'r',l:'루프 반지름 r (m)',min:1,max:3,st:.5,v:2}],chk:()=>''},
+ {id:4,nm:'목표 높이에 정확히 정지',goal:'오른쪽 경사로에서 스케이터가 목표 높이 '+T_T+' m(🎯) 에서 정확히 멈추게(±0.25 m) 만들기',env:'레일 마찰 있음 — 열에너지 손실을 계산해 보세요',lim:'출발점 높이 최대 10 m · 경사로 꼭대기 9.8 m',mu:p=>p.mu,
+  inp:[{k:'A',l:'출발점 A 높이 (m)',min:2,max:10,st:.1,v:5},{k:'mu',l:'마찰 계수 μ',sel:[[.03,'약간 (μ=0.03)'],[.06,'보통 (μ=0.06)'],[.1,'많음 (μ=0.10)']],v:.06}],chk:()=>''},
+ {id:5,nm:'종합 — 루프 + 마찰 + 마지막 언덕',goal:'마찰이 있는 트랙에서 루프를 통과하고 마지막 언덕(3 m)까지 넘어 완주하기',env:'레일 마찰 약간 (μ=0.03)',lim:'출발점 높이 최대 10 m · 루프 반지름 1~2.5 m',mu:()=>.03,
+  inp:[{k:'A',l:'출발점 A 높이 (m)',min:2,max:10,st:.5,v:6},{k:'r',l:'루프 반지름 r (m)',min:1,max:2.5,st:.5,v:1.5}],chk:()=>''}];
+const MS={st:1,v:{},trk:null,cur:null,tm:0,idx:0,playing:false,speed:1,done:false,logN:0,tries:{},prog:{cl:{},stars:{},all:false},html:[],pv:null,logEl:null};
+try{const o=JSON.parse(localStorage.getItem('skateProg')||'null');if(o)MS.prog=Object.assign(MS.prog,o)}catch(e){}
+const saveProg=()=>{try{localStorage.setItem('skateProg',JSON.stringify(MS.prog))}catch(e){}};
+const sg=()=>SG[MS.st-1];
+function vals(){const s=sg();if(!MS.v[s.id]){MS.v[s.id]={};s.inp.forEach(i=>MS.v[s.id][i.k]=i.v)}return MS.v[s.id]}
+function mkTrack(){const s=sg(),p=vals();if(s.chk(p)){MS.trk=null;MS.pv=null;return}MS.trk=K.buildStage(s.id,p);const o=K.newSim(MS.trk);K.place(o,0,0);MS.pv={x:o.x,y:o.y,th:(MS.trk.at(0,o.q),o.q.th),v:0,ep:o.m*o.g*o.y,ek:0,eth:0,tot:o.m*o.g*o.y,mode:'track',m:60,g:9.8}}
+function MS_enter(){MS.cur=null;MS.playing=false;MS.done=false;app.hist=[];app.trail=[];mkTrack();if(!MS.html.length)logReset(greet())}
+function greet(){return {cls:'',t:`헤이! 에너지 스케이트 파크에 오신 것을 환영합니다! 🛹\n저는 여러분의 주행 안전을 책임지는 물리 코치입니다. 위치 에너지(Ep=mgh)와 운동 에너지(Ek=½mv²)가 어떻게 모습을 바꾸는지, 에너지 막대로 함께 확인해 봐요!`}}
+function briefMsg(){const s=sg();return{cls:'',t:`[스테이지 ${s.id}: ${s.nm}]\n🎯 미션 목표: ${s.goal}\n⚙️ 환경 조건: ${s.env}\n📐 트랙 설계 지침: 아래 값을 입력하고 ▶ 출발을 눌러요. (${s.lim})`}}
+function logReset(m){MS.html=[];MS.logN=0;if(m)MS.html.push(m);paintLog()}
+function paintLog(){const L=MS.logEl=$('#log');if(!L)return;L.innerHTML=MS.html.map(m=>`<div class="msg ${m.cls||''}">${esc(m.t)}${m.bars?`<code>${esc(m.bars)}</code>`:''}</div>`).join('');L.scrollTop=L.scrollHeight}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function pushLog(m){MS.html.push(m);paintLog()}
+function missSide(S){const s=sg(),p=vals(),err=s.chk(p);
+ S.innerHTML=`<div class="card"><h2>🎯 스테이지</h2><div class="pills">${SG.map(g=>`<button class="pill ${g.id===MS.st?'on':''} ${MS.prog.cl[g.id]?'done':''}" data-s="${g.id}" ${(g.id===1||MS.prog.cl[g.id-1]||MS.prog.all)?'':'disabled'}>${MS.prog.cl[g.id]?'★':''}${g.id}</button>`).join('')}<button class="pill" id="allOpen" style="font-size:.75em;padding:0 8px" title="교사용: 모든 스테이지 열기">🔓</button></div>
+ <b>스테이지 ${s.id}. ${s.nm}</b><div class="goal">🎯 ${s.goal}</div><div class="goal">⚙️ ${s.env}</div><div class="goal">📐 ${s.lim}</div>
+ ${s.inp.map(i=>i.sel?`<div class="in"><span>${i.l}</span><select data-k="${i.k}">${i.sel.map(o=>`<option value="${o[0]}" ${+p[i.k]===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>`:`<div class="in"><span>${i.l}</span><input type="number" data-k="${i.k}" min="${i.min}" max="${i.max}" step="${i.st}" value="${p[i.k]}"><input type="range" data-r="${i.k}" min="${i.min}" max="${i.max}" step="${i.st}" value="${p[i.k]}"></div>`).join('')}
+ ${err?`<div class="goal" style="border-color:var(--no)">⚠️ ${err}</div>`:`<div class="small mu" id="mgj">처음 에너지: m g A = 60×9.8×${p.A} = <b>${K.f0(588*p.A)} J</b></div>`}
+ <div class="pre" style="margin-top:8px"><button class="btn pri" id="mGo" ${err?'disabled':''} style="min-height:48px">▶ 시뮬레이션 출발!</button>${(MS.prog.cl[s.id]&&s.id<5)?`<button class="btn ok" id="mNext" style="min-height:48px">다음 스테이지 ▶</button>`:''}</div></div>
+ <div class="card"><h2>👁 보기</h2>${['bar','pie','speed','path','grid'].map(k=>`<label class="chk"><input type="checkbox" data-o="${k}" ${app.opt[k]?'checked':''}>${OL[k]}</label>`).join('')}</div>
+ `;
+ let lc=$('#logCard');if(!lc){lc=document.createElement('div');lc.id='logCard';lc.className='card';lc.style.marginTop='10px';$('#bar').parentNode.appendChild(lc)}lc.innerHTML='<h2>📣 코치 중계</h2><div id="log"></div>';
+ paintLog();
+ $$('[data-s]').forEach(b=>b.onclick=()=>{MS.st=+b.dataset.s;MS.cur=null;MS.playing=false;MS.done=false;app.hist=[];app.trail=[];mkTrack();logReset(briefMsg());missSide(S);renderBar()});
+ $('#allOpen').onclick=()=>{MS.prog.all=true;saveProg();missSide(S);toast('모든 스테이지를 열었어요')};
+ const upd=(k,v)=>{vals()[k]=+v;MS.cur=null;MS.playing=false;MS.done=false;app.hist=[];app.trail=[];mkTrack();const e=sg().chk(vals());const g=$('#mgj');if(g&&!e)g.innerHTML=`처음 에너지: m g A = 60×9.8×${vals().A} = <b>${K.f0(588*vals().A)} J</b>`;$('#mGo').disabled=!!e;renderBar();if(e)missSide(S)};
+ $$('input[data-k]').forEach(i=>i.oninput=()=>{let v=+i.value;if(isNaN(v))return;v=Math.max(+i.min,Math.min(+i.max,v));const r=$(`[data-r="${i.dataset.k}"]`);if(r)r.value=v;upd(i.dataset.k,v)});
+ $$('input[data-r]').forEach(i=>i.oninput=()=>{$(`input[data-k="${i.dataset.r}"]`).value=i.value;upd(i.dataset.r,i.value)});
+ $$('select[data-k]').forEach(i=>i.onchange=()=>upd(i.dataset.k,i.value));
+ $$('[data-o]').forEach(c=>c.onchange=()=>{app.opt[c.dataset.o]=c.checked});
+ $('#mGo').onclick=missStart;if($('#mNext'))$('#mNext').onclick=()=>{MS.st++;MS.cur=null;MS.playing=false;MS.done=false;app.hist=[];app.trail=[];mkTrack();logReset(briefMsg());missSide(S);renderBar()}}
+function missStart(){const s=sg(),p=Object.assign({},vals());if(s.chk(p))return;const tr=K.buildStage(s.id,p),mu=s.mu(p);const res=K.runHeadless(tr,mu,p);res.log=makeLog(s.id,p,tr,res,mu);MS.trk=tr;MS.cur=res;MS.tm=0;MS.idx=0;MS.playing=true;MS.done=false;MS.logN=0;MS.tries[s.id]=(MS.tries[s.id]||0)+1;app.hist=[];app.trail=[];logReset(null);pushLog({cls:'',t:`📋 [스테이지 ${s.id}] 설계 접수! ${s.inp.map(i=>i.sel?'μ='+p[i.k]:i.k+'='+p[i.k]).join(', ')} — 안전 점검 완료, 출발합니다! 🚦`});renderBar();if(innerWidth<980)$('#cv').scrollIntoView({behavior:'smooth',block:'center'})}
+function missReplay(){if(!MS.cur)return;MS.tm=0;MS.idx=0;MS.playing=true;MS.done=false;MS.logN=0;app.hist=[];app.trail=[];logReset(null);renderBar()}
+function missSnap(){const c=MS.cur;if(!c)return MS.pv||{x:0,y:0,th:0,v:0,ep:0,ek:0,eth:0,tot:0,mode:'track',m:60,g:9.8};const a=c.smp[Math.min(MS.idx,c.smp.length-1)];return{x:a.x,y:a.y,th:a.mode==='ground'?Math.PI/2:a.th,v:a.v,ep:a.ep,ek:a.ek,eth:a.eth,tot:a.ep+a.ek+a.eth,mode:a.mode,m:60,g:9.8}}
+function missTick(dt){const c=MS.cur;if(!c||!MS.playing)return;MS.tm+=dt*MS.speed;const n=Math.min(c.smp.length-1,Math.floor(MS.tm*60));
+ while(MS.idx<n){MS.idx++;const a=c.smp[MS.idx];app.hist.push({t:a.t,x:a.x,ep:a.ep,ek:a.ek,eth:a.eth,tot:a.ep+a.ek+a.eth});if(MS.idx%2===0)app.trail.push([a.x,a.y])}
+ const L=c.log.items;while(MS.logN<L.length&&L[MS.logN].i<=MS.idx){pushLog(L[MS.logN]);MS.logN++}
+ if(MS.idx>=c.smp.length-1){MS.playing=false;MS.done=true;while(MS.logN<L.length){pushLog(L[MS.logN]);MS.logN++}
+  if(c.log.ok){const id=sg().id,t=MS.tries[id]||1,star=t===1?3:t<=3?2:1;MS.prog.cl[id]=1;MS.prog.stars[id]=Math.max(MS.prog.stars[id]||0,star);saveProg();missSide($('#side'))}
+  renderBar()}}
+function missMarks(){const c=ctx,t=MS.trk;if(!t)return;const lab=(x,y,tx,col)=>{c.beginPath();c.arc(wx(x),wy(y),13,0,7);c.fillStyle=col||'#dc2626';c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();c.fillStyle='#fff';c.font='800 14px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(tx,wx(x),wy(y)+1)};
+ const id=sg().id,p=vals();
+ if(id===4){const yy=wy(T_T);c.strokeStyle='#dc2626';c.lineWidth=2.5;c.setLineDash([10,7]);c.beginPath();c.moveTo(wx(6),yy);c.lineTo(wx(15.5),yy);c.stroke();c.setLineDash([]);const near=t.near(12,T_T);let bx=12;for(let k=0;k<=t.n;k++){if(t.xs[k]>6&&t.ys[k]>=T_T){bx=t.xs[k];break}}c.font='28px system-ui';c.textAlign='center';c.fillText('🎯',wx(bx)+4,yy-22);c.fillStyle='#7f1d1d';c.font='800 14px system-ui';c.textAlign='left';c.fillText('목표 '+T_T+' m (±0.25)',wx(bx)+22,yy-24);c.fillStyle='rgba(220,38,38,.18)';c.fillRect(wx(6),wy(T_T+.25),wx(15.5)-wx(6),.5*PX)}
+ lab(t.xs[0],t.ys[0],'A');
+ if(id===1){lab(5,p.B,'B','#2563eb');lab(11,p.C,'C','#16a34a')}
+ if(id===2){lab(4,0,'B','#2563eb');lab(8,4,'H','#7c3aed');lab(16,p.C,'C','#16a34a')}
+ if((id===3||id===5)&&t.loop){const q={};t.at((t.loop[0]+t.loop[1])/2,q);c.fillStyle='#7f1d1d';c.font='800 15px system-ui';c.textAlign='center';c.fillText('r = '+p.r+' m',wx(q.x),wy(q.y)+4)}
+ const ex=t.xs[t.n],ey=t.ys[t.n];c.fillStyle='#111';c.fillRect(wx(ex)-1,wy(ey)-48,3,48);for(let i=0;i<3;i++)for(let j=0;j<3;j++){c.fillStyle=(i+j)%2?'#111':'#fff';c.fillRect(wx(ex)+2+i*9,wy(ey)-48+j*9,9,9)}c.strokeStyle='#111';c.lineWidth=1;c.strokeRect(wx(ex)+2,wy(ey)-48,27,27)}
+function missOverlay(){const c=ctx,s=sg();c.fillStyle='#000b';rr(CW-210,8,202,28,8);c.fill();c.fillStyle='#fff';c.font='800 14px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText('스테이지 '+s.id+' · 시도 '+(MS.tries[s.id]||0)+'회',CW-109,23);
+ if(MS.done&&MS.cur){const ok=MS.cur.log.ok;c.fillStyle=ok?'#065f46ee':'#7f1d1dee';rr(CW/2-190,150,380,52,14);c.fill();c.fillStyle='#fff';c.font='900 22px system-ui';c.fillText(ok?'🎉 미션 성공!'+' '+'★'.repeat(MS.prog.stars[s.id]||1):'💥 미션 실패 — 다시 설계해요',CW/2,176)}
+ else if(!MS.cur){c.fillStyle='#0009';rr(CW/2-230,GY+16,460,30,10);c.fill();c.fillStyle='#fff';c.font='700 15px system-ui';c.fillText('오른쪽에서 트랙을 설계하고 ▶ 시뮬레이션 출발!',CW/2,GY+32)}}
+/* ===== 코치 중계 문장 ===== */
+function firstMin(sm){let dec=false;for(let i=1;i<sm.length;i++){if(sm[i].y<sm[i-1].y-1e-5)dec=true;else if(dec&&sm[i].y>sm[i-1].y+1e-5)return i-1}return -1}
+function makeLog(id,p,tr,res,mu){
+ const {smp,evs,out,apex,E0}=res,m=60,g=9.8,items=[],last=smp.length-1,S=i=>smp[Math.max(0,Math.min(last,i))],A=p.A;
+ const add=(i,cls,t,b)=>items.push({i,cls,t,bars:b?K.bars(S(i),E0):''});
+ const mg=m*g,fr=mu>0;
+ add(0,'',`🛹 출발! 출발점 A: 높이 ${f1(A)} m, 정지 상태예요.\nEp = mgh = ${m}×${g}×${f1(A)} = ${f0(mg*A)} J (전부 위치 에너지), Ek = 0 J`,true);
+ const det=evs.find(e=>e.type==='loopdet'),tb=evs.find(e=>e.type==='turnback');
+ const ib=firstMin(smp);
+ if(ib>0&&(!tb||ib<tb.i)&&(!det||ib<det.i)){const a=S(ib);add(ib,'',`⚡ 골짜기 최저점(높이 ${f1(a.y)} m) 통과! 위치 에너지가 운동 에너지로 바뀌어 속력이 가장 커요.\n${fr?'(마찰로 열이 생겨 이론값보다 조금 작아요) ':''}이론값 v = √(2g·Δh) = √(2×${g}×${f1(A-a.y)}) ≈ ${f1(Math.sqrt(2*g*(A-a.y)))} m/s → 측정 ${f1(a.v)} m/s`,true)}
+ if(tr.loop&&!det){let bi=-1,by=-1;smp.forEach((a,i)=>{if(a.mode==='track'&&a.s>=tr.loop[0]&&a.s<=tr.loop[1]&&a.y>by){by=a.y;bi=i}});if(bi>0&&by>2*p.r-.15){const a=S(bi),vmin=Math.sqrt(g*p.r);add(bi,'ok',`🎡 루프 꼭대기(높이 ${f1(2*p.r)} m) 통과!\n위치 에너지가 최대로 커지는 대신 속력은 줄어요: v = ${f1(a.v)} m/s ≥ 최소 속력 √(gr) = √(${g}×${p.r}) = ${f1(vmin)} m/s ✔\nEp ${f0(a.ep)} J ↔ Ek ${f0(a.ek)} J${fr?', 열 '+f0(a.eth)+' J':''} — 합은 그대로!`,true)}}
+ if(det){const d=det.d,vmin=Math.sqrt(g*p.r),rr2=p.r;add(det.i,'no',`😱 앗! 루프 도중 높이 ${f1(d.y)} m 지점에서 레일을 이탈했어요!\n그때 속력 ${f1(d.v)} m/s — 레일이 잡아 주는 힘(수직항력 N = m(v²/r − g·cosθ))이 0 아래가 되어 버렸어요.\n꼭대기 통과 조건: v ≥ √(gr) = ${f1(vmin)} m/s ⇒ 필요한 출발 높이 A ≥ 2.5r = ${f1(2.5*rr2)} m ${fr?'(+ 마찰 손실)':''}`+(A<2*rr2?`\n지금 A=${f1(A)} m 는 꼭대기 높이 2r=${f1(2*rr2)} m 보다도 낮아요!`:`\n지금 꼭대기 속력은 √(2g(A−2r)) = √(2×${g}×${f1(A-2*rr2)}) = ${f1(Math.sqrt(Math.max(0,2*g*(A-2*rr2))))} m/s 로 모자라요.`),true)}
+ let af=0;if(tr.loop){const k=smp.findIndex(a=>a.s>tr.loop[1]);af=k<0?last:k}else af=Math.max(ib,0)+1;
+ if(!det&&!(id===3)&&!(id===4)){let pi=-1,py=0.4;for(let i=af;i<=last;i++){if(smp[i].mode==='track'&&smp[i].y>py&&(smp[i].s<tr.total-1)){py=smp[i].y;pi=i}}if(pi>0&&(!tb||pi<=tb.i)){const a=S(pi);add(pi,'',`⛰ 언덕 꼭대기(높이 ${f1(a.y)} m) 지나는 중: Ep=${f0(a.ep)} J, Ek=${f0(a.ek)} J, 속력 ${f1(a.v)} m/s${fr?'. 열에너지 '+f0(a.eth)+' J가 벌써 빠져나갔어요 🔥':''}`,true)}}
+ const eP=(a)=>f1(a.eth/mg);
+ if(tb){const a=S(tb.i),ay=tb.d.y;let t='',cls='no';
+  if(id===1){t=`🛑 앗! ${f2(ay)} m 높이에서 속력이 0이 되어 멈추고 되돌아가요!\n출발점 A=${f1(A)} m의 에너지 mgA = ${f0(mg*A)} J 로는 언덕 C(${f1(p.C)} m, mgC = ${f0(mg*p.C)} J)를 넘을 수 없어요. 마찰이 없으면 도달 높이는 정확히 출발 높이(${f1(A)} m) — 그 이상은 못 올라가요!`}
+  else if(id===4){const d=ay-T_T;cls=Math.abs(d)<=.25?'ok':'wa';t=`🎯 스케이터가 높이 ${f2(ay)} m 에서 멈췄어요! (목표 ${T_T} m, 차이 ${d>=0?'+':''}${f2(d)} m)\n열에너지 Eth = ${f0(a.eth)} J (= ${eP(a)} m 높이만큼의 위치 에너지) 가 마찰로 사라졌어요. ${f1(A)} m − ${eP(a)} m ≈ ${f2(ay)} m`}
+  else{t=`🛑 ${f2(ay)} m 높이에서 멈추고 되돌아갔어요!\n마찰 때문에 열에너지 Eth = ${f0(a.eth)} J (≈ ${eP(a)} m 높이에 해당)가 빠져나가서 목표 언덕에 닿지 못했어요. 쓸 수 있는 에너지 = 처음 ${f0(E0)} J − 열 ${f0(a.eth)} J`}
+  add(tb.i,cls,t,true)}
+ if(out==='crash'){add(last,'no',`💥 쿵! 스케이터가 레일 밖으로 떨어졌어요. 남은 에너지는 모두 열(Eth)로 바뀌었어요.`,true)}
+ if(out==='loopfall'){add(last,'no',`💥 쿵! 이탈한 스케이터가 포물선을 그리며 땅으로 추락했어요! 안전 감독관으로서 이 설계는 불합격이에요.`,true)}
+ if(out==='finish'){add(last,'ok',`🏁 결승선 통과! 마지막 에너지 상태예요.${fr?`\n🔥 열에너지 Eth = ${f0(S(last).eth)} J (처음 에너지의 ${f1(100*S(last).eth/E0)} %)가 마찰로 빠져나갔어요.`:`\n에너지 총합은 끝까지 ${f0(E0)} J 그대로 — 역학적 에너지 보존!`}`,true)}
+ if(out==='rest'||out==='timeout'){add(last,'wa',`🧊 스케이터가 멈춰 섰어요. 마찰로 모든 에너지가 열로 바뀌었어요.`,true)}
+ let ok=false,v='',tip='';
+ if(id===4){ok=out==='turnback'&&Math.abs(apex.y-T_T)<=.25;if(ok)v=`🎉 정확해요! 목표 ${T_T} m 에 ${f2(Math.abs(apex.y-T_T))} m 오차로 정지! 에너지 보존 + 마찰 손실 계산 완벽!`;else if(out==='turnback'){const d=apex.y-T_T;v=`❌ 목표에서 ${f2(Math.abs(d))} m ${d>0?'높게':'낮게'} 멈췄어요.`;tip=`💡 힌트: ${d>0?'출발점 A를 조금 낮춰':'출발점 A를 조금 높여'} 보세요. (마찰 손실 ≈ μ × 가로 이동거리, A − 손실 = 정지 높이)`}else{v='❌ 목표 높이를 지나쳐 버렸어요.';tip='💡 출발 높이를 낮춰 보세요.'}}
+ else{ok=out==='finish';if(ok)v=`🎉 성공! 최저점에서는 최대 속력, 최고점에서는 최대 위치 에너지, 그리고 에너지 총합은 ${fr?'열까지 포함해서 ':''}일정해요. 멋진 설계예요! 👏`;else if(id===1)v='❌ 실패! 💡 힌트: 언덕 C를 출발점 A보다 낮게(또는 A를 더 높게) 설계해 보세요.';else if(tr.loop)v='❌ 실패! 💡 힌트: 루프 통과 조건 v ≥ √(gr) 과 에너지 보존으로 출발 높이 A ≥ 2.5r 을 만족시켜 보세요'+(fr?' (마찰 손실도 더해서!)':'.');else v='❌ 실패! 💡 힌트: A − (열손실 높이) > 마지막 언덕 높이 C 가 되도록 A를 올려 보세요.'}
+ add(last,ok?'ok':'no',v+(tip?'\n'+tip:''),false);
+ return{items:items.sort((a,b)=>a.i-b.i),ok}}
+window.__sk={app,K,MS,SG,setTab,draw,missStart,mkTrack,loadPre};
+tabsInit();setTab('intro');requestAnimationFrame(frame);
+})();
+</script></body></html>
