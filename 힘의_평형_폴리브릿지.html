@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>폴리 브릿지 · 힘의 평형 다리 설계 게임</title>
+<style>
+:root{--bg:#0b1020;--pn:#131b34;--pn2:#1a2547;--ln:#2b3a6b;--tx:#e8eefc;--mu:#9fb0d8;--ac:#22d3ee;--ok:#34d399;--no:#f87171;--wa:#fbbf24}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(14px,1.5vw,17px);line-height:1.5}
+header{display:flex;align-items:center;gap:8px;padding:8px clamp(8px,2vw,16px);background:#060a18;border-bottom:1px solid var(--ln);flex-wrap:nowrap}
+header h1{margin:0;font-size:clamp(15px,2.6vw,22px);flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:7px clamp(8px,1.6vw,14px);font-weight:800;font-size:clamp(11px,1.6vw,14px);text-decoration:none;cursor:pointer;white-space:nowrap}
+.lv{display:flex;gap:8px;padding:10px clamp(8px,2vw,16px) 0;flex-wrap:wrap}
+.lv button{flex:1 1 90px;background:var(--pn);color:var(--mu);border:2px solid var(--ln);border-radius:12px;padding:8px 6px;font-weight:900;cursor:pointer;font-size:clamp(13px,1.8vw,16px)}
+.lv button.on{background:#0e3a4a;color:#fff;border-color:var(--ac);box-shadow:0 0 0 3px #22d3ee33}
+.lv button small{display:block;font-weight:700;font-size:.78em;color:var(--mu)}
+.lv button.on small{color:#bdeefa}
+.main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px;padding:12px clamp(8px,2vw,16px) 24px;align-items:start}
+@media(max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:12px 14px}
+.card h2{margin:0 0 8px;font-size:1.05em}
+canvas{width:100%;display:block;aspect-ratio:16/9;border-radius:12px;background:#10223f}
+.brief{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.brief div{background:var(--pn2);border-radius:12px;padding:8px 6px;text-align:center}
+.brief b{display:block;font-size:1.25em}.brief span{font-size:.8em;color:var(--mu)}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sg button,.mg button{background:var(--pn2);color:var(--tx);border:2px solid var(--ln);border-radius:12px;padding:8px 6px;font-weight:800;cursor:pointer;text-align:center;font-size:.95em}
+.sg button small,.mg button small{display:block;font-weight:600;color:var(--mu);font-size:.78em}
+.sg button.on,.mg button.on{border-color:var(--ac);background:#0e3a4a;box-shadow:0 0 0 3px #22d3ee33}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lab{font-size:.85em;color:var(--mu);font-weight:800;margin:10px 0 5px}
+.stp{display:flex;align-items:center;gap:8px;background:var(--pn2);border-radius:12px;padding:6px 8px}
+.stp span{flex:1;font-weight:800}.stp b{min-width:2.2em;text-align:center;font-size:1.3em}
+.stp button{width:2.5em;height:2.5em;border-radius:10px;border:1px solid var(--ln);background:#22305a;color:#fff;font-weight:900;cursor:pointer;font-size:.95em}
+.cost{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:900}
+.bar{height:12px;background:#0a1128;border-radius:8px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#34d399);width:0;transition:width .25s}.bar.over i{background:var(--no)}
+.go{width:100%;margin-top:10px;padding:12px;border:0;border-radius:14px;background:linear-gradient(180deg,#34d399,#10b981);color:#04210f;font-weight:900;font-size:1.1em;cursor:pointer;box-shadow:0 4px 0 #0a7a57}
+.go:disabled{opacity:.5;cursor:not-allowed}
+.row2{display:flex;gap:8px;margin-top:8px}.row2 button{flex:1;padding:9px;border-radius:12px;border:1px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:800;cursor:pointer}
+#log{margin-top:10px;background:#080d1e;border:1px solid var(--ln);border-radius:12px;padding:10px 12px;min-height:7.5em;max-height:15em;overflow:auto}
+#log p{margin:0 0 6px}#log .bad{color:#fecaca}#log .good{color:#bbf7d0}#log .sci{color:#bae6fd}
+#res{display:none;margin-top:10px;border-radius:14px;padding:12px 14px;border:2px solid var(--ln)}
+#res.on{display:block}#res.ok{border-color:var(--ok);background:#0b2a22}#res.no{border-color:var(--no);background:#2a1214}#res.wa{border-color:var(--wa);background:#2a2410}
+#res h3{margin:0 0 6px;font-size:1.15em}
+table{border-collapse:collapse;width:100%;font-size:.9em;margin:6px 0}td{padding:3px 6px;border-bottom:1px solid #ffffff1a}td:last-child{text-align:right;font-weight:800}
+.info{font-size:.9em;color:var(--mu)}.info b{color:var(--tx)}
+.info details{margin-top:6px;background:var(--pn2);border-radius:10px;padding:6px 10px}.info summary{cursor:pointer;font-weight:800;color:var(--tx)}
+#fin{display:none;position:fixed;inset:0;z-index:50;background:#000b;align-items:center;justify-content:center;padding:16px}
+#fin.on{display:flex}#fin .c{background:var(--pn);border:2px solid var(--wa);border-radius:20px;padding:20px;max-width:560px;text-align:center}
+#fin h2{margin:0 0 8px;font-size:1.5em}
+</style></head><body>
+<header><h1>🌉 폴리 브릿지 · 힘의 평형 다리 설계</h1><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<div class="lv" id="lv"></div>
+<div class="main">
+  <section class="card">
+    <canvas id="cv" width="960" height="540"></canvas>
+    <div id="log" aria-live="polite"></div>
+    <div id="res"></div>
+  </section>
+  <section>
+    <div class="card" style="margin-bottom:12px">
+      <h2 id="stt">🚧 레벨 1</h2>
+      <div class="brief" id="brief"></div>
+      <div class="info" id="hint"></div>
+    </div>
+    <div class="card">
+      <h2>🛠️ 다리 설계</h2>
+      <div class="lab">① 다리 구조</div><div class="sg" id="sg"></div>
+      <div class="lab">② 주요 재료 (상판·기둥·뼈대)</div><div class="mg" id="mg"></div>
+      <div class="lab">③ 재료 개수</div>
+      <div class="stp"><span id="nlab">주요 재료</span><button data-k="n" data-d="-5">−5</button><button data-k="n" data-d="-1">−</button><b id="nv">1</b><button data-k="n" data-d="1">＋</button><button data-k="n" data-d="5">＋5</button></div>
+      <div class="stp" style="margin-top:6px"><span>🪢 밧줄·케이블</span><button data-k="r" data-d="-5">−5</button><button data-k="r" data-d="-1">−</button><b id="rv">0</b><button data-k="r" data-d="1">＋</button><button data-k="r" data-d="5">＋5</button></div>
+      <div class="cost"><span id="cs">0 G</span><span id="cb"></span></div>
+      <div class="bar" id="bar"><i></i></div>
+      <button class="go" id="go">🚗 시험 주행 시작!</button>
+      <div class="row2"><button id="hbtn">💡 힌트</button><button id="rbtn">↺ 설계 초기화</button></div>
+    </div>
+    <div class="card info" style="margin-top:12px">
+      <h2>📘 오늘의 과학 개념</h2>
+      <p style="margin:0"><b>힘의 평형:</b> 한 물체에 작용하는 힘의 합력이 0이면 물체는 정지(또는 등속 운동)해요. 다리 위 차량의 <b>무게(아래)</b> = 양쪽 지반이 떠받치는 <b>반력(위)</b>의 합!</p>
+      <details><summary>작용·반작용</summary>다리가 지반을 누르면(작용) 지반도 같은 크기로 다리를 밀어 올려요(반작용). 두 힘은 <b>크기 같고 방향 반대, 서로 다른 물체</b>에 작용해요.</details>
+      <details><summary>인장력 vs 압축력</summary><b>인장력</b>: 양쪽에서 잡아당기는 힘(밧줄이 강함). <b>압축력</b>: 양쪽에서 누르는 힘(밧줄은 형태가 무너짐).</details>
+      <details><summary>왜 삼각형·아치일까?</summary>삼각형은 모양이 변하지 않아 힘을 여러 부재가 인장·압축으로 나눠 가져요. 아치는 누르는 힘을 곡선을 따라 지지대로 흘려보내요.</details>
+    </div>
+  </section>
+</div>
+<div id="fin"><div class="c"><h2>🏆 폴리 브릿지 마스터!</h2><p id="fint"></p><button class="go" id="fclose" style="max-width:260px">닫기</button></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const MAT={wood:{nm:'🪵 나무',cost:100,cap:10,mass:30,col:'#b07a45',d:'가벼운 하중 OK · 긴 구간에 약함'},steel:{nm:'⛓️ 철골',cost:300,cap:40,mass:120,col:'#8fa8cc',d:'강하지만 무겁고 비쌈'},rope:{nm:'🪢 밧줄',cost:50,cap:15,mass:5,col:'#e0bb80',d:'당기는 힘에만 강함'}};
+const ST={
+ flat:{nm:'단순 평면',ic:'▬',d:'상판만 놓기',eff:L=>1/Math.pow(L/6,2),woodMax:8,tie:.5,part:'상판 가운데',force:'인장력(아랫면)·압축력(윗면)',bx:.5,sci:'단순 평면은 하중 때문에 상판이 <b>휘어요</b>(윗면 압축·아랫면 인장). 구간이 길수록 급격히 약해져 짧은 강에서만 효율적이에요.'},
+ arch:{nm:'아치형',ic:'⌒',d:'곡선으로 떠받치기',eff:L=>2.2/(L/6),woodMax:24,tie:.5,part:'아치 꼭대기 부근',force:'압축력',bx:.5,sci:'아치는 누르는 힘을 <b>곡선을 따라 압축력</b>으로 바꿔 양쪽 지지대로 흘려보내요. 지지대는 옆으로 밀려나는 힘을 <b>작용·반작용</b>으로 버텨요.'},
+ truss:{nm:'삼각형 트러스',ic:'△',d:'삼각형 뼈대',eff:L=>3/Math.pow(L/6,.8),woodMax:30,tie:.8,part:'가장 긴 대각 부재',force:'압축력·인장력',bx:.35,sci:'삼각형은 <b>모양이 변하지 않아서</b> 각 부재가 인장력 또는 압축력만 나눠 받아요. 힘이 여러 부재로 분산되는 거예요.'},
+ susp:{nm:'현수교',ic:'🌉',d:'주탑 + 케이블',effD:L=>4/Math.sqrt(L/6),effC:L=>5/Math.sqrt(L/6),woodMax:60,tie:0,part:'케이블',force:'인장력',bx:.25,sci:'현수교는 역할 분담이 핵심! <b>케이블은 인장력</b>, <b>주탑은 압축력</b>을 맡고, 케이블 끝은 지반에 단단히 고정돼 반작용으로 버텨요.'}
+};
+const STAGES=[
+ {n:1,L:6,car:{nm:'자전거 행렬',em:'🚲',kg:200},budget:500,hint:'짧은 강이에요. 가장 싼 설계로도 충분할지 계산해 보세요. 예산을 아끼면 별이 늘어요! ⭐'},
+ {n:2,L:12,car:{nm:'승용차',em:'🚗',kg:1500},budget:800,hint:'강이 12 m로 길어졌어요. 평평한 상판은 길수록 휘기 쉬워요. 삼각형이나 곡선은 어떨까요?'},
+ {n:3,L:20,car:{nm:'트럭',em:'🚚',kg:8000},budget:1200,hint:'트럭이 8톤이에요! 철골은 비싸지만 강해요. 밧줄은 "당기는 힘"에만 강하다는 점을 활용해 보세요.'},
+ {n:4,L:40,car:{nm:'대형 화물차',em:'🚛',kg:20000},budget:2200,hint:'40 m 대협곡! 누르는 힘과 당기는 힘을 구조물이 나눠 맡도록 역할을 분담시켜 보세요.'}
+];
+let S={st:0,struct:'flat',mat:'wood',n:1,r:0,busy:false,best:{}};
+try{S.best=JSON.parse(localStorage.getItem('pbBest')||'{}')||{}}catch(e){S.best={}}
+function saveBest(){try{localStorage.setItem('pbBest',JSON.stringify(S.best))}catch(e){}}
+function evalD(si,struct,mat,n,r){
+ const SG=STAGES[si],M=MAT[mat],T=ST[struct],L=SG.L;
+ const cost=n*M.cost+r*MAT.rope.cost,self=n*M.mass+r*MAT.rope.mass,W=(SG.car.kg+self)*9.8/1000;
+ const o={cost,self,W,need:W*1.5,R:W/2,struct,mat,n,r,L};
+ if(cost>SG.budget){o.kind='budget';return o}
+ if(n<=0){o.kind='empty';return o}
+ if(mat==='rope'){o.kind='rope';o.bx=struct==='susp'?.25:.5;o.force='압축력';o.part='밧줄로 만든 뼈대';return o}
+ if(mat==='wood'&&L>T.woodMax){o.kind='wood';o.bx=.5;o.force='휨(인장+압축)';o.part='나무 뼈대 가운데';return o}
+ let cap,part=T.part,force=T.force,bx=T.bx;
+ if(struct==='susp'){const cd=n*M.cap*T.effD(L),cc=r*MAT.rope.cap*T.effC(L);o.capD=cd;o.capC=cc;if(cc<=cd){cap=cc;part='케이블';force='인장력'}else{cap=cd;part='주탑·상판';force='압축력'}}
+ else{const e=T.eff(L);o.tie=Math.min(r,n)*MAT.rope.cap*e*T.tie;cap=n*M.cap*e+o.tie}
+ o.cap=cap;o.ratio=cap/W;o.part=part;o.force=force;o.bx=bx;
+ o.kind=o.ratio<1?'cap':o.ratio<1.5?'safety':'ok';
+ return o;
+}
+/* ---------- UI ---------- */
+function buildUI(){
+ $('#lv').innerHTML=STAGES.map((s,i)=>`<button data-i="${i}">LEVEL ${s.n}<small>${s.L}m · ${s.car.em} ${s.car.kg.toLocaleString()}kg${S.best[i]?' · '+'⭐'.repeat(S.best[i]):''}</small></button>`).join('');
+ $('#sg').innerHTML=Object.keys(ST).map(k=>`<button data-s="${k}">${ST[k].ic} ${ST[k].nm}<small>${ST[k].d}</small></button>`).join('');
+ $('#mg').innerHTML=Object.keys(MAT).map(k=>`<button data-m="${k}">${MAT[k].nm}<small>${MAT[k].cost}G</small></button>`).join('');
+}
+function refresh(){
+ const SG=STAGES[S.st];
+ document.querySelectorAll('#lv button').forEach((b,i)=>b.classList.toggle('on',i===S.st));
+ document.querySelectorAll('#sg button').forEach(b=>b.classList.toggle('on',b.dataset.s===S.struct));
+ document.querySelectorAll('#mg button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.mat));
+ $('#stt').textContent='🚧 LEVEL '+SG.n+' · '+SG.car.em+' '+SG.car.nm+' 통과 작전';
+ $('#brief').innerHTML=`<div><b>🌊 ${SG.L} m</b><span>강의 너비</span></div><div><b>${SG.car.em} ${SG.car.kg.toLocaleString()}kg</b><span>${SG.car.nm}</span></div><div><b>💰 ${SG.budget}G</b><span>총 예산</span></div>`;
+ $('#nlab').textContent=MAT[S.mat].nm+' (상판·기둥)';
+ $('#nv').textContent=S.n;$('#rv').textContent=S.r;
+ const c=S.n*MAT[S.mat].cost+S.r*50;$('#cs').textContent='사용 '+c+' G';
+ $('#cb').textContent='남은 예산 '+(SG.budget-c)+' G';$('#cb').style.color=c>SG.budget?'var(--no)':'var(--ok)';
+ $('#bar').classList.toggle('over',c>SG.budget);$('#bar i').style.width=Math.min(100,c/SG.budget*100)+'%';
+ $('#hint').innerHTML='🎯 <b>목표:</b> 예산 안에서 설계해 '+SG.car.em+' '+SG.car.nm+'을(를) 무사히 건너게 하세요. 안전율 <b>1.5배 이상</b>이어야 합격!';
+ renderBridge();
+}
+function say(t,cls){const p=document.createElement('p');if(cls)p.className=cls;p.innerHTML=t;$('#log').appendChild(p);$('#log').scrollTop=1e5}
+function clearLog(){$('#log').innerHTML='';$('#res').className='';$('#res').innerHTML=''}
+document.addEventListener('click',e=>{
+ if(S.busy)return;
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.i!==undefined&&b.parentNode.id==='lv'){S.st=+b.dataset.i;S.n=1;S.r=0;S.struct='flat';S.mat='wood';anim=null;clearLog();intro();refresh()}
+ else if(b.dataset.s){S.struct=b.dataset.s;anim=null;refresh()}
+ else if(b.dataset.m){S.mat=b.dataset.m;anim=null;refresh()}
+ else if(b.dataset.k){const k=b.dataset.k;S[k]=Math.max(0,Math.min(60,S[k]+ +b.dataset.d));anim=null;refresh()}
+});
+$('#hbtn').onclick=()=>{if(S.busy)return;say('💡 <b>힌트</b> · '+STAGES[S.st].hint,'sci')};
+$('#rbtn').onclick=()=>{if(S.busy)return;S.n=1;S.r=0;S.struct='flat';S.mat='wood';anim=null;refresh()};
+$('#fs').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+$('#fclose').onclick=()=>$('#fin').classList.remove('on');
+function intro(){const SG=STAGES[S.st];
+ say(`🎙️ <b>LEVEL ${SG.n}</b> 개막! ${SG.L}m 강 위에 다리를 놓아 ${SG.car.em} <b>${SG.car.nm}</b>(${SG.car.kg.toLocaleString()}kg)을(를) 건너게 해 주세요!`);
+ say('⚖️ 기억하세요! 다리가 버티려면 <b>아래로 누르는 힘 = 위로 떠받치는 힘</b>, 즉 합력 0 — 힘의 평형이 필요해요.','sci')}
+/* ---------- drawing ---------- */
+const cv=$('#cv'),cx=cv.getContext('2d'),B=document.createElement('canvas');B.width=960;B.height=540;const bx_=B.getContext('2d');
+const X0=150,X1=810,DY=300,WY=430;
+let anim=null;
+function line(c,x1,y1,x2,y2,w,col){c.strokeStyle=col;c.lineWidth=w;c.lineCap='round';c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+function renderBridge(){
+ const c=bx_;c.clearRect(0,0,960,540);
+ const m=MAT[S.mat],col=m.col,t=5+Math.min(12,S.n*(S.mat==='steel'?1.6:1.1)),rw=1.5+Math.min(4,S.r*.35);
+ if(S.n<=0&&S.r<=0)return;
+ if(S.struct==='flat'){c.fillStyle=col;c.fillRect(X0-12,DY,X1-X0+24,t+6);c.fillStyle='#0003';for(let x=X0;x<X1;x+=22)c.fillRect(x,DY,2,t+6);
+  if(S.r>0)for(let x=X0+40;x<X1;x+=80)line(c,x,DY+t+6,x+40,DY+t+30,rw,MAT.rope.col)}
+ else if(S.struct==='arch'){c.strokeStyle=col;c.lineWidth=t+3;c.lineCap='butt';c.beginPath();c.moveTo(X0-6,420);c.quadraticCurveTo((X0+X1)/2,160,X1+6,420);c.stroke();
+  for(let x=X0+50;x<X1-30;x+=60){const u=(x-X0)/(X1-X0),y=(1-u)*(1-u)*420+2*u*(1-u)*160+u*u*420;line(c,x,DY+4,x,y,Math.max(3,t*.5),col)}
+  c.fillStyle=col;c.fillRect(X0-12,DY,X1-X0+24,8);
+  if(S.r>0)line(c,X0,422,X1,422,rw,MAT.rope.col)}
+ else if(S.struct==='truss'){const N=8,pw=(X1-X0)/N;c.fillStyle=col;c.fillRect(X0-12,DY,X1-X0+24,7);line(c,X0,DY-70,X1,DY-70,t*.5+2,col);
+  for(let i=0;i<=N;i++)line(c,X0+i*pw,DY,X0+i*pw,DY-70,t*.35+2,col);
+  for(let i=0;i<N;i++){const rope=S.r>0&&i%2===1,cc=rope?MAT.rope.col:col;if(i%2===0)line(c,X0+i*pw,DY,X0+(i+1)*pw,DY-70,t*.35+2,col);else line(c,X0+i*pw,DY-70,X0+(i+1)*pw,DY,rope?rw:t*.35+2,cc)}}
+ else{const tw=[250,710];c.fillStyle=col;c.fillRect(X0-12,DY,X1-X0+24,7);
+  tw.forEach(x=>{c.fillRect(x-t/2-3,185,t+6,DY-185)});
+  const cc=MAT.rope.col,w=rw+(S.r>0?1:0);if(S.r>0){const par=(x)=>{ if(x<=250){const u=(x-X0)/100;return 280-u*95} if(x>=710){const u=(x-710)/100;return 185+u*95} const u=(x-250)/460;return 185+ (4*u*(1-u))*70};
+   c.strokeStyle=cc;c.lineWidth=w;c.beginPath();for(let x=X0;x<=X1;x+=6){const y=par(x);x===X0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();
+   for(let x=270;x<=690;x+=36)line(c,x,par(x),x,DY,Math.max(1,w*.6),cc)}}
+}
+function waterFront(tm){cx.fillStyle='#1c6fd8';cx.globalAlpha=.78;cx.beginPath();cx.moveTo(0,540);cx.lineTo(0,WY);for(let x=0;x<=960;x+=16)cx.lineTo(x,WY+Math.sin(x*.03+tm/420)*4);cx.lineTo(960,540);cx.fill();cx.globalAlpha=1}
+function arrow(x,y,len,col,up,label){const d=up?-1:1;cx.strokeStyle=col;cx.fillStyle=col;cx.lineWidth=5;cx.lineCap='round';cx.beginPath();cx.moveTo(x,y);cx.lineTo(x,y+d*len);cx.stroke();cx.beginPath();cx.moveTo(x,y+d*(len+10));cx.lineTo(x-9,y+d*(len-4));cx.lineTo(x+9,y+d*(len-4));cx.fill();
+ cx.font='bold 19px system-ui,sans-serif';cx.textAlign='center';cx.fillStyle='#fff';cx.strokeStyle='#000a';cx.lineWidth=4;const ly=y+d*(len+(up?-14:30));cx.strokeText(label,x,ly);cx.fillText(label,x,ly)}
+function scene(tm){
+ const g=cx.createLinearGradient(0,0,0,WY);g.addColorStop(0,'#5aa9ff');g.addColorStop(1,'#cfe9ff');cx.fillStyle=g;cx.fillRect(0,0,960,540);
+ cx.fillStyle='#b7d2ec';cx.beginPath();cx.moveTo(150,300);cx.lineTo(260,215);cx.lineTo(330,265);cx.lineTo(430,200);cx.lineTo(560,290);cx.lineTo(680,220);cx.lineTo(810,300);cx.fill();
+ cx.font='34px serif';cx.textAlign='left';cx.fillText('☁️',70+((tm/90)%900),70);cx.fillText('☁️',560-((tm/140)%700)+300,110);
+ // cliffs
+ cx.fillStyle='#6b5b45';cx.fillRect(0,DY,X0,540-DY);cx.fillRect(X1,DY,960-X1,540-DY);cx.fillStyle='#4f8a3c';cx.fillRect(0,DY-6,X0,10);cx.fillRect(X1,DY-6,960-X1,10);
+ cx.fillStyle='#fff';cx.font='bold 17px system-ui,sans-serif';cx.textAlign='center';cx.fillText(STAGES[S.st].L+' m',(X0+X1)/2,WY+36);
+ line(cx,X0,WY+18,X1,WY+18,2,'#fff8');
+ // bridge
+ const col=anim&&anim.col;
+ cx.shadowColor='#000a';cx.shadowBlur=4;if(!col)cx.drawImage(B,0,0);
+ else{const el=(tm-col.t0)/1000,bxp=X0+col.bx*(X1-X0);
+  for(let sx=0;sx<960;sx+=12){if(sx<X0-14||sx>X1+2){cx.drawImage(B,sx,0,12,540,sx,0,12,540);continue}
+   const d=Math.abs(sx+6-bxp),tt=Math.max(0,el-d/(X1-X0)*1.1),fall=520*tt*tt,rot=(sx+6<bxp?-1:1)*tt*(d<220?1.1:.35);
+   if(sx<X0+8||sx>X1-14){cx.drawImage(B,sx,0,12,540,sx,0,12,540);continue}
+   cx.save();cx.translate(sx+6,DY+10+fall);cx.rotate(rot);cx.drawImage(B,sx,0,12,540,-6,-DY-10,12,540);cx.restore()}}
+ cx.shadowBlur=0;cx.shadowColor='transparent';
+ // car
+ if(anim){let u=anim.u,cyOff=0,rot=0;
+  if(col){const el=(tm-col.t0)/1000,carT=Math.max(0,el-.12);cyOff=520*carT*carT;rot=carT*.8}
+  const x=X0-30+u*(X1-X0+60);cx.save();cx.translate(x,DY-20+cyOff);cx.rotate(rot);cx.font='46px serif';cx.textAlign='center';cx.fillText(STAGES[S.st].car.em,0,0);cx.restore()}
+ waterFront(tm);
+ // forces
+ const ev=evalD(S.st,S.struct,S.mat,Math.max(S.n,0),S.r),W=ev.W;
+ if(!(anim&&anim.col&&(tm-anim.col.t0)>300)){
+  const u=anim?Math.min(1,Math.max(0,anim.u)):.5,cxp=X0+u*(X1-X0);
+  const wl=Math.min(70,22+W*1.6);
+  arrow(cxp,DY-70,wl,'#ff6b6b',false,'무게 W '+W.toFixed(1)+'kN');
+  const ra=W*(1-u),rb=W*u,la=Math.min(60,10+ra*1.5),lb=Math.min(60,10+rb*1.5);
+  arrow(X0-45,DY-4,la,'#34d399',true,'R₁ '+ra.toFixed(1));arrow(X1+45,DY-4,lb,'#34d399',true,'R₂ '+rb.toFixed(1));
+ }
+ if(anim&&anim.crack){cx.font='bold 40px serif';cx.textAlign='center';cx.fillText('🟠',X0+anim.cbx*(X1-X0),DY+8);}
+ if(anim&&anim.boom&&tm-anim.boom<1200){cx.font='60px serif';cx.textAlign='center';cx.globalAlpha=Math.max(0,1-(tm-anim.boom)/1200);cx.fillText('💥',X0+anim.bxv*(X1-X0),DY-30-(tm-anim.boom)/20);cx.globalAlpha=1}
+ if(anim&&anim.win&&tm-anim.win<3000){cx.font='38px serif';cx.textAlign='center';for(let i=0;i<10;i++){const p=(tm-anim.win)/3000;cx.globalAlpha=1-p;cx.fillText(i%2?'✨':'🎉',140+i*75,120+ ((i*53)%60)+p*160);}cx.globalAlpha=1}
+}
+function loop(tm){
+ if(anim&&anim.ph==='drive'){const dt=(tm-anim.last)/1000;anim.last=tm;anim.u+=dt*(anim.fast?0.5:0.3);
+  if(!anim.mid&&anim.u>=.4){anim.mid=1;onMid()}
+  if(anim.fail&&!anim.col&&anim.u>=anim.bx-.01){anim.col={t0:tm,bx:anim.bx};anim.bxv=anim.bx;anim.boom=tm;anim.ph='fall';anim.endAt=tm+2600;onBreak()}
+  else if(anim.u>=1.04){anim.ph='end';anim.u=1.04;if(anim.crackFlag){anim.crack=true;anim.cbx=anim.bx}else if(!anim.fail)anim.win=tm;anim.endAt=tm+500}}
+ if(anim&&anim.ph==='fall'&&tm>anim.endAt){anim.ph='end2';finish()}
+ if(anim&&anim.ph==='end'&&tm>anim.endAt){anim.ph='end2';finish()}
+ scene(tm);requestAnimationFrame(loop)}
+/* ---------- run ---------- */
+let EV=null;
+$('#go').onclick=()=>{
+ if(S.busy)return;const SG=STAGES[S.st];EV=evalD(S.st,S.struct,S.mat,S.n,S.r);clearLog();
+ if(EV.kind==='budget'){say(`💸 <b>예산 초과!</b> 사용 ${EV.cost}G &gt; 예산 ${SG.budget}G. 재료를 줄이거나 값싼 재료로 바꿔 보세요.`,'bad');return}
+ if(EV.kind==='empty'){say('🤔 재료가 하나도 없으면 다리가 없어요! 주요 재료를 1개 이상 골라 주세요.','bad');return}
+ S.busy=true;$('#go').disabled=true;try{cv.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+ say(`🎙️ 시험 주행 시작! ${SG.car.em} <b>${SG.car.nm}</b>(${SG.car.kg.toLocaleString()}kg)이(가) ${ST[S.struct].nm} 다리에 진입합니다!`);
+ const fail=EV.kind==='cap'||EV.kind==='rope'||EV.kind==='wood';
+ anim={ph:'drive',u:-.05,last:performance.now(),fail,bx:EV.bx||.5,crackFlag:EV.kind==='safety',mid:0};
+ if(EV.kind==='rope'||EV.kind==='wood'){anim.bx=Math.min(anim.bx,.45)}
+};
+function onMid(){
+ say(`⚖️ <b>힘의 평형 점검</b> · 하중 W = ${EV.W.toFixed(1)}kN (차량 ${STAGES[S.st].car.kg.toLocaleString()}kg + 다리 자체 무게 ${EV.self}kg). 양쪽 지반이 떠받치는 반력 R₁+R₂ = ${EV.W.toFixed(1)}kN → 합력 0!`,'sci');
+ if(!anim.fail&&!anim.crackFlag)say('👀 구조물이 안정적으로 버티고 있어요…!');
+ else say('😰 어라… 구조물이 삐걱거리는 소리가 들려요…');
+}
+function onBreak(){
+ const SG=STAGES[S.st];
+ if(EV.kind==='rope')say(`🔴💥 <b>쾅!</b> 밧줄로 만든 뼈대가 <b>누르는 힘(압축력)</b>을 못 견디고 축 늘어져 무너졌어요! 밧줄은 '당기는 힘'에만 강해요.`,'bad');
+ else if(EV.kind==='wood')say(`🔴💥 <b>우지끈!</b> ${SG.L}m는 나무로 버티기엔 너무 길어요. 자체 무게와 하중 때문에 ${EV.part}이(가) <b>${EV.force}</b>을 못 견디고 부러졌어요!`,'bad');
+ else say(`🔴💥 <b>콰광!</b> <b>${EV.part}</b>이(가) <b>${EV.force}</b> 한계를 넘겨 끊어졌어요! (필요 내력 ${EV.need.toFixed(1)}kN 대비 내력 ${EV.cap.toFixed(1)}kN)`,'bad');
+ say(`🌊 ${SG.car.em}이(가) 강물로 풍덩…! 하중이 반력보다 커져 힘의 평형이 깨졌어요.`,'bad');
+}
+function finish(){
+ S.busy=false;$('#go').disabled=false;const SG=STAGES[S.st],ev=EV,res=$('#res');
+ const tbl=`<table><tr><td>아래로 누르는 하중 W</td><td>${ev.W.toFixed(1)} kN</td></tr><tr><td>지반 반력 R₁ + R₂</td><td>${ev.R.toFixed(1)} + ${ev.R.toFixed(1)} kN</td></tr><tr><td>다리가 견디는 힘(내력)</td><td>${ev.cap!==undefined?ev.cap.toFixed(1):'—'} kN</td></tr><tr><td>안전율(내력 ÷ 하중)</td><td>${ev.ratio!==undefined?ev.ratio.toFixed(2):'—'} 배 (합격 1.5↑)</td></tr><tr><td>사용 예산</td><td>${ev.cost} / ${SG.budget} G</td></tr></table>`;
+ if(ev.kind==='ok'){
+  const sp=ev.cost/SG.budget,stars=sp<=.6?3:sp<=.85?2:1;S.best[S.st]=Math.max(S.best[S.st]||0,stars);saveBest();buildUI();refresh();
+  say(`🎉 <b>성공!</b> ${SG.car.em}이(가) 무사히 건넜어요! 안전율 ${ev.ratio.toFixed(2)}배!`,'good');say('🔬 '+ST[ev.struct].sci,'sci');
+  const last=S.st===STAGES.length-1;
+  res.className='on ok';res.innerHTML=`<h3>✅ LEVEL ${SG.n} 클리어! ${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</h3>${tbl}<div class="info">${ST[ev.struct].sci}</div><div class="row2"><button id="again">다시 설계</button><button id="next" style="background:#10b981;color:#04210f">${last?'🏆 최종 결과 보기':'다음 레벨 ▶'}</button></div>`;
+  $('#again').onclick=()=>{anim=null;clearLog();res.className='';intro()};
+  $('#next').onclick=()=>{if(last){showFinal()}else{S.st++;S.n=1;S.r=0;S.struct='flat';S.mat='wood';anim=null;clearLog();intro();refresh()}};
+  if(last)setTimeout(showFinal,900);
+ }else if(ev.kind==='safety'){
+  say(`🟠 <b>균열 발견!</b> 겨우 건넜지만 ${ev.part}에 금이 갔어요. 안전율 ${ev.ratio.toFixed(2)}배 &lt; 1.5배 — 안전 점검 <b>불합격</b>!`,'bad');
+  res.className='on wa';res.innerHTML=`<h3>🟠 안전 점검 불합격</h3>${tbl}<div class="info">하중보다 내력이 아주 조금만 커서는 위험해요. 실제 다리는 안전율을 두고 설계해요. 구조를 바꾸거나 재료를 보강해 보세요!</div>`;
+ }else{
+  res.className='on no';let why='';
+  if(ev.kind==='rope')why='밧줄은 <b>인장력(당기는 힘)</b>에만 강해요. 뼈대(압축력을 받는 곳)에는 쓸 수 없어요. 밧줄은 케이블·보강용으로!';
+  else if(ev.kind==='wood')why='나무는 긴 구간에서 쉽게 부러져요. 구간이 길면 더 튼튼한 재료나 힘이 분산되는 구조가 필요해요.';
+  else if(ev.struct==='susp'&&ev.capC<ev.capD)why='케이블(인장력)이 약했어요. 밧줄 개수를 늘려 보세요!';
+  else if(ev.struct==='susp')why='주탑·상판(압축력)이 약했어요. 주요 재료를 더 단단하게!';
+  else why='구조가 힘을 충분히 나누지 못했어요. 힘이 분산되는 구조(삼각형·아치·현수교)나 더 강한 재료를 고민해 보세요.';
+  res.innerHTML=`<h3>💥 붕괴! 다시 도전해요</h3>${tbl}<div class="info">${why}</div>`;
+ }
+}
+function showFinal(){
+ const tot=Object.values(S.best).reduce((a,b)=>a+b,0);
+ $('#fint').innerHTML=`4개 레벨 모두 클리어! 총 별 <b>${tot}/12</b> ⭐<br><br>✔ 합력이 0이어야 다리는 안 무너진다 (힘의 평형)<br>✔ 지반이 떠받치는 반력 = 작용·반작용<br>✔ 밧줄은 인장력, 기둥·아치는 압축력, 삼각형·현수교는 힘을 분산!`;
+ $('#fin').classList.add('on')}
+buildUI();refresh();intro();requestAnimationFrame(loop);
+</script></body></html>
