@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>솔라 갤러그 · 액션+퀴즈 (태양계)</title>
+<style>
+:root{--bg:#05030f;--pn:#120b2e;--pn2:#1e1450;--ln:#4c3a9a;--tx:#f3efff;--mu:#b6a9ec;--ok:#34d399;--no:#f87171;--ac:#fde047}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;font-size:clamp(16px,1.6vw,20px);line-height:1.5;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+header{display:flex;align-items:center;gap:8px;padding:6px clamp(8px,2vw,16px);background:#02010a;border-bottom:1px solid var(--ln);flex-wrap:wrap}
+header h1{margin:0;font-size:clamp(16px,2.3vw,22px);flex:1;min-width:190px}
+.hb{background:var(--pn2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:8px 12px;font-weight:800;font-size:14px;text-decoration:none;cursor:pointer;font-family:inherit}
+main{max-width:600px;margin:0 auto;padding:8px clamp(6px,2vw,14px);display:flex;flex-direction:column;gap:8px}
+.hud{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;font-weight:900;font-size:.95em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.hud span{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:3px 10px}
+.stage{position:relative;border-radius:14px;overflow:hidden;border:2px solid var(--ln);background:#000;width:min(100%,calc((100vh - 170px)*.75));min-width:300px;margin:0 auto}
+canvas{width:100%;display:block;aspect-ratio:3/4;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(5,3,15,.9);text-align:center;padding:14px;overflow:auto}
+.ov[hidden]{display:none}
+.ov h2{margin:0;font-size:clamp(22px,5vw,34px);color:var(--ac);text-shadow:0 0 12px #f0a}
+.ov p{margin:0;max-width:440px;font-size:.95em}
+.btn{min-height:52px;padding:0 20px;border-radius:14px;border:2px solid var(--ln);background:var(--pn2);color:var(--tx);font-weight:900;cursor:pointer;font-family:inherit;font-size:1em}
+.btn.pri{background:linear-gradient(#fde047,#f59e0b);border-color:#fff3a0;color:#2b1700;font-size:1.1em}
+.btn:disabled{opacity:.45}
+.q{width:100%;max-width:460px}
+.q .qt{background:#0a0620;border:2px solid var(--ac);border-radius:14px;padding:10px 12px;font-size:1.02em;margin:6px 0}
+.opts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
+.opts .btn{min-height:56px}
+.q form{display:flex;gap:6px}
+#ans{flex:1;min-width:0;font-size:17px;font-family:inherit;background:#0a0620;color:#fff;border:2px solid var(--ln);border-radius:12px;padding:8px 10px}
+.fb{border-radius:12px;padding:8px 12px;margin:6px 0;font-size:.95em;text-align:left}
+.fb.ok{background:#052e1f;border:2px solid var(--ok)}.fb.no{background:#33090c;border:2px solid var(--no)}
+.ctl{display:flex;gap:8px;justify-content:center;align-items:stretch}
+.ctl .btn{min-height:60px;min-width:70px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.ctl .big{flex:1.4;font-size:1.15em}
+.tip{font-size:.82em;color:var(--mu);text-align:center}
+</style></head><body>
+<header><h1>👾 솔라 갤러그 <span style="font-size:.7em;color:var(--ac)">액션+퀴즈 · 태양계 · 중1</span></h1>
+<button class="hb" id="snd">🔊 소리 켜짐</button><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<main>
+<div class="hud"><span id="hw">WAVE 1</span><span id="hs">SCORE 0</span><span id="hl">❤️❤️❤️</span><span id="hm">🚀</span><span id="hh">HI 0</span></div>
+<div class="stage"><canvas id="cv" width="480" height="640"></canvas>
+<div class="ov" id="ov"><h2>👾 SOLAR GALAGA 👾</h2><p>🎵 <i>빠바바밤~ 삐뽀삐뽀~ 뿅뿅뿅♪ (8비트 오락실 BGM 두둥!)</i></p><p><b>① 액션</b> 외계 편대를 직접 조종해서 격추!<br><b>② 퀴즈 타임</b> 편대를 물리치면 태양계 퀴즈 폭탄 — 맞히면 🛡 방어막!<br><b>③ 보스 🛸</b> 트랙터 빔에 납치되거나 보스를 쓰러뜨리면 구출 퀴즈! 맞히면 <b>쌍발기 🚀🚀 + 다음 웨이브 점수 2배</b></p><p class="tip">조작: ← → 또는 A D 이동 · Space 발사 · 터치는 화면을 끌어서 이동 (자동 발사)</p><button class="btn pri" id="start">🪙 INSERT COIN · 게임 시작</button></div>
+<div class="ov" id="qv" hidden></div></div>
+<div class="ctl"><button class="btn" id="bl">◀</button><button class="btn big" id="bf">🔫 발사 (자동발사 켜짐)</button><button class="btn" id="br">▶</button></div>
+<div class="tip">키보드: ←→ 이동, Space 발사 · 터치: 캔버스를 끌어서 이동</div>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const B={ // 천체: 별칭, 해설, 단서들
+수성:{al:[],ex:'수성은 태양에 가장 가까운 가장 작은 행성! 대기가 거의 없어 낮 약 430℃, 밤 약 −180℃로 온도 차가 커요.',c:['나는 태양에서 가장 가까운 행성이지! 내가 누구게 빔-!','대기가 거의 없어서 낮과 밤의 온도 차가 엄청나게 크단다! 누구게?','표면에 크레이터가 가득하고 위성도 없는 태양계에서 가장 작은 행성이야!']},
+금성:{al:['샛별','개밥바라기'],ex:'금성은 두꺼운 이산화탄소 대기의 온실효과로 표면 온도가 약 460℃! 다른 행성과 반대로 자전해요.',c:['새벽엔 샛별, 저녁엔 개밥바라기! 지구 크기와 비슷한 나는 누구게?','두꺼운 이산화탄소 구름에 덮여 표면이 안 보이지롱! 누구게?','다른 행성들과 반대 방향으로 자전한다네! 삐리릭!']},
+지구:{al:[],ex:'지구는 액체 물과 산소, 적당한 온도가 있어 생명체가 살 수 있는 유일한 행성이에요. 위성은 달 1개!',c:['표면의 약 70%가 바다로 덮인 푸른 행성! 내가 누구게?','액체 상태의 물과 산소가 있어서 생명체가 사는 행성이야!','위성이 단 1개(달)인 우리 모두의 고향 행성이지! 누구게?']},
+화성:{al:[],ex:'화성은 산화철 때문에 표면이 붉고, 극관(드라이아이스·얼음)이 있어요. 위성은 포보스·데이모스 2개!',c:['삐리릭! 나는 표면이 붉고 극관이 존재하지! 내가 누구게 빔-!','태양계에서 가장 큰 화산 올림포스 산이 내 몸에 있다구!','위성이 포보스와 데이모스, 딱 2개뿐이야! 누구게?']},
+목성:{al:[],ex:'목성은 태양계에서 가장 큰 행성! 수소·헬륨 가스로 이루어져 있고 거대한 폭풍 대적점이 있어요.',c:['태양계에서 가장 큰 행성이 바로 나다! 누구게 빔-!','내 몸의 대적점은 지구보다 큰 거대 폭풍이지! 누구게?','갈릴레이가 발견한 위성 4개(이오·유로파·가니메데·칼리스토)가 내 친구야!']},
+토성:{al:[],ex:'토성은 얼음 조각으로 된 아름다운 고리가 있고, 평균 밀도가 물보다 작아요(물에 뜬다고 상상 가능!).',c:['아름다운 고리를 두른 나는 누구게? 빔-!','나의 평균 밀도는 물보다 작아서 큰 욕조에 넣으면 둥둥 뜬다네!','가장 큰 위성 타이탄을 거느린 고리 행성이야! 누구게?']},
+천왕성:{al:[],ex:'천왕성은 자전축이 거의 누운 채(약 98°) 공전하고, 메탄 때문에 청록색으로 보여요.',c:['자전축이 옆으로 누워서 데굴데굴 굴러가듯 공전하는 행성!','메탄 때문에 청록색으로 보이는 얼음 거인이지! 누구게?','1781년 허셜이 망원경으로 발견한 행성이야! 빔-!']},
+해왕성:{al:[],ex:'해왕성은 태양에서 가장 먼 행성! 메탄 때문에 푸른색이고 초속 수백 m의 강한 바람이 불어요.',c:['태양에서 가장 멀리 있는 행성이 바로 나!','푸른색에 대암점이 있고 태양계에서 가장 강한 바람이 부는 행성!','가장 큰 위성 트리톤이 거꾸로 공전하는 푸른 행성이야! 누구게?']},
+흑점:{al:[],ex:'흑점은 광구에서 주변보다 온도가 낮은(약 4,000℃) 곳이라 어둡게 보여요. 강한 자기장 때문이고, 11년 주기로 늘고 줄어요.',c:['나는 태양 표면에서 주변보다 온도가 낮아 검게 보이지!','약 11년 주기로 개수가 늘었다 줄었다 하는 태양 표면의 어두운 점!','갈릴레이가 관측해 태양의 자전을 알아내는 데 쓴 검은 점이야!']},
+광구:{al:[],ex:'광구는 우리 눈에 보이는 태양의 표면(약 6,000℃)으로, 쌀알 무늬가 있어요.',c:['우리 눈에 보이는 태양의 둥근 표면! 온도는 약 6,000℃야!','쌀알 무늬가 보이는 태양의 표면층이지롱! 누구게?']},
+코로나:{al:[],ex:'코로나는 태양 대기의 가장 바깥층으로 온도가 100만 ℃ 이상! 개기 일식 때 진주색으로 보여요.',c:['태양 대기의 가장 바깥층, 온도가 100만 ℃가 넘는 나는 누구게?','개기 일식 때 달 둘레에 진주빛으로 빛나는 것이 바로 나야!']},
+홍염:{al:[],ex:'홍염은 광구에서 위로 솟구치는 붉은 불기둥 모양의 가스예요. 개기 일식 때 가장자리에서 잘 보여요.',c:['광구에서 불기둥처럼 솟아오르는 붉은 가스 구름!','태양 가장자리에서 고리 모양으로 치솟는 붉은 가스, 누구게?']},
+플레어:{al:['플레어','태양폭발','태양플레어'],ex:'플레어는 흑점 주변에서 일어나는 폭발 현상! 통신 장애나 오로라를 일으킬 수 있어요.',c:['흑점 근처에서 펑! 터지며 통신 장애와 오로라를 일으키는 폭발!','태양 표면에서 에너지가 갑자기 터져 나오는 폭발 현상이지! 누구게?']},
+달:{al:['moon'],ex:'달은 지구의 하나뿐인 위성! 대기가 없어 크레이터가 그대로 남아 있고, 모양이 바뀌는 위상 변화를 보여요.',c:['지구 둘레를 도는 하나뿐인 위성! 위상이 보름달·초승달로 변하지!','대기가 없어 운석 충돌 자국(크레이터)이 그대로 남은 지구의 위성!']},
+소행성:{al:['소행성대'],ex:'소행성은 주로 화성과 목성 사이(소행성대)에서 태양을 도는 작은 암석 천체예요.',c:['화성과 목성 사이 띠에서 태양을 도는 작은 암석 덩어리들!','모양이 울퉁불퉁하고 행성보다 훨씬 작은 암석 천체, 누구게?']},
+혜성:{al:['꼬리별'],ex:'혜성은 얼음과 먼지 덩어리! 태양에 가까워지면 꼬리가 생기고 그 꼬리는 항상 태양 반대쪽으로 뻗어요.',c:['태양에 가까워지면 얼음이 녹아 긴 꼬리가 생기는 나는 누구게?','나의 꼬리는 늘 태양의 반대쪽을 향한단다! 핼리가 유명하지!','매우 길쭉한 타원 궤도로 태양을 도는 얼음 덩어리, 76년마다 오는 핼리가 나야!']}};
+const WV=[
+{nm:'지구형 행성 편대 접근',pool:['수성','금성','지구','화성'],n:4,boss:[{a:'금성',q:'위성이 없고, 온실효과로 표면 온도가 가장 높은 행성!'},{a:'수성',q:'위성이 없고, 태양에 가장 가까운 행성이야!'},{a:'화성',q:'붉은 표면에 극관이 있고, 위성이 2개뿐인 행성!'}]},
+{nm:'목성형 행성 편대 접근',pool:['목성','토성','천왕성','해왕성'],n:4,boss:[{a:'토성',q:'가스 행성이면서 고리가 가장 뚜렷하고, 밀도가 물보다 작은 행성!'},{a:'목성',q:'가장 크고, 갈릴레이가 위성 4개를 발견한 행성!'},{a:'천왕성',q:'자전축이 누워 있고, 청록색을 띠는 얼음 거인 행성!'}]},
+{nm:'태양 보스전 · 달/소행성/혜성',pool:['흑점','광구','코로나','홍염','플레어','달','소행성','혜성'],n:6,boss:[{a:'코로나',q:'태양 대기의 가장 바깥층이면서, 개기 일식 때 진주색으로 보이는 것!'},{a:'흑점',q:'광구에 있고, 주변보다 온도가 낮아 어둡게 보이며 약 11년 주기로 변하는 것!'},{a:'혜성',q:'얼음과 먼지로 되어 있고, 태양에 가까워질 때 꼬리가 생기는 천체!'}]}];
+
+const WV_NAMES=['지구형 행성 편대 접근','목성형 행성 편대 접근','태양 보스전 · 달/소행성/혜성'];
+const G={st:'title',w:0,round:1,score:0,lives:3,mult:1,pend:false,dual:false,hi:0,miss:[],auto:true,t:0,banner:0,dt2:2,qq:[],qi:0,bossCap:false};
+try{G.hi=+localStorage.getItem('sg2')||0}catch(e){}
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const norm=s=>s.replace(/\s+/g,'').toLowerCase();
+function hud(){$('hw').textContent='WAVE '+(G.w+1);$('hs').textContent='SCORE '+G.score;$('hl').textContent=G.lives>0?'❤️'.repeat(G.lives):'💀';$('hm').textContent=(G.dual?'🚀🚀':'🚀')+(P.shield?' 🛡'+P.shield:'')+(G.mult>1?' ×2':'');$('hh').textContent='HI '+Math.max(G.hi,G.score)}
+/* ===== 소리 ===== */
+let AC=null,mute=false,bgmOn=false,step=0;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function tone(f1,f2,d,type,v){if(mute)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'square';o.frequency.setValueAtTime(f1,a.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),a.currentTime+d);g.gain.setValueAtTime(v||.06,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+d)}
+function noise(d,v){if(mute)return;const a=ac();if(!a)return;const n=a.sampleRate*d,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=1400;s.buffer=b;g.gain.value=v||.15;s.connect(f).connect(g).connect(a.destination);s.start()}
+const sfx={shot:()=>tone(1200,500,.07,'square',.035),pop:()=>{noise(.18,.12);tone(500,100,.15,'square',.04)},boom:()=>{noise(.45,.2);tone(200,40,.4,'sawtooth',.06)},hit:()=>{noise(.3,.22);tone(300,50,.35,'sawtooth',.08)},win:()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,f*1.01,.14,'square',.07),i*110)),beam:()=>{for(let i=0;i<8;i++)setTimeout(()=>tone(300+i*70,200+i*60,.12,'triangle',.05),i*90)},coin:()=>{tone(988,988,.07,'square',.07);setTimeout(()=>tone(1319,1319,.25,'square',.07),80)},no:()=>tone(220,90,.35,'sawtooth',.07)};
+const MEL=[523,659,784,659,523,659,784,1047,988,784,659,784,988,784,659,523],BAS=[131,131,196,196,175,175,196,196];
+function bgm(){if(!bgmOn)return;if(!mute&&G.st==='play'){tone(MEL[step%16],MEL[step%16],.11,'square',.02);if(step%2===0)tone(BAS[(step/2|0)%8],BAS[(step/2|0)%8],.2,'triangle',.04)}step++;setTimeout(bgm,170)}
+/* ===== 게임 객체 ===== */
+const cv=$('cv'),c=cv.getContext('2d'),W=480,H=640;
+const P={x:W/2,y:H-60,inv:0,shield:0,cd:0,cap:0};
+let E=[],EB=[],PB=[],PT=[],STR=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*H,s:.4+Math.random()*1.6})),shake=0,flash=0;
+const keys={};let ptrX=null,hold=false;
+function spawnRound(){E=[];EB=[];PB=[];G.dtimer=2;const wv=G.w;
+ if(G.round===1){const cols=6,rows=3;for(let r=0;r<rows;r++)for(let k=0;k<cols;k++)E.push(mk(k,r,cols,r*cols+k))}
+ else{const cols=5,rows=2;for(let r=0;r<rows;r++)for(let k=0;k<cols;k++)E.push(mk(k,r+1,cols,r*cols+k));
+  const bo=mk(2,0,5,0);bo.boss=true;bo.hp=bo.maxhp=4+wv;bo.sx=W/2;bo.sy=76;bo.bt=3;bo.bstate='form';E.push(bo)}}
+function mk(k,r,cols,i){const sx=W/2+(k-(cols-1)/2)*58,sy=80+r*44;const d=i*.12;return {x:k%2?-30:W+30,y:-30,sx,sy,r,state:'enter',t:-d,hp:1,boss:false,dir:k%2?1:-1,x0:0,y0:0}}
+function addPT(x,y,n,col){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=1+Math.random()*4;PT.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:col||['#fde047','#fb923c','#f43f5e','#fff'][i%4]})}}
+function ex(e){return e.state==='form'?e.sx+Math.sin(G.t*.8)*28:e.x}
+/* ===== 업데이트 ===== */
+function update(dt){
+ G.t+=dt;if(G.st!=='play'&&G.st!=='capture')return;
+ if(G.st==='capture'){P.cap+=dt;P.y=Math.max(110,P.y-380*dt);if(P.cap>1.1){G.st='quiz';startQuiz(true)}return}
+ // 이동
+ const sp=300;if(keys.ArrowLeft||keys.a||keys.A||hold==='l')P.x-=sp*dt;if(keys.ArrowRight||keys.d||keys.D||hold==='r')P.x+=sp*dt;
+ if(ptrX!=null){const d=ptrX-P.x;P.x+=Math.sign(d)*Math.min(Math.abs(d),520*dt)}
+ P.x=Math.max(24,Math.min(W-24,P.x));P.inv=Math.max(0,P.inv-dt);P.cd-=dt;
+ const shooting=G.auto||keys[' ']||hold==='f';
+ if(shooting&&P.cd<=0){P.cd=.26;if(G.dual){PB.push({x:P.x-14,y:P.y-18});PB.push({x:P.x+14,y:P.y-18})}else PB.push({x:P.x,y:P.y-18});sfx.shot()}
+ PB.forEach(b=>b.y-=560*dt);PB=PB.filter(b=>b.y>-20);
+ // 적
+ G.dtimer-=dt;const live=E.filter(e=>e.state==='form'&&!e.boss);
+ if(G.dtimer<=0&&live.length){const e=live[Math.random()*live.length|0];e.state='dive';e.t=0;e.x0=ex(e);e.y0=e.sy;e.tx=P.x;e.dir=Math.random()<.5?-1:1;e.shot=0;G.dtimer=Math.max(.9,2.1-G.w*.25)+Math.random()*.8}
+ for(const e of E){
+  if(e.state==='enter'){e.t+=dt;if(e.t>=0){const u=Math.min(1,e.t/1.3),k=u*u*(3-2*u);e.x=(e.dir>0?-30:W+30)+(e.sx-(e.dir>0?-30:W+30))*k+Math.sin(u*Math.PI)*70*e.dir;e.y=-30+(e.sy+30)*k+Math.sin(u*Math.PI*2)*18;if(u>=1)e.state='form'}}
+  else if(e.state==='dive'){e.t+=dt;const u=e.t/2.6;e.x=e.x0+(e.tx-e.x0)*u+Math.sin(u*8)*55*e.dir;e.y=e.y0+(H+40-e.y0)*u;
+   if(e.shot<1&&u>.25){e.shot=1;shoot(e)}else if(e.shot<2&&u>.55&&G.w>0){e.shot=2;shoot(e)}
+   if(u>=1){e.state='ret';e.t=0;e.y=-30}}
+  else if(e.state==='ret'){e.t+=dt;const u=Math.min(1,e.t/1.0);e.x=e.x+(e.sx-e.x)*.08;e.y=-30+(e.sy+30)*u;if(u>=1)e.state='form'}
+  if(e.boss&&e.state==='form'&&e.bstate==='form'){bossAI(e,dt)}
+  if(e.boss&&(e.bstate==='go'||e.bstate==='beam'||e.bstate==='back')){bossMove(e,dt)}
+ }
+ EB.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt});EB=EB.filter(b=>b.y<H+20&&b.x>-20&&b.x<W+20);
+ PT.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.l-=.025});PT=PT.filter(p=>p.l>0);
+ // 충돌: 내 총알 vs 적
+ for(const b of PB){for(const e of E){if(e.hp<=0)continue;const x=(e.state==='form'&&!e.boss)?ex(e):e.x;if(Math.abs(b.x-x)<(e.boss?30:17)&&Math.abs(b.y-e.y)<(e.boss?26:16)){b.y=-99;e.hp--;if(e.hp<=0)kill(e,x);else{addPT(x,e.y,6,'#fff');sfx.pop()}}}}
+ E=E.filter(e=>e.hp>0);
+ // 적 vs 나
+ if(P.inv<=0){for(const b of EB){if(Math.abs(b.x-P.x)<(G.dual?30:14)&&Math.abs(b.y-P.y)<16){b.y=999;hitPlayer();break}}
+  for(const e of E){const x=e.state==='form'?ex(e):e.x;if(!e.boss&&e.state==='dive'&&Math.abs(x-P.x)<(G.dual?34:20)&&Math.abs(e.y-P.y)<20){e.hp=0;addPT(x,e.y,20);hitPlayer();break}}
+  // 트랙터 빔
+  const bo=E.find(e=>e.boss&&e.bstate==='beam');if(bo&&G.st==='play'){const half=60*((P.y-bo.y)/(H-bo.y))+10+40;if(Math.abs(P.x-bo.x)<half&&P.y>bo.y){captured(bo)}}}
+ E=E.filter(e=>e.hp>0);
+ if(G.st==='play'&&E.length===0)roundDone()}
+function shoot(e){const x=e.x,y=e.y;const vy=170+G.w*25;let vx=Math.max(-80,Math.min(80,(P.x-x)*.25));EB.push({x,y:y+14,vx,vy})}
+function bossAI(e,dt){e.bt-=dt;e.x=ex(e);if(e.bt<=0){e.bstate='go';e.bt=0;e.tx=P.x}}
+function bossMove(e,dt){e.bt+=dt;
+ if(e.bstate==='go'){const u=Math.min(1,e.bt/1.1);e.x=e.x+(e.tx-e.x)*.06;e.y=e.sy+(250-e.sy)*u;if(u>=1){e.bstate='beam';e.bt=0;sfx.beam()}}
+ else if(e.bstate==='beam'){e.x+=Math.sin(e.bt*1.3)*50*dt;e.x=Math.max(60,Math.min(W-60,e.x));if(e.bt%.9<dt)sfx.beam();if(e.bt>4){e.bstate='back';e.bt=0}}
+ else if(e.bstate==='back'){const u=Math.min(1,e.bt/1.0);e.y=250+(e.sy-250)*u;e.x=e.x+(W/2-e.x)*.06;if(u>=1){e.bstate='form';e.state='form';e.bt=3.2}}}
+function kill(e,x){const pts=(e.boss?500:(e.state==='form'?50:100))*G.mult;G.score+=pts;addPT(x,e.y,e.boss?80:22);sfx.boom();hud();e.x=x;if(e.boss){shake=14;bossDown(e)}}
+function hitPlayer(){if(P.inv>0)return;if(P.shield>0){P.shield--;P.inv=1;addPT(P.x,P.y,18,'#7dd3fc');sfx.pop();hud();return}
+ addPT(P.x,P.y,30);sfx.hit();shake=16;flash=1;if(G.dual){G.dual=false;P.inv=2;hud();return}
+ G.lives--;P.inv=2.2;hud();if(G.lives<=0){gameOver()}}
+function captured(bo){G.st='capture';P.cap=0;sfx.beam();G.capBoss=bo;EB=[]}
+/* ===== 라운드/퀴즈 ===== */
+function roundDone(){if(G.round===1){G.round=2;G.st='quiz';startQuiz(false,true)}else{G.st='quiz';startQuiz(false,false)}}
+function bossDown(e){G.st='quiz';EB=[];startQuiz(false,false,true)}
+function pick(a){return {a,clue:shuf(B[a].c)[0]}}
+function startQuiz(captured,mid,bossKill){
+ G.qMode=mid?'mid':'boss';G.qCaptured=!!captured;
+ const W0=WV[G.w];
+ if(mid){const arr=shuf(W0.pool).slice(0,2);G.qq=arr.map(pick)}
+ else{const bq=shuf(W0.boss)[0];G.qq=[{a:bq.a,clue:bq.q,boss:true}]}
+ G.qi=0;showQ()}
+function showQ(){const q=G.qq[G.qi],W0=WV[G.w];let ch=[q.a];shuf(W0.pool.filter(x=>x!==q.a)).slice(0,3).forEach(x=>ch.push(x));ch=shuf(ch);
+ const qv=$('qv');qv.hidden=false;
+ const head=G.qMode==='mid'?'📡 <b>퀴즈 타임!</b> 편대 격파! 퀴즈 폭탄이 날아옵니다 ('+(G.qi+1)+'/'+G.qq.length+')':(G.qCaptured?'🛸 <b>트랙터 빔에 납치됐다!</b> 퀴즈를 맞혀 탈출하라!':'🛸 <b>보스 격파!</b> 붙잡힌 아군 기체를 구출하라! 퀴즈 하나만 더!');
+ qv.innerHTML='<div class="q"><div>'+head+'</div><div class="qt">'+(q.boss?'🛸 ':'👾 ')+'「'+q.clue+'」</div><div class="opts">'+ch.map(x=>'<button class="btn" data-o="'+x+'">'+x+'</button>').join('')+'</div><form id="qf" autocomplete="off"><input id="ans" placeholder="이름 입력 후 발사!"><button class="btn pri" type="submit">🔫 발사</button></form><div id="fb"></div></div>';
+ qv.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>answer(b.dataset.o));$('qf').onsubmit=e=>{e.preventDefault();answer($('ans').value.trim())};$('ans').focus({preventScroll:true});G.qlock=false}
+function answer(txt){if(G.qlock||!txt)return;G.qlock=true;const q=G.qq[G.qi];const ok=norm(txt)===norm(q.a)||(B[q.a].al||[]).some(x=>norm(x)===norm(txt));
+ $('qv').querySelectorAll('button,input').forEach(b=>b.disabled=true);let h='';
+ if(ok){sfx.win();
+  if(G.qMode==='mid'){const p=200*G.mult;G.score+=p;P.shield=Math.min(2,P.shield+1);h='💥 <b>정답! +'+p+'점 · 🛡 방어막 획득!</b><br>'+B[q.a].ex}
+  else{const p=300*G.mult;G.score+=p;G.dual=true;G.pend=G.w<2;h='🚀🚀 <b>구출 성공! 쌍발기 획득! +'+p+'점</b>'+(G.w<2?'<br>다음 웨이브 점수 2배!':'')+'<br>'+B[q.a].ex}}
+ else{G.miss.push(q.a);sfx.no();
+  if(G.qMode==='mid'||G.qCaptured){G.lives--;h='💔 <b>오답! 생명 -1</b> 정답은 <b>'+q.a+'</b><br>'+B[q.a].ex}
+  else h='😢 <b>오답!</b> 정답은 <b>'+q.a+'</b> — 구출 실패, 쌍발기는 놓쳤어요.<br>'+B[q.a].ex}
+ hud();
+ $('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+h+'</div><button class="btn pri" id="qn">'+(G.lives<=0?'결과 보기 ▶':'다음 ▶')+'</button>';
+ $('qn').onclick=()=>{if(G.lives<=0)return gameOver();G.qi++;if(G.qi<G.qq.length)return showQ();$('qv').hidden=true;afterQuiz()}}
+function afterQuiz(){
+ if(G.qMode==='mid'){G.st='banner';G.banner=1.6;banner('⚠ ROUND 2 — 보스 🛸 접근!');spawnRound();P.y=H-60}
+ else{P.y=H-60;P.inv=2;G.qCaptured=false;waveDone()}}
+let bannerTxt='';function banner(t){bannerTxt=t}
+function waveDone(){const o=$('ov');o.hidden=false;G.st='clear';EB=[];
+ if(G.w<2){G.lives=Math.min(5,G.lives+1);hud();o.innerHTML='<h2>WAVE '+(G.w+1)+' CLEAR! 🎉</h2><p>SCORE <b>'+G.score+'</b> · 생명 '+'❤️'.repeat(G.lives)+' (+1 보너스)</p><p>'+(G.pend?'🚀🚀 쌍발기 보너스! 다음 웨이브 점수 2배!':'다음 웨이브도 힘내요!')+'</p><button class="btn pri" id="nw">▶ NEXT WAVE</button>';sfx.win();$('nw').onclick=()=>{G.w++;startWave()}}
+ else end()}
+function startWave(){$('ov').hidden=true;G.mult=G.pend?2:1;if(G.pend)G.dual=true;G.pend=false;G.round=1;spawnRound();P.x=W/2;P.y=H-60;P.inv=2;hud();G.st='banner';G.banner=2;banner('WAVE '+(G.w+1)+' — '+WV_NAMES[G.w]);sfx.coin()}
+function startGame(){G.w=0;G.score=0;G.lives=3;G.pend=false;G.dual=false;G.miss=[];G.mult=1;P.shield=0;startWave()}
+function gameOver(){G.st='over';$('qv').hidden=true;const o=$('ov');o.hidden=false;if(G.score>G.hi){G.hi=G.score;try{localStorage.setItem('sg2',G.hi)}catch(e){}}hud();const u=[...new Set(G.miss)];o.innerHTML='<h2>GAME OVER 💀</h2><p>SCORE <b>'+G.score+'</b></p><p>'+(u.length?'다시 살펴볼 천체: <b>'+u.join(', ')+'</b>':'')+'</p><button class="btn pri" id="rt">🔄 CONTINUE? (다시 도전)</button>';$('rt').onclick=startGame}
+function end(){const o=$('ov');o.hidden=false;G.score+=G.lives*100;if(G.score>G.hi){G.hi=G.score;try{localStorage.setItem('sg2',G.hi)}catch(e){}}hud();const u=[...new Set(G.miss)];const rank=G.score>=4500?'🥇 갤럭시 마스터':G.score>=3000?'🥈 태양계 탐험가':'🥉 우주 훈련생';o.innerHTML='<h2>🏆 ALL CLEAR!</h2><p>최종 SCORE <b>'+G.score+'</b> <small>(남은 생명 보너스 포함)</small></p><p style="font-size:1.4em">'+rank+'</p><p>'+(u.length?'복습할 천체: <b>'+u.join(', ')+'</b>':'퀴즈를 하나도 안 틀렸어요! 완벽해요 ✨')+'</p><button class="btn pri" id="rt">🔄 다시 하기</button>';sfx.win();$('rt').onclick=startGame}
+/* ===== 그리기 ===== */
+function ship(x,y,col){c.fillStyle=col||'#e5f2ff';c.beginPath();c.moveTo(x,y-20);c.lineTo(x+13,y+12);c.lineTo(x+5,y+8);c.lineTo(x,y+14);c.lineTo(x-5,y+8);c.lineTo(x-13,y+12);c.closePath();c.fill();c.fillStyle='#ef4444';c.fillRect(x-2,y-6,4,10);c.fillStyle='#38bdf8';c.fillRect(x-14,y+6,4,6);c.fillRect(x+10,y+6,4,6)}
+function emoji(t,x,y,sz){c.font=sz+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(t,x,y)}
+const PLN=[['#3b82f6','#22c55e'],['#f59e0b','#fde68a'],['#fb923c','#fff1b8']];
+function draw(){c.save();if(shake>0){c.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.88;if(shake<.5)shake=0}
+ c.fillStyle='#04020e';c.fillRect(-10,-10,W+20,H+20);
+ const pc=PLN[G.w]||PLN[0];const g=c.createRadialGradient(400,560,10,400,560,150);g.addColorStop(0,pc[1]);g.addColorStop(.6,pc[0]);g.addColorStop(1,'rgba(0,0,0,0)');c.globalAlpha=.35;c.fillStyle=g;c.beginPath();c.arc(400,560,150,0,7);c.fill();c.globalAlpha=1;
+ STR.forEach(s=>{s.y+=s.s*(G.st==='play'?1.2:.3);if(s.y>H)s.y=0;c.fillStyle='rgba(255,255,255,'+(.3+s.s/3)+')';c.fillRect(s.x,s.y,s.s,s.s*2.2)});
+ const bo=E.find(e=>e.boss&&e.bstate==='beam');
+ if(bo){c.save();c.globalAlpha=.3+.12*Math.sin(G.t*20);const gg=c.createLinearGradient(0,bo.y,0,H);gg.addColorStop(0,'#7dd3fc');gg.addColorStop(1,'rgba(125,211,252,.05)');c.fillStyle=gg;c.beginPath();c.moveTo(bo.x-12,bo.y+26);c.lineTo(bo.x+12,bo.y+26);c.lineTo(bo.x+110,H);c.lineTo(bo.x-110,H);c.closePath();c.fill();c.restore()}
+ for(const e of E){if(e.state==='enter'&&e.t<0)continue;const x=(e.state==='form'&&!e.boss)?ex(e):e.x;
+  if(e.boss){emoji('🛸',x,e.y,58);c.fillStyle='#450a0a';c.fillRect(x-26,e.y-36,52,6);c.fillStyle='#f43f5e';c.fillRect(x-26,e.y-36,52*e.hp/e.maxhp,6)}
+  else emoji(['👾','👽','🤖'][e.r%3],x,e.y,30)}
+ c.fillStyle='#fde047';PB.forEach(b=>c.fillRect(b.x-2,b.y-9,4,16));
+ c.fillStyle='#fb7185';EB.forEach(b=>{c.beginPath();c.arc(b.x,b.y,5,0,7);c.fill()});
+ PT.forEach(p=>{c.globalAlpha=Math.max(0,p.l);c.fillStyle=p.c;c.fillRect(p.x,p.y,4,4)});c.globalAlpha=1;
+ if(G.st==='play'||G.st==='banner'||G.st==='capture'){const bl=P.inv>0&&((G.t*12|0)%2);if(!bl){if(G.dual){ship(P.x-15,P.y);ship(P.x+15,P.y)}else ship(P.x,P.y,G.st==='capture'?'#fca5a5':null);if(P.shield){c.strokeStyle='rgba(125,211,252,.8)';c.lineWidth=3;c.beginPath();c.arc(P.x,P.y,G.dual?36:24,0,7);c.stroke()}}}
+ if(G.st==='banner'){c.fillStyle='rgba(0,0,0,.55)';c.fillRect(0,H/2-50,W,100);c.fillStyle='#fde047';c.font='bold 24px sans-serif';c.textAlign='center';c.fillText(bannerTxt,W/2,H/2+6)}
+ if(flash>0){c.fillStyle='rgba(244,63,94,'+flash*.3+')';c.fillRect(0,0,W,H);flash-=.05}
+ c.restore()}
+let last=0;function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;
+ if(G.st==='banner'){G.banner-=dt;if(G.banner<=0)G.st='play'}
+ update(dt);draw();requestAnimationFrame(loop)}
+/* ===== 입력 ===== */
+addEventListener('keydown',e=>{if([' ','ArrowLeft','ArrowRight'].includes(e.key)&&G.st!=='quiz'&&document.activeElement.id!=='ans')e.preventDefault();keys[e.key]=true});
+addEventListener('keyup',e=>{keys[e.key]=false});
+function ptr(e){const r=cv.getBoundingClientRect();ptrX=(e.clientX-r.left)/r.width*W}
+cv.addEventListener('pointerdown',e=>{ptr(e);cv.setPointerCapture(e.pointerId)});cv.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')ptr(e)});
+const rel=()=>{ptrX=null};cv.addEventListener('pointerup',rel);cv.addEventListener('pointercancel',rel);
+[['bl','l'],['br','r'],['bf','f']].forEach(([id,k])=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();hold=k});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{if(hold===k)hold=false}))});
+$('bf').addEventListener('click',()=>{G.auto=!G.auto;$('bf').textContent=G.auto?'🔫 발사 (자동발사 켜짐)':'🔫 발사 (꾹 누르기)'});
+$('start').onclick=()=>{ac();if(!bgmOn){bgmOn=true;bgm()}startGame()};
+$('snd').onclick=()=>{mute=!mute;$('snd').textContent=mute?'🔇 소리 꺼짐':'🔊 소리 켜짐'};
+$('fs').onclick=()=>{try{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}catch(e){}};
+hud();requestAnimationFrame(loop);
+window.__g={G,P,get E(){return E},update,startGame,answer,B,WV,keys,roundDone,bossDown};
+})();
+</script></body></html>
