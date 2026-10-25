@@ -4026,6 +4026,22 @@ function flowGameHref(file, nm, m) {
     ? "./전자칠판_실행기.html?f=" + encodeURIComponent(file) + "&imm=1&fq=" + encodeURIComponent(fq) + "&t=" + encodeURIComponent(nm)
     : "./" + file + "?" + fq;
 }
+
+/*NEWGAMES1025 : 새 과학게임·도입 퀴즈를 카드별 수업 흐름(⑤)에 연결 */
+const NG_QUIZ = {"중1|열":["도입퀴즈_열의역설.html","도입퀴즈_열과에너지_2탄.html","도입퀴즈_열과에너지_3탄.html"],"중1|물질의 상태 변화":["도입퀴즈_열과에너지_3탄.html","도입퀴즈_오개념모음_여러단원.html"],"중1|기체의 성질":["도입퀴즈_열과에너지_2탄.html","도입퀴즈_오개념모음_여러단원.html"],"중1|힘의 작용":["도입퀴즈_내무게는얼마죠.html","도입퀴즈_열과에너지_3탄.html","도입퀴즈_오개념모음_여러단원.html"],"중3|운동과 에너지":["도입퀴즈_내무게는얼마죠.html"],"중1|태양계":["도입퀴즈_오개념모음_여러단원.html"],"중2|전기와 자기":["도입퀴즈_오개념모음_여러단원.html"]};
+const NG_NM = {"도입퀴즈_내무게는얼마죠.html":"도입 퀴즈 · 내 무게는?","도입퀴즈_열의역설.html":"도입 퀴즈 · 열의 역설","도입퀴즈_열과에너지_2탄.html":"도입 퀴즈 · 열과 에너지 2탄","도입퀴즈_열과에너지_3탄.html":"도입 퀴즈 · 열과 에너지 3탄","도입퀴즈_오개념모음_여러단원.html":"도입 퀴즈 · 오개념 모음"};
+const NG_BOSS = {"중1|열":0,"중1|기체의 성질":1,"중1|물질의 상태 변화":2,"중1|힘의 작용":3,"중3|운동과 에너지":4,"중2|전기와 자기":5,"중1|태양계":6,"중2|별과 우주":6,"중3|별과 우주":6};
+function newGames1025(m) {
+  const k = m.grade + "|" + m.unit; let h = "";
+  const link = (file, fq, nm, ic, tt) => {
+    const href = boardMode ? "./전자칠판_실행기.html?f=" + encodeURIComponent(file) + "&imm=1" + (fq ? "&fq=" + encodeURIComponent(fq) : "") + "&t=" + encodeURIComponent(nm) : "./" + file + (fq ? "?" + fq : "");
+    return '<a href="' + flowEsc(href) + '" class="btn-action btn-game" title="' + flowEsc(tt) + '"><span><i class="stp">⑤</i>' + ic + ' ' + flowEsc(nm) + '</span></a>';
+  };
+  h += link("과학_보글보글_" + m.grade + "_단원별.html", "u=" + encodeURIComponent(m.unit), "단원별 보글보글", "🫧", m.unit + " 개념을 용어 방울로 격파하는 보글보글");
+  if (k in NG_BOSS) h += link("단원마무리_보스전.html", "b=" + NG_BOSS[k], "마무리 보스전", "⚔️", m.unit + " 단원 마무리 보스전");
+  (NG_QUIZ[k] || []).forEach(f => { h += link(f, "", NG_NM[f], "💥", "수업 시작 3분 도입 퀴즈 (A/B 투표 → 반전 공개)"); });
+  return h;
+}
 function flowCatalog() {
   if (flowCatalog._c) return flowCatalog._c;
   const sim = new Map(), game = new Map(), intro = new Map();
@@ -4316,6 +4332,7 @@ function render() {
           + `<a href="${_lnk("과학_땅따먹기.html", "땅따먹기")}" class="btn-action btn-land" title="${m.lesson} 차시 문제로 하는 땅따먹기"><span><i class="stp">⑤</i>🟩 땅따먹기</span></a>`
           + (_isLast && m.unit === "생물의 구성과 다양성" ? `<a href="${boardMode ? "./전자칠판_실행기.html?f=" + encodeURIComponent("세포에서_특이점까지_진화게임.html") + "&imm=1&t=" + encodeURIComponent("진화 게임") : "./세포에서_특이점까지_진화게임.html"}" class="btn-action btn-evo" title="세포에서 특이점까지 · 대단원 진화 게임 (실제 세포 그림 도감)"><span><i class="stp">⑤</i>🧬 진화 게임 (대단원)</span></a>` : ""); /* EVO_LINK_1018 */
       }
+      toolsHtml += newGames1025(m);
       { /* QRSTAY_1017 : 학생 QR 칩 */
           const _whole = m.unit === "별과 우주";
           const _q2 = _whole ? ("g=" + encodeURIComponent(m.grade) + "&u=" + encodeURIComponent(m.unit)) : fq;

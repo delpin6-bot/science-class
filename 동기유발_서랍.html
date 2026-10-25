@@ -332,8 +332,16 @@ html .empty-state{font-size:12px}
     <span class="sp"></span>
     <button class="bigb rv" id="bReveal">🔓 정답·비밀 공개!</button>
     <button class="bigb nx" id="bNextM">다음 기법 ⏭</button>
+    <button class="bigb gy" id="bMenu">🧭 수업 메뉴</button>
   </div>
 </section>
+<div id="smenu" role="menu" aria-label="수업 메뉴"></div>
+<div id="tv" aria-label="본시 도구 화면"><div class="tvbar">
+ <button class="back" id="tvBack">◀ 동기유발로 돌아가기</button>
+ <button id="tvPrev">◀ 이전 도구</button><span class="tvt" id="tvTitle"></span>
+ <button class="go" id="tvNext">다음 도구 ▶</button>
+ <button id="tvCard">⏭ 다음 카드</button><button id="tvHome">🏠 서랍 목록</button><button id="tvNew" title="새 탭으로 열기">↗</button>
+</div><iframe id="tvFrame" title="본시 도구" allow="fullscreen"></iframe></div>
 <div class="ov" id="ovQ"><div class="pop"><h2><span>📱 학생 접속 QR코드</span><button class="x" id="qX">✕</button></h2>
   <div class="qn">학생 휴대폰·태블릿 카메라로 찍으면 바로 열립니다. GitHub Pages 주소를 한 번 붙여 넣으면 이 컴퓨터에 저장돼요.</div>
   <input id="qrUrl" type="url" placeholder="https://계정명.github.io/저장소명/동기유발_서랍.html" autocomplete="off" spellcheck="false">
@@ -2752,7 +2760,17 @@ function toolsOf(c){
   sims.forEach(t=>out.push(t));
   if(SHOOT_UNITS.has(c.grade+'|'+c.unit))out.push({nm:'개념 격추',file:'개념격추.html',kind:'shoot',fq:'g='+encodeURIComponent(c.grade)+'&u='+encodeURIComponent(c.unit)+(c.shoot?'&s='+c.shoot:'')});
   if(SNAKE_UNITS.has(c.grade+'|'+c.unit))out.push({nm:'뱀주사위',file:'올인원_뱀주사위놀이.html',kind:'snake',fq:'g='+encodeURIComponent(c.grade)+'&u='+encodeURIComponent(c.unit)});
+  NEWHOOK1025(c,out);
   return out;
+}
+/*NEWHOOK1025*/
+const HOOK_Q={"중1|열":["도입퀴즈_열의역설.html","도입퀴즈_열과에너지_2탄.html","도입퀴즈_열과에너지_3탄.html"],"중1|물질의 상태 변화":["도입퀴즈_열과에너지_3탄.html","도입퀴즈_오개념모음_여러단원.html"],"중1|기체의 성질":["도입퀴즈_열과에너지_2탄.html","도입퀴즈_오개념모음_여러단원.html"],"중1|힘의 작용":["도입퀴즈_내무게는얼마죠.html","도입퀴즈_열과에너지_3탄.html","도입퀴즈_오개념모음_여러단원.html"],"중3|운동과 에너지":["도입퀴즈_내무게는얼마죠.html"],"중1|태양계":["도입퀴즈_오개념모음_여러단원.html"],"중2|전기와 자기":["도입퀴즈_오개념모음_여러단원.html"]};
+const HOOK_NM={"도입퀴즈_내무게는얼마죠.html":"도입 퀴즈 · 내 무게는?","도입퀴즈_열의역설.html":"도입 퀴즈 · 열의 역설","도입퀴즈_열과에너지_2탄.html":"도입 퀴즈 · 열과 에너지 2탄","도입퀴즈_열과에너지_3탄.html":"도입 퀴즈 · 열과 에너지 3탄","도입퀴즈_오개념모음_여러단원.html":"도입 퀴즈 · 오개념 모음"};
+const BOSS_IDX={"중1|열":0,"중1|기체의 성질":1,"중1|물질의 상태 변화":2,"중1|힘의 작용":3,"중3|운동과 에너지":4,"중2|전기와 자기":5,"중1|태양계":6,"중2|별과 우주":6,"중3|별과 우주":6};
+function NEWHOOK1025(c,out){const k=c.grade+'|'+c.unit;
+  (HOOK_Q[k]||[]).forEach(f=>out.push({nm:HOOK_NM[f],file:f,kind:'game'}));
+  out.push({nm:'단원별 보글보글',file:'과학_보글보글_'+c.grade+'_단원별.html',kind:'game',fq:'u='+encodeURIComponent(c.unit)});
+  if(k in BOSS_IDX)out.push({nm:'마무리 보스전',file:'단원마무리_보스전.html',kind:'game',fq:'b='+BOSS_IDX[k]});
 }
 function hrefOf(t){
   if(t.fq){if(!S.board)return './'+t.file+'?'+t.fq;return './전자칠판_실행기.html?f='+encodeURIComponent(t.file)+'&imm=1&fq='+encodeURIComponent(t.fq)+'&t='+encodeURIComponent(t.nm);}
@@ -2840,7 +2858,34 @@ function reveal(){S.revealed=!S.revealed;const r=$('#res');if(!r)return;r.classL
   r.scrollIntoView({behavior:'smooth',block:'nearest'});}else{SFX.click();$$('.ch').forEach(x=>x.classList.remove('right','wrong'));}}
 function nextMethod(){const i=METHODS.findIndex(x=>x.k===S.method);S.method=METHODS[(i+1)%5].k;SFX.tab();stage();}
 function step(dir){const l=S.list.length?S.list:filtered();const i=l.findIndex(x=>x.id===S.cur.id);const nx=l[(i+dir+l.length)%l.length];S.cur=nx;S.method=S.startM==='ALL'?'myth':S.startM;timerReset();stage();}
-$('#sBack').onclick=closeStudio;$('#bReveal').onclick=reveal;$('#bNextM').onclick=nextMethod;$('#pPrev').onclick=()=>step(-1);$('#pNext').onclick=()=>step(1);
+$('#sBack').onclick=closeStudio;
+/*STUDIOMENU1025*/
+const TVI={sim:'🔬',shoot:'🎯',snake:'🐍',game:'🎮'};
+const plainHref=t=>'./'+t.file+(t.fq?'?'+t.fq:'');
+function studioTools(){return S.cur?toolsOf(S.cur):[];}
+function closeSMenu(){$('#smenu').classList.remove('on');}
+function openTool(i){const l=studioTools();if(!l.length){toast('이 카드에 연결된 도구가 없어요.');return;}
+  closeSMenu();TV.list=l;TV.i=((i%l.length)+l.length)%l.length;const t=l[TV.i];$('#tvFrame').src=plainHref(t);
+  $('#tvTitle').innerHTML=(TVI[t.kind]||'🎮')+' '+esc(t.nm)+' <small>('+(TV.i+1)+'/'+l.length+')</small>';$('#tv').classList.add('on');}
+function closeTool(){$('#tv').classList.remove('on');$('#tvFrame').src='about:blank';}
+const TV={list:[],i:0};
+function openSMenu(){const m=$('#smenu');if(m.classList.contains('on')){closeSMenu();return;}
+  const l=studioTools(),c=S.cur;
+  let h='<div class="flow">수업 흐름 : ① 동기유발 5기법 → ② 본시 도구(가상실험·게임) → ③ 다음 카드</div><h4>이동</h4><div class="sg">'
+   +'<button class="home" data-a="home">◀ 서랍으로 돌아가기</button><button data-a="next5">다음 기법 ⏭</button>'
+   +'<button data-a="prev">◀ 이전 카드</button><button data-a="next">다음 카드 ▶</button></div>';
+  if(l.length){h+='<h4>본시 학습 · 활동 도구 ('+l.length+')</h4><div class="sg">'+l.map((t,i)=>'<button class="tool" data-a="tool" data-i="'+i+'">'+(TVI[t.kind]||'🎮')+' '+esc(t.nm)+'</button>').join('')+'</div>';}
+  m.innerHTML=h;m.classList.add('on');}
+$('#bMenu').onclick=e=>{e.stopPropagation();SFX.tab&&SFX.tab();openSMenu();};
+$('#smenu').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;
+  if(a==='home'){closeSMenu();closeStudio();}else if(a==='next5'){closeSMenu();nextMethod();}else if(a==='prev'){closeSMenu();step(-1);}else if(a==='next'){closeSMenu();step(1);}else if(a==='tool')openTool(+b.dataset.i);});
+document.addEventListener('click',e=>{if(!e.target.closest('#smenu')&&!e.target.closest('#bMenu'))closeSMenu();});
+$('#tvBack').onclick=closeTool;$('#tvHome').onclick=()=>{closeTool();closeStudio();};
+$('#tvCard').onclick=()=>{closeTool();step(1);};
+$('#tvPrev').onclick=()=>openTool(TV.i-1);$('#tvNext').onclick=()=>{if(TV.i>=TV.list.length-1){closeTool();toast('마지막 도구예요. 다음 카드로 이동하려면 [⏭ 다음 카드]를 누르세요.');}else openTool(TV.i+1);};
+$('#tvNew').onclick=()=>{const t=TV.list[TV.i];if(t)window.open(plainHref(t),'_blank');};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#tv').classList.contains('on')){e.stopImmediatePropagation();closeTool();}else if($('#smenu').classList.contains('on')){e.stopImmediatePropagation();closeSMenu();}}},true);
+$('#bReveal').onclick=reveal;$('#bNextM').onclick=nextMethod;$('#pPrev').onclick=()=>step(-1);$('#pNext').onclick=()=>step(1);
 $('#tStart').onclick=timerToggle;$('#tReset').onclick=timerReset;$('#sSnd').onclick=()=>{S.snd=!S.snd;$('#sSnd').textContent=S.snd?'🔊':'🔇';};
 /* ---------- 머리글 도구 ---------- */
 $('#q').addEventListener('input',e=>{S.q=e.target.value;render();});
@@ -2894,6 +2939,27 @@ window.__hook={S:S,CARDS:CARDS,render:render,openStudio:openStudio,stage:stage,r
  .header-inner>*:first-child,.header-brand,.brand{min-width:0;flex:1 1 180px}
  .header-utils,.header-actions,.nav-actions{width:100%;justify-content:flex-start}
 }
+</style>
+<style id="studiomenu1025">/* STUDIOMENU1025 : 수업 메뉴(서랍으로·이전/다음 카드·본시 도구 뷰어) */
+#bMenu{flex:.9}
+#smenu{position:fixed;right:16px;bottom:96px;z-index:260;width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 140px);overflow:auto;background:#fff;border:2px solid #0ea5e9;border-radius:16px;box-shadow:0 14px 40px rgba(15,23,42,.35);padding:12px;display:none}
+#smenu.on{display:block}
+#smenu h4{margin:8px 2px 6px;font-size:13px;color:#475569;letter-spacing:.02em}
+#smenu .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#smenu button{min-height:48px;border-radius:12px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#0f172a;font-weight:800;font-size:15px;padding:6px 10px;cursor:pointer;text-align:left}
+#smenu button:hover{background:#e0f2fe;border-color:#0ea5e9}
+#smenu button.home{background:#0f172a;color:#fff;border-color:#0f172a}
+#smenu button.tool{grid-column:1/-1}
+#smenu .flow{font-size:12.5px;color:#0369a1;background:#f0f9ff;border-radius:10px;padding:6px 10px;margin-bottom:6px;font-weight:700}
+#tv{position:fixed;inset:0;z-index:500;background:#0f172a;display:none;flex-direction:column}
+#tv.on{display:flex}
+#tv .tvbar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:#0f172a;color:#fff;flex-wrap:wrap}
+#tv .tvbar button{min-height:44px;padding:0 12px;border-radius:11px;border:1.5px solid #334155;background:#1e293b;color:#fff;font-weight:800;font-size:14px;cursor:pointer}
+#tv .tvbar button.back{background:#0ea5e9;border-color:#7dd3fc}
+#tv .tvbar button.go{background:#16a34a;border-color:#bbf7d0}
+#tv .tvt{flex:1;min-width:120px;font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tv .tvt small{color:#94a3b8;font-weight:700}
+#tvFrame{flex:1;border:0;background:#fff;width:100%}
 </style>
 <script id="embed1017">
 /* EMBED_1017 : 통합 서랍 안에서 열렸을 때 서랍 링크는 '서랍으로 돌아가기' */
