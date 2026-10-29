@@ -583,6 +583,23 @@ html .stat-val{font-size:15px!important}
 html .stat-lbl,html .stat-desc{font-size:10px!important}
 }
 </style>
+<style id="pt1029css">
+#simCanvas{touch-action:none}
+.btn-ctrl#waterBtn.active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+@media (max-width:768px){
+  .main-wrapper{height:auto;min-height:0}
+  .canvas-container{display:flex;flex-direction:column;overflow:visible;flex:none;height:auto}
+  .canvas-container #simCanvas{flex:none;height:56vh;min-height:300px;width:100%}
+  .canvas-container .hint-badge{display:none}
+  .canvas-container .hud-card{position:static;width:auto;max-width:none;margin:0;padding:8px 12px;border-radius:0;flex:0 0 auto}
+  .hud-card .hud-row{margin-bottom:3px;font-size:12px}
+  .hud-card .hud-desc{margin-top:6px;padding:6px 8px;font-size:11.5px;line-height:1.45}
+  .hud-card .hud-title{margin-bottom:6px;padding-bottom:4px}
+  .bottom-bar{gap:6px;padding:8px 10px}
+  .control-actions{gap:6px;flex-wrap:wrap;justify-content:center}
+  .btn-ctrl{padding:6px 10px;font-size:12px}
+}
+</style>
 </head>
 <body>
 
@@ -606,24 +623,25 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
 <div class="theory-panel" id="theoryPanel">
   <div class="theory-grid">
     <div class="theory-card">
-      <h3>🎢 롤러코스터 높낮이 비유</h3>
+      <h3>💧 물의 높낮이 비유</h3>
       <p>
-        전기 회로에서 <strong>전압(전위차)</strong>은 롤러코스터의 <strong>'높이(위치에너지)'</strong>와 같습니다.
-        전지는 전하를 높은 곳으로 끌어올리는 리프트 역할을 하며, 저항은 전하가 아래로 굴러떨어지며 에너지를 방출하는 경사로 역할을 합니다.
+        물은 <strong>수위(높이)가 높은 곳 → 낮은 곳</strong>으로 흐르고, <strong>펌프</strong>가 다시 위로 끌어올려요.
+        전기도 똑같아요. <strong>수위 차 = 전압(전위차)</strong>, 펌프 = 전지, 물길 = 도선, 좁고 거친 물길 = 저항, 흐르는 물의 양 = 전류입니다.
       </p>
     </div>
     <div class="theory-card">
-      <h3>🟢 기준면 (Ground, 0V)</h3>
+      <h3>🔋 전지의 +극과 −극</h3>
       <p>
-        연두색 평면은 전위가 0V인 <strong>기준면(Ground)</strong>입니다.
-        전지에서 올라간 높이(+V)는 회로의 저항을 모두 거쳐 내려온 높이의 합과 정확히 같아져, 원래의 바닥 기준면(0V)으로 되돌아옵니다 (키르히호프 전압 법칙).
+        <strong>+극은 높은 곳(전압이 높다)</strong>, <strong>−극은 낮은 곳(전압이 낮다, 0 V 기준)</strong>이에요.
+        전류는 +극에서 나와 저항을 지나 −극으로 흐르고, 전지는 전하를 다시 +극까지 끌어올립니다.
+        올라간 높이(12 V)와 저항에서 내려온 높이의 합은 항상 같아요.
       </p>
     </div>
     <div class="theory-card">
       <h3>⚡ 직렬 vs 병렬 연결</h3>
       <p>
-        <strong>직렬 연결</strong>: 2개의 저항을 2단계 계단처럼 거쳐 내려오므로 각각 전압을 나누어 가집니다 ($V = V_1 + V_2$).<br>
-        <strong>병렬 연결</strong>: 두 갈래 길로 나뉘지만, 각각 높은 곳에서 바닥(0V)까지 완전히 같은 높이를 떨어집니다 ($V = V_1 = V_2$).
+        <strong>직렬</strong>: 2단 계단을 차례로 내려오므로 높이를 나누어 가져요 ($V = V_1 + V_2$).<br>
+        <strong>병렬</strong>: 물길이 두 갈래로 나뉘어도 둘 다 같은 높이 12 V를 내려옵니다 ($V = V_1 = V_2$).
       </p>
     </div>
   </div>
@@ -636,7 +654,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
     
     <!-- 인터랙션 안내 힌트 -->
     <div class="hint-badge">
-      <span>🔄 마우스/터치로 드래그하여 3D 시점 360° 회전 (휠: 줌)</span>
+      <span>🔄 드래그: 시점 회전 · 휠: 확대/축소 (물 비유 ON/OFF는 아래 버튼)</span>
     </div>
 
     <!-- 실시간 HUD 정보 카드 -->
@@ -647,7 +665,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       </div>
       <div class="hud-row">
         <span class="hud-label">전원 전압 (V)</span>
-        <span class="hud-value" style="color: #2563eb;">12.0 V (높이 +H)</span>
+        <span class="hud-value" style="color: #2563eb;">12.0 V (수위 차 = 전압)</span>
       </div>
       <div class="hud-row">
         <span class="hud-label">저항 1 전압강하 (V₁)</span>
@@ -691,6 +709,9 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
 
     <!-- 유틸리티 조작 버튼 -->
     <div class="control-actions">
+      <button class="btn-ctrl active" id="waterBtn" onclick="toggleWater()">
+        <span>💧 물 비유: ON</span>
+      </button>
       <button class="btn-ctrl active" id="flowBtn" onclick="toggleFlow()">
         <span>⚡ 전하 흐름: ON</span>
       </button>
@@ -707,787 +728,555 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
   </footer>
 </div>
 
-<script>
+<script id="pt1029">
 "use strict";
+/* 전위차 · 물의 높낮이 비유 (수위 차 = 전압) 3D 지형 시뮬레이션 — pt1029 */
+const $ = id => document.getElementById(id);
+const FF = "'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+const canvas = $("simCanvas"), ctx = canvas.getContext("2d");
 
-/* ==========================================================================
-   1. 전역 상태 및 카메라 파라미터 (자바실험실 스크린샷 1:1 복각)
-   ========================================================================== */
 const STATE = {
-  mode: "single",       // "single" | "series" | "parallel"
-  showFlow: true,       // 전하 애니메이션
-  showGuides: false,    // 높이 가이드 점선
-  
-  // 전기 파라미터
-  voltage: 12.0,        // V (전원 전압)
-  R1: 10.0,             // 저항 1 (Ω)
-  R2: 10.0,             // 저항 2 (Ω)
-  
-  // 카메라 3D 궤도 (스크린샷 오리지널 시점 기준)
-  camera: {
-    yaw: -0.65,         // 수평 회전각 (약 -37도)
-    pitch: 0.44,        // 수직 시선각 (약 25도)
-    targetYaw: -0.65,
-    targetPitch: 0.44,
-    distance: 780,      // 카메라 거리
-    targetDist: 780,
-    fov: 780,
-    defaultYaw: -0.65,
-    defaultPitch: 0.44,
-    defaultDist: 780
-  },
-  
-  // 마우스/터치 드래그 인터랙션
-  isDragging: false,
-  lastMouseX: 0,
-  lastMouseY: 0,
-  
-  // 전하 입자
-  charges: []
+  mode: "single", showFlow: true, showGuides: true, water: true,
+  camera: { yaw: -0.3, pitch: 0.5, distance: 780, fov: 780, targetYaw: -0.3, targetPitch: 0.5, targetDist: 780,
+            defaultYaw: -0.3, defaultPitch: 0.5, defaultDist: 780 },
+  isDragging: false, lastMouseX: 0, lastMouseY: 0, loops: []
 };
+const VIEW = { w: 800, h: 500, cx: 400, cy: 250, k: 1 };
 
-/* ==========================================================================
-   2. 3D 기하 수학 & 원근 투영 엔진 (순수 삼각함수, No Library)
-   ========================================================================== */
-function project3D(x, y, z, cx, cy) {
-  const cam = STATE.camera;
-  
-  // Yaw 회전 (Y축 기준)
-  const cosY = Math.cos(cam.yaw);
-  const sinY = Math.sin(cam.yaw);
-  const x1 = x * cosY - z * sinY;
-  const z1 = x * sinY + z * cosY;
-  
-  // Pitch 회전 (X축 기준)
-  const cosP = Math.cos(cam.pitch);
-  const sinP = Math.sin(cam.pitch);
-  const y2 = y * cosP - z1 * sinP;
-  const z2 = y * sinP + z1 * cosP;
-  
-  // 원근 투영 (Perspective Projection)
-  const depth = cam.distance + z2;
-  const scale = cam.fov / Math.max(10, depth);
-  
-  return {
-    x: cx + x1 * scale,
-    y: cy - y2 * scale, // 화면 Y축은 아래가 양수이므로 반전
-    z: z2,
-    scale: scale
-  };
+/* ---------- 3D 투영 ---------- */
+function P3(x, y, z) {
+  const c = STATE.camera;
+  x += 26; y -= 42; z -= 5;
+  const cY = Math.cos(c.yaw), sY = Math.sin(c.yaw);
+  const x1 = x * cY - z * sY, z1 = x * sY + z * cY;
+  const cP = Math.cos(c.pitch), sP = Math.sin(c.pitch);
+  const y2 = y * cP - z1 * sP, z2 = y * sP + z1 * cP;
+  const sc = c.fov * VIEW.k / Math.max(10, c.distance + z2);
+  return { x: VIEW.cx + x1 * sc, y: VIEW.cy - y2 * sc, z: z2, s: sc };
 }
+const PP = a => P3(a[0], a[1], a[2]);
 
-/* ==========================================================================
-   3. 3D 공간 기하 좌표 정의
-   ========================================================================== */
-// 높이 상수 (+V 고전위면)
-const HIGH_Y = 100;
-const MID_Y = 50;
-const GND_Y = 0;
-
-// 연두색 Ground 사각 평면 4개 모서리 (Y=0 바닥)
-const GROUND_PLANE = [
-  { x: -210, y: 0, z: 150 },  // 앞-왼쪽
-  { x:  150, y: 0, z: 120 },  // 앞-오른쪽
-  { x:  210, y: 0, z: -140 }, // 뒤-오른쪽
-  { x: -150, y: 0, z: -110 }  // 뒤-왼쪽
-];
-
-// 기본 회로 루프 코너들
-// C_FL (앞-왼쪽 바닥), C_FR (앞-오른쪽 바닥), C_BR (뒤-오른쪽 높은면), C_BL (뒤-왼쪽 높은면)
-const CORNER_FRONT_LEFT  = { x: -240, y: GND_Y,  z:  170 };
-const CORNER_FRONT_RIGHT = { x:  190, y: GND_Y,  z:  140 };
-const CORNER_BACK_RIGHT  = { x:  260, y: HIGH_Y, z: -170 };
-const CORNER_BACK_LEFT   = { x: -170, y: HIGH_Y, z: -140 };
-
-// 배터리 위치 (앞-오른쪽 모서리 부근에서 수직으로 승압)
-const BATT_NEG_IN  = { x:  10, y: GND_Y,  z: 153 };
-const BATT_NEG_BAR = { x:  50, y: GND_Y,  z: 148 };
-const BATT_POS_BAR = { x:  75, y: 25,     z: 145 };
-const BATT_POS_OUT = { x: 120, y: HIGH_Y, z: 139 };
-
-/* ==========================================================================
-   4. 지그재그 저항(Zigzag Resistor) 3D 정점 계산기
-   ========================================================================== */
-function generateZigzagPoints(pStart, pEnd, numTeeth = 5, amp = 18, perpOffset = { x: 0, y: 0, z: 0 }) {
-  const dx = pEnd.x - pStart.x;
-  const dy = pEnd.y - pStart.y;
-  const dz = pEnd.z - pStart.z;
-  const len = Math.hypot(dx, dy, dz);
-  if (len === 0) return [pStart, pEnd];
-  
-  const ux = dx / len;
-  const uy = dy / len;
-  const uz = dz / len;
-  
-  // 경사면과 수직이면서 화면에 뚜렷이 보이는 횡방향 벡터
-  // normal x u
-  let px = -uz;
-  let py = 0;
-  let pz = ux;
-  const plen = Math.hypot(px, pz);
-  if (plen > 0.001) {
-    px /= plen;
-    pz /= plen;
-  } else {
-    px = 1; pz = 0;
+/* ---------- 지형·회로 정의 ---------- */
+const XL = -300, XR = 300, ZB = -100, ZF = 40, SB = -112, SF = 118, ZW = -20;
+const BX = -328, BZ = ZW, RZR = 82, SXL = -352, XE = 248, RUL = 280, HIGH = 100, OFS = 2.5;
+const LANE_A = -62, LANE_B = 22;
+const MODES = {
+  single:   { prof: [[-300,100],[-80,100],[80,0],[300,0]], I: 1.2, n: 12 },
+  series:   { prof: [[-300,100],[-175,100],[-95,50],[95,50],[175,0],[300,0]], I: 0.6, n: 6 },
+  parallel: { prof: [[-300,100],[-80,100],[80,0],[300,0]], I: 1.2, n: 12 }
+};
+function hAt(prof, x) {
+  if (x <= prof[0][0]) return prof[0][1];
+  for (let i = 0; i < prof.length - 1; i++) {
+    const a = prof[i], b = prof[i + 1];
+    if (x <= b[0]) return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]);
   }
-  
-  const points = [];
-  points.push({ x: pStart.x + perpOffset.x, y: pStart.y + perpOffset.y, z: pStart.z + perpOffset.z });
-  
-  // 도입선 (10%)
-  const lead = 0.12;
-  points.push({
-    x: pStart.x + dx * lead + perpOffset.x,
-    y: pStart.y + dy * lead + perpOffset.y,
-    z: pStart.z + dz * lead + perpOffset.z
-  });
-  
-  // 지그재그 치차
-  const teethSteps = numTeeth * 2;
-  for (let i = 1; i < teethSteps; i++) {
-    const t = lead + (1 - 2 * lead) * (i / teethSteps);
-    const sign = (i % 2 === 1) ? 1 : -1;
-    points.push({
-      x: pStart.x + dx * t + px * amp * sign + perpOffset.x,
-      y: pStart.y + dy * t + perpOffset.y,
-      z: pStart.z + dz * t + pz * amp * sign + perpOffset.z
-    });
-  }
-  
-  // 출구선 (10%)
-  points.push({
-    x: pStart.x + dx * (1 - lead) + perpOffset.x,
-    y: pStart.y + dy * (1 - lead) + perpOffset.y,
-    z: pStart.z + dz * (1 - lead) + perpOffset.z
-  });
-  
-  points.push({ x: pEnd.x + perpOffset.x, y: pEnd.y + perpOffset.y, z: pEnd.z + perpOffset.z });
-  return points;
+  return prof[prof.length - 1][1];
 }
-
-/* ==========================================================================
-   5. 회로 모드별 3D 와이어 경로 빌더
-   ========================================================================== */
-function buildCircuitGeometry() {
-  const mode = STATE.mode;
-  
-  // 공통 전지 & 도선 경로
-  // 1. 바닥 귀환선: C_FL -> BATT_NEG_IN -> BATT_NEG_BAR
-  const wireGroundIn = [
-    CORNER_FRONT_LEFT,
-    BATT_NEG_IN,
-    BATT_NEG_BAR
-  ];
-  
-  // 2. 배터리 기호 (음극 짧은 막대, 양극 긴 막대)
-  const battNegBar = {
-    p1: { x: BATT_NEG_BAR.x - 4, y: BATT_NEG_BAR.y - 12, z: BATT_NEG_BAR.z + 10 },
-    p2: { x: BATT_NEG_BAR.x + 4, y: BATT_NEG_BAR.y + 12, z: BATT_NEG_BAR.z - 10 }
+function seg(prof, xa, xb, z, step) {
+  const pts = [], n = Math.max(1, Math.ceil(Math.abs(xb - xa) / step));
+  for (let i = 0; i <= n; i++) { const x = xa + (xb - xa) * i / n; pts.push([x, hAt(prof, x) + OFS, z]); }
+  return pts;
+}
+function zig(prof, xa, xb, z) {
+  const N = 7, A = 9, pts = [];
+  for (let k = 0; k <= 2 * N; k++) {
+    const x = xa + (xb - xa) * k / (2 * N);
+    const dz = (k === 0 || k === 2 * N) ? 0 : ((k % 2) ? A : -A);
+    pts.push([x, hAt(prof, x) + OFS, z + dz]);
+  }
+  return pts;
+}
+function polyLen(pts) {
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++)
+    cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]));
+  return cum;
+}
+function polyAt(pts, cum, s) {
+  const L = cum[cum.length - 1];
+  s = ((s % L) + L) % L;
+  let lo = 0, hi = cum.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] <= s) lo = m; else hi = m; }
+  const a = pts[lo], b = pts[hi], d = cum[hi] - cum[lo] || 1, t = (s - cum[lo]) / d;
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+const CIRC = {};
+function build(mode) {
+  if (CIRC[mode]) return CIRC[mode];
+  const M = MODES[mode], P = M.prof;
+  const ramps = [];
+  for (let i = 0; i < P.length - 1; i++)
+    if (P[i][1] !== P[i + 1][1]) ramps.push({ x0: P[i][0], x1: P[i + 1][0], h0: P[i][1], h1: P[i + 1][1] });
+  const rz = (r, z) => {
+    const m = (r.x1 - r.x0) * 0.16;
+    return { xa: r.x0 + m, xb: r.x1 - m, z };
   };
-  const battPosBar = {
-    p1: { x: BATT_POS_BAR.x - 7, y: BATT_POS_BAR.y - 24, z: BATT_POS_BAR.z + 18 },
-    p2: { x: BATT_POS_BAR.x + 7, y: BATT_POS_BAR.y + 24, z: BATT_POS_BAR.z - 18 }
-  };
-  
-  // 3. 고전위 상단 공급선: BATT_POS_OUT -> C_FR(상단) -> C_BR -> C_BL
-  const cornerFR_High = { x: CORNER_FRONT_RIGHT.x, y: HIGH_Y, z: CORNER_FRONT_RIGHT.z };
-  const wireHighSupply = [
-    BATT_POS_BAR,
-    BATT_POS_OUT,
-    cornerFR_High,
-    CORNER_BACK_RIGHT,
-    CORNER_BACK_LEFT
-  ];
-  
-  // 4. 저항 구간 및 귀환선 (모드별 분기)
-  let resistorBranches = [];
-  let wireGroundOut = [];
-  
+  const piece = (pts, z) => ({ pts, zig: !!z });
+  const pump = [[BX, 0, BZ], [BX, HIGH, BZ]];
+  const up = [[BX, HIGH + OFS, BZ]];
+  const resist = [];
+  let common1 = [], branches = [], common2 = [];
+  const retPts = [[XE, OFS, ZW], [XE, OFS, RZR], [BX, OFS, RZR], [BX, OFS, ZW], [BX, 0, BZ]];
   if (mode === "single") {
-    // 단일 저항: C_BL(높이 H)에서 C_FL(높이 0)로 단번에 전압 강하
-    const pStart = { x: -170, y: HIGH_Y, z: -140 };
-    const pEnd   = { x: -240, y: GND_Y,  z:  170 };
-    const zigzag = generateZigzagPoints(pStart, pEnd, 6, 20);
-    resistorBranches.push({ points: zigzag, label: "R (12V 강하)", isResistor: true });
-    
-    wireGroundOut = [pEnd, CORNER_FRONT_LEFT];
-    
+    const q = rz(ramps[0], ZW);
+    common1 = [piece(up.concat(seg(P, BX, q.xa, ZW, 25).slice(1))), piece(zig(P, q.xa, q.xb, ZW), 1),
+               piece(seg(P, q.xb, XE, ZW, 25))];
+    branches = [[]];
+    common2 = [piece(retPts)];
+    resist.push({ name: "R₁", ohm: 10, pts: common1[1].pts });
   } else if (mode === "series") {
-    // 직렬 연결: 2단 계단 강하 (H -> H/2 -> 0)
-    const pR1_Start = { x: -170, y: HIGH_Y, z: -140 };
-    const pR1_End   = { x: -200, y: MID_Y,  z:   10 };
-    const zigzag1   = generateZigzagPoints(pR1_Start, pR1_End, 4, 18);
-    resistorBranches.push({ points: zigzag1, label: "R₁ (6V 강하)", isResistor: true });
-    
-    // 중간 등전위 도선 (MID_Y 유지)
-    const pMid_Start = pR1_End;
-    const pMid_End   = { x: -212, y: MID_Y, z: 60 };
-    resistorBranches.push({ points: [pMid_Start, pMid_End], label: "+6V 등전위", isResistor: false });
-    
-    // 두 번째 저항 (MID_Y -> GND_Y)
-    const pR2_Start = pMid_End;
-    const pR2_End   = { x: -240, y: GND_Y, z: 170 };
-    const zigzag2   = generateZigzagPoints(pR2_Start, pR2_End, 4, 18);
-    resistorBranches.push({ points: zigzag2, label: "R₂ (6V 강하)", isResistor: true });
-    
-    wireGroundOut = [pR2_End, CORNER_FRONT_LEFT];
-    
-  } else if (mode === "parallel") {
-    // 병렬 연결: 2개의 나란한 갈래길 (각각 H -> 0으로 전체 전압 강하)
-    const pSplitTop = { x: -170, y: HIGH_Y, z: -140 };
-    const pMergeBot = { x: -240, y: GND_Y,  z:  170 };
-    
-    // 3D 횡방향 오프셋 벡터 (화면에 평행하게 분기되도록 세팅)
-    const offA = { x:  30, y: 0, z:  30 };
-    const offB = { x: -30, y: 0, z: -30 };
-    
-    // 상단 분기선
-    const pBranchA_Top = { x: pSplitTop.x + offA.x, y: HIGH_Y, z: pSplitTop.z + offA.z };
-    const pBranchB_Top = { x: pSplitTop.x + offB.x, y: HIGH_Y, z: pSplitTop.z + offB.z };
-    
-    // 하단 합류선
-    const pBranchA_Bot = { x: pMergeBot.x + offA.x, y: GND_Y, z: pMergeBot.z + offA.z };
-    const pBranchB_Bot = { x: pMergeBot.x + offB.x, y: GND_Y, z: pMergeBot.z + offB.z };
-    
-    // 상단 분기 도선
-    resistorBranches.push({
-      points: [pBranchB_Top, pSplitTop, pBranchA_Top],
-      isResistor: false
-    });
-    
-    // 저항 A (안쪽)
-    const zigzagA = generateZigzagPoints(pBranchA_Top, pBranchA_Bot, 5, 17);
-    resistorBranches.push({ points: zigzagA, label: "R₁ (12V 강하)", isResistor: true });
-    
-    // 저항 B (바깥쪽)
-    const zigzagB = generateZigzagPoints(pBranchB_Top, pBranchB_Bot, 5, 17);
-    resistorBranches.push({ points: zigzagB, label: "R₂ (12V 강하)", isResistor: true });
-    
-    // 하단 합류 도선
-    resistorBranches.push({
-      points: [pBranchB_Bot, pMergeBot, pBranchA_Bot],
-      isResistor: false
-    });
-    
-    wireGroundOut = [pMergeBot, CORNER_FRONT_LEFT];
-  }
-  
-  return {
-    wireGroundIn,
-    battNegBar,
-    battPosBar,
-    wireHighSupply,
-    resistorBranches,
-    wireGroundOut
-  };
-}
-
-/* ==========================================================================
-   6. 전하(전류) 입자 시스템
-   ========================================================================== */
-function initCharges() {
-  STATE.charges = [];
-  const count = (STATE.mode === "parallel") ? 36 : 24;
-  for (let i = 0; i < count; i++) {
-    STATE.charges.push({
-      progress: i / count,
-      branchIndex: (i % 2 === 0) ? 0 : 1, // 병렬 시 분기
-      speed: (STATE.mode === "parallel") ? 0.0035 : (STATE.mode === "series" ? 0.0018 : 0.0025)
-    });
-  }
-}
-
-// 닫힌 루프 상에서 progress (0 ~ 1)에 해당하는 3D 좌표 보간
-function getCircuitPosition(progress, branchIndex) {
-  const mode = STATE.mode;
-  const H = HIGH_Y;
-  const M = MID_Y;
-  const G = GND_Y;
-  
-  // 전체 루프 단계 비율 분할
-  // 0.00 ~ 0.15: 바닥 귀환선 -> 배터리 음극
-  // 0.15 ~ 0.25: 배터리 내부 상승 (GND -> HIGH_Y)
-  // 0.25 ~ 0.55: 높은 전위 공급선 (HIGH_Y)
-  // 0.55 ~ 0.85: 저항 강하 구간 (HIGH_Y -> GND)
-  // 0.85 ~ 1.00: 바닥 모서리 복귀
-  
-  if (progress < 0.15) {
-    const t = progress / 0.15;
-    return lerp3D(CORNER_FRONT_LEFT, BATT_NEG_BAR, t);
-  } else if (progress < 0.25) {
-    const t = (progress - 0.15) / 0.10;
-    return lerp3D(BATT_NEG_BAR, BATT_POS_OUT, t);
-  } else if (progress < 0.55) {
-    const t = (progress - 0.25) / 0.30;
-    const cornerFR = { x: CORNER_FRONT_RIGHT.x, y: H, z: CORNER_FRONT_RIGHT.z };
-    if (t < 0.33) {
-      return lerp3D(BATT_POS_OUT, cornerFR, t / 0.33);
-    } else if (t < 0.66) {
-      return lerp3D(cornerFR, CORNER_BACK_RIGHT, (t - 0.33) / 0.33);
-    } else {
-      return lerp3D(CORNER_BACK_RIGHT, CORNER_BACK_LEFT, (t - 0.66) / 0.34);
-    }
-  } else if (progress < 0.85) {
-    const t = (progress - 0.55) / 0.30;
-    if (mode === "single") {
-      return lerp3D(CORNER_BACK_LEFT, CORNER_FRONT_LEFT, t);
-    } else if (mode === "series") {
-      const pR1_End = { x: -200, y: M, z: 10 };
-      const pR2_Start = { x: -212, y: M, z: 60 };
-      if (t < 0.45) {
-        return lerp3D(CORNER_BACK_LEFT, pR1_End, t / 0.45);
-      } else if (t < 0.55) {
-        return lerp3D(pR1_End, pR2_Start, (t - 0.45) / 0.10);
-      } else {
-        return lerp3D(pR2_Start, CORNER_FRONT_LEFT, (t - 0.55) / 0.45);
-      }
-    } else {
-      // parallel
-      const off = (branchIndex === 0) ? { x: 30, y: 0, z: 30 } : { x: -30, y: 0, z: -30 };
-      const pTop = { x: CORNER_BACK_LEFT.x + off.x, y: H, z: CORNER_BACK_LEFT.z + off.z };
-      const pBot = { x: CORNER_FRONT_LEFT.x + off.x, y: G, z: CORNER_FRONT_LEFT.z + off.z };
-      return lerp3D(pTop, pBot, t);
-    }
+    const q1 = rz(ramps[0], ZW), q2 = rz(ramps[1], ZW);
+    common1 = [piece(up.concat(seg(P, BX, q1.xa, ZW, 25).slice(1))), piece(zig(P, q1.xa, q1.xb, ZW), 1),
+               piece(seg(P, q1.xb, q2.xa, ZW, 25)), piece(zig(P, q2.xa, q2.xb, ZW), 1),
+               piece(seg(P, q2.xb, XE, ZW, 25))];
+    branches = [[]];
+    common2 = [piece(retPts)];
+    resist.push({ name: "R₁", ohm: 10, pts: common1[1].pts }, { name: "R₂", ohm: 10, pts: common1[3].pts });
   } else {
-    const t = (progress - 0.85) / 0.15;
-    return CORNER_FRONT_LEFT;
+    const J1 = -140, J2 = 140, r = ramps[0];
+    const mk = (z, nm) => {
+      const q = rz(r, z);
+      const z1 = zig(P, q.xa, q.xb, z);
+      resist.push({ name: nm, ohm: 10, pts: z1 });
+      return [piece([[J1, HIGH + OFS, ZW], [J1, HIGH + OFS, z]].concat(seg(P, J1, q.xa, z, 25).slice(1))),
+              piece(z1, 1),
+              piece(seg(P, q.xb, J2, z, 25).concat([[J2, OFS, ZW]]))];
+    };
+    common1 = [piece(up.concat(seg(P, BX, J1, ZW, 25).slice(1)))];
+    branches = [mk(LANE_A, "R₁"), mk(LANE_B, "R₂")];
+    common2 = [piece(seg(P, J2, XE, ZW, 25).concat([[XE, OFS, RZR], [BX, OFS, RZR], [BX, OFS, ZW], [BX, 0, BZ]]))];
   }
+  const flat = ps => ps.reduce((a, p) => a.concat(p.pts), []);
+  const loops = branches.map(b => {
+    const pts = [];
+    [pump, ...[].concat(common1, b, common2).map(p => p.pts)].forEach(a => a.forEach(p => {
+      const l = pts[pts.length - 1];
+      if (!l || Math.hypot(l[0] - p[0], l[1] - p[1], l[2] - p[2]) > 0.01) pts.push(p);
+    }));
+    return { pts, cum: polyLen(pts) };
+  });
+  const pieces = [].concat(common1, ...branches, common2);
+  return (CIRC[mode] = { M, P, ramps, pieces, loops, resist, pump });
 }
 
-function lerp3D(p1, p2, t) {
-  return {
-    x: p1.x + (p2.x - p1.x) * t,
-    y: p1.y + (p2.y - p1.y) * t,
-    z: p1.z + (p2.z - p1.z) * t
+/* ---------- 지형 면 ---------- */
+const TCOL = { top: "#ecd9ab", ramp: "#dcc48c", front: "#cdb27a", back: "#bda468", cap: "#c3a86f" };
+function terrainFaces(C) {
+  const P = C.P, f = [];
+  for (let i = 0; i < P.length - 1; i++) {
+    const [x0, h0] = P[i], [x1, h1] = P[i + 1];
+    if (h0 === 0 && h1 === 0) continue;
+    const ramp = h0 !== h1;
+    f.push({ c: ramp ? TCOL.ramp : TCOL.top, p: [[x0,h0,ZB],[x1,h1,ZB],[x1,h1,ZF],[x0,h0,ZF]], top: 1, ramp });
+    f.push({ c: TCOL.front, p: [[x0,0,ZF],[x1,0,ZF],[x1,h1,ZF],[x0,h0,ZF]] });
+    f.push({ c: TCOL.back, p: [[x0,0,ZB],[x1,0,ZB],[x1,h1,ZB],[x0,h0,ZB]] });
+  }
+  f.push({ c: TCOL.cap, p: [[XL,0,ZB],[XL,0,ZF],[XL,P[0][1],ZF],[XL,P[0][1],ZB]] });
+  return f;
+}
+function fillPoly(pts3, fill, stroke, lw) {
+  const q = pts3.map(PP);
+  ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y);
+  for (let i = 1; i < q.length; i++) ctx.lineTo(q[i].x, q[i].y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.lineWidth = lw || 1; ctx.strokeStyle = stroke; ctx.stroke(); }
+  return q;
+}
+
+/* ---------- 2D 보조 ---------- */
+function rr(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+let FS = 13;
+function chip(txt, x, y, o) {
+  o = o || {};
+  const f = o.f || FS;
+  ctx.font = `800 ${f}px ${FF}`;
+  const w = ctx.measureText(txt).width + 14, h = f + 9;
+  let bx = o.al === "l" ? x : o.al === "r" ? x - w : x - w / 2, by = y - h / 2;
+  bx = Math.max(4, Math.min(VIEW.w - w - 4, bx)); by = Math.max(4, Math.min(VIEW.h - h - 4, by));
+  ctx.save();
+  ctx.shadowColor = "rgba(15,23,42,.15)"; ctx.shadowBlur = 4;
+  rr(bx, by, w, h, 7); ctx.fillStyle = o.bg || "rgba(255,255,255,.95)"; ctx.fill();
+  ctx.shadowBlur = 0; ctx.lineWidth = 1.4; ctx.strokeStyle = o.bd || "#cbd5e1"; ctx.stroke();
+  ctx.fillStyle = o.fg || "#0f172a"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText(txt, bx + 7, by + h / 2 + 0.5);
+  ctx.restore();
+  return { x: bx, y: by, w, h };
+}
+function arrow2(a, b, col, lw) {
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const ang = Math.atan2(b.y - a.y, b.x - a.x), hs = Math.max(8, 10 * VIEW.k);
+  const head = (p, d) => {
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x - d * hs * Math.cos(ang - 0.4), p.y - d * hs * Math.sin(ang - 0.4));
+    ctx.lineTo(p.x - d * hs * Math.cos(ang + 0.4), p.y - d * hs * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
   };
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = lw + 3.5;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke();
+  ctx.fillStyle = col; head(a, -1); head(b, 1);
+  ctx.restore();
+}
+function dashLine(a, b, col, lw) {
+  ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = col; ctx.lineWidth = lw || 1.5;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore();
+}
+function strokePoly(pts3, col, w, cap) {
+  const q = pts3.map(PP);
+  ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y);
+  for (let i = 1; i < q.length; i++) ctx.lineTo(q[i].x, q[i].y);
+  ctx.lineJoin = "round"; ctx.lineCap = cap || "round"; ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke();
 }
 
-/* ==========================================================================
-   7. 렌더링 파이프라인 (Canvas 2D Graphics)
-   ========================================================================== */
-const canvas = document.getElementById("simCanvas");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas() {
-  const container = document.getElementById("canvasContainer");
-  const dpr = window.devicePixelRatio || 1;
-  const w = container.clientWidth;
-  const h = container.clientHeight;
-  
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx.resetTransform();
-  ctx.scale(dpr, dpr);
+/* ---------- 전하(물방울) ---------- */
+function initCharges() {
+  const C = build(STATE.mode);
+  STATE.loops = C.loops.map((lp, li) => {
+    const L = lp.cum[lp.cum.length - 1], n = C.M.n, d = [];
+    for (let k = 0; k < n; k++) d.push(k * L / n + li * 11);
+    return { s: d };
+  });
 }
 
-window.addEventListener("resize", resizeCanvas);
-
-function render() {
-  const w = canvas.width / (window.devicePixelRatio || 1);
-  const h = canvas.height / (window.devicePixelRatio || 1);
-  const cx = w / 2;
-  const cy = h / 2 + 10;
-  
-  // 카메라 부드러운 보간 (Damping)
+/* ---------- 렌더 ---------- */
+let lastTs = 0;
+function render(ts) {
+  const dt = Math.min(0.05, ((ts || 0) - lastTs) / 1000 || 0.016); lastTs = ts || 0;
   const cam = STATE.camera;
   cam.yaw += (cam.targetYaw - cam.yaw) * 0.12;
   cam.pitch += (cam.targetPitch - cam.pitch) * 0.12;
   cam.distance += (cam.targetDist - cam.distance) * 0.12;
-  
-  // 캔버스 배경 클리어
-  ctx.fillStyle = "#e9ecef";
-  ctx.fillRect(0, 0, w, h);
-  
-  // ------------------------------------------------------------------------
-  // 1. 연두색 Ground 기준면 (0V 평면) 그리기 (자바실험실 스크린샷 1:1)
-  // ------------------------------------------------------------------------
-  const gndPts = GROUND_PLANE.map(p => project3D(p.x, p.y, p.z, cx, cy));
-  
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(gndPts[0].x, gndPts[0].y);
-  for (let i = 1; i < gndPts.length; i++) {
-    ctx.lineTo(gndPts[i].x, gndPts[i].y);
-  }
-  ctx.closePath();
-  
-  // 반투명 연두색 채우기
-  ctx.fillStyle = "rgba(187, 247, 208, 0.65)";
-  ctx.fill();
-  
-  // 부드러운 초록색 테두리
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "rgba(74, 222, 128, 0.9)";
-  ctx.stroke();
-  
-  // "Ground" 중앙 텍스트 렌더링
-  const gndCenter = project3D(0, 0, 0, cx, cy);
-  ctx.font = "bold 26px 'Pretendard', sans-serif";
-  ctx.fillStyle = "rgba(74, 222, 128, 0.85)";
-  ctx.textAlign = "center";
+  draw(dt);
+  requestAnimationFrame(render);
+}
+function draw(dt) {
+  const w = VIEW.w, h = VIEW.h, W = STATE.water, C = build(STATE.mode), mode = STATE.mode;
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#e6f0fb"); g.addColorStop(1, "#f6f9fc");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   ctx.textBaseline = "middle";
-  ctx.fillText("Ground", gndCenter.x, gndCenter.y);
-  
-  // 0V 기준면 보조 라벨
-  ctx.font = "bold 12px 'Pretendard', sans-serif";
-  ctx.fillStyle = "rgba(22, 101, 52, 0.6)";
-  ctx.fillText("(전위 0V 기준면)", gndCenter.x, gndCenter.y + 24);
-  ctx.restore();
-  
-  // ------------------------------------------------------------------------
-  // 2. 높이 가이드 점선 (옵션 켜짐 시)
-  // ------------------------------------------------------------------------
+
+  // 1) 바닥판
+  const SD = -24, S = [[SXL,SB],[XR,SB],[XR,SF],[SXL,SF]];
+  const sidec = ["#c8b585", "#bba975", "#d4c294", "#c2b07e"];
+  for (let i = 0; i < 4; i++) {
+    const a = S[i], b = S[(i + 1) % 4];
+    fillPoly([[a[0],0,a[1]],[b[0],0,b[1]],[b[0],SD,b[1]],[a[0],SD,a[1]]], sidec[i], "#a8935f", 1);
+  }
+  fillPoly([[SXL,0,SB],[XR,0,SB],[XR,0,SF],[SXL,0,SF]], "#f3e8c6", "#d8c590", 1.2);
+
+  // 2) 지형 (먼 곳부터)
+  const faces = terrainFaces(C).map(f => {
+    const q = f.p.map(PP); return { f, q, d: q.reduce((s, p) => s + p.z, 0) / q.length };
+  }).sort((a, b) => b.d - a.d);
+  faces.forEach(o => {
+    ctx.beginPath(); ctx.moveTo(o.q[0].x, o.q[0].y);
+    for (let i = 1; i < o.q.length; i++) ctx.lineTo(o.q[i].x, o.q[i].y);
+    ctx.closePath(); ctx.fillStyle = o.f.c; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = "#a98f58"; ctx.stroke();
+  });
+
+  // 3) 연못(수위) — 물 비유 모드
+  const P = C.P, lv = [];
+  lv.push({ h: 100, x0: -255, x1: P[1][0] - 22 });
+  if (mode === "series") lv.push({ h: 50, x0: P[2][0] + 22, x1: P[3][0] - 22 });
+  const lastR = C.ramps[C.ramps.length - 1];
+  lv.push({ h: 0, x0: lastR.x1 + 22, x1: 232 });
+  if (W) lv.forEach(l => {
+    fillPoly([[l.x0,l.h+0.8,-88],[l.x1,l.h+0.8,-88],[l.x1,l.h+0.8,30],[l.x0,l.h+0.8,30]], "rgba(96,165,250,.55)", "rgba(37,99,235,.7)", 1.4);
+  });
+
+  // 4) 가이드(같은 높이 점선)
+  const RZ = ZW;
+  const xr = (z) => [RUL, z];
   if (STATE.showGuides) {
-    drawHeightGuides(cx, cy);
+    lv.forEach(l => {
+      const a = PP([l.x1 + 6, l.h, RZ]), b = PP([RUL, l.h, RZ]);
+      dashLine(a, b, "rgba(109,40,217,.65)", 1.6);
+    });
   }
-  
-  // ------------------------------------------------------------------------
-  // 3. 전기 회로 3D 도선 및 부품 렌더링
-  // ------------------------------------------------------------------------
-  const geom = buildCircuitGeometry();
-  
-  // (A) 도선 그리기 헬퍼
-  function drawWirePolyline(points, isHigh = false) {
-    if (points.length < 2) return;
-    ctx.beginPath();
-    const p0 = project3D(points[0].x, points[0].y, points[0].z, cx, cy);
-    ctx.moveTo(p0.x, p0.y);
-    for (let i = 1; i < points.length; i++) {
-      const p = project3D(points[i].x, points[i].y, points[i].z, cx, cy);
-      ctx.lineTo(p.x, p.y);
-    }
-    ctx.lineWidth = 3.2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#111827"; // 선명한 검은색
-    ctx.stroke();
-  }
-  
-  // (B) 바닥 귀환 도선
-  drawWirePolyline(geom.wireGroundIn, false);
-  
-  // (C) 배터리 기호 (음극 짧은 막대, 양극 긴 막대)
-  ctx.save();
-  // 음극 (-)
-  const bn1 = project3D(geom.battNegBar.p1.x, geom.battNegBar.p1.y, geom.battNegBar.p1.z, cx, cy);
-  const bn2 = project3D(geom.battNegBar.p2.x, geom.battNegBar.p2.y, geom.battNegBar.p2.z, cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(bn1.x, bn1.y);
-  ctx.lineTo(bn2.x, bn2.y);
-  ctx.lineWidth = 5.5; // 음극은 짧고 굵음
-  ctx.strokeStyle = "#0f172a";
-  ctx.stroke();
-  
-  // 양극 (+)
-  const bp1 = project3D(geom.battPosBar.p1.x, geom.battPosBar.p1.y, geom.battPosBar.p1.z, cx, cy);
-  const bp2 = project3D(geom.battPosBar.p2.x, geom.battPosBar.p2.y, geom.battPosBar.p2.z, cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(bp1.x, bp1.y);
-  ctx.lineTo(bp2.x, bp2.y);
-  ctx.lineWidth = 2.4; // 양극은 길고 얇음
-  ctx.strokeStyle = "#0f172a";
-  ctx.stroke();
-  
-  // 배터리 내부 승압 연결선
-  const bMidNeg = project3D(BATT_NEG_BAR.x, BATT_NEG_BAR.y, BATT_NEG_BAR.z, cx, cy);
-  const bMidPos = project3D(BATT_POS_BAR.x, BATT_POS_BAR.y, BATT_POS_BAR.z, cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(bMidNeg.x, bMidNeg.y);
-  ctx.lineTo(bMidPos.x, bMidPos.y);
-  ctx.lineWidth = 2.8;
-  ctx.strokeStyle = "#111827";
-  ctx.stroke();
-  
-  // 배터리 +, - 라벨
-  ctx.font = "bold 13px sans-serif";
-  ctx.fillStyle = "#2563eb";
-  ctx.fillText("+V", bp1.x - 8, bp1.y - 8);
-  ctx.fillStyle = "#64748b";
-  ctx.fillText("0V (-)", bn1.x + 8, bn1.y + 14);
-  ctx.restore();
-  
-  // (D) 높은 전위 상단 공급선
-  drawWirePolyline(geom.wireHighSupply, true);
-  
-  // (E) 저항 구간들 렌더링
-  geom.resistorBranches.forEach(branch => {
-    drawWirePolyline(branch.points, false);
-    
-    // 저항 이름 라벨 표기
-    if (branch.label && branch.isResistor) {
-      const midIdx = Math.floor(branch.points.length / 2);
-      const midP = branch.points[midIdx];
-      const mid2D = project3D(midP.x, midP.y, midP.z, cx, cy);
-      
-      ctx.save();
-      ctx.font = "bold 12px 'Pretendard', sans-serif";
-      ctx.fillStyle = "#dc2626"; // 붉은색 전압 강하 강조
-      ctx.textAlign = "right";
-      ctx.fillText(branch.label, mid2D.x - 14, mid2D.y - 4);
+
+  // 5) 도선 / 물길
+  const sc = VIEW.k * Math.max(0.7, STATE.camera.fov / STATE.camera.distance);
+  C.pieces.forEach(pc => {
+    if (W) { strokePoly(pc.pts, "#2563eb", 10 * sc); strokePoly(pc.pts, "#93c5fd", 6 * sc); strokePoly(pc.pts, "#dbeafe", 2.2 * sc); }
+    else   { strokePoly(pc.pts, "#6b3f17", 6 * sc); strokePoly(pc.pts, "#e0923e", 3.8 * sc); strokePoly(pc.pts, "#fbd7a0", 1.2 * sc); }
+  });
+  // 저항 (구불구불 좁은 길)
+  C.resist.forEach(r => {
+    if (W) { strokePoly(r.pts, "#1e3a8a", 4.5 * sc); strokePoly(r.pts, "#60a5fa", 2.6 * sc); }
+    else   { strokePoly(r.pts, "#7f1d1d", 6.5 * sc); strokePoly(r.pts, "#ef4444", 4 * sc); }
+  });
+
+  // 6) 전류 화살표(→ 높은 곳에서 낮은 곳)
+  C.pieces.forEach(pc => {
+    if (pc.zig) return;
+    const cum = polyLen(pc.pts), L = cum[cum.length - 1];
+    if (L < 100) return;
+    const n = Math.max(1, Math.floor(L / 120));
+    for (let j = 0; j < n; j++) {
+      const s = (j + 0.5) * L / n;
+      const a = PP(polyAt(pc.pts, cum, s - 4)), b = PP(polyAt(pc.pts, cum, s + 4));
+      const ang = Math.atan2(b.y - a.y, b.x - a.x), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, z = 7 * sc + 3;
+      ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(z, 0); ctx.lineTo(-z * 0.7, -z * 0.85); ctx.lineTo(-z * 0.3, 0); ctx.lineTo(-z * 0.7, z * 0.85); ctx.closePath();
+      ctx.fillStyle = "#1d4ed8"; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = "#fff"; ctx.stroke();
       ctx.restore();
     }
   });
-  
-  // (F) 저항 하단에서 바닥 모서리로 이어지는 귀환선
-  drawWirePolyline(geom.wireGroundOut, false);
-  
-  // ------------------------------------------------------------------------
-  // 4. 전하(전류) 입자 애니메이션
-  // ------------------------------------------------------------------------
+
+  // 7) 전지 / 펌프
+  drawBattery(W, sc);
+
+  // 8) 전하 입자
   if (STATE.showFlow) {
-    updateAndDrawCharges(cx, cy);
+    const sp = 110 * C.M.I;
+    STATE.loops.forEach((ld, li) => {
+      const lp = C.loops[li];
+      ld.s = ld.s.map(s => s + sp * dt);
+      ld.s.forEach(s => {
+        const pos = polyAt(lp.pts, lp.cum, s), p = PP(pos), r = Math.max(3.2, 4.6 * sc);
+        const t = Math.max(0, Math.min(1, pos[1] / HIGH));
+        const R = Math.round(249 * t + 37 * (1 - t)), G = Math.round(115 * t + 99 * (1 - t)), B = Math.round(22 * t + 235 * (1 - t));
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7);
+        ctx.fillStyle = `rgb(${R},${G},${B})`; ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+      });
+    });
   }
-  
-  requestAnimationFrame(render);
+
+  // 9) 눈금 화살표 (수위 차 / 전압)
+  drawRuler(C, W, lv);
+
+  // 10) 라벨
+  drawLabels(C, W, lv, sc);
 }
 
-// 높이 가이드선 (점선 및 높이 레벨)
-function drawHeightGuides(cx, cy) {
+function drawBattery(W, sc) {
+  const r = 15, b = PP([BX, 0, BZ]), t = PP([BX, HIGH, BZ]);
+  const rx = r * b.s, ry = rx * Math.max(0.28, Math.sin(STATE.camera.pitch));
+  const body = ctx.createLinearGradient(b.x - rx, 0, b.x + rx, 0);
+  if (W) { body.addColorStop(0, "#fca5a5"); body.addColorStop(0.45, "#ef4444"); body.addColorStop(1, "#991b1b"); }
+  else   { body.addColorStop(0, "#e2e8f0"); body.addColorStop(0.45, "#94a3b8"); body.addColorStop(1, "#475569"); }
   ctx.save();
-  ctx.setLineDash([4, 4]);
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
-  
-  // 배터리 위치 수직 점선
-  const pBattBot = project3D(BATT_POS_OUT.x, GND_Y,  BATT_POS_OUT.z, cx, cy);
-  const pBattTop = project3D(BATT_POS_OUT.x, HIGH_Y, BATT_POS_OUT.z, cx, cy);
   ctx.beginPath();
-  ctx.moveTo(pBattBot.x, pBattBot.y);
-  ctx.lineTo(pBattTop.x, pBattTop.y);
-  ctx.stroke();
-  
-  // 뒤쪽 코너 수직 점선
-  const pCornerBot = project3D(CORNER_BACK_RIGHT.x, GND_Y,  CORNER_BACK_RIGHT.z, cx, cy);
-  const pCornerTop = project3D(CORNER_BACK_RIGHT.x, HIGH_Y, CORNER_BACK_RIGHT.z, cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(pCornerBot.x, pCornerBot.y);
-  ctx.lineTo(pCornerTop.x, pCornerTop.y);
-  ctx.stroke();
-  
-  // 전압 높이 텍스트 라벨
-  ctx.setLineDash([]);
-  ctx.font = "bold 11px 'Pretendard', sans-serif";
-  ctx.fillStyle = "#2563eb";
-  ctx.fillText("▲ 전위 상승 (+12V)", pBattTop.x + 8, (pBattBot.y + pBattTop.y) / 2);
-  
-  if (STATE.mode === "series") {
-    // 중간 높이 +6V 점선
-    const pMidBot = project3D(-200, GND_Y, 10, cx, cy);
-    const pMidTop = project3D(-200, MID_Y, 10, cx, cy);
-    ctx.setLineDash([3, 3]);
-    ctx.strokeStyle = "#eab308";
-    ctx.beginPath();
-    ctx.moveTo(pMidBot.x, pMidBot.y);
-    ctx.lineTo(pMidTop.x, pMidTop.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#d97706";
-    ctx.fillText("+6V 중간 전위", pMidTop.x + 8, pMidTop.y);
-  }
+  ctx.moveTo(b.x - rx, b.y); ctx.lineTo(t.x - rx, t.y);
+  ctx.ellipse(t.x, t.y, rx, ry, 0, Math.PI, 0, true);
+  ctx.lineTo(b.x + rx, b.y);
+  ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI, false);
+  ctx.closePath();
+  ctx.fillStyle = body; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = "#0f172a"; ctx.stroke();
+  // 양극/음극 마개
+  ctx.beginPath(); ctx.ellipse(t.x, t.y, rx, ry, 0, 0, 7); ctx.fillStyle = "#fecaca"; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(t.x, t.y, rx * 0.45, ry * 0.45, 0, 0, 7); ctx.fillStyle = "#dc2626"; ctx.fill();
+  // 중간 띠 + 부호
+  const my = (b.y + t.y) / 2;
+  ctx.font = `900 ${Math.max(13, 16 * VIEW.k)}px ${FF}`; ctx.textAlign = "center";
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(15,23,42,.85)"; ctx.lineJoin = "round";
+  ctx.strokeText(W ? "펌프" : "전지", b.x, my + 1);
+  ctx.fillStyle = "#fff"; ctx.fillText(W ? "펌프" : "전지", b.x, my + 1);
+  ctx.font = `900 ${Math.max(15, 22 * VIEW.k)}px ${FF}`;
+  ctx.fillStyle = "#b91c1c"; ctx.fillText("+", t.x, t.y - ry - 11);
+  ctx.fillStyle = "#1d4ed8"; ctx.fillText("−", b.x, b.y + ry + 12);
+  // 위로 끌어올림 화살표
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.fillStyle = "#16a34a";
+  const ax = b.x + rx + 10 * VIEW.k, a0 = b.y - 6, a1 = t.y + 8;
+  ctx.beginPath(); ctx.moveTo(ax, a0); ctx.lineTo(ax, a1 + 6); ctx.stroke();
+  ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ax, a1 - 3); ctx.lineTo(ax - 6, a1 + 8); ctx.lineTo(ax + 6, a1 + 8); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 
-// 전하 애니메이션
-function updateAndDrawCharges(cx, cy) {
-  ctx.save();
-  for (let i = 0; i < STATE.charges.length; i++) {
-    const c = STATE.charges[i];
-    c.progress = (c.progress + c.speed) % 1.0;
-    
-    const pos3D = getCircuitPosition(c.progress, c.branchIndex);
-    const pos2D = project3D(pos3D.x, pos3D.y, pos3D.z, cx, cy);
-    
-    // 전위(Y높이)에 따른 전하 색상: 고전위(주황/빨강) -> 바닥(파랑/청록)
-    const ratio = Math.max(0, Math.min(1, pos3D.y / HIGH_Y));
-    const r = Math.round(234 * ratio + 37 * (1 - ratio));
-    const g = Math.round(88 * ratio + 99 * (1 - ratio));
-    const b = Math.round(12 * ratio + 235 * (1 - ratio));
-    
-    // 입자 발광 효과
-    ctx.beginPath();
-    ctx.arc(pos2D.x, pos2D.y, 4.5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.6)`;
-    ctx.shadowBlur = 6;
-    ctx.fill();
-    ctx.shadowBlur = 0;
+function drawRuler(C, W, lv) {
+  const SM = VIEW.w < 560;
+  const steps = C.M.prof.filter((p, i, a) => i === 0 || p[1] !== a[i - 1][1]).map(p => p[1]);
+  const levels = Array.from(new Set(C.M.prof.map(p => p[1]))).sort((a, b) => b - a);
+  const zt = ZW + (levels.length > 2 ? 48 : 0);
+  // 전체 화살표
+  const a = PP([RUL, 0, zt]), b = PP([RUL, HIGH, zt]);
+  arrow2(a, b, "#6d28d9", 3);
+  if (levels.length > 2) {
+    for (let i = 0; i < levels.length - 1; i++) {
+      const p0 = PP([RUL, levels[i + 1], ZW - 40]), p1 = PP([RUL, levels[i], ZW - 40]);
+      arrow2(p0, p1, "#0891b2", 2.6);
+      chip(SM ? "6V" : "6 V", Math.min(p0.x, p1.x) - 8, (p0.y + p1.y) / 2, { al: "r", bg: "#cffafe", bd: "#0891b2", fg: "#155e75" });
+    }
   }
+  chip(VIEW.w < 560 ? "12 V" : W ? "수위 차 = 전압 12 V" : "전압(전위차) 12 V", b.x - 12, (a.y + b.y) / 2 - 6, { al: "r", bg: "#ede9fe", bd: "#6d28d9", fg: "#4c1d95" });
+}
+
+function drawLabels(C, W, lv, sc) {
+  const mode = STATE.mode, SM = VIEW.w < 560;
+  // 극 이름
+  const t = PP([BX, HIGH, BZ]), b = PP([BX, 0, BZ]);
+  chip(SM ? "+극 높다" : "양극(+) 전압이 높다", t.x, t.y - 40 * VIEW.k - 6, { al: "c", bg: "#fee2e2", bd: "#dc2626", fg: "#991b1b" });
+  chip(SM ? "−극 낮다" : "음극(−) 전압이 낮다", b.x, b.y + 36 * VIEW.k + 8, { al: "c", bg: "#dbeafe", bd: "#2563eb", fg: "#1e3a8a" });
+  if (!SM) chip(W ? "💧 펌프 = 전지" : "🔋 전지", b.x - 15 * b.s - 34, (b.y + t.y) / 2, { al: "r", bg: "#ecfdf5", bd: "#16a34a", fg: "#14532d" });
+  // 수위 / 전위 표시
+  if (!SM) lv.forEach(l => {
+    const p = PP([(l.x0 + l.x1) / 2, l.h, 26]);
+    const hv = l.h === 100 ? "12 V" : l.h === 50 ? "6 V" : "0 V";
+    const nm = W ? (l.h === 100 ? "수위 높음" : l.h === 0 ? "수위 낮음" : "수위 중간") : (l.h === 100 ? "전위 높음" : l.h === 0 ? "전위 낮음(기준)" : "전위 중간");
+    chip(`${nm} · ${hv}`, p.x, p.y + 2, {
+      bg: l.h === 100 ? "#fff7ed" : l.h === 0 ? "#eff6ff" : "#f0fdf4",
+      bd: l.h === 100 ? "#ea580c" : l.h === 0 ? "#2563eb" : "#16a34a",
+      fg: l.h === 100 ? "#9a3412" : l.h === 0 ? "#1e3a8a" : "#166534"
+    });
+  });
+  // 저항
+  C.resist.forEach(r => {
+    const mid = PP(r.pts[Math.floor(r.pts.length / 2)]);
+    const label = mode === "series" ? `${r.name} 10Ω · 6V 하강` : mode === "parallel" ? `${r.name} 10Ω · 12V 하강` : `${r.name} 10Ω · 12V 하강`;
+    chip(SM ? r.name + " " + (mode === "series" ? "6V" : "12V") : (W ? "좁은 물길 " : "저항 ") + label, mid.x, mid.y - 22 * VIEW.k - 6, { bg: "#fef2f2", bd: "#ef4444", fg: "#991b1b" });
+  });
+  // 전류
+  const Ival = mode === "single" ? "1.20 A" : mode === "series" ? "0.60 A" : "2.40 A (각 1.20 A)";
+  const cm = PP([-10, OFS, RZR]);
+  chip(SM ? "I " + Ival.split(" (")[0] : (W ? "물의 흐름 = 전류 I " : "전류 I ") + Ival, cm.x, cm.y + 26 * VIEW.k + 4, { bg: "#eff6ff", bd: "#1d4ed8", fg: "#1e3a8a" });
+  // 범례 + 캡션
+  const small = VIEW.w < 560;
+  const lx = 12, ly = small ? 14 : 52;
+  ctx.save();
+  rr(lx, ly - 4, small ? 150 : 230, small ? 38 : 44, 10); ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fill();
+  ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1; ctx.stroke();
+  const gg = ctx.createLinearGradient(lx + 8, 0, lx + (small ? 142 : 222), 0);
+  gg.addColorStop(0, "#f97316"); gg.addColorStop(1, "#2563eb");
+  ctx.fillStyle = gg; rr(lx + 8, ly + 18, small ? 134 : 214, 8, 4); ctx.fill();
+  ctx.fillStyle = "#334155"; ctx.font = `800 ${small ? 10 : 11.5}px ${FF}`; ctx.textAlign = "left";
+  ctx.fillText(small ? "전하 색: 주황(높음) → 파랑(낮음)" : "전하(물방울) 색: 주황 = 높은 곳 → 파랑 = 낮은 곳", lx + 8, ly + 8);
+  ctx.restore();
+  const cap = W ? "물은 수위가 높은 곳 → 낮은 곳으로 흐르고, 펌프가 다시 끌어올립니다." :
+                  "전류는 전압(전위)이 높은 +극 → 낮은 −극으로 흐르고, 전지가 전하를 다시 끌어올립니다.";
+  ctx.save(); ctx.font = `800 ${FS}px ${FF}`;
+  const maxW = Math.min(VIEW.w - 24, 620), words = cap.split(" "), lines = []; let cur = "";
+  words.forEach(wd => { const tt = cur ? cur + " " + wd : wd; if (ctx.measureText(tt).width > maxW - 20 && cur) { lines.push(cur); cur = wd; } else cur = tt; });
+  lines.push(cur);
+  const bh = lines.length * (FS + 4) + 10, bw = Math.max(...lines.map(l => ctx.measureText(l).width)) + 22;
+  const bx = (VIEW.w - bw) / 2 - (VIEW.capShift || 0), by = VIEW.h - bh - 8;
+  rr(bx, by, bw, bh, 10); ctx.fillStyle = "rgba(30,41,59,.88)"; ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+  lines.forEach((l, i) => ctx.fillText(l, bx + bw / 2, by + 5 + (FS + 4) * (i + 0.5) + 1));
   ctx.restore();
 }
 
-/* ==========================================================================
-   8. 마우스 & 터치 3D 회전 / 줌 인터랙션 (Orbit Controls)
-   ========================================================================== */
-const container = document.getElementById("canvasContainer");
+/* ---------- 크기 ---------- */
+function resizeCanvas() {
+  const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(200, r.width), h = Math.max(160, r.height);
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  VIEW.w = w; VIEW.h = h;
+  const wide = w > 768;
+  const usable = wide ? w - 350 : w;
+  VIEW.k = Math.max(0.36, Math.min(1.7, Math.min(usable / (wide ? 740 : 700), h / 400)));
+  VIEW.cx = usable / 2;
+  VIEW.cy = h / 2 - 4;
+  FS = w < 560 ? 11 : 13;
+  VIEW.capShift = wide ? 170 : 0;
+}
+window.addEventListener("resize", resizeCanvas);
+if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
 
-container.addEventListener("mousedown", (e) => {
-  STATE.isDragging = true;
-  STATE.lastMouseX = e.clientX;
-  STATE.lastMouseY = e.clientY;
-});
-
-window.addEventListener("mousemove", (e) => {
+/* ---------- 조작 ---------- */
+const container = $("canvasContainer");
+const clampCam = () => {
+  const c = STATE.camera;
+  c.targetPitch = Math.max(0.12, Math.min(1.2, c.targetPitch));
+  c.targetYaw = Math.max(-1.45, Math.min(0.45, c.targetYaw));
+};
+container.addEventListener("mousedown", e => { if (e.target.closest(".hud-card")) return; STATE.isDragging = true; STATE.lastMouseX = e.clientX; STATE.lastMouseY = e.clientY; });
+window.addEventListener("mousemove", e => {
   if (!STATE.isDragging) return;
-  const dx = e.clientX - STATE.lastMouseX;
-  const dy = e.clientY - STATE.lastMouseY;
-  
-  STATE.camera.targetYaw += dx * 0.007;
-  STATE.camera.targetPitch += dy * 0.007;
-  
-  // Pitch 상하 회전각 제한 (0도 ~ 85도)
-  STATE.camera.targetPitch = Math.max(0.1, Math.min(Math.PI / 2.1, STATE.camera.targetPitch));
-  
-  STATE.lastMouseX = e.clientX;
-  STATE.lastMouseY = e.clientY;
+  STATE.camera.targetYaw += (e.clientX - STATE.lastMouseX) * 0.007;
+  STATE.camera.targetPitch += (e.clientY - STATE.lastMouseY) * 0.007;
+  clampCam(); STATE.lastMouseX = e.clientX; STATE.lastMouseY = e.clientY;
 });
-
-window.addEventListener("mouseup", () => {
-  STATE.isDragging = false;
-});
-
-// 마우스 휠 줌 (Zoom In/Out)
-container.addEventListener("wheel", (e) => {
+window.addEventListener("mouseup", () => { STATE.isDragging = false; });
+container.addEventListener("wheel", e => {
   e.preventDefault();
-  STATE.camera.targetDist += e.deltaY * 0.5;
-  STATE.camera.targetDist = Math.max(400, Math.min(1400, STATE.camera.targetDist));
+  STATE.camera.targetDist = Math.max(450, Math.min(1300, STATE.camera.targetDist + e.deltaY * 0.5));
 }, { passive: false });
-
-// 모바일 터치 이벤트
-let initialPinchDist = null;
-container.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 1) {
-    STATE.isDragging = true;
-    STATE.lastMouseX = e.touches[0].clientX;
-    STATE.lastMouseY = e.touches[0].clientY;
-  } else if (e.touches.length === 2) {
-    initialPinchDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-  }
+let pinch = null;
+container.addEventListener("touchstart", e => {
+  if (e.target.closest(".hud-card")) return;
+  if (e.touches.length === 1) { STATE.isDragging = true; STATE.lastMouseX = e.touches[0].clientX; STATE.lastMouseY = e.touches[0].clientY; }
+  else if (e.touches.length === 2) pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 }, { passive: true });
-
-window.addEventListener("touchmove", (e) => {
+window.addEventListener("touchmove", e => {
   if (e.touches.length === 1 && STATE.isDragging) {
-    const dx = e.touches[0].clientX - STATE.lastMouseX;
-    const dy = e.touches[0].clientY - STATE.lastMouseY;
-    
-    STATE.camera.targetYaw += dx * 0.008;
-    STATE.camera.targetPitch += dy * 0.008;
-    STATE.camera.targetPitch = Math.max(0.1, Math.min(Math.PI / 2.1, STATE.camera.targetPitch));
-    
-    STATE.lastMouseX = e.touches[0].clientX;
-    STATE.lastMouseY = e.touches[0].clientY;
-  } else if (e.touches.length === 2 && initialPinchDist !== null) {
-    const currentDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    const pinchDelta = initialPinchDist - currentDist;
-    STATE.camera.targetDist += pinchDelta * 1.2;
-    STATE.camera.targetDist = Math.max(400, Math.min(1400, STATE.camera.targetDist));
-    initialPinchDist = currentDist;
+    STATE.camera.targetYaw += (e.touches[0].clientX - STATE.lastMouseX) * 0.008;
+    STATE.camera.targetPitch += (e.touches[0].clientY - STATE.lastMouseY) * 0.008;
+    clampCam(); STATE.lastMouseX = e.touches[0].clientX; STATE.lastMouseY = e.touches[0].clientY;
+  } else if (e.touches.length === 2 && pinch !== null) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    STATE.camera.targetDist = Math.max(450, Math.min(1300, STATE.camera.targetDist + (pinch - d) * 1.2)); pinch = d;
   }
 }, { passive: true });
+window.addEventListener("touchend", () => { STATE.isDragging = false; pinch = null; });
+canvas.style.touchAction = "none";
 
-window.addEventListener("touchend", () => {
-  STATE.isDragging = false;
-  initialPinchDist = null;
-});
-
-/* ==========================================================================
-   9. 모드 전환 및 실시간 HUD 대시보드 업데이트
-   ========================================================================== */
-function setMode(newMode) {
-  STATE.mode = newMode;
-  
-  // 라디오 버튼 동기화
-  const radios = document.getElementsByName("circuitMode");
-  radios.forEach(r => { r.checked = (r.value === newMode); });
-  
-  // HUD 수치 갱신
-  const hudModeName = document.getElementById("hudModeName");
-  const hudTag = document.getElementById("hudTag");
-  const hudRowV2 = document.getElementById("hudRowV2");
-  const hudV1 = document.getElementById("hudV1");
-  const hudV2 = document.getElementById("hudV2");
-  const hudReq = document.getElementById("hudReq");
-  const hudI = document.getElementById("hudI");
-  const hudDesc = document.getElementById("hudDesc");
-  
-  if (newMode === "single") {
-    hudModeName.textContent = "단일 저항 회로";
-    hudTag.textContent = "Single";
-    hudRowV2.style.display = "none";
-    hudV1.textContent = "12.0 V";
-    hudReq.textContent = "10.0 Ω";
-    hudI.textContent = "1.20 A";
-    hudDesc.innerHTML = "전지에서 끌어올린 전위(+12V)가 <strong>1개의 저항을 거치며 바닥 기준면(0V)까지 모두 떨어집니다</strong> ($V_R = V$).";
-  } else if (newMode === "series") {
-    hudModeName.textContent = "저항의 직렬 연결";
-    hudTag.textContent = "Series (계단식)";
-    hudRowV2.style.display = "flex";
-    hudV1.textContent = "6.0 V (1/2 분할)";
-    hudV2.textContent = "6.0 V (1/2 분할)";
-    hudReq.textContent = "20.0 Ω (R₁ + R₂)";
-    hudI.textContent = "0.60 A (전류 감소)";
-    hudDesc.innerHTML = "저항 2개가 2단계 계단처럼 전압을 나누어 가집니다 ($V = V_1 + V_2$). 합성 저항이 커져 전류는 <strong>절반(0.6A)으로 감소</strong>합니다.";
-  } else if (newMode === "parallel") {
-    hudModeName.textContent = "저항의 병렬 연결";
-    hudTag.textContent = "Parallel (분기형)";
-    hudRowV2.style.display = "flex";
-    hudV1.textContent = "12.0 V (전체 전압)";
-    hudV2.textContent = "12.0 V (전체 전압)";
-    hudReq.textContent = "5.0 Ω (합성 저항 감소)";
-    hudI.textContent = "2.40 A (전류 증가)";
-    hudDesc.innerHTML = "도선이 두 갈래로 나뉘어, <strong>두 저항 모두 동일한 전체 전압(+12V)에서 0V로 떨어집니다</strong> ($V = V_1 = V_2$). 전류는 <strong>2배(2.4A)로 증가</strong>합니다.";
+/* ---------- 모드 / HUD ---------- */
+function setMode(m) {
+  STATE.mode = m;
+  document.getElementsByName("circuitMode").forEach(r => { r.checked = (r.value === m); });
+  const row2 = $("hudRowV2");
+  if (m === "single") {
+    $("hudModeName").textContent = "단일 저항 회로"; $("hudTag").textContent = "Single";
+    row2.style.display = "none";
+    $("hudV1").textContent = "12.0 V"; $("hudReq").textContent = "10.0 Ω"; $("hudI").textContent = "1.20 A";
+    $("hudDesc").innerHTML = "💧 펌프(전지)가 끌어올린 <strong>수위 차 12 V</strong>를 물이 <strong>좁은 물길(저항) 하나</strong>에서 모두 내려옵니다. 높은 곳(+12 V)에서 낮은 곳(0 V)으로 흘러요.";
+  } else if (m === "series") {
+    $("hudModeName").textContent = "저항의 직렬 연결"; $("hudTag").textContent = "Series (계단식)";
+    row2.style.display = "flex";
+    $("hudV1").textContent = "6.0 V (1/2 분할)"; $("hudV2").textContent = "6.0 V (1/2 분할)";
+    $("hudReq").textContent = "20.0 Ω (R₁ + R₂)"; $("hudI").textContent = "0.60 A (전류 감소)";
+    $("hudDesc").innerHTML = "💧 <strong>2단 계단</strong>을 차례로 내려옵니다. 한 단마다 수위가 6 V씩 내려가 <strong>V = V₁ + V₂</strong>. 길이 좁아져 물(전류)은 <strong>절반(0.6 A)</strong>으로 줄어요.";
+  } else {
+    $("hudModeName").textContent = "저항의 병렬 연결"; $("hudTag").textContent = "Parallel (분기형)";
+    row2.style.display = "flex";
+    $("hudV1").textContent = "12.0 V (전체 전압)"; $("hudV2").textContent = "12.0 V (전체 전압)";
+    $("hudReq").textContent = "5.0 Ω (합성 저항 감소)"; $("hudI").textContent = "2.40 A (전류 증가)";
+    $("hudDesc").innerHTML = "💧 물길이 <strong>두 갈래</strong>로 나뉘어도 <strong>둘 다 같은 높이 차 12 V</strong>를 내려옵니다 (<strong>V = V₁ = V₂</strong>). 물길이 2개라 물(전류)이 <strong>2배(2.4 A)</strong>예요.";
   }
-  
   initCharges();
 }
-
 function toggleFlow() {
   STATE.showFlow = !STATE.showFlow;
-  const btn = document.getElementById("flowBtn");
-  btn.classList.toggle("active", STATE.showFlow);
-  btn.innerHTML = STATE.showFlow ? "<span>⚡ 전하 흐름: ON</span>" : "<span>⚡ 전하 흐름: OFF</span>";
+  const b = $("flowBtn"); b.classList.toggle("active", STATE.showFlow);
+  b.innerHTML = STATE.showFlow ? "<span>⚡ 전하 흐름: ON</span>" : "<span>⚡ 전하 흐름: OFF</span>";
 }
-
 function toggleGuides() {
-  STATE.showGuides = !STATE.showGuides;
-  const btn = document.getElementById("guideBtn");
-  btn.classList.toggle("active", STATE.showGuides);
+  STATE.showGuides = !STATE.showGuides; $("guideBtn").classList.toggle("active", STATE.showGuides);
 }
-
+function toggleWater() {
+  STATE.water = !STATE.water;
+  const b = $("waterBtn"); b.classList.toggle("active", STATE.water);
+  b.innerHTML = STATE.water ? "<span>💧 물 비유: ON</span>" : "<span>💧 물 비유: OFF (회로)</span>";
+}
 function resetView() {
-  STATE.camera.targetYaw = STATE.camera.defaultYaw;
-  STATE.camera.targetPitch = STATE.camera.defaultPitch;
-  STATE.camera.targetDist = STATE.camera.defaultDist;
+  const c = STATE.camera; c.targetYaw = c.defaultYaw; c.targetPitch = c.defaultPitch; c.targetDist = c.defaultDist;
 }
-
 function toggleTheory() {
-  const panel = document.getElementById("theoryPanel");
-  const btn = document.getElementById("theoryToggleBtn");
-  panel.classList.toggle("show");
-  btn.classList.toggle("active");
+  $("theoryPanel").classList.toggle("show"); $("theoryToggleBtn").classList.toggle("active");
+  setTimeout(resizeCanvas, 50);
 }
-
 function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
-  } else {
-    document.exitFullscreen().catch(() => {});
-  }
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+  else document.exitFullscreen().catch(() => {});
 }
-
-// 초기화 실행
+window.__pt = { STATE, VIEW, build, P3, setMode, resizeCanvas, draw };
 window.addEventListener("DOMContentLoaded", () => {
-  resizeCanvas();
-  initCharges();
-  setMode("single");
+  resizeCanvas(); setMode("single");
+  $("guideBtn").classList.add("active");
   requestAnimationFrame(render);
 });
+
 </script>
 <style id="rsp1017">
 @media (pointer:coarse) and (hover:none){
