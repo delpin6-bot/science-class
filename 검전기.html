@@ -478,6 +478,15 @@ html .stat-val{font-size:15px!important}
 html .stat-lbl,html .stat-desc{font-size:10px!important}
 }
 </style>
+<style id="es1029css">
+.hud-stats.es{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.hud-stats.es .hud-val{font-size:13px;font-family:inherit;line-height:1.3}
+.hud-bar{height:6px;background:#e2e8f0;border-radius:4px;margin-top:4px;overflow:hidden}
+.hud-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#ef4444)}
+.hud-msg{margin-top:8px;font-size:12.5px;line-height:1.5;color:#334155;background:#f1f5f9;border-radius:8px;padding:8px 10px;min-height:4.6em}
+#simCanvas{background:#efefef;touch-action:none}
+@media (max-width:640px){.concept-box>div{grid-template-columns:minmax(0,1fr)!important}}
+</style>
 </head>
 <body>
 
@@ -510,7 +519,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
 
   <!-- 메인 캔버스 -->
   <div class="canvas-container">
-    <canvas id="simCanvas" width="1180" height="580"></canvas>
+    <canvas id="simCanvas" width="1600" height="811"></canvas>
   </div>
 
   <!-- 컨트롤러 및 HUD -->
@@ -579,20 +588,17 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       <div class="panel-header">
         <span>📊 실시간 검전기 전하 & 각도 HUD</span>
       </div>
-      <div class="hud-stats">
-        <div class="hud-box">
-          <div class="hud-label">금속판 순전하</div>
-          <div class="hud-val val-plate" id="hudPlateNet">중성 (0)</div>
-        </div>
-        <div class="hud-box">
-          <div class="hud-label">금속박 순전하</div>
-          <div class="hud-val val-leaves" id="hudLeavesNet">중성 (0)</div>
-        </div>
-        <div class="hud-box">
-          <div class="hud-label">금속박 벌어짐 각도</div>
-          <div class="hud-val val-angle" id="hudAngle">0.0°</div>
-        </div>
+      <div class="hud-stats es">
+        <div class="hud-box"><div class="hud-label">금속판 알짜전하</div><div class="hud-val val-plate" id="hudPlateNet">중성 (0)</div></div>
+        <div class="hud-box"><div class="hud-label">금속박 알짜전하</div><div class="hud-val val-leaves" id="hudLeavesNet">중성 (0)</div></div>
+        <div class="hud-box"><div class="hud-label">금속박 벌어짐 각도</div><div class="hud-val val-angle" id="hudAngle">0.0°</div></div>
+        <div class="hud-box"><div class="hud-label">검전기 전체 전하</div><div class="hud-val" id="hudTotal">중성 (0)</div></div>
+        <div class="hud-box"><div class="hud-label">대전체–금속판 거리 r</div><div class="hud-val" id="hudDist">멀리 있음</div></div>
+        <div class="hud-box"><div class="hud-label">상대 전기력 F ∝ 1/r²</div><div class="hud-val" id="hudForce">0 %</div><div class="hud-bar"><i id="hudForceBar"></i></div></div>
+        <div class="hud-box"><div class="hud-label">유도로 이동한 전자 수 n</div><div class="hud-val" id="hudMoved">0 개</div></div>
+        <div class="hud-box"><div class="hud-label">접지 상태</div><div class="hud-val" id="hudGround">고립 (접지 안 됨)</div></div>
       </div>
+      <div class="hud-msg" id="hudMsg"></div>
     </div>
   </div>
 
@@ -601,692 +607,488 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
     <h3>💡 검전기(Electroscope) 핵심 탐구 포인트</h3>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
       <div>
-        <b>1. 대전체 접근 시 정전기 유도</b><br>
-        • <b>(-) 대전체 접근:</b> 금속판의 자유 전자가 척력으로 금속박으로 밀려 내려가, <b>금속판은 (+)</b>, <b>금속박은 (-)</b>로 대전되어 벌어집니다.<br>
-        • <b>(+) 대전체 접근:</b> 금속박의 자유 전자가 인력으로 금속판으로 끌려 올라가, <b>금속판은 (-)</b>, <b>금속박은 (+)</b>로 대전되어 벌어집니다.
+        <b>1. 전기력이 클수록 더 많은 전자가 움직여요</b><br>
+        • 대전체가 가까울수록 전기력 <b>F ∝ 1/r²</b> 이 커지고, 이동하는 전자 수는 <b>n = 4 × F(상대값)</b>으로 정해집니다. (최대 4개)<br>
+        • 전자는 <b>금속(판 · 막대 · 박)을 따라서만</b> 이동하고, 유리병 밖으로는 나가지 못합니다.<br>
+        • <b>(-) 대전체:</b> 척력으로 전자가 금속판 → 금속박으로 이동 → 금속판 (+), 금속박 (-) → 벌어짐<br>
+        • <b>(+) 대전체:</b> 인력으로 전자가 금속박 → 금속판으로 이동 → 금속판 (-), 금속박 (+) → 벌어짐
       </div>
       <div>
-        <b>2. 손가락 접지 및 영구 대전의 비결 (순서가 핵심!)</b><br>
-        • 대전체를 댄 상태에서 손가락을 대면, 전자가 인체를 통해 빠져나가거나 들어와 <b>금속박이 오므라듭니다</b>.<br>
-        • 이때 <b>손가락을 먼저 떼고 대전체를 치워야</b> 이동한 전자가 갇혀 검전기 전체가 대전체와 <b>반대 종류의 전하로 영구 대전</b>됩니다!
+        <b>2. 금속박이 벌어지는 정도</b><br>
+        • 두 금속박이 같은 종류의 전하 q를 띠면 서로 밀어내고(쿨롱 힘 ∝ q²), 중력이 이를 되돌립니다. 평형: <b>sin³θ / cosθ ∝ q²</b><br>
+        • 전하량이 2배면 각도가 크게 늘어나지만, 끝없이 벌어지지는 않아요.<br>
+        <b>3. 손가락 접지 & 영구 대전 (순서가 핵심!)</b><br>
+        • 대전체를 댄 채 손가락을 대면, 금속박의 전자가 손가락으로 빠져나가거나(−대전체) 손가락에서 들어와(+대전체) 금속박이 <b>중성</b>이 되어 오므라듭니다.<br>
+        • <b>손가락을 먼저 떼고 대전체를 치워야</b> 이동한 전자가 갇혀 검전기가 대전체와 <b>반대 종류</b>로 영구 대전됩니다!
       </div>
     </div>
   </div>
 
 </div>
 
-<script>
+<script id="es1029">
 "use strict";
-
+/* ES1029 : 검전기 가상실험 v2 — 전기력(F ∝ 1/r²)에 비례해 전자가 금속판 ↔ 금속박(접지 시 손가락)으로만 이동 */
 const canvas = document.getElementById("simCanvas");
 const ctx = canvas.getContext("2d");
+const RW = 2000, RH = 1013;                 // 참고 삽화와 같은 기준 좌표계
+const SC = canvas.width / RW;
+const TAU = Math.PI * 2;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = v => Math.sign(v) * Math.round(Math.abs(v));     // 0.5는 0에서 먼 쪽으로
+try { canvas.style.touchAction = "none"; } catch (e) {}
 
-/* ==========================================================================
-   물리 시뮬레이션 상태 및 좌표 정의
-   ========================================================================== */
-// 검전기 기하학 구조
-const ELECTROSCOPE = {
-  plateX: 590,
-  plateY: 190,
-  plateRadiusX: 110,
-  plateRadiusY: 18,
-  rodTopY: 180,
-  rodBottomY: 440,
-  ballR: 34,
-  rodWidth: 16,
-  flaskX: 430,
-  flaskY: 230,
-  flaskW: 320,
-  flaskH: 300,
-  leafLength: 85,
-  leafWidth: 10
-};
+/* ---------- 검전기 기하 ---------- */
+const DISC = { x: 979, y: 222, rx: 184, ry: 34 };     // 금속판(타원)
+const STEM = { x: 981, top: 262, hinge: 700, w: 36 }; // 금속 막대
+const LEAF = { len: 225, w: 34 };                     // 금속박
+const TC = { x: 1160, y: 222 };                       // 손가락이 닿는 금속판 오른쪽 끝
+const FIN_HOME = { x: 1533, y: 215 };
+const NQ = 8;                                         // 영역(금속판/금속박)마다 고정 (+) 개수 = 중성일 때 전자 개수
+const CAP = 16;                                       // 영역마다 전자 슬롯 수
+const R = 15;                                         // 전하 알갱이 반지름
 
-// 대전체 막대 (좌측 상단에서 비스듬히 접근)
-const ROD = {
-  x: 180,
-  y: 110,
-  angle: Math.PI / 4,
-  length: 200,
-  width: 24,
-  type: "MINUS", // "MINUS" or "PLUS"
-  isDragging: false,
-  dragOffsetX: 0,
-  dragOffsetY: 0,
-  initialX: 150,
-  initialY: 90
-};
+/* 금속판 전하 자리: 고정 (+) 8개 + 전자 자리 16개 */
+const COLX = [0, 1, 2, 3, 4, 5, 6, 7].map(k => 825 + 44 * k);
+const PF = COLX.map((x, k) => ({ x, y: k % 2 ? 204 : 240 }));
+const PE = COLX.map((x, k) => ({ x, y: k % 2 ? 240 : 204 }))
+  .concat([[847, 204], [935, 204], [1023, 204], [1111, 204], [891, 240], [979, 240], [1067, 240], [1111, 240]].map(a => ({ x: a[0], y: a[1] })));
+/* 금속박 전하 자리 (좌/우 박, t = 경첩에서 끝까지의 비율) */
+const TL = [.15, .37, .59, .81, .26, .48, .70, .92];
+const TR = [.26, .48, .70, .92, .15, .37, .59, .81];
+const FL = [.26, .48, .70, .92], FRt = [.15, .37, .59, .81];
 
-// 손가락 접지 객체 (우측에서 금속판으로 접근)
-const HAND = {
-  x: 1050,
-  y: 175,
-  isTouching: false,
-  isDragging: false,
-  dragOffsetX: 0,
-  dragOffsetY: 0,
-  initialX: 1000,
-  initialY: 205,
-  contactX: 615,
-  contactY: 185
-};
+/* ---------- 상태 ---------- */
+const ROD = { x: 352, y: 283, type: "MINUS", drag: false, ox: 0, oy: 0, gx: null, gy: null, ang: 44 * Math.PI / 180, len: 560, hw: 36 };
+const ROD_HOME = { x: 352, y: 283 };
+const ROD_NEAR = { x: 752, y: 292 };
+const HAND = { x: FIN_HOME.x, y: FIN_HOME.y, touching: false, drag: false, ox: 0, oy: 0, gx: null, gy: null, want: "away" };
+const S = { theta: 0, vel: 0, el: [], ownP: Array(CAP).fill(null), ownL: Array(CAP).fill(null), acc: 0, time: 0 };
+let chargeView = "ALL";
+let EID = 1;
+let scenarioToken = 0;
 
-let chargeView = "ALL"; // ALL, NET, NONE
-
-// 검전기 내부 전하 분포 상태
-// 중성 기준: 금속판에 +6, -6 / 금속박에 +6, -6
-let netChargeTotal = 0; // 검전기 전체의 잉여 순전하 (외부 유입/유출)
-let plateElectrons = 6;
-let leavesElectrons = 6;
-const FIXED_PLUS_PLATE = 6;
-const FIXED_PLUS_LEAVES = 6;
-
-// 금속박 각도 (라디안)
-let leafAngle = 0;
-let targetLeafAngle = 0;
-
-/* Web Audio 효과음 */
+/* ---------- 소리 ---------- */
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 function playTone(freq, dur) {
   try {
     if (!audioCtx) audioCtx = new AudioCtx();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + dur);
-  } catch(e) {}
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+const say = t => { const el = $("interactionStatus"); if (el) el.textContent = t; };
+
+/* ---------- 전하 자리 계산 ---------- */
+function leafPoint(sg, t, off) {
+  const s = Math.sin(S.theta), c = Math.cos(S.theta), d = t * LEAF.len;
+  return { x: STEM.x + sg * s * d + sg * c * off, y: STEM.hinge + c * d - s * off };
+}
+function slotPos(reg, i) {
+  if (reg === "P") return PE[i];
+  const sg = i % 2 === 0 ? -1 : 1, k = i >> 1;
+  return leafPoint(sg, (sg < 0 ? TL : TR)[k], 26);
+}
+function fixedLeafPos(i) {                    // 금속박의 고정 (+) 8개 (좌 4, 우 4)
+  const sg = i < 4 ? -1 : 1, k = i % 4;
+  return leafPoint(sg, (sg < 0 ? FL : FRt)[k], 9);
+}
+function mkE(reg, slot) {
+  const e = { id: EID++, reg, slot, tr: null, x: 0, y: 0, a: 1 };
+  if (reg !== "E") { const p = slotPos(reg, slot); e.x = p.x; e.y = p.y; }
+  return e;
+}
+function initElectrons() {
+  S.el = []; S.ownP.fill(null); S.ownL.fill(null);
+  for (let i = 0; i < NQ; i++) { const e = mkE("P", i); S.ownP[i] = e; S.el.push(e); }
+  for (let i = 0; i < NQ; i++) { const e = mkE("L", i); S.ownL[i] = e; S.el.push(e); }
+  S.theta = 0; S.vel = 0;
+}
+const cnt = a => a.filter(Boolean).length;
+const arrived = reg => S.el.filter(e => e.reg === reg && !e.tr).length;
+
+/* ---------- 대전체와 전기력 ---------- */
+function discGap(px, py) {                    // 점과 금속판 가장자리 사이 최단거리 / 가장 가까운 점
+  let best = 1e9, bp = null;
+  for (let a = 0; a < 90; a++) {
+    const th = a / 90 * TAU, qx = DISC.x + Math.cos(th) * DISC.rx, qy = DISC.y + Math.sin(th) * DISC.ry;
+    const d = Math.hypot(px - qx, py - qy);
+    if (d < best) { best = d; bp = { x: qx, y: qy }; }
+  }
+  return { d: best, p: bp };
+}
+function rodGeo() {
+  const g = discGap(ROD.x, ROD.y);
+  const r = Math.max(0, g.d - ROD.hw);                           // 막대 표면 ~ 금속판 사이 거리
+  const raw = Math.pow(85 / (r + 40), 2), cut = Math.pow(85 / 460, 2);
+  const F = clamp((raw - cut) / (1 - cut), 0, 1);                // 상대 전기력 (1 = 최대)
+  const n = Math.round(4 * F);                                   // 전기력에 비례하는 이동 전자 수 (0~4)
+  return { r, F, n, sInd: ROD.type === "MINUS" ? +1 : -1 };      // sInd: 유도로 금속판에 생기는 알짜전하 부호
+}
+function pushRodClear() {
+  const g = discGap(ROD.x, ROD.y), min = ROD.hw + 8;
+  if (g.d < min) {
+    const vx = ROD.x - g.p.x, vy = ROD.y - g.p.y, l = Math.hypot(vx, vy) || 1;
+    ROD.x = g.p.x + vx / l * min; ROD.y = g.p.y + vy / l * min;
+  }
 }
 
-/* ==========================================================================
-   인터랙션 및 드래그 이벤트 (Mouse & Touch)
-   ========================================================================== */
-function getCanvasCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  let clientX = e.clientX;
-  let clientY = e.clientY;
-  if (e.touches && e.touches.length > 0) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  }
-  return {
-    x: (clientX - rect.left) * scaleX,
-    y: (clientY - rect.top) * scaleY
-  };
+/* ---------- 전자 이동(경로 애니메이션) ---------- */
+const P_ST = { x: STEM.x, y: STEM.top }, P_HG = { x: STEM.x, y: STEM.hinge };
+const P_TC = { x: TC.x, y: TC.y }, P_IN = { x: TC.x + 320, y: TC.y - 6 };
+function launch(e, from, to, slot) {
+  if (from === "P") S.ownP[e.slot] = null; else if (from === "L") S.ownL[e.slot] = null;
+  if (to === "P") S.ownP[slot] = e; else if (to === "L") S.ownL[slot] = e;
+  const pts = [], DEST = { dest: true };
+  if (from === "P") { pts.push({ x: e.x, y: e.y }); if (to === "L") pts.push(P_ST, P_HG, DEST); else pts.push(P_TC, P_IN); }
+  else if (from === "L") { pts.push({ x: e.x, y: e.y }, P_HG, P_ST); if (to === "P") pts.push(DEST); else pts.push(P_TC, P_IN); }
+  else { pts.push(P_IN, P_TC); if (to === "L") pts.push(P_ST, P_HG, DEST); else pts.push(DEST); }
+  e.reg = "T"; e.tr = { pts, from, to, slot, prog: 0 };
 }
-
-let activeDrag = null; // 'ROD', 'HAND', null
-
-function onPointerDown(e) {
-  const p = getCanvasCoords(e);
-
-  // 1. 대전체 터치 판정
-  const rodHeadX = ROD.x + Math.cos(ROD.angle) * ROD.length * 0.7;
-  const rodHeadY = ROD.y + Math.sin(ROD.angle) * ROD.length * 0.7;
-  const distRod = Math.hypot(p.x - rodHeadX, p.y - rodHeadY);
-  if (distRod < 80) {
-    activeDrag = 'ROD';
-    ROD.isDragging = true;
-    ROD.dragOffsetX = ROD.x - p.x;
-    ROD.dragOffsetY = ROD.y - p.y;
-    document.getElementById("interactionStatus").textContent = "대전체를 움직이는 중입니다...";
-    return;
-  }
-
-  // 2. 손가락 터치 판정
-  const distHand = Math.hypot(p.x - (HAND.isTouching ? HAND.contactX : HAND.x), p.y - (HAND.isTouching ? HAND.contactY : HAND.y));
-  if (distHand < 90) {
-    activeDrag = 'HAND';
-    HAND.isDragging = true;
-    HAND.dragOffsetX = (HAND.isTouching ? HAND.contactX : HAND.x) - p.x;
-    HAND.dragOffsetY = (HAND.isTouching ? HAND.contactY : HAND.y) - p.y;
-    document.getElementById("interactionStatus").textContent = "손가락을 조작하는 중입니다...";
-  }
+function resolvePath(tr) {
+  const pts = tr.pts.map(p => p.dest ? slotPos(tr.to, tr.slot) : p);
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+  return { pts, cum, total: cum[cum.length - 1] };
 }
-
-function onPointerMove(e) {
-  if (!activeDrag) return;
-  const p = getCanvasCoords(e);
-
-  if (activeDrag === 'ROD') {
-    ROD.x = p.x + ROD.dragOffsetX;
-    ROD.y = p.y + ROD.dragOffsetY;
-    // 대전체 이동 범위 제한
-    ROD.x = Math.max(50, Math.min(ELECTROSCOPE.plateX - 60, ROD.x));
-    ROD.y = Math.max(10, Math.min(ELECTROSCOPE.plateY + 80, ROD.y));
-  } else if (activeDrag === 'HAND') {
-    const curX = p.x + HAND.dragOffsetX;
-    const curY = p.y + HAND.dragOffsetY;
-    const distToPlate = Math.hypot(curX - HAND.contactX, curY - HAND.contactY);
-
-    if (distToPlate < 65) {
-      if (!HAND.isTouching) {
-        HAND.isTouching = true;
-        document.getElementById("btnHandToggle").classList.add("active");
-        playTone(520, 0.08);
-      }
-    } else {
-      if (HAND.isTouching) {
-        HAND.isTouching = false;
-        document.getElementById("btnHandToggle").classList.remove("active");
-        playTone(380, 0.08);
-      }
-      HAND.x = Math.max(ELECTROSCOPE.plateX + 110, curX);
-      HAND.y = curY;
+function pointAt(pa, s) {
+  if (s <= 0) return pa.pts[0];
+  for (let i = 1; i < pa.pts.length; i++) if (s <= pa.cum[i]) {
+    const u = (s - pa.cum[i - 1]) / Math.max(1e-6, pa.cum[i] - pa.cum[i - 1]);
+    return { x: pa.pts[i - 1].x + (pa.pts[i].x - pa.pts[i - 1].x) * u, y: pa.pts[i - 1].y + (pa.pts[i].y - pa.pts[i - 1].y) * u };
+  }
+  return pa.pts[pa.pts.length - 1];
+}
+function pickFree(reg) { const a = reg === "P" ? S.ownP : S.ownL; return a.findIndex(x => !x); }
+function pickLeaving(from) {
+  const c = S.el.filter(e => e.reg === from && !e.tr);
+  if (!c.length) return null;
+  const ref = from === "P" ? { x: STEM.x, y: DISC.y } : P_HG;
+  c.sort((a, b) => Math.hypot(a.x - ref.x, a.y - ref.y) - Math.hypot(b.x - ref.x, b.y - ref.y));
+  return c[0];
+}
+function moveEl(from, to) {
+  let e = null;
+  if (from === "E") { e = mkE("E", -1); e.x = P_IN.x; e.y = P_IN.y; }
+  else { e = pickLeaving(from); if (!e) return false; }
+  let slot = -1;
+  if (to !== "E") { slot = pickFree(to); if (slot < 0) return false; }
+  if (from === "E") S.el.push(e);
+  launch(e, from, to, slot);
+  return true;
+}
+/* 손가락을 뗄 때, 아직 손가락에 닿지 못한 전자는 제자리로 되돌린다 */
+function onFingerLift() {
+  S.el.slice().forEach(e => {
+    if (!e.tr || (e.tr.to !== "E" && e.tr.from !== "E")) return;
+    const pa = resolvePath(e.tr), tcI = pa.pts.findIndex(p => p === P_TC), tcLen = pa.cum[tcI];
+    if (e.tr.from === "E") {
+      if (e.tr.prog < tcLen) { if (e.tr.to === "P") S.ownP[e.tr.slot] = null; else S.ownL[e.tr.slot] = null; S.el.splice(S.el.indexOf(e), 1); }
+    } else if (e.tr.prog < tcLen) {
+      const cur = pointAt(pa, e.tr.prog), org = e.tr.from, slot = pickFree(org);
+      if (slot < 0) { S.el.splice(S.el.indexOf(e), 1); return; }
+      const stI = pa.pts.findIndex(p => p === P_ST), pts = [cur];
+      if (org === "L") { if (stI >= 0 && e.tr.prog > pa.cum[stI] - 1) pts.push(P_ST); pts.push(P_HG); }
+      pts.push({ dest: true });
+      if (org === "P") S.ownP[slot] = e; else S.ownL[slot] = e;
+      e.tr = { pts, from: "T", to: org, slot, prog: 0 };
     }
+  });
+}
+
+/* ---------- 평형 목표 계산 & 전자 이동 지시 ---------- */
+function targets() {
+  const geo = rodGeo(), Ep = cnt(S.ownP), El = cnt(S.ownL);
+  let Ept, Elt;
+  if (HAND.touching) {                                  // 접지: 금속박은 중성, 금속판에 유도 전하 2n 구속
+    Ept = clamp(NQ - geo.sInd * 2 * geo.n, 0, CAP); Elt = NQ;
+  } else {                                              // 고립: 전체 전하 Q 보존, 금속판 ↔ 금속박 재분배
+    const Q = 2 * NQ - (Ep + El), Qp = rnd(Q / 2 + geo.sInd * geo.n);
+    Ept = clamp(NQ - Qp, 0, CAP); Elt = 2 * NQ - Q - Ept;
+    if (Elt > CAP) { Elt = CAP; Ept = 2 * NQ - Q - CAP; } else if (Elt < 0) { Elt = 0; Ept = 2 * NQ - Q; }
   }
+  return { geo, Ep, El, Ept, Elt };
 }
-
-function onPointerUp() {
-  if (activeDrag) {
-    activeDrag = null;
-    ROD.isDragging = false;
-    HAND.isDragging = false;
-    document.getElementById("interactionStatus").textContent = "검전기 전하 분포 관찰 중...";
-  }
-}
-
-canvas.addEventListener("mousedown", onPointerDown);
-window.addEventListener("mousemove", onPointerMove);
-window.addEventListener("mouseup", onPointerUp);
-
-canvas.addEventListener("touchstart", onPointerDown, {passive: false});
-window.addEventListener("touchmove", onPointerMove, {passive: false});
-window.addEventListener("touchend", onPointerUp);
-
-/* 컨트롤 패널 조작 함수들 */
-function setRodType(type) {
-  ROD.type = type;
-  playTone(type === "MINUS" ? 440 : 660, 0.1);
-  document.getElementById("interactionStatus").textContent = (type === "MINUS" ? "(-) 대전체" : "(+) 대전체") + "로 변경되었습니다.";
-}
-
-function toggleHandTouch() {
-  HAND.isTouching = !HAND.isTouching;
-  const btn = document.getElementById("btnHandToggle");
-  if (HAND.isTouching) {
-    btn.classList.add("active");
-    playTone(520, 0.1);
-    document.getElementById("interactionStatus").textContent = "손가락으로 금속판을 접지했습니다.";
+function dispatch() {
+  const t = targets();
+  if (HAND.touching) {
+    if (t.El > t.Elt) return moveEl("L", "E");
+    if (t.El < t.Elt) return moveEl("E", "L");
+    if (t.Ep > t.Ept) return moveEl("P", "E");
+    if (t.Ep < t.Ept) return moveEl("E", "P");
   } else {
-    btn.classList.remove("active");
-    playTone(360, 0.1);
-    document.getElementById("interactionStatus").textContent = "손가락을 떼었습니다.";
+    if (t.Ep > t.Ept && t.El < CAP) return moveEl("P", "L");
+    if (t.Ep < t.Ept && t.Ep < CAP) return moveEl("L", "P");
   }
+  return false;
 }
 
-function resetRodPosition() {
-  ROD.x = ROD.initialX;
-  ROD.y = ROD.initialY;
-  document.getElementById("interactionStatus").textContent = "대전체를 멀리 치웠습니다.";
+/* ---------- 금속박 각도: 쿨롱 척력 vs 중력  sin³θ / cosθ = C·q² ---------- */
+const LEAF_C = 0.0185;
+function angleFor(q) {
+  const target = LEAF_C * q * q; let lo = 0, hi = 1.2;
+  for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; (Math.pow(Math.sin(m), 3) / Math.cos(m) < target) ? lo = m : hi = m; }
+  return Math.min(55 * Math.PI / 180, (lo + hi) / 2);
 }
 
-function resetElectroscope() {
-  netChargeTotal = 0;
-  HAND.isTouching = false;
-  document.getElementById("btnHandToggle").classList.remove("active");
-  resetRodPosition();
-  playTone(220, 0.15);
-  document.getElementById("interactionStatus").textContent = "검전기가 완전히 방전되어 중화되었습니다.";
-}
-
-function setChargeView(mode) {
-  chargeView = mode;
-}
-
-/* 4대 시나리오 자동 연출 */
-function runScenario(num) {
-  if (num === 1) {
-    // 1) (-) 대전체 접근
-    setRodType("MINUS");
-    HAND.isTouching = false;
-    document.getElementById("btnHandToggle").classList.remove("active");
-    ROD.x = ELECTROSCOPE.plateX - 170;
-    ROD.y = ELECTROSCOPE.plateY - 170;
-    document.getElementById("interactionStatus").textContent = "[시나리오 1] (-) 대전체 접근 → 금속박 벌어짐!";
-  } else if (num === 2) {
-    // 2) (-) 상태에서 손가락 접지
-    setRodType("MINUS");
-    ROD.x = ELECTROSCOPE.plateX - 170;
-    ROD.y = ELECTROSCOPE.plateY - 170;
-    HAND.isTouching = true;
-    document.getElementById("btnHandToggle").classList.add("active");
-    document.getElementById("interactionStatus").textContent = "[시나리오 2] 전자가 손가락으로 탈출 → 금속박 오므라듦!";
-  } else if (num === 3) {
-    // 3) 손가락 먼저 떼고 대전체 치우기 -> (+) 영구 대전
-    netChargeTotal = +5; // 전자가 빠져나감
-    HAND.isTouching = false;
-    document.getElementById("btnHandToggle").classList.remove("active");
-    resetRodPosition();
-    document.getElementById("interactionStatus").textContent = "[시나리오 3] 전자가 갇혀 검전기가 (+)로 영구 대전됨!";
-    playTone(660, 0.2);
-  } else if (num === 4) {
-    // 4) (+) 대전체 접근 후 접지 -> (-) 영구 대전
-    netChargeTotal = -5; // 전자가 들어옴
-    HAND.isTouching = false;
-    document.getElementById("btnHandToggle").classList.remove("active");
-    resetRodPosition();
-    document.getElementById("interactionStatus").textContent = "[시나리오 4] 전자가 유입되어 검전기가 (-)로 영구 대전됨!";
-    playTone(440, 0.2);
+/* ---------- 매 프레임 갱신 ---------- */
+function update(dt) {
+  S.time += dt;
+  // 대전체 · 손가락 자동 이동
+  if (ROD.gx != null && !ROD.drag) {
+    const dx = ROD.gx - ROD.x, dy = ROD.gy - ROD.y, d = Math.hypot(dx, dy), st = 650 * dt;
+    if (d <= st) { ROD.x = ROD.gx; ROD.y = ROD.gy; ROD.gx = null; } else { ROD.x += dx / d * st; ROD.y += dy / d * st; }
   }
-}
-
-/* ==========================================================================
-   물리 연산 엔진 (정전기 유도 & 접지 전하 이동)
-   ========================================================================== */
-function updatePhysics() {
-  // 1. 대전체와 금속판 사이의 거리 계산
-  const rodTipX = ROD.x + Math.cos(ROD.angle) * ROD.length;
-  const rodTipY = ROD.y + Math.sin(ROD.angle) * ROD.length;
-  const distRod = Math.hypot(rodTipX - ELECTROSCOPE.plateX, rodTipY - ELECTROSCOPE.plateY);
-
-  // 대전체의 유도 강도 (거리가 70px 미만일 때 최대 1.0, 320px 이상이면 0)
-  const inductionFactor = Math.max(0, Math.min(1.0, (320 - distRod) / 250));
-
-  // 2. 손가락 접지 시 전하 이동
-  if (HAND.isTouching) {
-    if (inductionFactor > 0.15) {
-      if (ROD.type === "MINUS") {
-        // (-) 대전체의 척력으로 인해 전자가 사람 손가락을 통해 빠져나감 -> 검전기 전체가 (+)가 됨
-        netChargeTotal = Math.round(inductionFactor * 5);
+  if (HAND.gx != null && !HAND.drag) {
+    const dx = HAND.gx - HAND.x, dy = HAND.gy - HAND.y, d = Math.hypot(dx, dy), st = 900 * dt;
+    if (d <= st) { HAND.x = HAND.gx; HAND.y = HAND.gy; HAND.gx = null; if (HAND.want === "touch") setTouch(true); }
+    else { HAND.x += dx / d * st; HAND.y += dy / d * st; }
+  }
+  // 전자 지시 (0.11초마다 1개)
+  S.acc += dt;
+  while (S.acc >= 0.11) { S.acc -= 0.11; dispatch(); }
+  // 이동 중인 전자 / 정지한 전자 위치
+  const SP = 760;
+  S.el.slice().forEach(e => {
+    if (e.tr) {
+      const pa = resolvePath(e.tr);
+      e.tr.prog += SP * dt;
+      if (e.tr.prog >= pa.total) {
+        if (e.tr.to === "E") { S.el.splice(S.el.indexOf(e), 1); return; }
+        e.reg = e.tr.to; e.slot = e.tr.slot; e.tr = null;
+        const p = slotPos(e.reg, e.slot); e.x = p.x; e.y = p.y; e.a = 1;
       } else {
-        // (+) 대전체의 인력으로 인해 사람 몸에서 전자가 흘러 들어옴 -> 검전기 전체가 (-)가 됨
-        netChargeTotal = -Math.round(inductionFactor * 5);
+        const p = pointAt(pa, e.tr.prog); e.x = p.x; e.y = p.y;
+        e.a = (e.tr.to === "E" || e.tr.from === "E") ? clamp((pa.total - e.tr.prog) / 120, 0.15, 1) * (e.tr.from === "E" ? clamp(e.tr.prog / 80, 0.2, 1) : 1) : 1;
+        if (e.tr.to === "E" && e.tr.prog > pa.total - 120) e.a = clamp((pa.total - e.tr.prog) / 120, 0, 1);
+        else if (e.tr.from === "E") e.a = clamp(e.tr.prog / 120, 0.1, 1); else e.a = 1;
       }
-    } else {
-      // 대전체가 없는 상태에서 손을 대면 중화 (방전)
-      netChargeTotal = 0;
-    }
-  }
-
-  // 3. 금속판과 금속박 간의 전자 재배치 계산
-  const totalElectrons = FIXED_PLUS_PLATE + FIXED_PLUS_LEAVES - netChargeTotal;
-
-  if (HAND.isTouching) {
-    // 손을 대고 있는 동안:
-    // 금속박은 접지로 인해 중성(0)이 되고, 금속판에 대전체의 반대 전하가 구속됨
-    leavesElectrons = FIXED_PLUS_LEAVES;
-    plateElectrons = totalElectrons - leavesElectrons;
-  } else {
-    // 손을 뗀 상태:
-    if (inductionFactor > 0.05) {
-      // 대전체 유도 발생
-      const shiftElectrons = (ROD.type === "MINUS" ? 1 : -1) * (inductionFactor * 4.2);
-      plateElectrons = Math.round((totalElectrons / 2) - shiftElectrons);
-      leavesElectrons = totalElectrons - plateElectrons;
-    } else {
-      // 대전체가 멀리 있을 때: 잉여 전하가 금속판과 금속박에 균등 분배
-      plateElectrons = Math.round(totalElectrons / 2);
-      leavesElectrons = totalElectrons - plateElectrons;
-    }
-  }
-
-  // 순전하 계산
-  const plateNet = FIXED_PLUS_PLATE - plateElectrons;   // 양수면 +, 음수면 -
-  const leavesNet = FIXED_PLUS_LEAVES - leavesElectrons; // 양수면 +, 음수면 -
-
-  // 4. 금속박 벌어짐 각도 연산
-  // 금속박의 척력은 알짜 전하량의 제곱에 비례
-  const chargeAbs = Math.abs(leavesNet);
-  targetLeafAngle = Math.min(Math.PI * 0.28, Math.pow(chargeAbs / 4.8, 1.2) * (Math.PI * 0.28));
-
-  // 스프링 감쇠 운동 (부드러운 흔들림)
-  leafAngle += (targetLeafAngle - leafAngle) * 0.18;
-
-  // HUD 갱신
-  document.getElementById("hudPlateNet").textContent = (plateNet > 0 ? "+" : "") + plateNet + " e";
-  document.getElementById("hudLeavesNet").textContent = (leavesNet > 0 ? "+" : "") + leavesNet + " e";
-  const deg = (leafAngle * (180 / Math.PI)).toFixed(1);
-  document.getElementById("hudAngle").textContent = deg + "°";
-}
-
-/* ==========================================================================
-   캔버스 렌더링 루프 (유리병, 금속판, 금속박, 전하, 손가락, 대전체)
-   ========================================================================== */
-/* ---------- GFX_ES1018 : 검전기 그래픽 리뉴얼 (교과서 삽화형: 삼각 플라스크·고무마개·금속구·금속박·전하 알갱이·손가락) ---------- */
-const ESX = {
-  stopTop: 70, stopBot: 130, rimY: 92, rimH: 18, rimHW: 62, neckHW: 44, neckEnd: 118,
-  coneEnd: 350, coneHW: 178, bottom: 376, rodHW: 6, hingeUp: 4
-};
-function esWall(yRel) { // 플라스크 안쪽 반폭
-  if (yRel <= ESX.neckEnd) return ESX.neckHW;
-  const t = Math.min(1, (yRel - ESX.neckEnd) / (ESX.coneEnd - ESX.neckEnd));
-  return ESX.neckHW + (ESX.coneHW - ESX.neckHW) * t;
-}
-function esFlaskPath(x, P) {
-  const E = ESX, r = 28;
-  ctx.beginPath();
-  ctx.moveTo(x - E.neckHW, P + E.rimY + E.rimH / 2);
-  ctx.lineTo(x - E.neckHW, P + E.neckEnd);
-  ctx.lineTo(x - E.coneHW, P + E.coneEnd);
-  ctx.quadraticCurveTo(x - E.coneHW - 6, P + E.bottom - 2, x - E.coneHW + r, P + E.bottom);
-  ctx.lineTo(x + E.coneHW - r, P + E.bottom);
-  ctx.quadraticCurveTo(x + E.coneHW + 6, P + E.bottom - 2, x + E.coneHW, P + E.coneEnd);
-  ctx.lineTo(x + E.neckHW, P + E.neckEnd);
-  ctx.lineTo(x + E.neckHW, P + E.rimY + E.rimH / 2);
-  ctx.closePath();
-}
-function esRodSeg(x, y1, y2) {
-  const g = ctx.createLinearGradient(x - ESX.rodHW, 0, x + ESX.rodHW, 0);
-  g.addColorStop(0, "#9db8d6"); g.addColorStop(0.35, "#eaf3fc"); g.addColorStop(1, "#6f8fb5");
-  ctx.fillStyle = g;
-  ctx.fillRect(x - ESX.rodHW, y1, ESX.rodHW * 2, y2 - y1);
-  ctx.strokeStyle = "#4f6f96"; ctx.lineWidth = 1.5;
-  ctx.strokeRect(x - ESX.rodHW, y1, ESX.rodHW * 2, y2 - y1);
-}
-function esLabel(txt, x, y, lx, ly, align) {
-  ctx.save();
-  ctx.strokeStyle = "#64748b"; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke();
-  ctx.fillStyle = "#334155"; ctx.font = "bold 15px Pretendard, 'Malgun Gothic', sans-serif";
-  ctx.textAlign = align || "left"; ctx.textBaseline = "middle";
-  ctx.fillText(txt, lx + (align === "right" ? -6 : 6), ly);
-  ctx.restore();
-}
-
-function drawElectroscope() {
-  const ep = ELECTROSCOPE, E = ESX, x = ep.plateX, P = ep.plateY;
-  ctx.save();
-
-  // 1) 유리병(삼각 플라스크)
-  esFlaskPath(x, P);
-  const fg = ctx.createLinearGradient(x - E.coneHW, 0, x + E.coneHW, 0);
-  fg.addColorStop(0, "rgba(120,185,238,.78)");
-  fg.addColorStop(0.45, "rgba(205,232,251,.62)");
-  fg.addColorStop(1, "rgba(110,176,232,.80)");
-  ctx.fillStyle = fg; ctx.fill();
-  const fv = ctx.createLinearGradient(0, P + E.neckEnd, 0, P + E.bottom);
-  fv.addColorStop(0, "rgba(255,255,255,0)"); fv.addColorStop(1, "rgba(70,150,225,.35)");
-  ctx.fillStyle = fv; ctx.fill();
-  ctx.strokeStyle = "#4f9ad8"; ctx.lineWidth = 3.2; ctx.stroke();
-  // 유리 반사광
-  ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 5; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(x - E.neckHW + 9, P + E.neckEnd + 8);
-  ctx.lineTo(x - E.coneHW + 26, P + E.coneEnd - 12); ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(x + E.coneHW - 30, P + E.coneEnd - 40);
-  ctx.lineTo(x + E.coneHW - 20, P + E.coneEnd - 6); ctx.stroke();
-  ctx.lineCap = "butt";
-
-  // 2) 금속 막대 (구 ~ 마개 위)
-  esRodSeg(x, P, P + E.stopTop + 2);
-
-  // 3) 절연 병마개 (검은 고무)
-  ctx.beginPath();
-  ctx.moveTo(x - 40, P + E.stopTop); ctx.lineTo(x + 40, P + E.stopTop);
-  ctx.lineTo(x + 31, P + E.stopBot); ctx.lineTo(x - 31, P + E.stopBot); ctx.closePath();
-  const sg = ctx.createLinearGradient(x - 40, 0, x + 40, 0);
-  sg.addColorStop(0, "#111827"); sg.addColorStop(0.3, "#4b5563"); sg.addColorStop(0.6, "#1f2937"); sg.addColorStop(1, "#0b0f14");
-  ctx.fillStyle = sg; ctx.fill();
-  ctx.strokeStyle = "#020617"; ctx.lineWidth = 2; ctx.stroke();
-
-  // 4) 병목 테두리(유리 링)
-  ctx.beginPath(); ctx.roundRect(x - E.rimHW, P + E.rimY, E.rimHW * 2, E.rimH, 9);
-  const rg = ctx.createLinearGradient(0, P + E.rimY, 0, P + E.rimY + E.rimH);
-  rg.addColorStop(0, "rgba(240,249,255,.95)"); rg.addColorStop(1, "rgba(130,190,240,.9)");
-  ctx.fillStyle = rg; ctx.fill();
-  ctx.strokeStyle = "#4f9ad8"; ctx.lineWidth = 2.5; ctx.stroke();
-
-  // 5) 금속 막대 (병 속)
-  esRodSeg(x, P + E.stopBot - 2, ep.rodBottomY);
-
-  // 6) 금속박 걸이(작은 ㄷ자 클립)
-  const rb = ep.rodBottomY, hingeY = rb - E.hingeUp;
-  ctx.strokeStyle = "#374151"; ctx.lineWidth = 2.4;
-  ctx.beginPath(); ctx.moveTo(x - 9, rb - 12); ctx.lineTo(x - 9, rb + 6); ctx.lineTo(x + 9, rb + 6); ctx.lineTo(x + 9, rb - 12); ctx.stroke();
-
-  // 7) 금속박 2장 (∧ 모양으로 벌어짐)
-  ctx.save(); ctx.translate(x - 4, hingeY); ctx.rotate(leafAngle); drawLeaf(); ctx.restore();
-  ctx.save(); ctx.translate(x + 4, hingeY); ctx.rotate(-leafAngle); drawLeaf(); ctx.restore();
-  ctx.beginPath(); ctx.arc(x, hingeY, 4.5, 0, Math.PI * 2); ctx.fillStyle = "#475569"; ctx.fill();
-
-  // 8) 금속구 (위쪽 금속판)
-  const R = ep.ballR, bg = ctx.createRadialGradient(x - R * 0.35, P - R * 0.4, R * 0.1, x, P, R);
-  bg.addColorStop(0, "#d7ecff"); bg.addColorStop(0.35, "#5aa2e6"); bg.addColorStop(1, "#1d4f9c");
-  ctx.beginPath(); ctx.arc(x, P, R, 0, Math.PI * 2);
-  ctx.fillStyle = bg; ctx.fill();
-  ctx.strokeStyle = "#173f7c"; ctx.lineWidth = 2; ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(x - R * 0.36, P - R * 0.42, R * 0.22, R * 0.13, -0.6, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.fill();
-
-  // 9) 부분 이름 (교과서 삽화처럼 지시선)
-  esLabel("금속판(금속구)", x + R + 2, P + 8, x + 150, P + 8);
-  esLabel("절연 병마개", x + 36, P + 108, x + 150, P + 108);
-  esLabel("금속 막대", x + 7, P + 155, x + 150, P + 155);
-  esLabel("금속박", x + 24, P + 270, x + 150, P + 292);
-  ctx.fillStyle = "#3b6ea5"; ctx.font = "bold 16px Pretendard, 'Malgun Gothic', sans-serif";
-  ctx.textAlign = "center"; ctx.fillText("유리병", x + 112, P + 345); ctx.textAlign = "left";
-  ctx.restore();
-}
-
-function drawLeaf() {
-  const ep = ELECTROSCOPE, w = ep.leafWidth, L = ep.leafLength;
-  ctx.beginPath();
-  ctx.moveTo(-w / 2, 0); ctx.lineTo(w / 2, 0);
-  ctx.lineTo(w / 2 + 0.5, L); ctx.quadraticCurveTo(0, L + 4, -w / 2 - 0.5, L);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-  g.addColorStop(0, "#fde68a"); g.addColorStop(0.5, "#fbbf24"); g.addColorStop(1, "#b45309");
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = "#1f2937"; ctx.lineWidth = 1.6; ctx.stroke();
-}
-
-// 대전체 막대 (유리 막대 느낌)
-function drawRod() {
-  const minus = ROD.type === "MINUS";
-  const c1 = minus ? "#dc2626" : "#2563eb";
-  ctx.save();
-  ctx.translate(ROD.x, ROD.y);
-  ctx.rotate(ROD.angle);
-  const rw = ROD.length, rh = ROD.width;
-  ctx.beginPath(); ctx.roundRect(0, -rh / 2, rw, rh, rh / 2);
-  const g = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
-  g.addColorStop(0, minus ? "rgba(254,226,226,.95)" : "rgba(219,234,254,.95)");
-  g.addColorStop(0.5, minus ? "rgba(252,165,165,.55)" : "rgba(147,197,253,.55)");
-  g.addColorStop(1, minus ? "rgba(220,38,38,.35)" : "rgba(37,99,235,.35)");
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = c1; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(rh / 2, -rh / 2 + 5); ctx.lineTo(rw - rh / 2, -rh / 2 + 5);
-  ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 3; ctx.stroke();
-  for (let i = 0; i < 7; i++) {
-    const cx = 24 + i * 28;
-    ctx.save(); ctx.translate(cx, 0); ctx.rotate(-ROD.angle);
-    if (minus) drawMinusSymbol(0, 0); else drawPlusSymbol(0, 0);
-    ctx.restore();
-  }
-  ctx.fillStyle = minus ? "#b91c1c" : "#1d4ed8";
-  ctx.font = "bold 14px Pretendard, 'Malgun Gothic', sans-serif";
-  ctx.fillText(minus ? "(-) 대전체" : "(+) 대전체", 40, -20);
-  ctx.restore();
-}
-
-// 접지 손가락 (피부톤 손가락 + 손톱 + 손등/소매, 전자 이동 화살표)
-function drawHand() {
-  const hx = HAND.isTouching ? HAND.contactX : HAND.x;
-  const hy = HAND.isTouching ? HAND.contactY : HAND.y;
-  ctx.save();
-  ctx.translate(hx, hy);
-  ctx.rotate(-0.7);               // 손끝(원점)에서 오른쪽 위로 손이 이어짐
-
-  // 소매
-  const sleeve = ctx.createLinearGradient(0, -44, 0, 44);
-  sleeve.addColorStop(0, "#94a3b8"); sleeve.addColorStop(0.5, "#cbd5e1"); sleeve.addColorStop(1, "#64748b");
-  ctx.fillStyle = sleeve; ctx.fillRect(330, -46, 260, 92);
-  ctx.strokeStyle = "#475569"; ctx.lineWidth = 2; ctx.strokeRect(330, -46, 260, 92);
-
-  // 손가락 + 손등
-  ctx.beginPath();
-  ctx.moveTo(21, -21);
-  ctx.arc(21, 0, 21, -Math.PI / 2, Math.PI / 2, true);
-  ctx.lineTo(150, 24);
-  ctx.bezierCurveTo(190, 26, 235, 56, 292, 60);
-  ctx.lineTo(332, 44); ctx.lineTo(332, -44); ctx.lineTo(292, -60);
-  ctx.bezierCurveTo(235, -56, 190, -26, 150, -23);
-  ctx.closePath();
-  const sk = ctx.createLinearGradient(0, -34, 0, 34);
-  sk.addColorStop(0, "#fde3d0"); sk.addColorStop(0.45, "#f8c9ab"); sk.addColorStop(1, "#e6a583");
-  ctx.fillStyle = sk; ctx.fill();
-  ctx.strokeStyle = "#cf8f6e"; ctx.lineWidth = 2.2; ctx.stroke();
-
-  // 손톱
-  ctx.beginPath(); ctx.roundRect(7, -12.5, 38, 25, 11);
-  const ng = ctx.createLinearGradient(0, -12, 0, 12);
-  ng.addColorStop(0, "#fff1ea"); ng.addColorStop(1, "#f8cdbc");
-  ctx.fillStyle = ng; ctx.fill();
-  ctx.strokeStyle = "#e0a58e"; ctx.lineWidth = 1.4; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(14, -6); ctx.lineTo(34, -6);
-  ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.stroke();
-
-  // 손가락 마디 주름 + 하이라이트
-  ctx.strokeStyle = "rgba(190,120,90,.55)"; ctx.lineWidth = 1.4;
-  [78, 96].forEach(px => { ctx.beginPath(); ctx.moveTo(px, -17); ctx.quadraticCurveTo(px + 4, 0, px, 17); ctx.stroke(); });
-  ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 3.5;
-  ctx.beginPath(); ctx.moveTo(52, -13); ctx.lineTo(140, -16); ctx.stroke();
-  ctx.lineCap = "butt";
-
-  // 전자 이동 화살표 (접지 중 알짜 전하 이동이 있을 때)
-  if (HAND.isTouching && netChargeTotal !== 0) {
-    const outward = netChargeTotal > 0;      // (+)로 대전: 전자가 손으로 빠져나감
-    const t = performance.now() / 1000;
-    [-40, 40].forEach((oy, k) => {
-      const x0 = 52, x1 = 200;
-      ctx.strokeStyle = "#ea3b1f"; ctx.fillStyle = "#ea3b1f"; ctx.lineWidth = 3.2;
-      ctx.beginPath(); ctx.moveTo(x0, oy); ctx.lineTo(x1, oy); ctx.stroke();
-      const ax = outward ? x1 : x0, dir = outward ? 1 : -1;
-      ctx.beginPath(); ctx.moveTo(ax + dir * 13, oy); ctx.lineTo(ax - dir * 6, oy - 8); ctx.lineTo(ax - dir * 6, oy + 8); ctx.closePath(); ctx.fill();
-      for (let i = 0; i < 3; i++) {
-        let f = ((t * 0.5 + i / 3 + k * 0.17) % 1);
-        if (!outward) f = 1 - f;
-        drawMinusSymbol(x0 + 12 + f * (x1 - x0 - 24), oy - (k ? -0 : 0) + (k ? 0 : 0));
-      }
-    });
-  }
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = "#475569";
-  ctx.font = "bold 14px Pretendard, 'Malgun Gothic', sans-serif";
-  ctx.fillText(HAND.isTouching ? "⚡ 접지됨 (전하 이동)" : "손가락 (접지)", hx + 44, hy + 70);
-  ctx.restore();
-}
-
-// 전하 기호: (+) 파랑 원, (-) 빨강 원  (교과서 삽화 색)
-function drawPlusSymbol(x, y) {
-  ctx.save();
-  const g = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 10);
-  g.addColorStop(0, "#f0f9ff"); g.addColorStop(1, "#7ab8f0");
-  ctx.beginPath(); ctx.arc(x, y, 9.5, 0, Math.PI * 2);
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = "#1f6fc4"; ctx.lineWidth = 2; ctx.stroke();
-  ctx.strokeStyle = "#0c3f80"; ctx.lineWidth = 2.2;
-  ctx.beginPath(); ctx.moveTo(x - 4.5, y); ctx.lineTo(x + 4.5, y); ctx.moveTo(x, y - 4.5); ctx.lineTo(x, y + 4.5); ctx.stroke();
-  ctx.restore();
-}
-function drawMinusSymbol(x, y) {
-  ctx.save();
-  const g = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 10);
-  g.addColorStop(0, "#ff9a9a"); g.addColorStop(1, "#e11d2e");
-  ctx.beginPath(); ctx.arc(x, y, 9.5, 0, Math.PI * 2);
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = "#9f1220"; ctx.lineWidth = 2; ctx.stroke();
-  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.6;
-  ctx.beginPath(); ctx.moveTo(x - 4.5, y); ctx.lineTo(x + 4.5, y); ctx.stroke();
-  ctx.restore();
-}
-
-// 전하 자리(슬롯): pref '+' / '-' / 'x'(여분)
-function esTopSlots() {
-  const ep = ELECTROSCOPE, s = [];
-  for (let i = 0; i < 12; i++) {
-    const a = (-75 + i * 30) * Math.PI / 180, r = ep.ballR + 17;
-    s.push({ x: ep.plateX + Math.cos(a) * r, y: ep.plateY + Math.sin(a) * r, pref: i % 2 ? '-' : '+' });
-  }
-  for (let i = 0; i < 12; i++) {
-    const deg = -60 + i * 30, a = deg * Math.PI / 180;
-    if (Math.sin(a) > 0.5) continue;
-    const r = ep.ballR + 42;
-    s.push({ x: ep.plateX + Math.cos(a) * r, y: ep.plateY + Math.sin(a) * r, pref: 'x' });
-  }
-  return s;
-}
-function esBottomSlots() {
-  const ep = ELECTROSCOPE, x = ep.plateX, P = ep.plateY, s = [];
-  [142, 168, 194, 220].forEach((d, k) => {
-    s.push({ x: x - 34, y: P + d, pref: k % 2 ? '-' : '+' });
-    s.push({ x: x + 34, y: P + d, pref: k % 2 ? '+' : '-' });
+    } else { const p = slotPos(e.reg, e.slot); e.x = p.x; e.y = p.y; }
   });
-  const hingeY = ep.rodBottomY - ESX.hingeUp, th = leafAngle, c = Math.cos(th), sn = Math.sin(th);
-  const leafPt = (side, d, off) => {   // side -1 왼쪽 박, +1 오른쪽 박
-    const hx = x + side * 4;
-    return { x: hx + side * (sn * d + c * off), y: hingeY + c * d - sn * off };
-  };
-  [[-1, 26, '+'], [-1, 56, '-'], [1, 26, '-'], [1, 56, '+']].forEach(q => {
-    const p = leafPt(q[0], q[1], 17); p.pref = q[2]; s.push(p);
-  });
-  [176, 202, 228].forEach(d => { s.push({ x: x - 62, y: P + d, pref: 'x' }); s.push({ x: x + 62, y: P + d, pref: 'x' }); });
-  [[-1, 84], [1, 84]].forEach(q => { const p = leafPt(q[0], q[1], 17); p.pref = 'x'; s.push(p); });
-  return s;
-}
-function esPlace(slots, nPlus, nMinus) {
-  const plus = slots.filter(q => q.pref === '+'), minus = slots.filter(q => q.pref === '-'), extra = slots.filter(q => q.pref === 'x');
-  const pOrder = plus.concat(extra), mOrder = minus.concat(extra);
-  const used = new Set(), out = [];
-  for (let i = 0; i < nPlus && i < pOrder.length; i++) { used.add(pOrder[i]); out.push(['+', pOrder[i]]); }
-  let placed = 0;
-  for (let i = 0; i < mOrder.length && placed < nMinus; i++) {
-    if (used.has(mOrder[i])) continue;
-    used.add(mOrder[i]); out.push(['-', mOrder[i]]); placed++;
-  }
-  return out;
+  // 금속박: 감쇠 스프링으로 평형각에 접근
+  const q = Math.abs(NQ - arrived("L")), tgt = angleFor(q);
+  S.vel += (70 * (tgt - S.theta) - 9.5 * S.vel) * dt; S.theta = clamp(S.theta + S.vel * dt, 0, 1.1);
 }
 
-// 검전기 전하 렌더링
-function renderCharges() {
-  if (chargeView === "NONE") return;
-  const top = esTopSlots(), bot = esBottomSlots();
-  const plateNet = FIXED_PLUS_PLATE - plateElectrons;
-  const leavesNet = FIXED_PLUS_LEAVES - leavesElectrons;
-  let items = [];
+/* ---------- 그리기 ---------- */
+function ball(x, y, sign, a) {
+  ctx.save(); ctx.globalAlpha = a == null ? 1 : a;
+  ctx.beginPath(); ctx.arc(x, y, R + 1, 0, TAU);
+  ctx.fillStyle = sign > 0 ? "#e8281e" : "#0000ff"; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.fillRect(x - 9, y - 2.4, 18, 4.8);
+  if (sign > 0) ctx.fillRect(x - 2.4, y - 9, 4.8, 18);
+  ctx.restore();
+}
+function leafShape(sg) {
+  ctx.save(); ctx.translate(STEM.x, STEM.hinge); ctx.rotate(-sg * S.theta);
+  const w = LEAF.w, L = LEAF.len, r = 6;
+  ctx.beginPath(); ctx.moveTo(-w / 2, -6); ctx.lineTo(w / 2, -6); ctx.lineTo(w / 2, L - r);
+  ctx.quadraticCurveTo(w / 2, L, w / 2 - r, L); ctx.lineTo(-w / 2 + r, L); ctx.quadraticCurveTo(-w / 2, L, -w / 2, L - r); ctx.closePath();
+  ctx.fillStyle = "#808080"; ctx.fill(); ctx.restore();
+}
+function drawFlask() {
+  const p = new Path2D();
+  p.moveTo(876, 343); p.lineTo(876, 449); p.lineTo(740, 557); p.quadraticCurveTo(721, 573, 720, 600);
+  p.lineTo(718, 918); p.quadraticCurveTo(718, 968, 768, 968); p.lineTo(1192, 968); p.quadraticCurveTo(1241, 968, 1241, 916);
+  p.lineTo(1241, 600); p.quadraticCurveTo(1240, 573, 1222, 557); p.lineTo(1083, 449); p.lineTo(1083, 343);
+  const body = new Path2D();
+  body.moveTo(876, 449); body.lineTo(740, 557); body.quadraticCurveTo(721, 573, 720, 600); body.lineTo(718, 918);
+  body.quadraticCurveTo(718, 968, 768, 968); body.lineTo(1192, 968); body.quadraticCurveTo(1241, 968, 1241, 916);
+  body.lineTo(1241, 600); body.quadraticCurveTo(1240, 573, 1222, 557); body.lineTo(1083, 449); body.closePath();
+  ctx.fillStyle = "#ffffff"; ctx.fill(body);
+  ctx.fillStyle = "#d4fcfa"; ctx.fillRect(878, 355, 204, 94);                 // 절연체(마개)
+  ctx.lineWidth = 6; ctx.lineJoin = "round"; ctx.strokeStyle = "#a8c4e4"; ctx.stroke(p);
+}
+function drawStructure() {
+  drawFlask();
+  ctx.fillStyle = "#c0c0c0"; ctx.fillRect(STEM.x - STEM.w / 2, STEM.top - 4, STEM.w, STEM.hinge - STEM.top + 10);   // 금속 막대
+  ctx.fillStyle = "#808080"; ctx.fillRect(STEM.x - STEM.w / 2, STEM.hinge - 8, STEM.w, 16);
+  leafShape(-1); leafShape(1);                                                                                      // 금속박
+  ctx.beginPath(); ctx.ellipse(DISC.x, DISC.y, DISC.rx, DISC.ry, 0, 0, TAU); ctx.fillStyle = "#808080"; ctx.fill(); // 금속판
+}
+function label(txt, x, y, lx, ly, al) {
+  ctx.save(); ctx.strokeStyle = "#9aa3ad"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke();
+  ctx.fillStyle = "#475569"; ctx.font = "bold 34px Pretendard,'Malgun Gothic',sans-serif"; ctx.textAlign = al || "left"; ctx.textBaseline = "middle";
+  ctx.fillText(txt, lx + (al === "right" ? -10 : 10), ly); ctx.restore();
+}
+function drawLabels() {
+  label("금속판", DISC.x, DISC.y - 36, DISC.x, 118, "center");
+  label("금속 막대", STEM.x + 18, 520, 1330, 520);
+  label("절연체(마개)", 1083, 430, 1330, 430);
+  label("금속박", leafPoint(1, .75, 0).x + 12, leafPoint(1, .75, 0).y, 1330, 900);
+}
+function netText(n) { return n === 0 ? "중성 (0)" : (n > 0 ? "+" : "−") + Math.abs(n) + " e"; }
+function drawCharges() {
+  if (chargeView === "NONE") { S.el.filter(e => e.tr).forEach(e => ball(e.x, e.y, -1, e.a)); return; }
+  const Pe = S.el.filter(e => e.reg === "P" && !e.tr), Le = S.el.filter(e => e.reg === "L" && !e.tr);
   if (chargeView === "ALL") {
-    items = esPlace(top, FIXED_PLUS_PLATE, Math.max(0, plateElectrons))
-      .concat(esPlace(bot, FIXED_PLUS_LEAVES, Math.max(0, leavesElectrons)));
-  } else if (chargeView === "NET") {
-    const net = (slots, n) => {
-      const out = [], k = Math.min(slots.length, Math.abs(n));
-      for (let i = 0; i < k; i++) out.push([n > 0 ? '+' : '-', slots[i]]);
-      return out;
-    };
-    items = net(top, plateNet).concat(net(bot, leavesNet));
+    PF.forEach(p => ball(p.x, p.y, +1));
+    for (let i = 0; i < 8; i++) { const p = fixedLeafPos(i); ball(p.x, p.y, +1); }
+    Pe.forEach(e => ball(e.x, e.y, -1)); Le.forEach(e => ball(e.x, e.y, -1));
+  } else {                                           // 알짜 전하만
+    const qp = NQ - Pe.length, ql = NQ - Le.length;
+    if (qp > 0) for (let i = 0; i < qp; i++) ball(PF[i].x, PF[i].y, +1); else for (let i = 0; i < -qp; i++) ball(PE[i].x, PE[i].y, -1);
+    if (ql > 0) for (let i = 0; i < ql; i++) { const p = fixedLeafPos(i); ball(p.x, p.y, +1); } else for (let i = 0; i < -ql; i++) { const p = slotPos("L", i); ball(p.x, p.y, -1); }
   }
-  items.forEach(it => { if (it[0] === '+') drawPlusSymbol(it[1].x, it[1].y); else drawMinusSymbol(it[1].x, it[1].y); });
+  S.el.filter(e => e.tr).forEach(e => ball(e.x, e.y, -1, e.a));
+}
+function drawNetTags() {
+  const qp = NQ - arrived("P"), ql = NQ - arrived("L");
+  ctx.save(); ctx.font = "bold 36px Pretendard,'Malgun Gothic',sans-serif"; ctx.textBaseline = "middle";
+  ctx.textAlign = "left"; ctx.fillStyle = qp > 0 ? "#d92d20" : qp < 0 ? "#1d1dd8" : "#64748b"; ctx.fillText("금속판 " + netText(qp), 1190, 118);
+  ctx.fillStyle = ql > 0 ? "#d92d20" : ql < 0 ? "#1d1dd8" : "#64748b"; ctx.fillText("금속박 " + netText(ql), 1290, 960);
+  ctx.restore();
+}
+function drawRod() {
+  ctx.save(); ctx.translate(ROD.x, ROD.y); ctx.rotate(ROD.ang);
+  ctx.beginPath(); ctx.moveTo(-ROD.len, -ROD.hw); ctx.lineTo(0, -ROD.hw); ctx.arc(0, 0, ROD.hw, -Math.PI / 2, Math.PI / 2); ctx.lineTo(-ROD.len, ROD.hw); ctx.closePath();
+  ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = "#808080"; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.restore();
+  for (let k = 0; k < 7; k++) { const d = 20 + 46 * k; ball(ROD.x - Math.cos(ROD.ang) * d, ROD.y - Math.sin(ROD.ang) * d, ROD.type === "MINUS" ? -1 : +1); }
+}
+function drawHand() {
+  ctx.save(); ctx.translate(HAND.x - FIN_HOME.x, HAND.y - FIN_HOME.y);
+  ctx.fillStyle = "#ffffd5"; ctx.strokeStyle = "#808080"; ctx.lineWidth = 5; ctx.lineJoin = "round"; ctx.lineCap = "round";
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r); ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath(); ctx.fill(); ctx.stroke(); };
+  // 손등
+  ctx.beginPath(); ctx.moveTo(1700, 236); ctx.lineTo(1930, 205); ctx.lineTo(1976, 212); ctx.lineTo(1976, 350); ctx.lineTo(1890, 360); ctx.quadraticCurveTo(1850, 382, 1790, 382); ctx.lineTo(1700, 380); ctx.closePath(); ctx.fill(); ctx.stroke();
+  rr(1664, 330, 130, 54, 26); rr(1662, 284, 150, 52, 26); rr(1676, 238, 142, 50, 25);       // 접은 손가락
+  // 검지
+  ctx.beginPath(); ctx.moveTo(1800, 172); ctx.lineTo(1578, 180); ctx.bezierCurveTo(1540, 182, 1528, 204, 1534, 220); ctx.bezierCurveTo(1540, 238, 1566, 238, 1600, 238); ctx.lineTo(1800, 236); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // 엄지
+  ctx.beginPath(); ctx.moveTo(1712, 246); ctx.bezierCurveTo(1696, 214, 1730, 184, 1778, 176); ctx.bezierCurveTo(1830, 164, 1880, 190, 1930, 206); ctx.bezierCurveTo(1890, 214, 1860, 296, 1790, 294); ctx.bezierCurveTo(1740, 296, 1720, 272, 1712, 246); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#6a9ccb"; ctx.fillRect(1968, 188, 8, 184);                               // 소매
+  ctx.restore();
+}
+function draw() {
+  ctx.setTransform(SC, 0, 0, SC, 0, 0);
+  ctx.fillStyle = "#efefef"; ctx.fillRect(0, 0, RW, RH);
+  drawStructure(); drawLabels(); drawCharges(); drawNetTags(); drawRod(); drawHand();
 }
 
-/* ==========================================================================
-   메인 렌더 애니메이션 루프
-   ========================================================================== */
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  updatePhysics();
-
-  drawElectroscope();
-  drawRod();
-  drawHand();
-  renderCharges();
-
-  requestAnimationFrame(animate);
+/* ---------- HUD ---------- */
+function updateHUD() {
+  const t = targets(), qpA = NQ - arrived("P"), qlA = NQ - arrived("L");
+  const Qc = 2 * NQ - (t.Ep + t.El), deg = S.theta * 180 / Math.PI;
+  const set = (id, v) => { const el = $(id); if (el && el.textContent !== v) el.textContent = v; };
+  set("hudPlateNet", netText(qpA)); set("hudLeavesNet", netText(qlA));
+  set("hudAngle", deg.toFixed(1) + "°");
+  set("hudDist", t.geo.r > 420 ? "멀리 있음" : Math.round(t.geo.r) + " (상대값)");
+  set("hudForce", Math.round(t.geo.F * 100) + " %");
+  set("hudMoved", t.geo.n + " 개 (접지 시 " + 2 * t.geo.n + " 개)");
+  set("hudTotal", netText(Qc));
+  set("hudGround", HAND.touching ? "접지됨 ⏚" : "고립 (접지 안 됨)");
+  const bar = $("hudForceBar"); if (bar) bar.style.width = Math.round(t.geo.F * 100) + "%";
+  const sg = ROD.type === "MINUS" ? "(−)" : "(+)";
+  let m;
+  if (t.geo.n === 0 && !HAND.touching && Math.abs(Qc) === 0) m = "대전체가 멀리 있어 전기력이 거의 없어요. 전자는 금속판과 금속박에 고르게 퍼져 있습니다.";
+  else if (HAND.touching) m = t.geo.n === 0 ? "손가락이 닿아 있고 대전체가 없어서 전자가 드나들어 검전기가 중성이 됩니다." : sg + " 대전체의 " + (ROD.type === "MINUS" ? "척력으로 전자 " + 2 * t.geo.n + "개가 손가락 쪽으로 빠져나가" : "인력으로 손가락에서 전자 " + 2 * t.geo.n + "개가 들어와") + " 금속판에 구속되고, 금속박은 중성이 되어 오므라듭니다.";
+  else if (t.geo.n > 0) m = sg + " 대전체와의 전기력 F=" + Math.round(t.geo.F * 100) + "% → 전자 " + t.geo.n + "개가 " + (ROD.type === "MINUS" ? "금속판 → 금속박" : "금속박 → 금속판") + "으로 이동 (금속판 " + netText(NQ - t.Ept) + " / 금속박 " + netText(NQ - t.Elt) + ").";
+  else m = "검전기 전체 전하 " + netText(Qc) + " → 금속판과 금속박에 나뉘어 있어 금속박이 벌어져 있습니다.";
+  set("hudMsg", m);
 }
 
-// 초기 기동
-animate();
+/* ---------- 입력 ---------- */
+function canvasPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * RW, y: (e.clientY - r.top) / r.height * RH };
+}
+function hitRod(p) {
+  const ux = Math.cos(ROD.ang), uy = Math.sin(ROD.ang);
+  const t = clamp((p.x - ROD.x) * ux + (p.y - ROD.y) * uy, -420, 0);
+  return Math.hypot(p.x - (ROD.x + ux * t), p.y - (ROD.y + uy * t)) < ROD.hw + 28;
+}
+const hitHand = p => p.x > HAND.x - 30 && p.x < HAND.x + 460 && p.y > HAND.y - 70 && p.y < HAND.y + 180;
+canvas.addEventListener("pointerdown", e => {
+  const p = canvasPoint(e);
+  if (hitRod(p)) { scenarioToken++; ROD.drag = true; ROD.gx = null; ROD.ox = ROD.x - p.x; ROD.oy = ROD.y - p.y; say("대전체를 움직이는 중입니다..."); }
+  else if (hitHand(p)) { scenarioToken++; HAND.drag = true; HAND.gx = null; HAND.want = "away"; HAND.ox = HAND.x - p.x; HAND.oy = HAND.y - p.y; say("손가락을 조작하는 중입니다..."); }
+  else return;
+  try { canvas.setPointerCapture(e.pointerId); } catch (er) {}
+  e.preventDefault();
+});
+canvas.addEventListener("pointermove", e => {
+  const p = canvasPoint(e);
+  if (ROD.drag) {
+    ROD.x = clamp(p.x + ROD.ox, 30, 1010); ROD.y = clamp(p.y + ROD.oy, 0, 640); pushRodClear();
+  } else if (HAND.drag) {
+    const x = p.x + HAND.ox, y = p.y + HAND.oy;
+    if (Math.hypot(x - (TC.x + 8), y - TC.y) < 70) { HAND.x = TC.x + 8; HAND.y = TC.y; HAND.want = "touch"; setTouch(true); }
+    else { setTouch(false); HAND.want = "away"; HAND.x = clamp(x, TC.x + 60, 1700); HAND.y = clamp(y, 40, 600); }
+  } else canvas.style.cursor = (hitRod(p) || hitHand(p)) ? "grab" : "default";
+});
+const endDrag = () => { if (ROD.drag || HAND.drag) { ROD.drag = false; HAND.drag = false; say("검전기 전하 분포 관찰 중..."); } };
+canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+
+/* ---------- 컨트롤 ---------- */
+function setTouch(v) {
+  if (v === HAND.touching) return;
+  HAND.touching = v; playTone(v ? 520 : 380, 0.08);
+  const b = $("btnHandToggle"); if (b) b.classList.toggle("active", v);
+  if (!v) onFingerLift();
+}
+function setRodType(type) {
+  ROD.type = type; playTone(type === "MINUS" ? 440 : 660, 0.1);
+  const r = document.querySelector('input[name="rodType"][value="' + type + '"]'); if (r) r.checked = true;
+  say((type === "MINUS" ? "(-) 대전체" : "(+) 대전체") + "로 변경되었습니다.");
+}
+function handTo(mode) {
+  if (mode === "touch") { HAND.want = "touch"; HAND.gx = TC.x + 8; HAND.gy = TC.y; }
+  else { HAND.want = "away"; setTouch(false); HAND.gx = FIN_HOME.x; HAND.gy = FIN_HOME.y; }
+}
+function toggleHandTouch() {
+  scenarioToken++;
+  if (HAND.touching || HAND.want === "touch") { handTo("away"); say("손가락을 떼었습니다."); }
+  else { handTo("touch"); say("손가락으로 금속판을 접지합니다."); }
+}
+function rodTo(pos) { ROD.gx = pos.x; ROD.gy = pos.y; }
+function resetRodPosition() { scenarioToken++; rodTo(ROD_HOME); say("대전체를 멀리 치웠습니다."); }
+function resetElectroscope() {
+  scenarioToken++; handTo("away"); HAND.x = FIN_HOME.x; HAND.y = FIN_HOME.y; HAND.gx = null;
+  initElectrons(); ROD.x = ROD_HOME.x; ROD.y = ROD_HOME.y; ROD.gx = null;
+  playTone(220, 0.15); say("검전기가 완전히 방전되어 중화되었습니다.");
+}
+function setChargeView(m) { chargeView = m; }
+
+/* ---------- 원클릭 시나리오 ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function waitUntil(fn, tok, ms) { const t0 = Date.now(); while (!fn() && tok === scenarioToken && Date.now() - t0 < (ms || 6000)) await sleep(40); }
+const settled = () => !S.el.some(e => e.tr);
+async function runScenario(num) {
+  const tok = ++scenarioToken, type = num === 4 ? "PLUS" : "MINUS";
+  const near = () => ROD.gx == null, ok = () => tok === scenarioToken;
+  initElectrons(); HAND.x = FIN_HOME.x; HAND.y = FIN_HOME.y; HAND.gx = null; HAND.want = "away"; setTouch(false); ROD.x = ROD_HOME.x; ROD.y = ROD_HOME.y;
+  setRodType(type);
+  if (num === 1) { say("[시나리오 1] " + (type === "MINUS" ? "(-)" : "(+)") + " 대전체 접근 → 전자가 금속판 ↔ 금속박으로 이동, 금속박이 벌어짐!"); rodTo(ROD_NEAR); return; }
+  rodTo(ROD_NEAR); await waitUntil(near, tok); await waitUntil(settled, tok); await sleep(500); if (!ok()) return;
+  say("[시나리오 " + num + "] 대전체를 가까이 한 채 손가락을 금속판에 접지!"); handTo("touch");
+  await waitUntil(() => HAND.touching, tok); await sleep(300); await waitUntil(settled, tok, 8000); await sleep(600); if (!ok()) return;
+  if (num === 2) { say("[시나리오 2] 금속박의 전자가 손가락으로 빠져나가 금속박이 오므라듭니다!"); return; }
+  say("[시나리오 " + num + "] ① 손가락을 먼저 뗍니다"); handTo("away"); await sleep(1100); if (!ok()) return;
+  say("[시나리오 " + num + "] ② 그 다음 대전체를 치웁니다"); rodTo(ROD_HOME); await waitUntil(near, tok, 5000); await waitUntil(settled, tok); await sleep(300);
+  if (ok()) say(num === 3 ? "[시나리오 3] 전자가 빠져나간 채 갇혀 검전기가 (+)로 영구 대전됨!" : "[시나리오 4] 전자가 들어온 채 갇혀 검전기가 (-)로 영구 대전됨!");
+}
+
+/* ---------- 실행 ---------- */
+let last = 0;
+function frame(ts) {
+  const dt = Math.min(0.05, (ts - last) / 1000 || 0); last = ts;
+  update(dt); draw(); updateHUD();
+  requestAnimationFrame(frame);
+}
+initElectrons();
+window.__es = { S, ROD, HAND, DISC, targets, rodGeo, dispatch, update, draw, updateHUD, angleFor, arrived, cnt, setTouch, handTo, rodTo,
+  advance(sec) { const n = Math.round(sec / 0.016); for (let i = 0; i < n; i++) update(0.016); }, ROD_NEAR, ROD_HOME, TC };
+requestAnimationFrame(frame);
+
 </script>
 <style id="rsp1017">
 @media (pointer:coarse) and (hover:none){
