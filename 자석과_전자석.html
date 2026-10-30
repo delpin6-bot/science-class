@@ -750,59 +750,79 @@ const STATE = {
    2. 물리 엔진: 자기 쌍극자 및 복합 자계 계산
    ========================================================================== */
 // 물체 중심(obj.x, obj.y) 기준 (px, py)에서의 자기장 벡터 (Bx, By) 계산
+
+/* 막대자석·전자석 모두 "원통형 코일(솔레노이드)"과 같은 자기장으로 계산한다.
+   원형 전류 고리의 정확한 자기장(타원적분)을 길이 방향으로 겹쳐 놓아,
+   교과서 그림처럼 자석 안에서는 S->N, 바깥에서는 N->S로 이어지는 닫힌 곡선이 된다. */
+const FM = { a: 17, L: 104, N: 30, soft: 25 };
+
+function ellipKE(m) {                       // 완전타원적분 K, E (산술-기하 평균법)
+  m = Math.min(m, 0.9999999);
+  let a = 1, b = Math.sqrt(1 - m), sum = 0.5 * m, pw = 0.5;
+  for (let i = 0; i < 7; i++) {
+    const c = (a - b) / 2, an = (a + b) / 2, bn = Math.sqrt(a * b);
+    a = an; b = bn; pw *= 2; sum += pw * c * c;
+  }
+  const K = Math.PI / (2 * a);
+  return [K, K * (1 - sum)];
+}
+
+function solenoidLocal(lx, ly) {            // 코일 축 = x축, 반경 방향 = |y|
+  const rho = Math.max(Math.abs(ly), 0.6), sg = ly / rho;      // 축 근처에서도 부호가 매끄럽게 이어지도록
+  let bz = 0, br = 0;
+  for (let k = 0; k < FM.N; k++) {
+    const z = lx - (-FM.L / 2 + (k + 0.5) * FM.L / FM.N), a = FM.a;
+    const Q = (a + rho) * (a + rho) + z * z, sq = Math.sqrt(Q);
+    const den = Math.max((a - rho) * (a - rho) + z * z, FM.soft);   // 도선 바로 옆(5px 이내)에서만 값이 폭주하지 않게 제한
+    const [K, E] = ellipKE(4 * a * rho / Q);
+    bz += (K + (a * a - rho * rho - z * z) / den * E) / sq;
+    br += z / (rho * sq) * (-K + (a * a + rho * rho + z * z) / den * E);
+  }
+  return { bx: bz, by: br * sg };
+}
+
 function getMagneticFieldAt(px, py) {
   const tool = STATE.currentTool;
-  
-  // 슬롯 1 (코일만 있고 배터리 없음): 전류가 흐르지 않아 자기장 = 0
-  if (tool === 1) {
-    return { bx: 0, by: 0, mag: 0 };
+  if (tool === 1) return { bx: 0, by: 0, mag: 0 };          // 전류가 없는 코일 : 자기장 없음
+  const M = (tool === 3) ? 2.0 : 1.0;
+  const th = STATE.obj.angle, dx = px - STATE.obj.x, dy = py - STATE.obj.y;
+  const c = Math.cos(-th), s_ = Math.sin(-th);
+  const f = solenoidLocal(dx * c - dy * s_, dx * s_ + dy * c);
+  const cr = Math.cos(th), sr = Math.sin(th);
+  const Bx = (f.bx * cr - f.by * sr) * M, By = (f.bx * sr + f.by * cr) * M;
+  return { bx: Bx, by: By, mag: Math.hypot(Bx, By) };
+}
+
+/* 자기력선 추적 : 자석 한가운데(x=0) 안쪽에서 출발해 B 방향을 따라 한 바퀴 돈다 */
+const LINE_CACHE = {};
+function traceLine(y0) {
+  const pts = [[0, y0]]; let x = 0, y = y0, len = 0;
+  for (let i = 0; i < 1500; i++) {
+    const near = Math.hypot(Math.max(0, Math.abs(x) - FM.L / 2), y);
+    const h = near < 40 ? 2.2 : 3.6;
+    let b = solenoidLocal(x, y), m = Math.hypot(b.bx, b.by) || 1;
+    const mx = x + b.bx / m * h / 2, my = y + b.by / m * h / 2;
+    b = solenoidLocal(mx, my); m = Math.hypot(b.bx, b.by) || 1;
+    const px = x; x += b.bx / m * h; y += b.by / m * h; len += h;
+    pts.push([x, y]);
+    if (i > 8 && px < 0 && x >= 0) break;                       // 한 바퀴 돌아 제자리
+    if (Math.abs(x) > 900 || Math.abs(y) > 620) break;           // 화면 밖
   }
-  
-  // 자기 모멘트 세기 M
-  let M = 1.0;
-  if (tool === 3) M = 2.0;       // 촘촘한 코일은 2배 강함
-  else if (tool === 0 || tool === 2) M = 1.0;
-  
-  const ox = STATE.obj.x;
-  const oy = STATE.obj.y;
-  const theta = STATE.obj.angle;
-  
-  // 1. 상대 변위 벡터
-  const dx = px - ox;
-  const dy = py - oy;
-  
-  // 2. 물체의 로컬 좌표계로 회전 (물체 중심이 원점, 자석 축이 X축)
-  const cosT = Math.cos(-theta);
-  const sinT = Math.sin(-theta);
-  const lx = dx * cosT - dy * sinT;
-  const ly = dx * sinT + dy * cosT;
-  
-  // 유한한 쌍극자 모델 (N극 at +d, S극 at -d)
-  const d = 35.0; // 자석 양극 사이 거리 절반
-  
-  // N극 (+d, 0)
-  const rx1 = lx - d;
-  const ry1 = ly;
-  const r1 = Math.max(12, Math.hypot(rx1, ry1));
-  
-  // S극 (-d, 0)
-  const rx2 = lx + d;
-  const ry2 = ly;
-  const r2 = Math.max(12, Math.hypot(rx2, ry2));
-  
-  // B_local = q_m * ( r1/r1^3 - r2/r2^3 )
-  const scale = M * 14000.0;
-  const bx_local = scale * ( (rx1 / (r1*r1*r1)) - (rx2 / (r2*r2*r2)) );
-  const by_local = scale * ( (ry1 / (r1*r1*r1)) - (ry2 / (r2*r2*r2)) );
-  
-  // 3. 원래 화면 좌표계로 역회전
-  const cosR = Math.cos(theta);
-  const sinR = Math.sin(theta);
-  const Bx = bx_local * cosR - by_local * sinR;
-  const By = bx_local * sinR + by_local * cosR;
-  
-  const mag = Math.hypot(Bx, By);
-  return { bx: Bx, by: By, mag: mag };
+  return pts;
+}
+function getFieldLines(n) {
+  if (LINE_CACHE[n]) return LINE_CACHE[n];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const rho = FM.a * 0.74 * Math.sqrt((i + 0.5) / n);
+    let up = traceLine(rho);
+    const e = up[up.length - 1];
+    if (Math.abs(e[0]) > 890 || Math.abs(e[1]) > 610) {          // 멀리 퍼져 나가는 선 : 들어오는 쪽(좌우 거울상)도 함께 그린다
+      up = up.map(p => [-p[0], p[1]]).reverse().concat(up);
+    }
+    out.push(up, up.map(p => [p[0], -p[1]]));                  // 위·아래 대칭
+  }
+  return (LINE_CACHE[n] = out);
 }
 
 /* ==========================================================================
@@ -845,8 +865,7 @@ function animate() {
   STATE.obj.angle += diff * 0.22;
   
   // 배경 클리어 (연한 민트 그린)
-  ctx.fillStyle = "#edf7ee";
-  ctx.fillRect(0, 0, w, h);
+  drawBackground(w, h);
   
   // 1. 나침반 매트릭스 렌더링
   if (STATE.showCompassMatrix) {
@@ -872,78 +891,40 @@ function animate() {
 /* ==========================================================================
    5. 나침반 매트릭스 렌더링 (Hexagonal Staggered Grid)
    ========================================================================== */
+
+function drawBackground(w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#04204b"); g.addColorStop(0.6, "#07408a"); g.addColorStop(1, "#0a5fb0");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  const r = ctx.createRadialGradient(STATE.obj.x, STATE.obj.y, 20, STATE.obj.x, STATE.obj.y, Math.max(w, h) * 0.7);
+  r.addColorStop(0, "rgba(90,170,255,.30)"); r.addColorStop(1, "rgba(90,170,255,0)");
+  ctx.fillStyle = r; ctx.fillRect(0, 0, w, h);
+}
+
 function drawCompassMatrix(w, h) {
-  const spacingX = 58;
-  const spacingY = 50;
-  const radius = 17;
-  
-  const startX = 140; // 좌측 툴박스 여백
-  const startY = 35;
-  
-  const rows = Math.ceil(h / spacingY) + 1;
-  const cols = Math.ceil((w - startX) / spacingX) + 1;
-  
+  const spacingX = 58, spacingY = 50, radius = 15;
+  const startX = 140, startY = 35;
+  const rows = Math.ceil(h / spacingY) + 1, cols = Math.ceil((w - startX) / spacingX) + 1;
   for (let r = 0; r < rows; r++) {
-    const y = startY + r * spacingY;
-    const offsetX = (r % 2 === 1) ? spacingX * 0.5 : 0;
-    
+    const y = startY + r * spacingY, offsetX = (r % 2 === 1) ? spacingX * 0.5 : 0;
     for (let c = 0; c < cols; c++) {
       const x = startX + c * spacingX + offsetX;
       if (x > w + 20) continue;
-      
-      // 자석/전자석 본체 바로 아래에 가려지는 나침반은 시각적 깔끔함을 위해 연하게 처리
-      const distToObj = Math.hypot(x - STATE.obj.x, y - STATE.obj.y);
-      const isUnderObj = distToObj < 45;
-      
-      // 자기장 벡터
+      const under = Math.hypot(x - STATE.obj.x, y - STATE.obj.y) < 52;
       const field = getMagneticFieldAt(x, y);
-      
-      // 나침반 바늘 각도: 자기장이 0이면 기본 북쪽(수평 우측 등) 안정 자세
-      let needleAngle = 0;
-      if (field.mag > 0.001) {
-        needleAngle = Math.atan2(field.by, field.bx);
-      }
-      
+      const ang = field.mag > 1e-9 ? Math.atan2(field.by, field.bx) : 0;
       ctx.save();
       ctx.translate(x, y);
-      if (isUnderObj) ctx.globalAlpha = 0.25;
-      
-      // 나침반 외곽 흰색 원반
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-      ctx.fill();
-      ctx.lineWidth = 1.0;
-      ctx.strokeStyle = "#cbd5e1";
-      ctx.stroke();
-      
-      // 나침반 자침 회전
-      ctx.rotate(needleAngle);
-      
-      // N극 (선명한 빨간색 마름모 - 오른쪽 화살표)
-      ctx.beginPath();
-      ctx.moveTo(0, -3.2);
-      ctx.lineTo(radius - 2.5, 0);
-      ctx.lineTo(0, 3.2);
-      ctx.closePath();
-      ctx.fillStyle = "#ef4444";
-      ctx.fill();
-      
-      // S극 (연한 회색/흰색 마름모 - 왼쪽)
-      ctx.beginPath();
-      ctx.moveTo(0, -3.2);
-      ctx.lineTo(-(radius - 2.5), 0);
-      ctx.lineTo(0, 3.2);
-      ctx.closePath();
-      ctx.fillStyle = "#94a3b8";
-      ctx.fill();
-      
-      // 중앙 회색 피벗 점
-      ctx.beginPath();
-      ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = "#475569";
-      ctx.fill();
-      
+      ctx.globalAlpha = under ? 0.10 : 0.34;               // 투명도를 크게 높여 자기력선이 또렷하게 보이도록
+      ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.10)"; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.stroke();
+      ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(radius - 2.5, 0); ctx.lineTo(0, 3); ctx.closePath();
+      ctx.fillStyle = "#ff5a5a"; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(-(radius - 2.5), 0); ctx.lineTo(0, 3); ctx.closePath();
+      ctx.fillStyle = "#dbe7ff"; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill();
       ctx.restore();
     }
   }
@@ -952,247 +933,121 @@ function drawCompassMatrix(w, h) {
 /* ==========================================================================
    6. 녹색 자기력선(Magnetic Field Lines) 렌더링
    ========================================================================== */
+
 function drawMagneticFieldLines() {
-  const ox = STATE.obj.x;
-  const oy = STATE.obj.y;
-  const theta = STATE.obj.angle;
   const tool = STATE.currentTool;
-  
+  const lines = getFieldLines(tool === 3 ? 12 : 8);
   ctx.save();
-  ctx.translate(ox, oy);
-  ctx.rotate(theta);
-  
-  ctx.lineWidth = 1.8;
-  ctx.strokeStyle = "rgba(21, 128, 61, 0.9)"; // 선명한 짙은 녹색
-  
-  // 극간 거리 (N at +d, S at -d)
-  const d = 35.0;
-  
-  // 촘촘한 코일이면 더 많은 자기력선 다발 표시
-  const lineLoops = (tool === 3) 
-    ? [20, 35, 55, 80, 115, 160, 220, 300]
-    : [22, 40, 65, 95, 140, 200];
-    
-  lineLoops.forEach(bRadius => {
-    // 윗쪽 대칭 루프 & 아랫쪽 대칭 루프
-    [-1, 1].forEach(side => {
-      ctx.beginPath();
-      const numPts = 60;
-      let started = false;
-      
-      for (let i = 0; i <= numPts; i++) {
-        const t = (i / numPts) * Math.PI; // 0 ~ PI
-        // 타원형 쌍극자 유선 보간
-        const lx = Math.cos(t) * (d + bRadius * 0.45);
-        const ly = side * Math.sin(t) * bRadius;
-        
-        if (!started) {
-          ctx.moveTo(lx, ly);
-          started = true;
-        } else {
-          ctx.lineTo(lx, ly);
-        }
-      }
-      ctx.stroke();
-    });
+  ctx.translate(STATE.obj.x, STATE.obj.y);
+  ctx.rotate(STATE.obj.angle);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  const strong = tool === 3;
+  const path = pts => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); };
+  // (1) 은은한 빛 번짐  (2) 또렷한 본선
+  ctx.strokeStyle = "rgba(170,150,255,0.16)"; ctx.lineWidth = strong ? 9 : 7;
+  lines.forEach(p => { path(p); ctx.stroke(); });
+  ctx.strokeStyle = "rgba(214,200,255,0.96)"; ctx.lineWidth = strong ? 2.6 : 2.2;
+  lines.forEach(p => { path(p); ctx.stroke(); });
+  // (3) 방향 화살표 : 곡선을 따라 일정 간격
+  ctx.fillStyle = "#f1e9ff"; ctx.strokeStyle = "rgba(40,20,110,.85)"; ctx.lineWidth = 1;
+  lines.forEach(p => {
+    let acc = 0, next = 90;
+    for (let i = 3; i < p.length - 3; i++) {
+      acc += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+      if (acc < next) continue;
+      next += 150;
+      if (Math.abs(p[i][0]) < FM.L / 2 + 62 && Math.abs(p[i][1]) < 62) continue;   // 자석 몸통·극 끝 주변은 화살표 생략
+      const tx = p[i + 2][0] - p[i - 2][0], ty = p[i + 2][1] - p[i - 2][1], an = Math.atan2(ty, tx);
+      ctx.save(); ctx.translate(p[i][0], p[i][1]); ctx.rotate(an);
+      ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, -6); ctx.lineTo(-3, 0); ctx.lineTo(-6, 6); ctx.closePath();
+      ctx.fill(); ctx.stroke(); ctx.restore();
+    }
   });
-  
-  // 양 극 바깥쪽으로 뻗어 나가는 축 방향 발산선
-  const outerLineY = [0, -18, 18, -36, 36];
-  outerLineY.forEach(yOff => {
-    // N극 쪽에서 뻗어나감 (+X)
-    ctx.beginPath();
-    ctx.moveTo(d + 15, yOff * 0.3);
-    ctx.quadraticCurveTo(d + 80, yOff * 0.8, d + 220, yOff * 2.2);
-    ctx.stroke();
-    
-    // S극 쪽으로 들어옴 (-X)
-    ctx.beginPath();
-    ctx.moveTo(-d - 15, yOff * 0.3);
-    ctx.quadraticCurveTo(-d - 80, yOff * 0.8, -d - 220, yOff * 2.2);
-    ctx.stroke();
-  });
-  
   ctx.restore();
+  // 범례
+  const w = canvas.width / (window.devicePixelRatio || 1), h = canvas.height / (window.devicePixelRatio || 1);
+  if (w > 700) {
+    ctx.save(); ctx.font = "800 24px Pretendard, 'Malgun Gothic', sans-serif"; ctx.textBaseline = "middle";
+    ctx.lineJoin = "round"; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(3,20,52,.9)"; ctx.fillStyle = "#e9defd";
+    const t = "자기력선 : 자석 밖에서 N극 → S극";
+    ctx.strokeText(t, 150, h - 26); ctx.fillText(t, 150, h - 26); ctx.restore();
+  }
 }
 
 /* ==========================================================================
    7. 중심 오브젝트 드로잉 (막대자석 / 코일 / 전자석 2종)
    ========================================================================== */
+
+function arrowShape(x, y, dir, col) {        // 노란 전류 화살표 (dir: -1 위, +1 아래)
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, dir);
+  ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(-6, 0); ctx.lineTo(-2, 0); ctx.lineTo(-2, 8); ctx.lineTo(2, 8); ctx.lineTo(2, 0); ctx.lineTo(6, 0); ctx.closePath();
+  ctx.fillStyle = col || "#ffd21e"; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "rgba(90,60,0,.9)"; ctx.stroke(); ctx.restore();
+}
+
+function drawBarMagnetBody() {
+  const w = 110, h = 36;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 5;
+  const gS = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
+  gS.addColorStop(0, "#9cc4ff"); gS.addColorStop(0.35, "#3b7bea"); gS.addColorStop(1, "#18399a");
+  const gN = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
+  gN.addColorStop(0, "#ffb0b0"); gN.addColorStop(0.35, "#ea4848"); gN.addColorStop(1, "#8e1a1a");
+  ctx.fillStyle = gS; ctx.fillRect(-w / 2, -h / 2, w / 2, h);
+  ctx.fillStyle = gN; ctx.fillRect(0, -h / 2, w / 2, h);
+  ctx.shadowColor = "transparent";
+  ctx.fillStyle = "rgba(255,255,255,0.28)"; ctx.fillRect(-w / 2, -h / 2 + 3, w, 5);
+  ctx.lineWidth = 1.6; ctx.strokeStyle = "#0b1730"; ctx.strokeRect(-w / 2, -h / 2, w, h);
+  ctx.beginPath(); ctx.moveTo(0, -h / 2); ctx.lineTo(0, h / 2); ctx.stroke();
+  ctx.font = "900 20px 'Pretendard', sans-serif"; ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("S", -w / 4, 1); ctx.fillText("N", w / 4, 1);
+  ctx.restore();
+}
+
 function drawMainObject() {
   const { x, y, angle } = STATE.obj;
   const tool = STATE.currentTool;
-  
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-  
-  if (tool === 0) {
-    // ----------------------------------------------------------------------
-    // [슬롯 0] 영구 막대자석 (S극 파랑 좌측, N극 빨강 우측)
-    // ----------------------------------------------------------------------
-    const w = 110;
-    const h = 36;
-    
-    // 그림자
-    ctx.shadowColor = "rgba(0, 0, 0, 0.18)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 4;
-    
-    // 왼쪽 S극 (파란색)
-    ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(-w/2, -h/2, w/2, h);
-    
-    // 오른쪽 N극 (빨간색)
-    ctx.fillStyle = "#ef4444";
-    ctx.fillRect(0, -h/2, w/2, h);
-    
-    ctx.shadowColor = "transparent";
-    
-    // 테두리
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#1e293b";
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    
-    // 중간 분할선
-    ctx.beginPath();
-    ctx.moveTo(0, -h/2);
-    ctx.lineTo(0, h/2);
-    ctx.stroke();
-    
-    // 텍스트 라벨 (S, N)
-    ctx.font = "900 18px 'Pretendard', sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("S", -w/4, 0);
-    ctx.fillText("N", w/4, 0);
-    
-  } else if (tool === 1 || tool === 2 || tool === 3) {
-    // ----------------------------------------------------------------------
-    // [슬롯 1, 2, 3] 코일 / 전자석 모델
-    // ----------------------------------------------------------------------
-    const w = 110;
-    const h = 32;
-    
-    // 그림자
-    ctx.shadowColor = "rgba(0, 0, 0, 0.16)";
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 3;
-    
-    // 1. 회색 철심 (Iron Core)
-    ctx.fillStyle = "#94a3b8";
-    ctx.fillRect(-w/2, -h/2, w, h);
-    ctx.shadowColor = "transparent";
-    
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#475569";
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    
-    // 2. 구리 코일 권선 렌더링
-    const numTurns = (tool === 3) ? 14 : ((tool === 2) ? 7 : 6);
-    const coilSpan = w - 16;
-    const turnSpacing = coilSpan / numTurns;
-    
-    ctx.lineWidth = 3.2;
-    ctx.strokeStyle = (tool === 1) ? "#b45309" : "#dc2626"; // 활성 시 선명한 빨간색 코일
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+  if (tool === 0 || tool === 4) {
+    drawBarMagnetBody();
+  } else {
+    const w = 110, h = 32;
+    // 철심 : 금속 원통
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
+    const gc = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
+    gc.addColorStop(0, "#f1f5f9"); gc.addColorStop(0.3, "#b6c0cf"); gc.addColorStop(0.7, "#7d8798"); gc.addColorStop(1, "#4b5565");
+    ctx.fillStyle = gc; ctx.fillRect(-w / 2, -h / 2, w, h); ctx.restore();
+    ctx.lineWidth = 1.4; ctx.strokeStyle = "#1e293b"; ctx.strokeRect(-w / 2, -h / 2, w, h);
+    // 구리 코일 : "/" 방향으로 감김 (전류가 오른쪽 끝에서 들어와 왼쪽으로 흐르면 오른쪽이 N극)
+    const nt = (tool === 3) ? 14 : ((tool === 2) ? 7 : 6), span = w - 16, ts = span / nt;
     ctx.lineCap = "round";
-    
-    for (let i = 0; i < numTurns; i++) {
-      const cx = -w/2 + 8 + i * turnSpacing;
-      ctx.beginPath();
-      // 비스듬히 감겨 돌아가는 코일 루프
-      ctx.moveTo(cx, -h/2 - 4);
-      ctx.lineTo(cx + turnSpacing * 0.7, h/2 + 4);
-      ctx.stroke();
+    for (let i = 0; i < nt; i++) {
+      const cx = -w / 2 + 8 + i * ts;
+      const p = () => { ctx.beginPath(); ctx.moveTo(cx, h / 2 + 4); ctx.quadraticCurveTo(cx + ts * 0.45, 0, cx + ts * 0.8, -h / 2 - 4); };
+      ctx.lineWidth = 6; ctx.strokeStyle = "#3b0d05"; p(); ctx.stroke();
+      ctx.lineWidth = 3.8; ctx.strokeStyle = "#c2410c"; p(); ctx.stroke();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = "rgba(253,186,116,.85)"; p(); ctx.stroke();
     }
-    
-    // 3. 배터리 연결부 (슬롯 2, 3일 때만 배터리 부착)
     if (tool === 2 || tool === 3) {
-      // 도선 인출선
-      ctx.lineWidth = 2.2;
-      ctx.strokeStyle = "#dc2626";
-      
-      // 왼쪽 선 -> 배터리 -극
-      ctx.beginPath();
-      ctx.moveTo(-w/2 + 8, h/2 + 4);
-      ctx.lineTo(-w/2 + 8, h/2 + 20);
-      ctx.lineTo(-24, h/2 + 20);
-      ctx.stroke();
-      
-      // 오른쪽 선 -> 배터리 +극
-      ctx.beginPath();
-      ctx.moveTo(w/2 - 8, h/2 + 4);
-      ctx.lineTo(w/2 - 8, h/2 + 20);
-      ctx.lineTo(24, h/2 + 20);
-      ctx.stroke();
-      
-      // 배터리 몸체 (검은색 원통)
-      const bw = 48;
-      const bh = 20;
-      const by = h/2 + 10;
-      
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(-bw/2, by, bw, bh);
-      ctx.strokeStyle = "#334155";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(-bw/2, by, bw, bh);
-      
-      // 배터리 양극 금색 단자 (+극, 오른쪽)
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillRect(bw/2 - 12, by, 12, bh);
-      
-      // 배터리 캡 돌출
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillRect(bw/2, by + 5, 4, 10);
-      
-      // 전자석 극성 안내 태그
-      ctx.font = "bold 13px sans-serif";
-      ctx.fillStyle = "#1d4ed8";
-      ctx.fillText("S", -w/2 - 14, 0);
-      ctx.fillStyle = "#ef4444";
-      ctx.fillText("N", w/2 + 14, 0);
+      ctx.lineWidth = 2.6; ctx.strokeStyle = "#c2410c";
+      ctx.beginPath(); ctx.moveTo(-w / 2 + 8, h / 2 + 4); ctx.lineTo(-w / 2 + 8, h / 2 + 24); ctx.lineTo(-24, h / 2 + 24); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w / 2 - 8, h / 2 + 4); ctx.lineTo(w / 2 - 8, h / 2 + 24); ctx.lineTo(24, h / 2 + 24); ctx.stroke();
+      const bw = 48, bh = 20, by = h / 2 + 14;
+      ctx.fillStyle = "#0f172a"; ctx.fillRect(-bw / 2, by, bw, bh);
+      ctx.strokeStyle = "#475569"; ctx.lineWidth = 1; ctx.strokeRect(-bw / 2, by, bw, bh);
+      ctx.fillStyle = "#f59e0b"; ctx.fillRect(bw / 2 - 12, by, 12, bh); ctx.fillRect(bw / 2, by + 5, 4, 10);
+      ctx.font = "800 13px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.fillText("+", bw / 2 - 6, by + 14); ctx.fillText("−", -bw / 2 + 8, by + 14);
+      // 전류의 방향 (+극 → 코일 오른쪽 끝 → 왼쪽 끝 → −극)
+      arrowShape(w / 2 - 8, h / 2 + 14, -1); arrowShape(-w / 2 + 8, h / 2 + 14, 1);
+      ctx.font = "800 18px Pretendard, sans-serif"; ctx.lineJoin = "round"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(3,20,52,.9)";
+      ctx.fillStyle = "#8ec5ff"; ctx.strokeText("S", -w / 2 - 16, 0); ctx.fillText("S", -w / 2 - 16, 0);
+      ctx.fillStyle = "#ff8a8a"; ctx.strokeText("N", w / 2 + 16, 0); ctx.fillText("N", w / 2 + 16, 0);
     } else {
-      // 전류 없음 코일
-      // 끊어진 전선
-      ctx.lineWidth = 2.0;
-      ctx.strokeStyle = "#b45309";
-      ctx.beginPath();
-      ctx.moveTo(-w/2 + 8, h/2 + 4);
-      ctx.lineTo(-w/2 + 8, h/2 + 18);
-      ctx.moveTo(w/2 - 8, h/2 + 4);
-      ctx.lineTo(w/2 - 8, h/2 + 18);
-      ctx.stroke();
-      
-      ctx.font = "bold 11px sans-serif";
-      ctx.fillStyle = "#64748b";
-      ctx.textAlign = "center";
-      ctx.fillText("전류 없음 (자기장 = 0)", 0, h/2 + 20);
+      ctx.lineWidth = 2.4; ctx.strokeStyle = "#c2410c";
+      ctx.beginPath(); ctx.moveTo(-w / 2 + 8, h / 2 + 4); ctx.lineTo(-w / 2 + 8, h / 2 + 20); ctx.moveTo(w / 2 - 8, h / 2 + 4); ctx.lineTo(w / 2 - 8, h / 2 + 20); ctx.stroke();
+      ctx.font = "800 18px Pretendard, sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(3,20,52,.9)"; ctx.fillStyle = "#cfe0ff";
+      ctx.strokeText("전류 없음 (자기장 = 0)", 0, h / 2 + 40); ctx.fillText("전류 없음 (자기장 = 0)", 0, h / 2 + 40);
     }
-  } else if (tool === 4) {
-    // 슬롯 4에서는 중심에 기본 막대자석을 두고, 별도의 탐구 나침반이 활성화됨
-    // 기본 막대자석 그대로 드로잉
-    const w = 110;
-    const h = 36;
-    ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(-w/2, -h/2, w/2, h);
-    ctx.fillStyle = "#ef4444";
-    ctx.fillRect(0, -h/2, w/2, h);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#1e293b";
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    ctx.beginPath();
-    ctx.moveTo(0, -h/2);
-    ctx.lineTo(0, h/2);
-    ctx.stroke();
-    ctx.font = "900 18px 'Pretendard', sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("S", -w/4, 0);
-    ctx.fillText("N", w/4, 0);
   }
-  
   ctx.restore();
 }
 
