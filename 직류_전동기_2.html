@@ -384,9 +384,9 @@ canvas {
 }
 
 /* 라벨 색상 지정 (스크린샷 오리지널) */
-.lbl-field { color: #475569; }     /* 자기장: 회색 점선 */
-.lbl-current { color: #3b46d6; }   /* 전류: 파랑 */
-.lbl-force { color: #4a9a1c; }     /* 힘: 초록 */
+.lbl-field { color: #2563eb; }     /* 자기장: 파랑 (교과서 손 그림) */
+.lbl-current { color: #b27a00; }   /* 전류: 노랑 */
+.lbl-force { color: #dc3a14; }     /* 힘: 빨강 */
 .lbl-torque { color: #d946ef; }    /* 토크: 자홍 */
 .lbl-run { color: #1e293b; }       /* Run */
 
@@ -638,6 +638,26 @@ html .stat-val{font-size:15px!important}
 html .stat-lbl,html .stat-desc{font-size:10px!important}
 }
 </style>
+<style id="handCss">
+.btn-hand{min-height:48px;font-size:16px!important;padding:6px 14px!important}
+.hint-badge{top:auto!important;bottom:12px!important;left:50%!important;transform:translateX(-50%)}
+.hand-panel{position:absolute;left:14px;bottom:14px;width:306px;max-height:calc(100% - 176px);overflow:auto;background:#3c4058;color:#fff;border-radius:18px;
+  box-shadow:0 10px 30px rgba(10,16,40,.45);z-index:12;padding:12px 14px 14px;display:none;font-family:inherit}
+.hand-panel.on{display:block}
+.hand-panel .hp-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hand-panel h3{margin:0;font-size:19px;line-height:1.25;color:#fff}
+.hand-panel .hp-tabs .hp-x{flex:0 0 56px;min-width:56px;border:0;border-radius:14px;background:#566086;color:#fff;font-size:22px;font-weight:900;cursor:pointer}
+.hand-panel .hp-tabs{display:flex;gap:8px;margin:0 0 8px}
+.hand-panel .hp-tabs button{flex:1;min-height:56px;padding:0;white-space:nowrap;border:2px solid #7b87b8;border-radius:14px;background:#4b5276;color:#e6ebff;font-size:17px;font-weight:800;cursor:pointer}
+.hand-panel .hp-tabs button.on{background:#ffd84a;border-color:#fff;color:#3a2a00}
+.hand-panel img{display:block;width:250px;max-width:100%;margin:0 auto 6px;border-radius:12px}
+.hand-panel .hp-row{display:flex;gap:10px;align-items:flex-start;padding:5px 4px;border-top:1px solid rgba(255,255,255,.14)}
+.hand-panel .hp-dot{flex:0 0 24px;height:24px;border-radius:50%;margin-top:3px;border:2px solid #fff}
+.hand-panel .hp-t{font-size:18px;line-height:1.3;font-weight:800}
+.hand-panel .hp-v{font-size:19px;line-height:1.3;font-weight:900}
+.hand-panel .hp-note{font-size:18px;line-height:1.35;margin-top:4px;color:#dfe6ff}
+@media (max-width:900px){.hand-panel{width:min(306px,calc(100% - 20px));left:10px;bottom:8px}}
+</style>
 </head>
 <body>
 
@@ -661,12 +681,12 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
 <div class="theory-panel" id="theoryPanel">
   <div class="theory-grid">
     <div class="theory-card">
-      <h3>✋ 오른손 손바닥 법칙 (전자기력)</h3>
+      <h3>✋ 플레밍의 왼손 법칙 (전자기력)</h3>
       <p>
-        자기장 속에 놓인 도선에 전류가 흐를 때 받는 힘입니다.<br>
-        <strong>네 손가락</strong>: 자기장 방향 ($\vec{B}$, N극 $\to$ S극)<br>
-        <strong>엄지손가락</strong>: 전류 방향 ($I$)<br>
-        <strong>손바닥이 미는 방향</strong>: 전자기력 방향 ($\vec{F}$)
+        왼손의 엄지·검지·중지를 서로 수직이 되게 펴 보세요.<br>
+        <strong>검지(인지)</strong>: 자기장 방향 (N극 → S극)<br>
+        <strong>중지</strong>: 전류 방향 (I)<br>
+        <strong>엄지</strong>: 도선이 받는 힘의 방향 (F) — '중지(전) · 검지(자) · 엄지(력)' = <strong>전·자·력</strong>
       </p>
     </div>
     <div class="theory-card">
@@ -705,6 +725,22 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
           <span class="badge-s">S</span><span class="badge-n">N</span>
         </div>
       </button>
+      <button class="btn-magnet-toggle btn-hand" id="btnHand" onclick="toggleHand()" title="왼손 법칙 그림 보기/숨기기">
+        <span>🖐️ 왼손 법칙</span>
+      </button>
+    </div>
+
+    <div class="hand-panel" id="handPanel">
+      <div class="hp-tabs">
+        <button id="hpL" onclick="setHandWire(0)">AB 도선</button>
+        <button id="hpR" class="on" onclick="setHandWire(1)">CD 도선</button>
+        <button class="hp-x" onclick="toggleHand(false)" title="닫기">✕</button>
+      </div>
+      <img alt="왼손의 검지·중지·엄지 방향" src="data:image/jpeg;base64,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">
+      <div class="hp-row"><span class="hp-dot" style="background:#2f8fff"></span><div><div class="hp-t">검지(인지) = 자기장</div><div class="hp-v" id="hpB">-</div></div></div>
+      <div class="hp-row"><span class="hp-dot" style="background:#ffc400"></span><div><div class="hp-t">중지 = 전류</div><div class="hp-v" id="hpI">-</div></div></div>
+      <div class="hp-row"><span class="hp-dot" style="background:#ee4a1f"></span><div><div class="hp-t">엄지 = 힘</div><div class="hp-v" id="hpF">-</div></div></div>
+      <div class="hp-note" id="hpNote">검지·중지·엄지를 서로 수직으로 펴요.</div>
     </div>
 
     <div class="hint-badge">
@@ -723,11 +759,11 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       </div>
       <div class="hud-row">
         <span class="hud-label">자기장 방향</span>
-        <span class="hud-value" style="color: #475569;" id="hudMagDir">왼쪽(N) → 오른쪽(S)</span>
+        <span class="hud-value" style="color: #2563eb;" id="hudMagDir">왼쪽(N) → 오른쪽(S)</span>
       </div>
       <div class="hud-row">
         <span class="hud-label">전자기력 (F)</span>
-        <span class="hud-value" style="color: #4a9a1c;" id="hudForceDir">좌: 아래(↓) / 우: 위(↑)</span>
+        <span class="hud-value" style="color: #dc3a14;" id="hudForceDir">좌: 아래(↓) / 우: 위(↑)</span>
       </div>
       <div class="hud-row">
         <span class="hud-label">돌림힘 토크 (τ)</span>
@@ -923,7 +959,9 @@ window.addEventListener("resize", resizeCanvas);
 function render() {
   const w = canvas.width / (window.devicePixelRatio || 1);
   const h = canvas.height / (window.devicePixelRatio || 1);
-  const cx = w / 2;
+  const handShift = (HAND.open && w >= 1000) ? Math.min(110, w * 0.075) : 0;
+  HAND.shift += (handShift - HAND.shift) * 0.15;
+  const cx = w / 2 + HAND.shift;
   const cy = h / 2 - 10;
   
   // 카메라 감쇠 보간
@@ -962,6 +1000,7 @@ function render() {
   drawMotorScene(cx, cy);
   
   updateHUD();
+  updateHandPanel();
   
   requestAnimationFrame(render);
 }
@@ -1122,10 +1161,10 @@ function drawMotorScene(cx, cy) {
     [-46, -15, 16, 47].forEach(y0 => [-66, -12, 42].forEach(z0 => {
       const a = P(-M.MAGIN + 3, y0, z0), b = P(M.MAGIN - 3, y0, z0), m = P(0, y0, z0);
       items.push({ d: m.depth - 400, f: () => {
-        ctx.save(); ctx.strokeStyle = "rgba(71,85,105,.55)"; ctx.lineWidth = 1.7; ctx.setLineDash([9, 6]);
+        ctx.save(); ctx.strokeStyle = "rgba(37,110,235,.55)"; ctx.lineWidth = 1.7; ctx.setLineDash([9, 6]);
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
         const sg = bDir > 0 ? 1 : -1, ux = (b.x - a.x), uy = (b.y - a.y), L = Math.hypot(ux, uy), vx = ux / L * sg, vy = uy / L * sg, h = 9 * Math.max(0.8, sc);
-        ctx.fillStyle = "rgba(71,85,105,.8)"; ctx.beginPath();
+        ctx.fillStyle = "rgba(30,100,225,.9)"; ctx.beginPath();
         ctx.moveTo(m.x + vx * h, m.y + vy * h); ctx.lineTo(m.x - vx * h - vy * h * 0.6, m.y - vy * h + vx * h * 0.6); ctx.lineTo(m.x - vx * h + vy * h * 0.6, m.y - vy * h - vx * h * 0.6); ctx.closePath(); ctx.fill();
         ctx.restore();
       }});
@@ -1196,7 +1235,7 @@ function drawMotorScene(cx, cy) {
 
   // 7) 벡터 표시 (맨 위)
   const mid = (M.ZB + M.ZF) / 2, ws = [w1, w2];
-  const ARC_CUR = ["#7f8cff", "#4a55e0"], OUT_CUR = "#2d36a8", ARC_F = ["#9be052", "#5aae22"], OUT_F = "#3d7a14";
+  const ARC_CUR = ["#ffe066", "#f2a900"], OUT_CUR = "#8a5a00", ARC_F = ["#ff8a5c", "#e03c1a"], OUT_F = "#8f2210", ARC_B = ["#5fb0ff", "#1f6fe0"], OUT_B = "#123f94";
   if (STATE.showCurrent && !comm.isDeadPoint) {
     const cs = comm.currentSign;
     ws.forEach((w, i) => {
@@ -1204,8 +1243,9 @@ function drawMotorScene(cx, cy) {
       const a = P(w[0] + ox, w[1] + oy, mid - 36 * dz), b = P(w[0] + ox, w[1] + oy, mid + 36 * dz);
       motArrow(a, b, ARC_CUR, 9 * a.scale, OUT_CUR);
     });
-    const tp = P(ws[1][0] + 17 * cT, ws[1][1] + 17 * sT, mid + 36 * cs);
-    if (STATE.showLabels) motLabel("전류", tp.x, tp.y, 58, -16, sc);
+    const sw = HAND.wire, sdz = (sw === 0 ? -1 : 1) * cs, srad = (sw === 0 ? -1 : 1);
+    const tp = P(ws[sw][0] + srad * 17 * cT, ws[sw][1] + srad * 17 * sT, mid + 36 * sdz);
+    if (STATE.showLabels) motLabel("전류 (중지)", tp.x, tp.y, 58, sdz > 0 ? 16 : -16, sc);
   }
   if (STATE.showForce && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
     const fs = comm.currentSign * bDir, len = 70;
@@ -1213,8 +1253,28 @@ function drawMotorScene(cx, cy) {
       const dy = (i === 0 ? -1 : 1) * fs * len;
       const a = P(w[0], w[1], mid), b = P(w[0], w[1] + dy, mid);
       motArrow(a, b, ARC_F, 11 * a.scale, OUT_F);
-      if (dy > 0 && STATE.showLabels) motLabel("도선이 받는 힘", b.x, b.y, 28, -22, sc);
+      if (i === HAND.wire && STATE.showLabels) motLabel("힘 (엄지)", b.x, b.y, 28, dy > 0 ? -22 : 22, sc);
     });
+  }
+  if (HAND.open) {                                          // 손 모양 맞추기 : 선택한 도선에서 세 손가락 방향을 한눈에
+    ws.forEach((wq, qi) => {                                // 두 도선에 AB / CD 이름표
+      const q = P(wq[0], wq[1], mid), sel = qi === HAND.wire, bx = q.x - 30 * sc, by = q.y - 30 * sc;
+      ctx.save(); ctx.beginPath(); ctx.arc(bx, by, 15, 0, 6.3); ctx.fillStyle = sel ? "#ffd84a" : "#e2e8f0"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = sel ? "#3a2a00" : "#64748b"; ctx.stroke();
+      ctx.font = "900 13px Pretendard, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#1e293b";
+      ctx.fillText(qi === 0 ? "AB" : "CD", bx, by + 1); ctx.restore();
+    });
+  }
+  if (HAND.open && !comm.isDeadPoint) {
+    const wv = ws[HAND.wire], c0 = P(wv[0], wv[1], mid);
+    ctx.save(); ctx.setLineDash([6, 5]); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(20,30,60,.85)";
+    ctx.beginPath(); ctx.arc(c0.x, c0.y, 30 * sc, 0, 6.3); ctx.stroke();
+    ctx.lineWidth = 1.6; ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(c0.x, c0.y, 30 * sc, 0, 6.3); ctx.stroke(); ctx.restore();
+    if (STATE.showField && Math.abs(bDir) > 0.1) {
+      const b0 = P(wv[0], wv[1], mid), b1 = P(wv[0] + bDir * 92, wv[1], mid);
+      motArrow(b0, b1, ARC_B, 10 * b0.scale, OUT_B);
+      if (STATE.showLabels) motLabel("자기장 (검지)", b1.x, b1.y, bDir > 0 ? 24 : -24, -12, sc);
+    }
   }
   if (STATE.showTorque && !comm.isDeadPoint && Math.abs(bDir) > 0.1) {
     const rs = comm.currentSign * bDir, mag = Math.abs(cT), z0 = M.AX0 + 28, ar = 52;
@@ -1411,6 +1471,49 @@ function updateHUD() {
 // --------------------------------------------------------------------------
 // 초기화 실행
 // --------------------------------------------------------------------------
+
+/* ---------- 왼손 법칙 패널 : 지금 장면의 방향을 검지·중지·엄지로 읽어 준다 ---------- */
+const HAND = { open: false, wire: 1, shift: 0 };
+let _handKey = "";
+function toggleHand(v) {
+  HAND.open = (typeof v === "boolean") ? v : !HAND.open;
+  document.getElementById("handPanel").classList.toggle("on", HAND.open);
+  _handKey = "";
+}
+function setHandWire(i) {
+  HAND.wire = i;
+  document.getElementById("hpL").classList.toggle("on", i === 0);
+  document.getElementById("hpR").classList.toggle("on", i === 1);
+  _handKey = "";
+}
+function updateHandPanel() {
+  if (!HAND.open) return;
+  const comm = getCommutatorState(STATE.theta), bDir = getBaseBDir();
+  let b, c, f, note;
+  if (Math.abs(bDir) < 0.1) {
+    b = "자기장 없음"; c = "-"; f = "힘 없음"; note = "같은 극이 마주 보면 자기장이 상쇄돼요.";
+  } else if (comm.isDeadPoint) {
+    b = bDir > 0 ? "오른쪽 → (N극 → S극)" : "← 왼쪽 (N극 → S극)"; c = "잠깐 끊김"; f = "힘 0"; note = "정류자 틈을 지나는 순간이에요. 곧 전류가 반대로 흘러요.";
+  } else {
+    const dz = (HAND.wire === 0 ? -1 : 1) * comm.currentSign, fy = (HAND.wire === 0 ? -1 : 1) * comm.currentSign * bDir;
+    b = bDir > 0 ? "오른쪽 → (N극 → S극)" : "← 왼쪽 (N극 → S극)";
+    c = dz > 0 ? "앞쪽 (정류자 쪽)" : "뒤쪽 (정류자 반대쪽)";
+    f = fy > 0 ? "위쪽 ↑" : "아래쪽 ↓";
+    note = (HAND.wire === 0 ? "AB" : "CD") + " 도선에서 왼손 검지를 " + (bDir > 0 ? "오른쪽" : "왼쪽") + ", 중지를 " + (dz > 0 ? "앞쪽" : "뒤쪽") + "으로 향하게 하면 엄지가 " + (fy > 0 ? "위" : "아래") + "를 가리켜요.";
+  }
+  const key = b + "|" + c + "|" + f + "|" + HAND.wire;
+  if (key === _handKey) return;
+  _handKey = key;
+  document.getElementById("hpB").textContent = b;
+  document.getElementById("hpI").textContent = c;
+  document.getElementById("hpF").textContent = f;
+  document.getElementById("hpNote").textContent = note;
+}
+window.addEventListener("DOMContentLoaded", () => {
+  const w = document.getElementById("canvasContainer").clientWidth;
+  if (w >= 1100) toggleHand(true);
+});
+
 window.addEventListener("DOMContentLoaded", () => {
   resizeCanvas();
   requestAnimationFrame(render);
