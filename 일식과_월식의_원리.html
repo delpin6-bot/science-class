@@ -705,6 +705,9 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
     ctx.font = "bold 13px sans-serif";
     ctx.textAlign = "left";
     ctx.fillText("🔭 우주 궤도 뷰 (Space Orbit & Shadows)", 20, 30);
+    ctx.fillStyle = "#fde68a";
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillText("↺ 달은 지구 둘레를 반시계 방향으로 공전 (북극 위에서 볼 때)", 20, 50);
 
     // 태양 위치
     const sunX = 40;
@@ -725,7 +728,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       // 일식: 달이 태양과 지구 사이 (삭 위치 중심)
       const moonCenterOrbitX = earthX - orbitR;
       moonX = earthX - orbitR * Math.cos(rad);
-      moonY = earthY - orbitR * Math.sin(rad);
+      moonY = earthY + orbitR * Math.sin(rad); // 반시계 방향 공전(북극 위에서 볼 때)
 
       // 달의 공전 궤도 원호
       ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
@@ -735,13 +738,14 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       ctx.arc(earthX, earthY, orbitR, Math.PI * 0.75, Math.PI * 1.25);
       ctx.stroke();
       ctx.setLineDash([]);
+      drawOrbitArrow(earthX, earthY, orbitR, Math.PI * 0.75);
 
       // 달의 그림자 원뿔 투영 (달 -> 지구)
       drawShadowCones(sunX, sunY, sunR, moonX, moonY, 10, earthX, earthY, earthR, true);
     } else {
       // 월식: 달이 지구 뒤쪽 (망 위치 중심)
       moonX = earthX + orbitR * Math.cos(rad);
-      moonY = earthY + orbitR * Math.sin(rad);
+      moonY = earthY - orbitR * Math.sin(rad); // 반시계 방향 공전(북극 위에서 볼 때)
 
       // 달의 공전 궤도 원호
       ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
@@ -751,6 +755,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       ctx.arc(earthX, earthY, orbitR, -Math.PI * 0.25, Math.PI * 0.25);
       ctx.stroke();
       ctx.setLineDash([]);
+      drawOrbitArrow(earthX, earthY, orbitR, -Math.PI * 0.25);
 
       // 지구의 그림자 원뿔 투영 (지구 -> 달)
       drawShadowCones(sunX, sunY, sunR, earthX, earthY, earthR, moonX, moonY, 10, false);
@@ -765,6 +770,28 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
     // 달 그리기 (회색 암석구)
     drawMoon(moonX, moonY, 10);
 
+    ctx.restore();
+  }
+
+  // 달 공전 방향 화살표 (반시계 방향): 각 θ 지점에서 θ가 감소하는 방향
+  function drawOrbitArrow(ex, ey, R, th) {
+    const px = ex + R * Math.cos(th), py = ey + R * Math.sin(th);
+    const tx = Math.sin(th), ty = -Math.cos(th);
+    const nx = -ty, ny = tx;
+    ctx.save();
+    ctx.fillStyle = "#fde68a";
+    ctx.strokeStyle = "#fde68a";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(px - tx * 26, py - ty * 26);
+    ctx.lineTo(px, py);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(px + tx * 10, py + ty * 10);
+    ctx.lineTo(px - tx * 4 + nx * 8, py - ty * 4 + ny * 8);
+    ctx.lineTo(px - tx * 4 - nx * 8, py - ty * 4 - ny * 8);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
   }
 
@@ -941,7 +968,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
       // 달 (검은 그림자 원반이 태양 앞을 가림)
       ctx.fillStyle = "#0f172a";
       ctx.beginPath();
-      ctx.arc(viewCx + offsetPx, viewCy, sunCenterR * 1.01, 0, Math.PI * 2);
+      ctx.arc(viewCx - offsetPx, viewCy, sunCenterR * 1.01, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#334155";
       ctx.lineWidth = 1.5;
@@ -968,7 +995,7 @@ html .stat-lbl,html .stat-desc{font-size:10px!important}
         // 부분월식 (지구의 둥근 본그림자가 달을 파먹음)
         ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
         ctx.beginPath();
-        ctx.arc(viewCx - offsetPx * 1.2, viewCy, moonCenterR * 1.8, 0, Math.PI * 2);
+        ctx.arc(viewCx + offsetPx * 1.2, viewCy, moonCenterR * 1.8, 0, Math.PI * 2);
         ctx.fill();
       }
     }
