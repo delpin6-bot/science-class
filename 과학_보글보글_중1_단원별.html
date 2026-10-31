@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="ko"><head><meta charset="utf-8"><script>try{(function(){var h=document.documentElement,c=matchMedia("(any-pointer:coarse)").matches||("ontouchstart" in window),f=localStorage.getItem("bbPad");if(c)h.classList.add("touchable");if(f==="1"||(f!=="0"&&c))h.classList.add("touch")})()}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>단원별 보글보글 · 중1</title>
 <style>
 :root{--bg:#120622;--pn:#2a0f45;--pn2:#401a66;--ln:#8b5bd6;--tx:#fff8ff;--mu:#d2bff5;--ok:#34d399;--no:#fb7185;--ac:#ffe45e}
@@ -42,14 +42,52 @@ aside{display:flex;flex-direction:column;gap:8px}
 .spr{display:flex;gap:6px}.spr .btn{flex:1;min-height:48px;font-size:.95em}
 .ctl{display:flex;gap:8px}.ctl .btn{flex:1;min-height:58px;font-size:1.2em}.ctl .big{flex:1.6}
 .tip{font-size:.78em;color:var(--mu)}
+#chips,#tf,#bg,#sw,#se{display:none!important}
+/* ===== 기기별 화면 배치 (PC · 아이패드 · 스마트폰) ===== */
+.wrap{display:grid;grid-template-areas:"game side";grid-template-columns:auto minmax(260px,320px);justify-content:center;align-items:start;gap:12px;max-width:none;padding:8px 12px}
+.left{grid-area:game;width:min(calc(100vw - 380px),calc((100vh - 125px)*.8));width:min(calc(100vw - 380px),calc((100dvh - 125px)*.8));min-width:260px;margin:0}
+aside{grid-area:side}
+aside .ctl{display:none!important}
+aside .spr{display:flex}
+html.touch aside .spr{display:none!important}
+aside .tablet{font-size:15px;min-height:0;padding:8px 12px}
+aside .tip{font-size:14px;background:#1d0b33;border:1px solid var(--ln);border-radius:10px;padding:8px 10px}
+.tp{display:none;gap:10px;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+html.touch .tp{display:flex}
+.padL{grid-area:padL}.padR{grid-area:padR}
+.tp button{width:var(--pb,68px);height:var(--pb,68px);border-radius:50%;border:2px solid rgba(255,255,255,.35);background:radial-gradient(circle at 35% 30%,#7b4fd0,#3a1a66);color:#fff;font:900 calc(var(--pb,68px)*.42)/1 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 0 #160528;transition:transform .06s,box-shadow .12s;touch-action:none;cursor:pointer;padding:0;flex:0 0 auto}
+.tp button small{font-size:11px;margin-top:3px;opacity:.92;font-weight:800}
+.tp #tJ{background:radial-gradient(circle at 35% 30%,#4ef0b8,#118a66)}
+.tp #tF{background:radial-gradient(circle at 35% 30%,#7ab8ff,#2a5bd6)}
+.tp #tH{--pb:48px;font-size:18px;background:radial-gradient(circle at 35% 30%,#ffe45e,#c98a12);color:#3b1600}
+.tp button.on{transform:translateY(3px) scale(.92);box-shadow:0 1px 0 #160528,0 0 18px 5px rgba(255,228,94,.6);filter:brightness(1.25)}
+#padTog{display:none}html.touchable #padTog{display:inline-flex}
+/* 터치 · 가로 화면 (아이패드 가로 · 전자칠판): 이동 버튼 왼쪽, 점프·발사 오른쪽 */
+@media (orientation:landscape){
+ html.touch .wrap{grid-template-areas:"padL game side" "padL game padR";grid-template-columns:auto auto minmax(220px,300px);grid-template-rows:auto 1fr}
+ html.touch .left{width:min(calc(100vw - 560px),calc((100vh - 110px)*.8));width:min(calc(100vw - 560px),calc((100dvh - 110px)*.8))}
+ html.touch .padL{align-self:end;margin-bottom:12px;--pb:clamp(64px,7vw,88px)}
+ html.touch .padR{align-self:end;justify-content:center;margin-bottom:12px;--pb:clamp(64px,7vw,88px)}}
+/* 터치 · 세로 화면 (스마트폰 · 아이패드 세로): 게임 아래에 패드 */
+@media (orientation:portrait){
+ html.touch .wrap{grid-template-areas:"game game" "padL padR" "side side";grid-template-columns:1fr 1fr;padding:4px 6px;gap:6px}
+ html.touch .left{width:min(calc(100vw - 12px),calc((100vh - 300px)*.8));width:min(calc(100vw - 12px),calc((100dvh - 300px)*.8));justify-self:center}
+ html.touch .padL{justify-self:start;padding-left:4px;--pb:clamp(60px,15vw,90px)}
+ html.touch .padR{justify-self:end;padding-right:4px;--pb:clamp(60px,15vw,90px)}
+ html.touch aside .tablet{font-size:clamp(13px,2.2vw,17px);max-height:22vh;overflow:auto}
+ html.touch aside .tip{display:none}}
+@media (max-width:700px){header{padding:4px 6px;flex-wrap:nowrap;gap:4px}header h1{font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}header h1 span{display:none}.hb{padding:4px 6px;font-size:11px;white-space:nowrap}#padTog{display:none!important}.hud{font-size:11px}body{overflow-x:hidden}}
+@media (max-width:900px) and (orientation:landscape){html.touch .wrap{grid-template-columns:auto auto minmax(150px,200px)}html.touch .left{width:min(calc(100vw - 420px),calc((100dvh - 92px)*.8))}header{display:none}}
 </style></head><body>
-<header><h1>🫧 사이언스 보글보글 <span style="font-size:.66em;color:var(--ac)">중1 단원별 개념 격추 · 7개 단원</span></h1>
-<button class="hb" id="snd">🔊 소리 켜짐</button><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="fs">⛶ 전체화면</button></header>
+<header><h1>🫧 사이언스 보글보글 <span style="font-size:.66em;color:var(--ac)">중1 단원별 개념 방울 깨기 · 7개 단원</span></h1>
+<button class="hb" id="snd">🔊 소리 켜짐</button><a class="hb" href="./시작하기_수업게임서랍.html">🎮 게임 서랍</a><button class="hb" id="padTog">🎮 터치패드</button><button class="hb" id="fs">⛶ 전체화면</button></header>
 <div class="wrap">
+<div class="tp padL" id="padL"><button id="tL" aria-label="왼쪽">◀</button><button id="tR" aria-label="오른쪽">▶</button></div>
 <section class="left">
 <div class="hud"><div><b class="g">1UP</b><span id="sc">0</span></div><div><b class="r">HIGH SCORE</b><span id="hi">0</span></div><div id="ext"></div><div><b class="y" id="stn">STAGE 1</b><span id="lv">❤️❤️❤️</span></div></div>
 <div class="stage"><canvas id="cv" width="480" height="600"></canvas><div class="ov tr" id="ov"></div></div>
 </section>
+<div class="tp padR" id="padR"><button id="tH" aria-label="힌트">💡<small id="tHn">2</small></button><button id="tF" aria-label="발사">🫧<small>발사</small></button><button id="tJ" aria-label="점프">⤒<small>점프</small></button></div>
 <aside>
 <div class="tablet" id="dlg"></div>
 <div class="chips" id="chips"></div>
@@ -57,7 +95,7 @@ aside{display:flex;flex-direction:column;gap:8px}
 <div class="spr"><button class="btn" id="sf">🔥 불 ×1</button><button class="btn" id="sw">💧 물 ×1</button><button class="btn" id="se">⚡ 번개 ×1</button></div>
 <div class="ctl"><button class="btn" id="bl">◀</button><button class="btn" id="bj">⤒ 점프</button><button class="btn big" id="bf">🫧 발사</button><button class="btn" id="br">▶</button></div>
 <button class="btn" id="bg">🧲 모아서 터뜨리기</button>
-<div class="tip">키보드: ←→ 이동 · ↑/W 점프 · Space 발사 · 1~9 용어 선택 후 즉시 발사 · G 모아서 터뜨리기 · Q/E/R 불·물·번개 · 몬스터를 터치하면 조준 고정</div>
+<div class="tip">조작: ◀ ▶ 이동 · ⤒ 점프로 <b>개념 방울에 닿으면 팡!</b> · 🫧 발사 = 👾 몬스터 가두기 · 💡 힌트 (키보드: ←→ · ↑/W · Space · H)</div>
 </aside></div>
 <script>
 (()=>{'use strict';
@@ -107,7 +145,7 @@ const TH={
  leaf:{a:'#3ccf74',b:'#e3ffe9',sh:'#1b7a3d',bg:['#04200d','#0b3a1a'],kind:'stripe'},
  space:{a:'#5a66d6',b:'#323c96',sh:'#161b5a',bg:['#02020c','#0a0a2a'],kind:'brick',torch:1,stars:1},
  grape:{a:'#a66bff',b:'#efe3ff',sh:'#5a2aa8',bg:['#140828','#2a0f4d'],kind:'stripe'}};
-const G={st:'title',si:0,start:0,score:0,lives:3,hi:0,letters:[],wrong:0,idle:0,hurry:false,hurryN:0,t:0,armed:null,sel:null,sp:{fire:1,water:1,elec:1},missed:[],chainMax:0,msg:'',msgT:0,msgK:'',ready:0,clearT:0,gather:null,bonusT:0,sw:0};
+const G={st:'title',si:0,start:0,score:0,lives:4,hi:0,letters:[],wrong:0,idle:0,hurry:false,hurryN:0,t:0,armed:null,sel:null,sp:{fire:1,water:1,elec:1},missed:[],chainMax:0,msg:'',msgT:0,msgK:'',ready:0,clearT:0,gather:null,bonusT:0,sw:0};
 try{G.hi=+localStorage.getItem(HIKEY)||0}catch(e){}
 const P={x:60,y:FLOOR,vx:0,vy:0,on:true,dir:1,inv:0,cd:0,anim:0,fire:0};
 let S=null,PAT=null,TCUR=TH.candy,BUB=[],TXT=[],PRT=[],ITM=[],PRJ=[],AMB=[];
@@ -134,7 +172,9 @@ function makePat(th){const t=document.createElement('canvas');t.width=t.height=2
  if(th.kind==='stripe'){x.fillStyle=th.b;x.fillRect(0,0,28,28);x.fillStyle=th.a;for(let k=-2;k<3;k++){x.beginPath();x.moveTo(k*28,28);x.lineTo(k*28+14,28);x.lineTo(k*28+42,0);x.lineTo(k*28+28,0);x.fill()}}
  else{x.fillStyle=th.a;x.fillRect(0,0,28,28);x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,0,28,3);x.fillRect(0,14,28,3);x.fillStyle=th.sh;x.fillRect(0,13,28,1);x.fillRect(0,27,28,1);x.fillRect(0,0,1,14);x.fillRect(14,14,1,14);x.fillStyle=th.b;x.fillRect(5,6,4,3);x.fillRect(20,20,4,3)}
  return c.createPattern(t,'repeat')}
-function layout(code){const out=[{x:WL,y:FLOOR,w:WR-WL,h:34}];ROWS.forEach((y,i)=>{if(code[i]==='A'){out.push({x:WL,y,w:40,h:14},{x:102,y,w:276,h:14},{x:418,y,w:40,h:14})}else{out.push({x:WL,y,w:190,h:14},{x:268,y,w:190,h:14})}});return out}
+const MAPS=['AAAA','ABAB','CDCE','EFEF','GAGA','BDBD','FECG','HCHC','DGEB','CFHA','GHGH','EDFC','ACEG','BHDF'];
+function pickLay(si){return MAPS[(si*5+(typeof UCUR==='number'?UCUR*3:0))%MAPS.length]}
+function layout(code){const out=[{x:WL,y:FLOOR,w:WR-WL,h:34}];ROWS.forEach((y,i)=>{const k=code[i],Q=(a,b)=>out.push({x:a,y,w:b-a,h:14});if(k==='C'){Q(42,150);Q(176,304);Q(330,438);return}if(k==='D'){Q(140,340);return}if(k==='E'){Q(WL,300);return}if(k==='F'){Q(180,WR);return}if(k==='G'){Q(WL,100);Q(140,220);Q(260,340);Q(380,WR);return}if(k==='H'){Q(60,200);Q(280,420);return}if(code[i]==='A'){out.push({x:WL,y,w:40,h:14},{x:102,y,w:276,h:14},{x:418,y,w:40,h:14})}else{out.push({x:WL,y,w:190,h:14},{x:268,y,w:190,h:14})}});return out}
 function drawPlat(p){c.save();c.translate(p.x,p.y);c.fillStyle=PAT;c.fillRect(0,0,p.w,p.h);c.fillStyle=TCUR.sh;if(p.h===14)c.fillRect(0,14,p.w,6);c.fillStyle='rgba(255,255,255,.4)';c.fillRect(0,0,p.w,2);c.restore()}
 function drawBG(){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,TCUR.bg[0]);g.addColorStop(1,TCUR.bg[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
  if(TCUR.stars){c.fillStyle='#fff';AMB.forEach(a=>{c.globalAlpha=.4+.4*Math.sin(G.t*2+a.p);c.fillRect(a.x,a.y,2,2)});c.globalAlpha=1}
@@ -175,22 +215,66 @@ function physics(e,dt,hw){const py=e.y;e.vy+=GRAV*dt;e.y+=e.vy*dt;e.on=false;
  if(e.vy>=0)for(const p of S.plats){if(e.x+hw>p.x&&e.x-hw<p.x+p.w&&py<=p.y+1&&e.y>=p.y){e.y=p.y;e.vy=0;e.on=true;break}}
  e.x=Math.max(WL+hw,Math.min(WR-hw,e.x))}
 function supportAt(x,y){return S.plats.some(p=>Math.abs(p.y-y)<2&&x>=p.x&&x<=p.x+p.w)}
+
+/* BB_CONCEPT_POP_V3 */
+const OKT=a=>{const k=nrm(String(a));return k.length>=2&&k.length<=14&&!/^[\d.\s%]+$/.test(a)&&!/[:：]/.test(a)&&!/\d\s*(g|%|kg|mL|ml)\b/.test(a)&&!/다$/.test(a)&&!['증가','감소','같다','크다','작다','일정','온도','빛','물','열','힘'].includes(a)};
+function mkConcepts(si){const D=STAGES[si],seen=new Set();let L=[];
+ D.mons.forEach(m=>{const t=m[1],k=nrm(t);if(seen.has(k))return;seen.add(k);let e=String(m[4]||m[0]||'');const pre=t+' : ';if(e.indexOf(pre)===0)e=e.slice(pre.length);L.push({t,e,learned:true})});
+ const L2=L.filter(x=>OKT(x.t));if(L2.length>=4)L=L2;L=L.slice(0,8);
+ const ks=L.map(x=>nrm(x.t)),cl=k=>ks.some(x=>x===k||x.includes(k)||k.includes(x));const cand=[];
+ const add=(t,from,e)=>{const k=nrm(String(t));if(!OKT(t)||cl(k)||cand.some(c=>nrm(c.t)===k))return;cand.push({t,from,e:e||''})};
+ (D.decoy||[]).forEach(t=>add(t,''));
+ STAGES.forEach((o,k)=>{if(k>si)o.mons.forEach(m=>add(m[1],o.title))});
+ STAGES.forEach((o,k)=>{if(k<si)o.mons.forEach(m=>add(m[1],o.title))});
+ const nd=L.length>=7?5:4,dec=shuf(cand.slice(0,10)).slice(0,nd).map(x=>({...x,learned:false}));
+ S.cb=[];c.font='900 13px system-ui';
+ shuf(L.concat(dec)).forEach(it=>{const w=c.measureText(it.t).width,r=Math.max(19,Math.min(34,w/2+7));let x,y,n=0;
+  do{x=R(WL+r+4,WR-r-4);y=R(60+r,FLOOR-60);n++}while(n<80&&(S.cb.some(b=>Math.hypot(b.x-x,b.y-y)<b.r+r+6)||Math.hypot(x-60,y-FLOOR)<90));
+  const a=R(0,6.28),sp=R(14,24);S.cb.push({...it,x,y,r,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,ph:R(0,6.28),dead:false,fs:13})})
+ const rest=cand.filter(x=>!dec.some(d=>d.t===x.t)),NM=Math.min(6,4+Math.floor(si/2)),segs=r=>S.plats.filter(p=>p.y===ROWS[r]);
+ for(let k=0;k<NM;k++){const lab=rest[k]?rest[k].t:['오개념','착각','헷갈림','혼동','오해','엉터리'][k%6],sg=segs(k%4),p=sg[(Math.random()*sg.length)|0],x=R(p.x+16,p.x+p.w-16);
+  S.mons.push({i:k,d:['오개념 몬스터',lab,[],k%2,lab],a:lab,al:[],x,y:p.y,vy:0,vx:0,dir:Math.random()<.5?-1:1,st:'walk',fr:0,pink:0,angry:0,jt:R(2,6),shT:R(2,5),on:true,hint:false})}}
+function popConcept(b){b.dead=true;P.fire=.25;
+ if(b.learned){G.score+=150;burst(b.x,b.y,18,['#ffe45e','#9fe8ff','#fff','#7dffc6']);ft(b.x,b.y-24,'✅ '+b.t,'#7dffc6',18);SFX.trap();
+  if(G.hurry){setHurry(false);PRJ.length=0;ft(W/2,H/2-60,'진정~ 😌','#7fffd4',22)}G.wrong=0;
+  say('✅ 뽀글! <b>'+b.t+'</b> — '+b.e,'ok',9);G.card={t:b.t,e:b.e,time:4.5};G.idle=0}
+ else{burst(b.x,b.y,14,['#ff8fa3','#fff']);ft(b.x,b.y-24,'배우지 않은 개념!','#ff8fa3',17);SFX.no();
+  G.missed.push([b.t,'',(b.from?b.from+'에서 배우는 개념':'이 차시에서 배운 개념이 아니에요')]);
+  G.wrong=(G.wrong||0)+1;if(G.wrong>=2&&!G.hurry){setHurry(true,'오답 2번');ft(W/2,H/2-30,'배우지 않은 개념 2번!','#ff5a8a',20)}
+  say('⚠️ <b>'+b.t+'</b>은(는) 이 차시에서 배운 개념이 아니에요!'+(b.from?' ('+b.from+')':'')+'<br>👾 몬스터가 나왔어요! <b>🫧 발사</b>로 가둔 뒤 닿아서 터뜨려요.','no',6);
+  G.card={t:b.t,e:'이 차시에서 배운 개념이 아니에요! 👾 몬스터 등장',time:2.6,bad:1};
+  const n=S.mons.length;S.mons.push({i:30+n,d:['배우지 않은 개념',b.t,[],n%2,b.t],a:b.t,al:[],x:Math.max(WL+14,Math.min(WR-14,b.x)),y:b.y+12,vy:0,vx:0,dir:P.x>b.x?1:-1,st:'walk',fr:.5,pink:0,angry:0,jt:R(3,6),shT:99,on:false,hint:false})}
+ hud()}
+function useHint(){if(G.st!=='play'||(G.hint||0)<1)return;G.hint--;G.glow=4;SFX.coin();say('💡 <b>반짝이는 방울</b>이 이 차시에서 배운 개념이에요!','ok',4);hud()}
+function cbUpd(dt){if(!S.cb)return;if(G.glow>0)G.glow-=dt;if(G.card){G.card.time-=dt;if(G.card.time<=0)G.card=null}
+ for(const b of S.cb){if(b.dead)continue;b.ph+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt+Math.sin(b.ph*1.7)*.12;
+  if(b.x<WL+b.r){b.x=WL+b.r;b.vx=Math.abs(b.vx)}if(b.x>WR-b.r){b.x=WR-b.r;b.vx=-Math.abs(b.vx)}if(b.y<WL+b.r+8){b.y=WL+b.r+8;b.vy=Math.abs(b.vy)}if(b.y>FLOOR-b.r-4){b.y=FLOOR-b.r-4;b.vy=-Math.abs(b.vy)}}
+ for(let i=0;i<S.cb.length;i++)for(let j=i+1;j<S.cb.length;j++){const a=S.cb[i],b=S.cb[j];if(a.dead||b.dead)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,o=a.r+b.r+2-d;if(o>0){a.x-=dx/d*o/2;a.y-=dy/d*o/2;b.x+=dx/d*o/2;b.y+=dy/d*o/2}}
+ for(const b of S.cb){if(!b.dead&&Math.hypot(b.x-P.x,b.y-(P.y-16))<b.r+13){popConcept(b);break}}}
+function drawConcepts(){if(!S||!S.cb)return;for(const b of S.cb){if(b.dead)continue;const gl=G.glow>0&&b.learned,wob=Math.sin(b.ph*3)*1.2;c.save();c.translate(b.x,b.y);
+ if(gl){c.shadowColor='#ffe45e';c.shadowBlur=16+Math.sin(G.t*10)*6}
+ const g=c.createRadialGradient(-b.r*.35,-b.r*.4,1,0,0,b.r);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.3,gl?'rgba(255,236,150,.5)':'rgba(170,225,255,.32)');g.addColorStop(1,gl?'rgba(255,200,60,.45)':'rgba(120,170,255,.25)');
+ c.fillStyle=g;c.beginPath();c.ellipse(0,0,b.r+wob,b.r-wob,0,0,7);c.fill();c.shadowBlur=0;c.lineWidth=2;c.strokeStyle=gl?'#ffe45e':'#cff';c.stroke();
+ c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.arc(-b.r*.45,-b.r*.45,Math.max(2,b.r*.13),0,7);c.fill();
+ let fs=13;c.font='900 '+fs+'px system-ui';const w=c.measureText(b.t).width;if(w>b.r*2-6){fs=Math.max(9,fs*(b.r*2-6)/w);c.font='900 '+fs+'px system-ui'}
+ c.textAlign='center';c.textBaseline='middle';c.lineWidth=3;c.strokeStyle='#1a0838';c.strokeText(b.t,0,1);c.fillStyle='#fff';c.fillText(b.t,0,1);c.textBaseline='alphabetic';c.restore()}
+ const k=G.card;if(k&&G.st==='play'){c.save();c.font='800 13px system-ui';const x=WL+10,w=WR-WL-20;const lines=[];let cur='';for(const ch of String(k.e)){if(c.measureText(cur+ch).width>w-20&&cur){lines.push(cur);cur=ch}else cur+=ch}if(cur)lines.push(cur);const ls=lines.slice(0,3),h=34+ls.length*17,y=WL+8;
+  c.globalAlpha=Math.min(1,k.time*2);c.fillStyle=k.bad?'rgba(90,10,35,.92)':'rgba(8,60,42,.92)';c.beginPath();c.roundRect(x,y,w,h,10);c.fill();c.lineWidth=2;c.strokeStyle=k.bad?'#ff8fa3':'#7dffc6';c.stroke();
+  c.textAlign='left';c.fillStyle='#ffe45e';c.font='900 16px system-ui';c.fillText((k.bad?'⚠️ ':'✅ ')+k.t,x+10,y+21);c.fillStyle='#fff';c.font='800 13px system-ui';ls.forEach((l,i)=>c.fillText(l,x+10,y+40+i*17));c.restore()}}
 /* ===== 스테이지 ===== */
-function stageSpeed(){return 36+G.si*7}
+function stageSpeed(){return 46+G.si*8}
 function initStage(si){G.si=si;const D=STAGES[si];TCUR=TH[D.theme];PAT=makePat(TCUR);
- S={D,plats:layout(D.lay),mons:[],terms:[]};
+ S={D,plats:layout(pickLay(si)),mons:[],terms:[]};
  AMB=Array.from({length:26},()=>({x:R(30,450),y:R(0,H),s:R(.4,1.6),r:R(3,11),p:R(0,6)}));
  BUB=[];TXT=[];PRT=[];ITM=[];PRJ=[];G.wrong=0;G.idle=0;G.hurry=false;G.hurryN=0;G.sel=null;G.armed=null;G.gather=null;G.clearT=0;G.chainMax=0;G.sp={fire:1,water:1,elec:1};
  const segs=r=>S.plats.filter(p=>p.y===ROWS[r]);
- shuf(D.mons.map((d,i)=>i)).forEach((i,k)=>{const r=k%4,sg=segs(r),p=sg[(Math.random()*sg.length)|0];const x=R(p.x+16,p.x+p.w-16);
-  S.mons.push({i,d:D.mons[i],a:D.mons[i][1],al:D.mons[i][2],x,y:p.y,vy:0,vx:0,dir:Math.random()<.5?-1:1,st:'walk',fr:0,pink:0,angry:0,jt:R(2,6),shT:R(2,5),on:true,hint:false})});
- S.terms=shuf([...new Set(D.mons.map(m=>m[1])),...D.decoy]);
+ S.terms=[];G.sp={fire:0,water:0,elec:0};G.hint=2;G.glow=0;G.card=null;G.allPop=0;G.wrong=0;mkConcepts(si);
  P.x=60;P.y=FLOOR;P.vx=P.vy=0;P.inv=2;P.dir=1;G.ready=1.4;
- buildChips();hud();G.st='play'}
+ buildChips();hud();G.st='play';say('🫧 <b>배운 개념</b> 방울에 닿아 팡! 터뜨려요. 👾 오개념 몬스터는 🫧 발사로 가둬요!','ok',6)}
 function buildChips(){const el=$('chips');el.innerHTML='';S.terms.forEach((t,i)=>{const b=document.createElement('button');b.className='btn';b.dataset.t=t;b.innerHTML='<small>'+(i<9?i+1:'')+'</small>'+t;b.onclick=()=>shoot(t);el.appendChild(b)})}
 function hud(){$('sc').textContent=G.score;$('hi').textContent=Math.max(G.hi,G.score);$('lv').textContent=G.lives>0?'❤️'.repeat(G.lives):'💀';$('stn').textContent='STAGE '+(G.si+1);
  $('ext').innerHTML=[...WORD].map((ch,i)=>'<i class="'+(G.letters[i]?'on':'')+'">'+ch+'</i>').join('');
- $('sf').textContent='🔥 불 ×'+G.sp.fire;$('sw').textContent='💧 물 ×'+G.sp.water;$('se').textContent='⚡ 번개 ×'+G.sp.elec;
+ $('sf').textContent='💡 힌트 ×'+(G.hint==null?2:G.hint);if($('tHn'))$('tHn').textContent=(G.hint==null?2:G.hint);{const tI=$('tInfo');if(tI)tI.textContent=(S&&S.cb&&G.st==='play')?'🫧 남은 개념 '+S.cb.filter(b=>b.learned&&!b.dead).length+(S.mons.some(m=>m.st==='walk')?' · 👾 '+S.mons.filter(m=>m.st==='walk').length:''):'🫧 개념 방울에 닿으면 팡!'}$('sw').textContent='💧 물 ×'+G.sp.water;$('se').textContent='⚡ 번개 ×'+G.sp.elec;
  [...$('chips').children].forEach(b=>b.classList.toggle('on',b.dataset.t===G.armed))}
 function say(html,k,dur){G.msg=html;G.msgK=k||'';G.msgT=dur||5}
 function ft(x,y,txt,col,sz){TXT.push({x,y,txt,col:col||'#fff',sz:sz||18,t:0})}
@@ -199,12 +283,9 @@ function burst(x,y,n,cols){for(let i=0;i<n;i++){const a=R(0,6.28),s=R(40,220);PR
 function target(){const L=S.mons.filter(m=>m.st==='walk');if(!L.length)return null;if(G.sel&&G.sel.st==='walk')return G.sel;
  const same=L.filter(m=>Math.abs(m.y-P.y)<24&&(m.x-P.x)*P.dir>0).sort((a,b)=>Math.abs(a.x-P.x)-Math.abs(b.x-P.x));if(same[0])return same[0];
  return L.slice().sort((a,b)=>(Math.abs(a.x-P.x)+Math.abs(a.y-P.y)*.7)-(Math.abs(b.x-P.x)+Math.abs(b.y-P.y)*.7))[0]}
-function shoot(term){ac();if(G.st!=='play'||G.ready>0)return;if(!term){term=G.armed;if(!term){say('먼저 아래에서 <b>용어 방울</b>을 골라요! (또는 직접 입력)','',3);return}}
- if(P.cd>0)return;term=term.trim();if(!term)return;G.armed=term;P.cd=.45;P.fire=.25;
- const t=target();if(t&&Math.abs(t.y-P.y)<24&&Math.abs(t.x-P.x)>10)P.dir=t.x>P.x?1:-1;
- BUB.push({x:P.x+P.dir*20,y:P.y-18,vx:P.dir*300,t:0,term});SFX.shot();hud()}
+function shoot(){ac();if(G.st!=='play'||G.ready>0||P.cd>0)return;P.cd=.4;P.fire=.25;const t=target();if(t&&Math.abs(t.y-P.y)<24&&Math.abs(t.x-P.x)>10)P.dir=t.x>P.x?1:-1;BUB.push({x:P.x+P.dir*20,y:P.y-18,vx:P.dir*300,t:0,term:''});SFX.shot()}
 function matches(m,term){const n=nrm(term);return [m.a,...m.al].some(a=>nrm(a)===n)}
-function hitMon(b,m){b.dead=1;if(matches(m,b.term))trap(m,b);else wrongHit(m,b)}
+function hitMon(b,m){b.dead=1;trap(m,b)}
 function wrongHit(m,b){G.wrong++;m.angry=2;burst(b.x,b.y,10,['#ff8fa3','#fff']);ft(m.x,m.y-46,'뽕… ✖','#ff8fa3',20);SFX.no();
  G.missed.push([m.d[1],m.d[0],m.d[4]]);
  say('❌ <b>'+b.term+'</b>은(는) 아니야! 단서를 다시 읽어 봐요.'+(G.wrong>=2?' <b>(오답 2번! HURRY UP 발동)</b>':''),'no',4.5);
@@ -213,7 +294,7 @@ function setHurry(on,why){if(on){G.hurry=true;G.hurryN++;ft(W/2,H/2-60,'HURRY UP
 function trap(m,b){m.st='trap';m.trapT=0;m.cy=m.y-16;m.ty=R(70,120);m.vy=0;m.angry=0;m.pink=0;m.fr=0;G.wrong=0;G.idle=0;G.sel=null;G.score+=200;
  if(G.hurry){setHurry(false);PRJ.length=0;ft(W/2,H/2-60,'진정~ 😌','#7fffd4',26)}
  burst(m.x,m.cy,16,['#9fe8ff','#fff','#c9a6ff']);ft(m.x,m.y-46,'뽀글!','#9fe8ff',22);SFX.trap();
- say('✅ 뽀글! <b>'+m.a+'</b> — '+m.d[4],'ok',7);hud()}
+ say('🫧 몬스터를 가뒀어요! 방울에 <b>닿아서 팡!</b> 터뜨려요.','ok',4);hud()}
 /* ===== 터뜨리기 ===== */
 function comp(m,all){const T=S.mons.filter(x=>x.st==='trap'&&x.d[3]===m.d[3]);if(all)return T;const seen=new Set([m]),q=[m];while(q.length){const a=q.pop();T.forEach(b=>{if(!seen.has(b)&&Math.hypot(a.x-b.x,a.cy-b.cy)<62){seen.add(b);q.push(b)}})}return [...seen]}
 function popGroup(list,gname){const n=list.length;let cx=0,cy=0;list.forEach(m=>{cx+=m.x;cy+=m.cy;m.st='dead';burst(m.x,m.cy,18,['#ffe45e','#ff8fd0','#9fe8ff','#fff'])});cx/=n;cy/=n;
@@ -245,7 +326,7 @@ function update(dt){G.t+=dt;if(G.msgT>0)G.msgT-=dt;
  if(G.st!=='play')return;
  if(G.ready>0){G.ready-=dt;return}
  const sp=stageSpeed()*(G.hurry?1.8:1);
- G.idle+=dt;if(!G.hurry&&S.mons.some(m=>m.st==='walk')&&G.idle>28){setHurry(true,'시간');say('⏰ <b>HURRY UP!</b> 너무 오래 걸려요! 몬스터가 화났어요!','no',5)}
+ G.idle+=dt;if(!G.hurry&&S.mons.some(m=>m.st==='walk')&&G.idle>22){setHurry(true,'시간');say('⏰ <b>HURRY UP!</b> 너무 오래 걸려요! 배운 개념 방울을 터뜨리면 진정돼요!','no',5)}cbUpd(dt);if(G.st!=='play')return;
  for(const m of S.mons){if(m.st==='walk')walkMon(m,dt,sp);else if(m.st==='trap')trapUpd(m,dt)}
  // 발사체
  for(const b of BUB){b.t+=dt;if(b.t<.7){b.x+=b.vx*dt;for(const m of S.mons){if(m.st==='walk'&&Math.abs(m.x-b.x)<22&&Math.abs((m.y-16)-b.y)<24){hitMon(b,m);break}}}else{b.y-=60*dt;b.dead=b.dead||b.t>1.1}
@@ -268,33 +349,33 @@ function update(dt){G.t+=dt;if(G.msgT>0)G.msgT-=dt;
   if(Math.abs(it.x-P.x)<22&&Math.abs((it.y-8)-(P.y-16))<26){it.dead=1;G.score+=it.pts;SFX.coin();ft(it.x,it.y-20,'+'+it.pts,it.rare?'#ffe45e':'#fff',it.rare?22:16);hud()}if(it.t>14)it.dead=1}
  ITM=ITM.filter(i=>!i.dead);
  // 클리어
- if(S.mons.every(m=>m.st==='dead')){G.clearT+=dt;if(G.clearT>1.2)stageClear()}
+ if(S.cb&&S.cb.every(b=>!b.learned||b.dead)){if(!G.allPop){G.allPop=1;S.mons.forEach(m=>{if(m.st!=='dead'){burst(m.x,m.st==='trap'?m.cy:m.y-16,12,['#fff','#ffe45e']);m.st='dead'}});ft(W/2,H/2-40,'배운 개념 모두 팡! 🎉','#ffe45e',24)}G.clearT+=dt;if(G.clearT>1.8)stageClear()}
  hud2()}
 function hud2(){if(Math.random()<.2)hud()}
 function walkMon(m,dt,sp){if(m.angry>0)m.angry-=dt;m.pink=G.hurry?1:0;if(m.fr>0){m.fr-=dt;physics(m,dt,12);return}
- if(m.on){const ahead=m.x+m.dir*16;if(!supportAt(ahead,m.y)&&Math.random()<.55)m.dir*=-1;m.vx=m.dir*sp*(m.angry>0?1.5:1);m.jt-=dt;if(m.jt<=0){m.jt=R(2.5,6);if(G.si>=1&&Math.random()<.6){m.vy=-640}}}
+ if(m.on){const ahead=m.x+m.dir*16;if(!supportAt(ahead,m.y)&&Math.random()<.55)m.dir*=-1;m.vx=m.dir*sp*(m.angry>0?1.5:1);m.jt-=dt;if(m.jt<=0){m.jt=R(2.5,6);if(Math.random()<.65){m.vy=-640}}}
  m.x+=m.vx*dt;if(m.x<=WL+12){m.x=WL+12;m.dir=1}if(m.x>=WR-12){m.x=WR-12;m.dir=-1}
  physics(m,dt,12);
  if(G.hurry){m.shT-=dt;if(m.shT<=0&&PRJ.length<5){m.shT=R(2.2,4);const ang=Math.atan2((P.y-16)-(m.y-16),P.x-m.x);PRJ.push({x:m.x,y:m.y-16,vx:Math.cos(ang)*130,vy:Math.sin(ang)*130,t:0,txt:S.D.mis[(Math.random()*3)|0]});}}}
 function trapUpd(m,dt){m.trapT+=dt;if(!G.gather){if(m.cy>m.ty)m.cy-=55*dt;else{m.cy+=Math.sin(G.t*2+m.i)*10*dt}m.x+=Math.sin(G.t*1.2+m.i*2)*16*dt}
  m.x=Math.max(WL+22,Math.min(WR-22,m.x));
- if(m.trapT>16){m.st='walk';m.y=m.cy+16;m.vy=0;m.angry=6;m.fr=0;ft(m.x,m.cy-26,'탈출! 😡','#ff8fb3',18);burst(m.x,m.cy,12,['#ff8fb3','#fff']);say('😡 <b>'+m.a+'</b> 몬스터가 방울을 터뜨리고 탈출했어요! 다시 가둬요!','no',4)}}
+ if(m.trapT>13){m.st='walk';m.y=m.cy+16;m.vy=0;m.angry=6;m.fr=0;ft(m.x,m.cy-26,'탈출! 😡','#ff8fb3',18);burst(m.x,m.cy,12,['#ff8fb3','#fff']);say('😡 <b>'+m.a+'</b> 몬스터가 방울을 터뜨리고 탈출했어요! 다시 가둬요!','no',4)}}
 function playerUpd(dt){if(P.cd>0)P.cd-=dt;if(P.fire>0)P.fire-=dt;if(P.inv>0)P.inv-=dt;
  const ax=(keys.ArrowLeft||keys.a||keys.A?-1:0)+(keys.ArrowRight||keys.d||keys.D?1:0);P.vx=ax*150;if(ax)P.dir=ax;P.x+=P.vx*dt;P.anim+=Math.abs(ax)*dt;
  if(jumpReq&&P.on){P.vy=-640;SFX.jump()}jumpReq=false;if(keys.ArrowUp&&P.on){P.vy=-640}
  physics(P,dt,12)}
 /* ===== 클리어/종료 ===== */
-function stageClear(){G.st='clear';ITM.forEach(it=>{G.score+=it.pts});ITM=[];G.letters[G.si]=true;SFX.win();
+function stageClear(){G.st='clear';G.card=null;ITM.forEach(it=>{G.score+=it.pts});ITM=[];G.letters[G.si]=true;SFX.win();
  let bonus='';if(G.hurryN===0){G.score+=3000;bonus='<p>🏅 <b>NO HURRY 보너스 +3000</b> (재촉 없이 클리어!)</p>'}
  if(G.chainMax>=3)bonus+='<p>💥 최고 <b>'+G.chainMax+'연쇄</b>!</p>';
  try{if(G.score>G.hi)localStorage.setItem(HIKEY,G.score)}catch(e){}G.hi=Math.max(G.hi,G.score);hud();
  const last=G.si>=STAGES.length-1;const full=WORD.split('').every((_,i)=>G.letters[i]);
- const rv=S.D.mons.map(m=>'<div><b>'+m[1]+'</b> — '+m[4]+'</div>').join('');
+ const rv=(S.cb||[]).filter(b=>b.learned).map(b=>'<div><b>'+b.t+'</b> — '+b.e+'</div>').join('')+G.missed.filter(x=>x[1]==='').map(x=>'<div style="opacity:.8">✖ <b style="color:#ff8fa3">'+x[0]+'</b> — '+x[2]+'</div>').join('');
  showOv('<h2>STAGE '+(G.si+1)+' CLEAR! 🎉</h2><p>EXTEND 글자 획득 → <b style="font-size:1.6em;color:#ffe45e">'+WORD[G.si]+'</b></p>'+bonus+'<div class="rv">'+rv+'</div><button class="btn pri" id="nx">'+(last?(full?'🌟 EXTEND! 보너스 스테이지 ▶':'🏆 결과 보기 ▶'):'다음 스테이지 ▶')+'</button>',
   ()=>{$('nx').onclick=()=>{hideOv();if(last){if(full){G.lives++;hud();startBonus()}else win()}else{G.si++;intro(G.si)}}},'')}
 function gameOver(){G.st='over';try{if(G.score>G.hi)localStorage.setItem(HIKEY,G.score)}catch(e){}G.hi=Math.max(G.hi,G.score);
  const uniq=[];G.missed.forEach(x=>{if(!uniq.find(u=>u[0]===x[0]))uniq.push(x)});
- showOv('<h2>GAME OVER 💫</h2><p>점수 <b>'+G.score+'</b> · 스테이지 '+(G.si+1)+'까지 도전!</p>'+(uniq.length?'<div class="rv"><b>복습: 헷갈렸던 용어</b>'+uniq.map(u=>'<div><b>'+u[0]+'</b> — '+u[2]+'</div>').join('')+'</div>':'')+'<button class="btn pri" id="rt">🔁 이 스테이지 다시 도전</button><button class="btn" id="rh">처음 화면</button>',()=>{$('rt').onclick=()=>{hideOv();G.lives=3;G.score=Math.max(0,G.score-0);intro(G.si)};$('rh').onclick=()=>{hideOv();title()}},'')}
+ showOv('<h2>GAME OVER 💫</h2><p>점수 <b>'+G.score+'</b> · 스테이지 '+(G.si+1)+'까지 도전!</p>'+(uniq.length?'<div class="rv"><b>복습: 헷갈렸던 용어</b>'+uniq.map(u=>'<div><b>'+u[0]+'</b> — '+u[2]+'</div>').join('')+'</div>':'')+'<button class="btn pri" id="rt">🔁 이 스테이지 다시 도전</button><button class="btn" id="rh">처음 화면</button>',()=>{$('rt').onclick=()=>{hideOv();G.lives=4;G.score=Math.max(0,G.score-0);intro(G.si)};$('rh').onclick=()=>{hideOv();title()}},'')}
 function startBonus(){G.st='bonus';G.bonusT=15;TCUR=TH.candy;PAT=makePat(TCUR);S={D:STAGES[0],plats:layout('AAAA'),mons:[],terms:[]};ITM=[];BUB=[];PRJ=[];TXT=[];PRT=[];P.x=W/2;P.y=FLOOR;P.vy=0;G.bonusN=0;SFX.win();say('🌟 <b>EXTEND! ❤️ +1</b> 보너스 스테이지! 떨어지는 디저트를 15초 동안 모아요!','ok',8);hud()}
 function bonusUpd(dt){G.bonusT-=dt;G.sw-=dt;if(G.sw<=0){G.sw=.16;const rare=Math.random()<.12;ITM.push({x:R(40,440),y:30,vy:R(40,120),vx:0,em:rare?'🎂':['🍰','🍩','🍪','🍓','🧁','🍦','🍭'][(Math.random()*7)|0],pts:rare?3000:300,t:0,hw:12,rare,rain:1})}
  for(const it of ITM){it.t+=dt;it.y+=(it.vy+it.t*60)*dt;if(Math.abs(it.x-P.x)<24&&Math.abs((it.y-8)-(P.y-16))<30){it.dead=1;G.score+=it.pts;SFX.coin();ft(it.x,it.y-18,'+'+it.pts,'#ffe45e',16)}if(it.y>FLOOR+10)it.dead=1}
@@ -305,15 +386,15 @@ function win(){G.st='win';try{if(G.score>G.hi)localStorage.setItem(HIKEY,G.score
 /* ===== 오버레이 ===== */
 function showOv(html,wire,cls){const o=$('ov');o.className='ov '+(cls||'');o.innerHTML=html;o.hidden=false;if(wire)wire()}
 function hideOv(){$('ov').hidden=true}
-function title(){G.st='title';G.score=0;G.lives=3;G.letters=[];G.missed=[];G.hurryN=0;TCUR=TH.candy;PAT=makePat(TCUR);S={D:STAGES[0],plats:layout('AAAA'),mons:[],terms:[]};BUB=[];ITM=[];PRJ=[];TXT=[];AMB=Array.from({length:30},()=>({x:R(30,450),y:R(0,H),s:R(.4,1.6),r:R(4,14),p:R(0,6)}));
+function title(){G.st='title';G.score=0;G.lives=4;G.letters=[];G.missed=[];G.hurryN=0;TCUR=TH.candy;PAT=makePat(TCUR);S={D:STAGES[0],plats:layout('AAAA'),mons:[],terms:[]};BUB=[];ITM=[];PRJ=[];TXT=[];AMB=Array.from({length:30},()=>({x:R(30,450),y:R(0,H),s:R(.4,1.6),r:R(4,14),p:R(0,6)}));
  $('chips').innerHTML='';hud();
  showOv('<div style="font-size:.85em;color:#ffe45e">📚 단원을 고르고 시작하세요</div><div class="sel" id="sel"></div><div class="sel" id="sel2"></div><button class="btn pri" id="go">🪙 INSERT COIN · 시작!</button>',()=>{
   const sel=$('sel'),sel2=$('sel2');
   const drawStarts=()=>{sel2.innerHTML='';STAGES.forEach((s,k)=>{const b=document.createElement('button');b.className='btn'+(k===G.start?' on':'');b.textContent=(k+1)+'차시';b.onclick=()=>{G.start=k;[...sel2.children].forEach((x,q)=>x.classList.toggle('on',q===k))};sel2.appendChild(b)})};
   UNITS.forEach((u,k)=>{const b=document.createElement('button');b.className='btn'+(k===UCUR?' on':'');b.textContent=(k+1)+'. '+u.unit;b.onclick=()=>{loadUnit(k);G.start=0;[...sel.children].forEach((x,q)=>x.classList.toggle('on',q===k));drawStarts()};sel.appendChild(b)});drawStarts();
-  $('go').onclick=()=>{ac();SFX.greet();bgmOn=true;if(!bgm.run){bgm.run=1;bgm()}G.score=0;G.lives=3;G.letters=[];G.missed=[];setTimeout(()=>intro(G.start),900)}},'tr')}
-function intro(si){G.st='intro';const D=STAGES[si];TCUR=TH[D.theme];PAT=makePat(TCUR);S={D,plats:layout(D.lay),mons:[],terms:[]};BUB=[];ITM=[];PRJ=[];TXT=[];G.si=si;hud();
- showOv('<h2>[스테이지 '+(si+1)+': '+D.title+']</h2><p>📚 '+D.grade+' · '+D.unit+'</p><p>'+D.intro+'</p><p>👾 몬스터 <b>'+D.mons.length+'마리</b> — 글자 <b style="color:#ffe45e">'+WORD[si]+'</b> 를 노려라!</p><p class="tipx" style="font-size:.82em;color:#d2bff5">① 몬스터를 향해 서서 <b>용어 방울</b> 선택 → 발사 ② 가둔 방울에 닿으면 팡! ③ 같은 색 태엽 몬스터끼리 모으면 연쇄!</p><button class="btn pri" id="st">▶ 스테이지 시작</button>',()=>{$('st').onclick=()=>{ac();hideOv();initStage(si)}},'')}
+  $('go').onclick=()=>{ac();SFX.greet();bgmOn=true;if(!bgm.run){bgm.run=1;bgm()}G.score=0;G.lives=4;G.letters=[];G.missed=[];setTimeout(()=>intro(G.start),900)}},'tr')}
+function intro(si){G.st='intro';const D=STAGES[si];TCUR=TH[D.theme];PAT=makePat(TCUR);S={D,plats:layout(pickLay(si)),mons:[],terms:[]};BUB=[];ITM=[];PRJ=[];TXT=[];G.si=si;hud();
+ showOv('<h2>[스테이지 '+(si+1)+': '+D.title+']</h2><p>📚 '+D.grade+' · '+D.unit+'</p><p>🫧 이 차시에서 <b>배운 개념</b>이 방울 속에 갇혀 있어요. 공룡을 움직여 방울에 닿으면 <b>팡!</b> 개념 설명이 나와요.</p><p>👾 스테이지에는 처음부터 <b>오개념 몬스터</b>가 돌아다녀요. 🫧 발사로 가두고 닿아서 터뜨려요. <b>배우지 않은 개념</b> 방울을 건드리면 몬스터가 더 나와요!</p><p>⏰ 오래 머뭇거리거나 배우지 않은 개념을 2번 건드리면 <b>HURRY UP!</b> — 배운 개념 방울을 터뜨리면 진정돼요.</p><p>배운 개념 방울을 모두 터뜨리면 글자 <b style="color:#ffe45e">'+WORD[si]+'</b> 획득!</p><p class="tipx" style="font-size:.82em;color:#d2bff5">◀ ▶ 이동 · ⤒ 점프 · 🫧 발사 · 💡 힌트(배운 개념이 반짝)</p><button class="btn pri" id="st">▶ 스테이지 시작</button>',()=>{$('st').onclick=()=>{ac();hideOv();initStage(si)}},'')}
 /* ===== 그리기 ===== */
 function drawTitle(){drawBG();drawWalls();
  // 로고
@@ -332,11 +413,12 @@ function drawPlay(){drawBG();S.plats.forEach(drawPlat);drawWalls();
  for(const m of S.mons){if(m.st==='walk'){c.save();if(m.fr>0&&m.hint){}robot(m.x,m.y,m);c.restore();
    if(m===tg){c.fillStyle='#ffe45e';c.beginPath();const yy=m.y-52+Math.sin(G.t*8)*3;c.moveTo(m.x-7,yy);c.lineTo(m.x+7,yy);c.lineTo(m.x,yy+10);c.fill()}
    if(m.fr>0&&m.hint){c.font='900 13px system-ui';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';const h=m.a[0]+'○'.repeat(m.a.length-1);c.strokeText('💡'+h,m.x,m.y-58);c.fillStyle='#fff';c.fillText('💡'+h,m.x,m.y-58)}}
-  else if(m.st==='trap'){const blink=m.trapT>12&&((G.t*8)|0)%2;c.save();c.globalAlpha=blink?.45:1;
+  else if(m.st==='trap'){const blink=m.trapT>9&&((G.t*8)|0)%2;c.save();c.globalAlpha=blink?.45:1;
    const gc=['#4ef0b8','#ffd24a','#ff7ad6','#7ab8ff'][m.d[3]%4];c.fillStyle='rgba(170,225,255,.3)';c.strokeStyle=gc;c.lineWidth=3;c.beginPath();c.arc(m.x,m.cy,23,0,7);c.fill();c.stroke();
    c.save();c.translate(m.x,m.cy+9);c.scale(.62,.62);robot(0,0,{...m,fr:0,pink:0,angry:0});c.restore();
    c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=2;c.beginPath();c.arc(m.x,m.cy,17,3.6,4.6);c.stroke();
    c.font='900 11px system-ui';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#2a0f45';c.strokeText(m.a,m.x,m.cy-27);c.fillStyle='#fff';c.fillText(m.a,m.x,m.cy-27);c.restore()}}
+ drawConcepts();
  // 방울 발사
  BUB.forEach(b=>{c.fillStyle='rgba(180,235,255,.45)';c.strokeStyle='#bff';c.lineWidth=2;c.beginPath();c.arc(b.x,b.y,15,0,7);c.fill();c.stroke();c.fillStyle='#fff';c.beginPath();c.arc(b.x-5,b.y-5,3,0,7);c.fill();c.font='900 10px system-ui';c.textAlign='center';c.fillStyle='#134';c.fillText(b.term.length>4?b.term.slice(0,4):b.term,b.x,b.y+4)});
  // 오개념
@@ -354,10 +436,9 @@ function drawPlay(){drawBG();S.plats.forEach(drawPlat);drawWalls();
  if(G.st==='play'&&!G.hurry&&G.idle>20&&S.mons.some(m=>m.st==='walk')&&((G.t*3)|0)%2){c.font='900 18px system-ui';c.textAlign='center';c.lineWidth=4;c.strokeStyle='#300';c.fillStyle='#ffd24a';c.strokeText('⚠ 서두르세요!',W/2,66);c.fillText('⚠ 서두르세요!',W/2,66)}}
 let lastDlg='';
 function dlg(){let h='';if(G.st==='play'||G.st==='bonus'||G.st==='clear'){if(G.msgT>0)h+='<div class="res '+G.msgK+'">'+G.msg+'</div>';
-  const t=G.st==='play'?target():null;if(t){h+='<div class="clue"><span class="tg">🎯 조준 몬스터 ('+(S.mons.filter(m=>m.st!=='dead').length)+'마리 남음)</span>'+'👾 “'+t.d[0]+'”'+(t.fr>0&&t.hint?'<br>💡 힌트: <b>'+t.a[0]+'○'.repeat(t.a.length-1)+'</b> ('+t.a.length+'글자)':'')+'</div>'}
-  else if(G.st==='play'&&S.mons.some(m=>m.st==='trap'))h+='<div class="clue">🫧 가둔 방울에 닿거나 <b>🧲 모아서 터뜨리기</b>! 같은 성질끼리 모으면 연쇄 폭발!</div>';
+  if(G.st==='play'&&S&&S.cb){const n=S.cb.filter(b=>b.learned&&!b.dead).length,wm=S.mons.filter(m=>m.st==='walk').length,tm=S.mons.filter(m=>m.st==='trap').length;h+='<div class="clue"><span class="tg">🫧 남은 배운 개념 방울 '+n+'개</span>'+(wm?'👾 몬스터 '+wm+'마리! <b>🫧 발사</b>로 가둬요.':tm?'🫧 가둔 몬스터에 <b>닿아서 팡!</b>':'공룡을 움직여 <b>배운 개념 방울</b>에 닿으면 팡! 터지고 설명이 나와요.')+'</div>'}
   else if(G.st==='bonus')h+='<div class="clue">🍰 떨어지는 디저트를 모아요!</div>'}
- else h='<div class="res">🎵 띠리리~ 뽀글뽀글~ 띠로롱♪ (8비트 오락실 멜로디)</div><div class="clue"><b>안녕! 나는 공룡 박사 버블룬이야! 🦖🫧</b> 몬스터가 외치는 과학 단서를 읽고 <b>정답 용어 방울</b>로 가둔 뒤, <b>같은 성질끼리 모아서 팡!</b> 터뜨리자! 틀리면 몬스터가 핑크로 변해 서둘러!</div>';
+ else h='<div class="res">🎵 띠리리~ 뽀글뽀글~ 띠로롱♪ (8비트 오락실 멜로디)</div><div class="clue"><b>안녕! 나는 공룡 박사 버블룬이야! 🦖🫧</b> 방울 속에 갇힌 <b>오늘 배운 개념</b>에 닿아 팡! 터뜨리면 설명이 나와! 배우지 않은 개념 방울을 건드리면 👾 몬스터가 나오니 조심!</div>';
  if(h!==lastDlg){$('dlg').innerHTML=h;lastDlg=h}}
 /* ===== 루프 ===== */
 let last=0;
@@ -382,6 +463,7 @@ cv.addEventListener('pointerdown',e=>{if(G.st!=='play')return;const r=cv.getBoun
 $('snd').onclick=()=>{mute=!mute;$('snd').textContent=mute?'🔇 소리 꺼짐':'🔊 소리 켜짐'};
 $('fs').onclick=()=>{const d=document;if(!d.fullscreenElement)(d.documentElement.requestFullscreen||(()=>{})).call(d.documentElement);else d.exitFullscreen()};
 window.__g={G,P,get S(){return S},update,initStage,shoot,popTouch,gather,useSp,intro,title,stageClear,get BUB(){return BUB},get ITM(){return ITM},keys,setHurry,matches};
+$('sf').onclick=useHint;$('padTog').onclick=()=>{const h=document.documentElement,on=!h.classList.contains('touch');h.classList.toggle('touch',on);try{localStorage.setItem('bbPad',on?'1':'0')}catch(_){}};const press=(id,dn,up)=>{const b=$(id);if(!b)return;b.addEventListener('pointerdown',e=>{e.preventDefault();ac();b.classList.add('on');try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}dn&&dn()});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{b.classList.remove('on');up&&up()}));b.addEventListener('contextmenu',e=>e.preventDefault())};press('tL',()=>{keys.ArrowLeft=true},()=>{keys.ArrowLeft=false});press('tR',()=>{keys.ArrowRight=true},()=>{keys.ArrowRight=false});press('tJ',()=>{jumpReq=true});press('tF',()=>shoot());press('tH',()=>useHint());addEventListener('keydown',e=>{if(e.key==='h'||e.key==='H')useHint()});
 title();requestAnimationFrame(frame);
 })();
 </script><script id="qrhook1025">window.__qrQuery=function(){return window.__qrU?"u="+encodeURIComponent(window.__qrU):""};</script>
