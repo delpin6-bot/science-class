@@ -239,6 +239,39 @@ header.unified-game-header .game-title {
   color: #0f172a !important;
 }
 </style>
+<style id="phoneLabCss">/* PHONELAB_1018 : 스마트폰 전용 레이아웃 (전자칠판 화면은 그대로) */
+@media (max-width:600px){
+html header h1,html .title-group h1,html .title-block h1{font-size:16px!important;line-height:1.25!important;margin:0!important}
+html header p,html .title-group p,html .title-block p{font-size:10.5px!important;line-height:1.35!important;margin:2px 0 0!important}
+html .wrap>h1,html #home>h1{font-size:17px!important;line-height:1.25!important}
+html .lead{font-size:11.5px!important;line-height:1.45!important}
+html .unified-nav-actions,html .header-actions{display:flex!important;flex-wrap:nowrap!important;gap:4px!important;overflow-x:auto;scrollbar-width:none;max-width:100%;padding:0!important;margin:4px 0!important}
+html .unified-nav-actions::-webkit-scrollbar,html .header-actions::-webkit-scrollbar{display:none}
+html .btn-top.btn-top,html .btn-help.btn-help,html a.back.back{flex:0 0 auto;min-height:30px!important;height:30px;padding:0 9px!important;font-size:11px!important;border-radius:9px!important;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box}
+html .btn-unified-nav.btn-unified-nav:is(#kjsHome,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,#kjsQrBtn,.kjs-qr-btn,#btnRestart,#btnSound,a[href*="게임서랍"]):not(.kjs-seg *),html #btnFullscreen.btn-top{width:34px;height:32px;min-height:0!important;padding:0!important;justify-content:center;font-size:0!important}
+html .btn-unified-nav:is(#kjsHome,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,#kjsQrBtn,.kjs-qr-btn,#btnRestart,#btnSound,a[href*="게임서랍"]):not(.kjs-seg *)>span{font-size:0!important}
+html .btn-unified-nav:is(#kjsHome,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,#kjsQrBtn,.kjs-qr-btn,#btnRestart,#btnSound,a[href*="게임서랍"]):not(.kjs-seg *)::before,html #btnFullscreen::before{font-size:15px;line-height:1}
+html .kjs-seg a{font-size:11px!important;padding:0 6px!important}
+html [class*="kjs-"][class*="qr"]:not(.kjs-seg *)::before{content:"📱"}
+html #kjsHome:not(.kjs-seg *)::before{content:"↺"}
+html .btn-hub-main:not(.kjs-seg *)::before{content:"📚"}
+html .btn-hub-sim:not(.kjs-seg *)::before{content:"🔬"}
+html .btn-hub-game:not(.kjs-seg *)::before{content:"🎮"}
+html .btn-hub-mod:not(.kjs-seg *)::before{content:"⚡"}
+html #btnFullscreen::before{content:"⛶"}
+html #kjsQrBtn::before{content:"📱"}
+html #btnRestart.btn-unified-nav::before{content:"🔄"}
+html #btnSound.btn-unified-nav::before{content:"🔊"}
+html a.btn-unified-nav[href*="게임서랍"]:not(.btn-hub-game):not(.kjs-seg *)::before{content:"🎮"}
+html #kjsImmBtn{right:8px!important;bottom:8px!important;width:36px;height:36px;min-height:0!important;padding:0!important;border-radius:11px!important;font-size:0!important;border-width:1.5px!important;opacity:.85}
+html #kjsImmBtn::before{content:"⛶";font-size:17px;line-height:1}
+html h2{font-size:14px!important}
+html h3{font-size:13px!important}
+html .stat-card{padding:7px 9px!important}
+html .stat-val{font-size:15px!important}
+html .stat-lbl,html .stat-desc{font-size:10px!important}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -580,8 +613,16 @@ header.unified-game-header .game-title {
     render(); sync();
     /* QR 딥링크: ?q=차시코드 → 그 학년·단원으로 이동해 바로 고르기(시작) */
     try {
-      var qp = new URLSearchParams(location.search).get("q");
+      var _sp = new URLSearchParams(location.search), qp = _sp.get("q");
       var target = qp && items.filter(function(x){ return x.q === qp; })[0];
+      /* QRSTAY_1017 : ?g=학년&u=단원&s=차시번호 / &m=중단원 / (생략=대단원 종합) */
+      if (!target && _sp.get("g") && _sp.get("u")) {
+        var _g = _sp.get("g"), _u = _sp.get("u"), _s = parseInt(_sp.get("s") || "", 10), _m = _sp.get("m");
+        var _in = items.filter(function(x){ return x.grade === _g && x.unit === _u; });
+        if (_s > 0) target = _in.filter(function(x){ return x.kind !== "unit" && x.kind !== "mid" && x.title && x.title.indexOf(_s + "차시") === 0; })[0];
+        if (!target && _m) target = _in.filter(function(x){ return x.kind === "mid" && x.mid === _m; })[0];
+        if (!target) target = _in.filter(function(x){ return x.kind === "unit"; })[0];
+      }
       if (target) {
         st.g = target.grade; var us = unitsOf(st.g); st.u = Math.max(0, us.indexOf(target.unit)); st.q = "";
         render(); sync();
@@ -647,6 +688,17 @@ KJSMenu.init({
       { grade: x.grade, unit: x.unit, lesson: x.title }); }
 });
 
+/* QRSTAY_1017 : QR 학생은 차시 고르기를 숨기고 "이 차시 다시 하기"만 */
+if (document.documentElement.classList.contains("kjs-stay") || (/[?&]qr=1/.test(location.search) && /[?&](q|g)=/.test(location.search))) {
+  (function(){
+    var st = document.createElement("style");
+    st.textContent = 'html.kjs-stay #picker > :not(#stayAgain){display:none!important}#stayAgain{display:block;margin:30px auto;padding:18px 28px;border-radius:16px;border:2px solid #38bdf8;background:#0f172a;color:#fff;font:900 22px/1.2 sans-serif;cursor:pointer}';
+    document.head.appendChild(st);
+    var b = document.createElement("button"); b.id = "stayAgain"; b.type = "button"; b.textContent = "▶ 이 차시 다시 하기";
+    b.onclick = function(){ location.reload(); };
+    $("picker").appendChild(b);
+  })();
+}
 /* ---------- 게임 상태 ---------- */
 let G = null, raf = null;
 const LIFE_MAX = 3;
@@ -1009,7 +1061,7 @@ var pend=0;function schedule(ms){clearTimeout(pend);pend=setTimeout(update,ms||2
 function update(){
   var p=isPlay();H.classList.toggle('kjs-playing',p);if(D.body)D.body.classList.toggle('kjs-playing',p);
   if(!p&&H.classList.contains('kjs-menu'))H.classList.remove('kjs-menu');
-  ensureMenuBtn();if(menuBtn)menuBtn.classList.toggle('on',p&&(hasHidden()||CFG.collapse));
+  ensureMenuBtn();refreshQr();if(menuBtn)menuBtn.classList.toggle('on',p&&(hasHidden()||CFG.collapse));
   lastPlay=p;
   if(p)refit();else setZ(1);
   lastProbe=Date.now();
@@ -1033,11 +1085,11 @@ function normUrl(u){try{var x=new URL(String(u).trim());return /^https?:$/.test(
 function targetUrl(){
   if(/^https?:$/.test(location.protocol)){var u=location.href.split('#')[0].split('?')[0];return u;}
   var b=lsGet(LSK);if(!b)return '';try{return new URL('./'+encodeURI(FILE),b).href;}catch(e){return '';}}
-var qrLesson=null;
+var qrLesson=null;var qrBtn=null;function refreshQr(){if(qrBtn){if(curLesson())qrBtn.style.removeProperty('display');else qrBtn.style.setProperty('display','none','important');}} /* QRFIX_1017 */
 function fnv(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h.toString(36);}
 function baseUrl(){return /^https?:$/.test(location.protocol)?location.href.split('#')[0].split('?')[0]:lsGet(LSK);}
 function lessonUrl(x){var b=baseUrl();if(!b||!x||!x.q)return '';try{return new URL('./go.html?f='+fnv(FILE)+'&q='+x.q+'&qr=1',b).href;}catch(e){return '';}}
-function curLesson(){if(!CFG.lessonQr)return null;var m=window.KJSMenu;return (m&&m._current&&m._current.q)?m._current:null;}
+function curLesson(){if(!CFG.lessonQr)return null;var m=window.KJSMenu;if(m&&m._current&&m._current.q)return m._current;var c=window.__kjsCurrent;return (c&&c.q)?c:null;}
 var ov=null;
 function paint(url){
   var c=ov.querySelector('canvas'),q=c.getContext('2d');ov.querySelector('.er').textContent='';
@@ -1064,7 +1116,7 @@ window.kjsOpenQr=function(){openQr(curLesson());};window.kjsLessonQr=function(x)
 function mountQr(){
   if(CFG.noqr||D.getElementById('kjsQrBtn')||!D.body)return;
   var host=null;(CFG.qrHost||['.header-actions','.unified-nav-actions']).some(function(s){host=D.querySelector(s);return !!host;});
-  var b=D.createElement('button');b.id='kjsQrBtn';b.type='button';b.textContent='📱 QR';b.title='학생 접속 QR코드 (이 게임)';
+  var b=D.createElement('button');b.id='kjsQrBtn';b.type='button';b.textContent='📱 이 차시 QR';b.title='지금 고른 차시로 바로 시작하는 학생용 QR';qrBtn=b;b.style.setProperty('display','none','important');
   if(host){var sib=host.querySelector('button');b.className=(sib?sib.className:'')+' kjs-in';host.insertBefore(b,host.firstChild);b.style.cssText+=';min-height:44px;cursor:pointer';}
   else{b.className='kjs-float';D.body.appendChild(b);}
   b.onclick=function(){openQr(curLesson());};
@@ -1076,6 +1128,56 @@ addEventListener('load',function(){schedule(100);});
 window.__kjsKitApi={update:update,refit:refit,isPlay:isPlay,get zoom(){return z;},fits:fits,cfg:CFG,openQr:openQr};
 })();
 
+</script>
+<style id="rsp1017">
+@media (pointer:coarse) and (hover:none){
+ button,.btn,.opt,select,[role=button],input[type=button],input[type=submit],.lk,.ctrl-btn,.btn-top,.btn-unified-nav,.km-chip,.unit-chip,.tab{min-height:44px}
+ input[type=radio],input[type=checkbox]{width:24px;height:24px;min-width:24px;accent-color:#2563eb}
+ input[type=range]{min-height:32px}
+ .btn-star{min-width:44px;min-height:44px}
+}
+@media (max-width:640px){
+ img,video{max-width:100%;height:auto}
+ .km-scroll,.unitchips,.jumpchips,.unit-chips-row,nav.dh-seg,nav.tabs,#tabs,.tabs{overflow-x:auto!important;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+ .km-row>*,.navrow>*,.unit-nav-bar>*{min-width:0}
+ header,.header-inner,.header-utils,.header-actions,.unified-nav-actions,.nav-actions,.tools,.panel-header,#hud,#bottom,.grp,.dh-r,.dh-t1,.row2{flex-wrap:wrap!important;row-gap:6px}
+ #hud{height:auto!important;min-height:38px;padding-top:4px!important;padding-bottom:4px!important}
+ .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .dashboard-grid>*,.hud-card{min-width:0}
+ .hud-val{white-space:normal!important;overflow-wrap:anywhere}
+ .lesson-grid{grid-template-columns:minmax(0,1fr)!important}
+ .lesson-card{min-width:0!important;max-width:100%!important}
+ .control-grid,.hud-stats{grid-template-columns:minmax(0,1fr)!important}
+ .panel-card{min-width:0;max-width:100%}
+}
+</style>
+<script id="kjsStay">
+/* QRSTAY_1017 : QR(qr=1)로 들어온 학생은 이 게임 안에서만 움직일 수 있어요 (서랍·다른 게임·차시 고르기 이동 차단) */
+(function(){try{
+var p=new URLSearchParams(location.search);
+if(p.get('qr')!=='1'||!(p.has('q')||p.has('g')))return;
+var H=document.documentElement;H.classList.add('kjs-stay');
+var st=document.createElement('style');st.id='kjsStayCss';
+st.textContent='html.kjs-stay :is(.kjs-seg,.dh-seg,.dh-menu,#dhTools,#dhToolsBtn,#kjsImmBtn,#kjsQrBtn,#kjsMenuBtn,.kjs-qr-btn,.btn-hub-main,.btn-hub-sim,.btn-hub-game,.btn-hub-mod,a[href*="서랍"],a[href*="index.html"],a[href*="go.html"],#kjsHomeLink,.hb,a.hb){display:none!important}'
+ +'html.kjs-stay .header-actions a[href]{display:none!important}'
+ +'#kjsStayBadge{position:fixed;right:10px;bottom:10px;z-index:2147480000;padding:6px 12px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font:800 12px/1.2 -apple-system,"Pretendard","Malgun Gothic",sans-serif;pointer-events:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';
+(document.head||H).appendChild(st);
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;
+  var h=a.getAttribute('href')||'';
+  if(h.charAt(0)==='#'||/^javascript:/i.test(h))return;
+  e.preventDefault();e.stopImmediatePropagation();
+},true);
+try{window.open=function(){return null;};}catch(e){}
+try{history.pushState(null,'',location.href);window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});}catch(e){}
+function badge(){
+  if(document.getElementById('kjsStayBadge')||!document.body)return;
+  var b=document.createElement('div');b.id='kjsStayBadge';b.textContent='📱 학생 QR · 이 차시 게임';document.body.appendChild(b);
+  var n=0,t=setInterval(function(){var c=(window.KJSMenu&&window.KJSMenu._current)||window.__kjsCurrent;
+    if(c&&c.title){b.textContent='📱 '+[c.unit,c.title].filter(Boolean).join(' · ');clearInterval(t);}else if(++n>20)clearInterval(t);},300);
+}
+if(document.body)badge();else document.addEventListener('DOMContentLoaded',badge);
+}catch(e){}})();
 </script>
 </body>
 </html>
